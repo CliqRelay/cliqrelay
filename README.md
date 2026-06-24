@@ -2,6 +2,12 @@
   <img src="./project-banner.png" width="700" alt="Project Banner"/>
 </p>
 
+<div align="center">
+
+### [Become a Sponsor!](https://buy.polar.sh/polar_cl_rCWK2EGUoQFDeBQmObwQi4NRLEHCBRSpicW0m10vLjo)
+
+</div>
+
 ---
 
 ### Overview
@@ -55,6 +61,10 @@ Your contributions are welcome! Here's how you can get involved:
 Join our growing community for support, discussions, and updates:
 
 - [Discord Server](https://discord.gg/FBM65P7GpZ)
+
+If you'd like to support the ongoing development of this project, consider subscribing on Polar!
+
+[![Subscribe on Polar](https://img.shields.io/badge/Subscribe-on%20Polar-00d1ff?style=for-the-badge&logo=polar&logoColor=white)](https://buy.polar.sh/polar_cl_rCWK2EGUoQFDeBQmObwQi4NRLEHCBRSpicW0m10vLjo)
 
 ---
 
