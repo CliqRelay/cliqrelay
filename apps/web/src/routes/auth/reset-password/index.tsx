@@ -1,0 +1,306 @@
+import { useState } from "react";
+
+import {
+	createFileRoute,
+	Link,
+	useNavigate,
+	useSearch,
+} from "@tanstack/react-router";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
+import { authulaClient } from "@/lib/authula-client";
+import { envClient } from "@/constants/env-client";
+
+export const Route = createFileRoute("/auth/reset-password/")({
+	component: ResetPasswordPage,
+	validateSearch: (search: Record<string, string | undefined>) => ({
+		token: search.token,
+	}),
+});
+
+const requestResetSchema = z.object({
+	email: z.string().email("Please enter a valid email address"),
+});
+
+const changePasswordSchema = z
+	.object({
+		password: z
+			.string()
+			.min(8, "Password must be at least 8 characters")
+			.regex(
+				/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+				"Password must contain at least one uppercase letter, one lowercase letter, and one number",
+			),
+		confirmPassword: z.string(),
+	})
+	.refine((data) => data.password === data.confirmPassword, {
+		message: "Passwords don't match",
+		path: ["confirmPassword"],
+	});
+
+type RequestResetFormData = z.infer<typeof requestResetSchema>;
+type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
+function ResetPasswordPage() {
+	const navigate = useNavigate();
+	const { token } = useSearch({ from: Route.id });
+
+	const [showPassword, setShowPassword] = useState<boolean>(false);
+	const [showConfirmPassword, setShowConfirmPassword] =
+		useState<boolean>(false);
+
+	const requestForm = useForm({
+		defaultValues: {
+			email: "",
+		} as RequestResetFormData,
+		validators: {
+			onChange: requestResetSchema,
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				await authulaClient.emailPassword.requestPasswordReset({
+					email: value.email,
+					callbackUrl: `${envClient.baseUrl}/auth/change-password`,
+				});
+
+				toast({
+					title: "Email sent",
+					description:
+						"If an account exists with that email, you will receive a password reset link.",
+				});
+
+				navigate({ to: "/auth/sign-in" });
+			} catch (error: any) {
+				toast({
+					title: "Request failed",
+					description: error?.message || "An unknown error occurred",
+				});
+			}
+		},
+	});
+
+	const changeForm = useForm({
+		defaultValues: {
+			password: "",
+			confirmPassword: "",
+		} as ChangePasswordFormData,
+		validators: {
+			onChange: changePasswordSchema,
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				await authulaClient.emailPassword.changePassword({
+					token: token!,
+					password: value.password,
+				});
+
+				toast({
+					title: "Success",
+					description: "Your password has been reset successfully.",
+				});
+
+				navigate({ to: "/auth/sign-in" });
+			} catch (error: any) {
+				toast({
+					title: "Reset failed",
+					description: error?.message || "An unknown error occurred",
+				});
+			}
+		},
+	});
+
+	if (token) {
+		return (
+			<Card className="w-full max-w-md">
+				<CardHeader className="text-center">
+					<CardTitle className="text-2xl font-bold">Set New Password</CardTitle>
+					<CardDescription>Enter your new password below.</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							changeForm.handleSubmit();
+						}}
+					>
+						<div className="flex flex-col gap-2">
+							{/* NEW PASSWORD */}
+							<changeForm.Field
+								name="password"
+								validators={{ onChange: changePasswordSchema.shape.password }}
+							>
+								{(field) => (
+									<Field data-invalid={field.state.meta.errors.length > 0}>
+										<FieldLabel htmlFor={field.name}>New Password</FieldLabel>
+										<div className="relative">
+											<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+											<Input
+												id={field.name}
+												type={showPassword ? "text" : "password"}
+												value={field.state.value}
+												onChange={(e) => field.handleChange(e.target.value)}
+												className="pl-10 pr-10"
+											/>
+											<button
+												type="button"
+												onClick={() => setShowPassword((p) => !p)}
+												className="absolute right-3 top-1/2 -translate-y-1/2"
+											>
+												{showPassword ? (
+													<EyeOff size={16} />
+												) : (
+													<Eye size={16} />
+												)}
+											</button>
+										</div>
+										<FieldError errors={field.state.meta.errors} />
+									</Field>
+								)}
+							</changeForm.Field>
+
+							{/* CONFIRM NEW PASSWORD */}
+							<changeForm.Field name="confirmPassword">
+								{(field) => (
+									<Field data-invalid={field.state.meta.errors.length > 0}>
+										<FieldLabel htmlFor={field.name}>
+											Confirm New Password
+										</FieldLabel>
+										<div className="relative">
+											<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+											<Input
+												id={field.name}
+												type={showConfirmPassword ? "text" : "password"}
+												value={field.state.value}
+												onChange={(e) => field.handleChange(e.target.value)}
+												className="pl-10 pr-10"
+											/>
+											<button
+												type="button"
+												onClick={() => setShowConfirmPassword((p) => !p)}
+												className="absolute right-3 top-1/2 -translate-y-1/2"
+											>
+												{showConfirmPassword ? (
+													<EyeOff size={16} />
+												) : (
+													<Eye size={16} />
+												)}
+											</button>
+										</div>
+										<FieldError errors={field.state.meta.errors} />
+									</Field>
+								)}
+							</changeForm.Field>
+
+							<changeForm.Subscribe
+								selector={(state) => [state.canSubmit, state.isSubmitting]}
+							>
+								{([canSubmit, isSubmitting]) => (
+									<Button
+										type="submit"
+										className="w-full mt-4"
+										disabled={!canSubmit}
+									>
+										{isSubmitting ? "Resetting..." : "Reset Password"}
+									</Button>
+								)}
+							</changeForm.Subscribe>
+
+							<div className="mt-4 text-center text-sm">
+								<Link
+									to="/auth/sign-in"
+									className="text-blue-500 hover:underline"
+								>
+									Back to Sign In
+								</Link>
+							</div>
+						</div>
+					</form>
+				</CardContent>
+			</Card>
+		);
+	}
+
+	return (
+		<Card className="w-full max-w-md">
+			<CardHeader className="text-center">
+				<CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
+				<CardDescription>
+					Enter your email and we'll send you a reset link.
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						requestForm.handleSubmit();
+					}}
+				>
+					<div className="flex flex-col gap-2">
+						{/* EMAIL */}
+						<requestForm.Field
+							name="email"
+							validators={{ onChange: requestResetSchema.shape.email }}
+						>
+							{(field) => (
+								<Field data-invalid={field.state.meta.errors.length > 0}>
+									<FieldLabel htmlFor={field.name}>Email</FieldLabel>
+									<div className="relative">
+										<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+										<Input
+											id={field.name}
+											type="email"
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											placeholder="you@example.com"
+											className="pl-10"
+										/>
+									</div>
+									<FieldError errors={field.state.meta.errors} />
+								</Field>
+							)}
+						</requestForm.Field>
+
+						<requestForm.Subscribe
+							selector={(state) => [state.canSubmit, state.isSubmitting]}
+						>
+							{([canSubmit, isSubmitting]) => (
+								<Button
+									type="submit"
+									className="w-full mt-4"
+									disabled={!canSubmit}
+								>
+									{isSubmitting ? "Sending..." : "Send Reset Link"}
+								</Button>
+							)}
+						</requestForm.Subscribe>
+
+						<div className="mt-4 text-center text-sm">
+							Remember your password?{" "}
+							<Link
+								to="/auth/sign-in"
+								className="text-blue-500 hover:underline"
+							>
+								Sign In
+							</Link>
+						</div>
+					</div>
+				</form>
+			</CardContent>
+		</Card>
+	);
+}

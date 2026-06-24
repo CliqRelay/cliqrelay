@@ -1,0 +1,28 @@
+{
+	"name": "@repo/api-client",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"build": "rm -rf ./src/gen && orval -c orval.config.ts",
+		"watch": "orval",
+		"format": "biome format --write",
+		"test": "vitest run",
+		"test:e2e": "playwright test",
+		"test:e2e:ui": "playwright test --ui"
+	},
+	"peerDependencies": {
+		"@tanstack/react-query": "^5.101.0",
+		"es-toolkit": "^1.47.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.1",
+		"@faker-js/faker": "^10.5.0",
+		"@types/node": "^26.0.0",
+		"@vitest/coverage-v8": "^4.1.9",
+		"@vitest/ui": "^4.1.9",
+		"orval": "^8.19.0",
+		"typescript": "^6.0.3",
+		"vitest": "^4.1.9"
+	}
+}

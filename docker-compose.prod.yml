@@ -1,0 +1,160 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: cliqrelay-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - cliqrelay_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8.8
+    container_name: cliqrelay-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - cliqrelay_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.8
+    container_name: cliqrelay-rustfs
+    ports:
+      - "${RUSTFS_PORT}:9000"
+      - "${RUSTFS_CONSOLE_PORT}:9001"
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY}
+      RUSTFS_ADDRESS: ${RUSTFS_ADDRESS}
+      RUSTFS_CONSOLE_ADDRESS: ${RUSTFS_CONSOLE_ADDRESS}
+      RUSTFS_CONSOLE_ENABLE: ${RUSTFS_CONSOLE_ENABLE}
+    volumes:
+      - rustfs_data:/data
+      - rustfs_logs:/logs
+    networks:
+      - cliqrelay_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.api
+    image: cliqrelay-api:latest
+    container_name: cliqrelay-api
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      REDIS_URL: ${REDIS_URL}
+      EVENT_BUS_CONSUMER_GROUP: ${EVENT_BUS_CONSUMER_GROUP}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_PRESIGNED_URL_EXPIRY: ${S3_PRESIGNED_URL_EXPIRY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      AUTHULA_BASE_URL: ${AUTHULA_BASE_URL}
+      AUTHULA_SECRET: ${AUTHULA_SECRET}
+      OPENAPI_SPEC_VERSION: ${OPENAPI_SPEC_VERSION}
+      CLIENT_URL: ${CLIENT_URL}
+      EXTENSION_URL: ${EXTENSION_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      STANDALONE_MODE: ${STANDALONE_MODE}
+      BASE_URL: ${BASE_URL}
+      PORT: ${PORT}
+      GO_ENV: ${GO_ENV}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+    networks:
+      - cliqrelay_network
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.worker
+    image: cliqrelay-worker:latest
+    container_name: cliqrelay-worker
+    environment:
+      REDIS_URL: ${REDIS_URL}
+      EVENT_BUS_CONSUMER_GROUP: ${EVENT_BUS_CONSUMER_GROUP}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_PRESIGNED_URL_EXPIRY: ${S3_PRESIGNED_URL_EXPIRY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+    networks:
+      - cliqrelay_network
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+      args:
+        VITE_EXTENSION_ID: ${VITE_EXTENSION_ID}
+        VITE_AUTHULA_URL: ${VITE_AUTHULA_URL}
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_BASE_URL: ${VITE_BASE_URL}
+        VITE_APP_NAME: ${VITE_APP_NAME}
+    image: cliqrelay-web:latest
+    container_name: cliqrelay-web
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      AUTHULA_URL: ${AUTHULA_URL}
+      API_URL: ${API_URL}
+    networks:
+      - cliqrelay_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  rustfs_data:
+  rustfs_logs:
+
+networks:
+  cliqrelay_network:

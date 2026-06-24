@@ -1,0 +1,37 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  core-js: true
+  esbuild: true
+  msw: true
+  sharp: true
+  spawn-sync: true
+  tesseract.js: true
+minimumReleaseAgeExclude:
+  - '@orval/angular@8.19.0'
+  - '@orval/axios@8.19.0'
+  - '@orval/core@8.19.0'
+  - '@orval/effect@8.19.0'
+  - '@orval/fetch@8.19.0'
+  - '@orval/hono@8.19.0'
+  - '@orval/mcp@8.19.0'
+  - '@orval/mock@8.19.0'
+  - '@orval/query@8.19.0'
+  - '@orval/solid-start@8.19.0'
+  - '@orval/swr@8.19.0'
+  - '@orval/zod@8.19.0'
+  - '@tanstack/devtools-client@0.0.8'
+  - '@tanstack/devtools-event-client@0.5.0'
+  - '@tanstack/devtools-ui@0.6.0'
+  - '@tanstack/devtools-vite@0.8.1'
+  - '@tanstack/devtools@0.12.5'
+  - '@tanstack/react-devtools@0.10.8'
+  - '@turbo/darwin-64@2.10.0'
+  - '@turbo/darwin-arm64@2.10.0'
+  - '@turbo/linux-64@2.10.0'
+  - '@turbo/linux-arm64@2.10.0'
+  - '@turbo/windows-64@2.10.0'
+  - '@turbo/windows-arm64@2.10.0'
+  - orval@8.19.0
+  - turbo@2.10.0

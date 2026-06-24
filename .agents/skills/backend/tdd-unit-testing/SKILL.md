@@ -1,0 +1,66 @@
+---
+name: tdd-unit-testing
+description: Write unit tests in Go following Red-Green-Refactor TDD principles.
+---
+
+# TDD & Unit Testing
+
+## When to use this skill
+
+- Implement new features (write test first)
+- Add test coverage for code changes
+- Test business logic such as handlers, services, and repositories.
+- Ensure error paths and edge cases are covered
+
+## Key principles
+
+1. **Red-Green-Refactor**: Write failing test → implement → refactor
+2. **Mock dependencies**: Use testify/mock to isolate units and put all mocks in a separate `mocks.go` file under a `tests` folder within the package being tested
+3. **Table-driven tests**: Use `tt` patterns for multiple cases, keep tests focused and small with one behavior per test case and test success and error paths.
+4. **Descriptive names**: `TestTodoService_CreateTodo` and all the scenarios and logic should be tested as individual test cases using the table driven approach
+5. **Temporary variables**: Utilise the `new()` function in Go 1.26+ to initialise reference type values instead of creating pointer functions that return a reference type. For example, use `new("user-1")` instead of a function such as `ptrString("user-1")` that returns `*string` to create a pointer to a string value. This also includes all other reference types such as `new(10)` for `*int`, `new(true)` for `*bool`, etc.
+6. **Assert mock expectations**: Always call `AssertExpectations(t)` at the end of tests that use mocks to ensure all expected calls were made.
+7. **Helpers and test harnesses**: Always utilise any test helpers and utils from the `internals` folder as it contains helpers and utils for tests. If a helper function or util is needed then see whether it is something that is global and can be used across the codebase but if it is specific to a plugin, then keep it local to the plugin by putting the helpers and utils within the plugin's `tests` folder. Never write test code differently in each handler, service, or repository test file. Always follow the same patterns and principles to ensure consistency and maintainability across all tests.
+
+## Testing strategy
+
+**Handlers**: Create handler struct with UseCase/Service field; return `http.HandlerFunc` from `Handler()` method; test via httptest
+**Services**: Mock repositories; test business logic and error handling
+**Repositories**: Test against real SQLite database (Bun ORM); use test fixtures to set up schema
+**Integration tests**: Use fixtures; test plugin routes end-to-end
+
+## Pattern
+
+Every test follows Arrange-Act-Assert (AAA):
+
+1. **Arrange**: Create mocks, set expectations, prepare test data
+2. **Act**: Call the function under test
+3. **Assert**: Verify results and confirm all mock expectations were met
+
+## Example files
+
+See [examples/](examples/) for Todos testing patterns:
+
+- `test_helpers.go` - MockTodoUseCase and MockTodoService interfaces
+- `handler_test.go` - Handler struct with UseCase, Handler() method, httptest patterns
+- `repository_test.go` - Real SQLite database tests with test fixtures, CRUD operations
+- `todo_service_test.go` - Service tests with mocked repositories and table-driven tests
+- `plugin_integration_test.go` - End-to-end route testing with fixtures
+
+## Common mistakes
+
+1. Not writing test first (Red-Green-Refactor discipline)
+2. Testing multiple behaviors in one test
+3. Using real database instead of mocks
+4. Skipping error cases and edge cases
+5. Not asserting mock expectations with `AssertExpectations(t)`
+6. Tests that break on harmless refactoring
+
+## Quick commands
+
+```bash
+make test                  # Run all tests
+make coverage              # With coverage
+go test -run TestFunc ...  # Specific test
+go test -race ./...        # Detect race conditions
+```

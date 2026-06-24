@@ -1,0 +1,53 @@
+{
+	"name": "cliqrelay",
+	"build": {
+		"context": ".",
+		"dockerfile": "Dockerfile"
+	},
+	"workspaceFolder": "/workspaces/cliqrelay",
+	"forwardPorts": [3000, 3002, 8080],
+	"mounts": [
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.profiles.linux": {
+					"zsh": {
+						"path": "/bin/zsh"
+					}
+				},
+				"workbench.iconTheme": "vscode-icons",
+				"editor.tabSize": 2,
+				"editor.formatOnSave": true,
+				"files.insertFinalNewline": true,
+				"editor.defaultFormatter": "biomejs.biome",
+				"js/ts.updateImportsOnFileMove.enabled": "always",
+				"telemetry.telemetryLevel": "off",
+				"editor.bracketPairColorization.enabled": true,
+				"editor.guides.bracketPairs": "active"
+			},
+			"extensions": [
+				"aaron-bond.better-comments",
+				"andys8.jest-snippets",
+				"biomejs.biome",
+				"dbaeumer.vscode-eslint",
+				"bradlc.vscode-tailwindcss",
+				"codeandstuff.package-json-upgrade",
+				"dsznajder.es7-react-js-snippets",
+				"eamodio.gitlens",
+				"formulahendry.auto-rename-tag",
+				"github.vscode-github-actions",
+				"IronGeek.vscode-env",
+				"ms-azuretools.vscode-containers",
+				"evondev.indent-rainbow-palettes",
+				"oderwat.indent-rainbow",
+				"redhat.vscode-yaml",
+				"vscode-icons-team.vscode-icons",
+				"yoavbls.pretty-ts-errors",
+				"golang.go",
+				"tamasfe.even-better-toml"
+			]
+		}
+	}
+}

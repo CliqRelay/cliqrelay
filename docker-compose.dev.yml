@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: cliqrelay-postgres
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    # volumes:
+    #   - cliqrelay_db:/var/lib/postgresql
+    networks:
+      - cliqrelay_network
+
+  redis:
+    image: redis:8.8
+    container_name: cliqrelay-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "${REDIS_PORT}:6379"
+    # volumes:
+    #   - cliqrelay_redis:/data
+    networks:
+      - cliqrelay_network
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.8
+    container_name: cliqrelay-rustfs
+    ports:
+      - "${RUSTFS_PORT}:9000"
+      - "${RUSTFS_CONSOLE_PORT}:9001"
+    # volumes:
+    #   - cliqrelay_rustfs_data:/data
+    #   - cliqrelay_rustfs_logs:/logs
+    networks:
+      - cliqrelay_network
+
+# volumes:
+#   cliqrelay_db:
+#   cliqrelay_redis:
+#   cliqrelay_rustfs_data:
+#   cliqrelay_rustfs_logs:
+networks:
+  cliqrelay_network:

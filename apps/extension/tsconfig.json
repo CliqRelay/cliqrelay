@@ -1,0 +1,13 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "ignoreDeprecations": "6.0",
+    "jsx": "react-jsx",
+    "resolvePackageJsonImports": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": ["dist", "src/_legacy"]
+}

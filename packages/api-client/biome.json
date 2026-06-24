@@ -1,0 +1,10 @@
+{
+  "extends": "//",
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "./index.ts",
+      "**/src/**/*"
+    ]
+  }
+}

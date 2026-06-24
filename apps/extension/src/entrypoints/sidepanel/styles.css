@@ -1,0 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,320..900&display=swap");
+@import "../../styles/globals.css";
+
+html,
+body,
+#app {
+	height: 100%;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	font-size: 16px;
+	font-family: "Google Sans Flex", sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border) transparent;
+}
+
+::selection {
+	background-color: var(--primary);
+	color: var(--primary-foreground);
+}

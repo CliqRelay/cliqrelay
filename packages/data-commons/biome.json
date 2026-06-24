@@ -1,0 +1,11 @@
+{
+  "extends": "//",
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**/src/**/*",
+      "**/.vscode/**/*",
+      "**/vitest.config.ts"
+    ]
+  }
+}

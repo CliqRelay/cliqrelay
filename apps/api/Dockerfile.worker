@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1
+
+FROM golang:1.26-alpine AS builder
+
+RUN apk add --no-cache git ca-certificates
+
+WORKDIR /build
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . ./
+
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o ./bin/cliqrelay-worker ./cmd/worker/main.go
+
+FROM alpine:3.24
+
+RUN apk add --no-cache ca-certificates tzdata curl
+
+ARG TARGETARCH
+
+RUN case "$TARGETARCH" in \
+    amd64) TYPST_ARCH="x86_64" ;; \
+    arm64) TYPST_ARCH="aarch64" ;; \
+    *) echo "unsupported architecture: $TARGETARCH"; exit 1 ;; \
+    esac; \
+    curl -sL "https://github.com/typst/typst/releases/download/v0.15.0/typst-${TYPST_ARCH}-unknown-linux-musl.tar.xz" \
+    | tar -xJ -C /tmp; \
+    mv "/tmp/typst-${TYPST_ARCH}-unknown-linux-musl/typst" /usr/local/bin/typst; \
+    rm -rf "/tmp/typst-${TYPST_ARCH}-unknown-linux-musl"; \
+    rmdir /tmp/typst-${TYPST_ARCH}-unknown-linux-musl 2>/dev/null || true; \
+    typst --version
+
+WORKDIR /app
+
+COPY --from=builder /build/bin/cliqrelay-worker /app/cliqrelay-worker
+
+RUN adduser -D -H appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+ENTRYPOINT ["/app/cliqrelay-worker"]
