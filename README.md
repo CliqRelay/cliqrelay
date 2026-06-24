@@ -2,15 +2,6 @@
   <img src="./project-banner.png" width="700" alt="Project Banner"/>
 </p>
 
-<div align="center">
-  <a href="https://github.com/CliqRelay/cliqrelay/stargazers" target="_parent">
-    <img src="https://img.shields.io/github/stars/CliqRelay/cliqrelay.svg?style=social&label=Star" alt="GitHub stars" />
-  </a>
-  <a href="https://github.com/CliqRelay/cliqrelay/blob/main/LICENSE" target="_parent">
-    <img src="https://img.shields.io/github/license/CliqRelay/cliqrelay.svg" alt="License" />
-  </a>
-</div>
-
 ---
 
 ### Overview
