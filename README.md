@@ -73,3 +73,15 @@ If you'd like to support the ongoing development of this project, consider subsc
 [![Star History Chart](https://api.star-history.com/svg?repos=CliqRelay/cliqrelay&type=date&legend=top-left)](https://www.star-history.com/#CliqRelay/cliqrelay&type=date&legend=top-left)
 
 ---
+
+### Our Sponsors
+
+#### 🏢 Corporate Sponsors
+
+#### 🥇 Gold Sponsors
+
+#### 🥈 Silver Sponsors
+
+#### 🥉 Bronze Sponsors
+
+---
