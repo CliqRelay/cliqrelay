@@ -10,6 +10,7 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersmediaassets "github.com/CliqRelay/cliqrelay/handlers/media_assets"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	media_assetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -104,7 +105,7 @@ func TestGetAllMediaAssetsHandler(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
-			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
+			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 			handler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, svc)
 
 			path := "/api/v1/media-assets?stepId=" + tt.stepID

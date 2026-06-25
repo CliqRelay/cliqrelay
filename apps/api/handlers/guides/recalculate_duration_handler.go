@@ -6,16 +6,16 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type RecalculateDurationHandler struct {
 	appConfig     *config.AppConfig
-	guidesService *guidesservice.GuidesService
+	guidesService interfaces.GuidesService
 }
 
-func NewRecalculateDurationHandler(appConfig *config.AppConfig, guidesService *guidesservice.GuidesService) *RecalculateDurationHandler {
+func NewRecalculateDurationHandler(appConfig *config.AppConfig, guidesService interfaces.GuidesService) *RecalculateDurationHandler {
 	return &RecalculateDurationHandler{appConfig: appConfig, guidesService: guidesService}
 }
 

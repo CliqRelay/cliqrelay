@@ -6,16 +6,16 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	media_assetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type GetAllMediaAssetsHandler struct {
 	appConfig          *config.AppConfig
-	mediaAssetsService *media_assetsservice.MediaAssetsService
+	mediaAssetsService interfaces.MediaAssetsService
 }
 
-func NewGetAllMediaAssetsHandler(appConfig *config.AppConfig, mediaAssetsService *media_assetsservice.MediaAssetsService) *GetAllMediaAssetsHandler {
+func NewGetAllMediaAssetsHandler(appConfig *config.AppConfig, mediaAssetsService interfaces.MediaAssetsService) *GetAllMediaAssetsHandler {
 	return &GetAllMediaAssetsHandler{appConfig: appConfig, mediaAssetsService: mediaAssetsService}
 }
 

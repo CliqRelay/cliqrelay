@@ -9,21 +9,15 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersmediaassets "github.com/CliqRelay/cliqrelay/handlers/media_assets"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/openapi"
-	guidesrepositories "github.com/CliqRelay/cliqrelay/repositories/guides"
-	mediaassetsrepositories "github.com/CliqRelay/cliqrelay/repositories/media_assets"
-	stepsrepositories "github.com/CliqRelay/cliqrelay/repositories/steps"
-	mediaassetsservices "github.com/CliqRelay/cliqrelay/services/media_assets"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func MediaAssetsRoutes(appConfig *config.AppConfig) []authulamodels.Route {
+func MediaAssetsRoutes(appConfig *config.AppConfig, mediaSvc interfaces.MediaAssetsService) []authulamodels.Route {
 	RegisterMediaAssetsOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
 
-	bunMediaAssetsRepo := mediaassetsrepositories.NewBunMediaAssetsRepository(appConfig.DB)
-	bunStepsRepo := stepsrepositories.NewBunStepsRepository(appConfig.DB)
-	bunGuidesRepo := guidesrepositories.NewBunGuidesRepository(appConfig.DB)
-	mediaAssetsService := mediaassetsservices.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo)
+	mediaAssetsService := mediaSvc
 
 	createHandler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, mediaAssetsService)
 	getAllHandler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, mediaAssetsService)

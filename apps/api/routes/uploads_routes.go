@@ -3,40 +3,21 @@ package routes
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	authulamiddleware "github.com/Authula/authula/middleware"
 	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersuploads "github.com/CliqRelay/cliqrelay/handlers/uploads"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/openapi"
-	guidesrepositories "github.com/CliqRelay/cliqrelay/repositories/guides"
-	mediaassetsrepositories "github.com/CliqRelay/cliqrelay/repositories/media_assets"
-	stepsrepositories "github.com/CliqRelay/cliqrelay/repositories/steps"
-	"github.com/CliqRelay/cliqrelay/services/presign"
-	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func UploadRoutes(appConfig *config.AppConfig) []authulamodels.Route {
+func UploadRoutes(appConfig *config.AppConfig, uploadSvc interfaces.UploadsService) []authulamodels.Route {
 	RegisterUploadsOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
 
-	bunGuidesRepo := guidesrepositories.NewBunGuidesRepository(appConfig.DB)
-	bunStepsRepo := stepsrepositories.NewBunStepsRepository(appConfig.DB)
-	bunMediaAssetsRepo := mediaassetsrepositories.NewBunMediaAssetsRepository(appConfig.DB)
-
-	expiry, _ := time.ParseDuration(appConfig.EnvConfig.S3PresignedURLExpiry)
-
-	presignClient := presign.NewAWSPresignService(appConfig.S3Client, expiry)
-
-	uploadsSvc := uploadsservice.NewUploadsService(
-		bunGuidesRepo,
-		bunStepsRepo,
-		bunMediaAssetsRepo,
-		presignClient,
-		appConfig.S3Bucket,
-	)
+	uploadsSvc := uploadSvc
 
 	presignUploadHandler := handlersuploads.NewPresignUploadHandler(appConfig, uploadsSvc)
 	completeUploadHandler := handlersuploads.NewCompleteUploadHandler(appConfig, uploadsSvc)

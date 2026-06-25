@@ -6,17 +6,17 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type UpdateStepHandler struct {
 	appConfig    *config.AppConfig
-	stepsService *stepsservice.StepsService
+	stepsService interfaces.StepsService
 }
 
-func NewUpdateStepHandler(appConfig *config.AppConfig, stepsService *stepsservice.StepsService) *UpdateStepHandler {
+func NewUpdateStepHandler(appConfig *config.AppConfig, stepsService interfaces.StepsService) *UpdateStepHandler {
 	return &UpdateStepHandler{appConfig: appConfig, stepsService: stepsService}
 }
 

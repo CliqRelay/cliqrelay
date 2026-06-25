@@ -6,16 +6,16 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type DeleteStepHandler struct {
 	appConfig    *config.AppConfig
-	stepsService *stepsservice.StepsService
+	stepsService interfaces.StepsService
 }
 
-func NewDeleteStepHandler(appConfig *config.AppConfig, stepsService *stepsservice.StepsService) *DeleteStepHandler {
+func NewDeleteStepHandler(appConfig *config.AppConfig, stepsService interfaces.StepsService) *DeleteStepHandler {
 	return &DeleteStepHandler{appConfig: appConfig, stepsService: stepsService}
 }
 

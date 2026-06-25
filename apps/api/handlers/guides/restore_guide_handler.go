@@ -6,16 +6,16 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type RestoreGuideHandler struct {
 	appConfig     *config.AppConfig
-	guidesService *guidesservice.GuidesService
+	guidesService interfaces.GuidesService
 }
 
-func NewRestoreGuideHandler(appConfig *config.AppConfig, guidesService *guidesservice.GuidesService) *RestoreGuideHandler {
+func NewRestoreGuideHandler(appConfig *config.AppConfig, guidesService interfaces.GuidesService) *RestoreGuideHandler {
 	return &RestoreGuideHandler{appConfig: appConfig, guidesService: guidesService}
 }
 

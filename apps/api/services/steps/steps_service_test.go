@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -163,7 +164,7 @@ func TestStepsService_Create(t *testing.T) {
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
 			step, err := svc.Create(context.Background(), tt.userID, tt.req)
 
@@ -271,7 +272,7 @@ func TestStepsService_GetByID(t *testing.T) {
 			tt.setup(mockStepsRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
 			step, err := svc.GetByID(context.Background(), tt.stepID)
 
@@ -414,7 +415,7 @@ func TestStepsService_GetByGuideID(t *testing.T) {
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
 			steps, err := svc.GetByGuideID(context.Background(), tt.userID, tt.guideID)
 
@@ -555,7 +556,7 @@ func TestStepsService_Update(t *testing.T) {
 			tt.setup(mockStepsRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
 			step, err := svc.Update(context.Background(), tt.stepID, tt.req)
 
@@ -658,7 +659,7 @@ func TestStepsService_Delete(t *testing.T) {
 			tt.setup(mockStepsRepo, mockMediaAssetsRepo)
 			mockPresignClient := new(tests.MockPresignService)
 			mockStorageService := new(tests.MockStorageService)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
 			err := svc.Delete(context.Background(), tt.stepID)
 
@@ -815,7 +816,7 @@ func TestStepsService_Reorder(t *testing.T) {
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
 			steps, err := svc.Reorder(context.Background(), tt.userID, tt.guideID, tt.targetStepID, tt.prevStepID, tt.nextStepID)
 
@@ -1239,7 +1240,7 @@ func TestStepsService_Duplicate(t *testing.T) {
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
 			step, err := svc.Duplicate(context.Background(), tt.userID, tt.stepID, tt.req)
 

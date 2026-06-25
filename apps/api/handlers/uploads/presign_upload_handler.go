@@ -7,17 +7,17 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
-	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type PresignUploadHandler struct {
 	appConfig      *config.AppConfig
-	uploadsService *uploadsservice.UploadsService
+	uploadsService interfaces.UploadsService
 }
 
-func NewPresignUploadHandler(appConfig *config.AppConfig, uploadsService *uploadsservice.UploadsService) *PresignUploadHandler {
+func NewPresignUploadHandler(appConfig *config.AppConfig, uploadsService interfaces.UploadsService) *PresignUploadHandler {
 	return &PresignUploadHandler{appConfig: appConfig, uploadsService: uploadsService}
 }
 

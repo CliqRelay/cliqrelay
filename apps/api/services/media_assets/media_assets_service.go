@@ -16,17 +16,20 @@ type MediaAssetsService struct {
 	mediaAssetsRepo interfaces.MediaAssetsRepository
 	stepsRepo       interfaces.StepsRepository
 	guidesRepo      interfaces.GuidesRepository
+	hooks           *interfaces.MediaAssetHooks
 }
 
 func NewMediaAssetsService(
 	mediaAssetsRepo interfaces.MediaAssetsRepository,
 	stepsRepo interfaces.StepsRepository,
 	guidesRepo interfaces.GuidesRepository,
+	hooks *interfaces.MediaAssetHooks,
 ) *MediaAssetsService {
 	return &MediaAssetsService{
 		mediaAssetsRepo: mediaAssetsRepo,
 		stepsRepo:       stepsRepo,
 		guidesRepo:      guidesRepo,
+		hooks:           hooks,
 	}
 }
 
@@ -51,6 +54,14 @@ func (s *MediaAssetsService) Create(ctx context.Context, userID string, req *typ
 		return nil, constants.ErrGuideNotFound
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeCreate {
+			if err := hook(ctx, nil, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	mediaAsset, err := s.mediaAssetsRepo.Create(ctx, &types.CreateMediaAssetDTO{
 		StepID:      req.StepID,
 		StoragePath: req.StoragePath,
@@ -62,6 +73,14 @@ func (s *MediaAssetsService) Create(ctx context.Context, userID string, req *typ
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterCreate {
+			if err := hook(ctx, mediaAsset, userID); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return mediaAsset, nil
@@ -151,6 +170,14 @@ func (s *MediaAssetsService) Delete(ctx context.Context, mediaAssetID string) (*
 		return nil, constants.ErrInvalidMediaAssetID
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeDelete {
+			if err := hook(ctx, mediaAssetID, ""); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	mediaAsset, err := s.mediaAssetsRepo.Delete(ctx, mediaAssetID)
 	if err != nil {
 		return nil, err
@@ -158,6 +185,14 @@ func (s *MediaAssetsService) Delete(ctx context.Context, mediaAssetID string) (*
 
 	if mediaAsset == nil {
 		return nil, constants.ErrMediaAssetNotFound
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterDelete {
+			if err := hook(ctx, mediaAssetID, ""); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return mediaAsset, nil

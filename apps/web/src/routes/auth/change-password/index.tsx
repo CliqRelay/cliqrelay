@@ -138,8 +138,8 @@ function ChangePasswordPage() {
 											id={field.name}
 											type={showPassword ? "text" : "password"}
 											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
 											className="pl-10 pr-10"
+											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 										<button
 											type="button"
@@ -167,8 +167,8 @@ function ChangePasswordPage() {
 											id={field.name}
 											type={showPassword ? "text" : "password"}
 											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
 											className="pl-10 pr-10"
+											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 										<button
 											type="button"

@@ -6,16 +6,16 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type UnarchiveGuideHandler struct {
 	appConfig     *config.AppConfig
-	guidesService *guidesservice.GuidesService
+	guidesService interfaces.GuidesService
 }
 
-func NewUnarchiveGuideHandler(appConfig *config.AppConfig, guidesService *guidesservice.GuidesService) *UnarchiveGuideHandler {
+func NewUnarchiveGuideHandler(appConfig *config.AppConfig, guidesService interfaces.GuidesService) *UnarchiveGuideHandler {
 	return &UnarchiveGuideHandler{appConfig: appConfig, guidesService: guidesService}
 }
 

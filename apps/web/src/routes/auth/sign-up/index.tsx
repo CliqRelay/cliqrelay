@@ -119,7 +119,6 @@ function SignupPage() {
 											id={field.name}
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
-											placeholder="John Doe"
 											className="pl-10"
 										/>
 									</div>
@@ -143,7 +142,6 @@ function SignupPage() {
 											type="email"
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
-											placeholder="you@example.com"
 											className="pl-10"
 										/>
 									</div>

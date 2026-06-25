@@ -98,7 +98,6 @@ function SignInPage() {
 											type="email"
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
-											placeholder="you@example.com"
 											className="pl-10"
 										/>
 									</div>

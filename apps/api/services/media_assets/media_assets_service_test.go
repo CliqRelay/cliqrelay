@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	mediaassetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -173,7 +174,7 @@ func TestMediaAssetsService_Create(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAsset, err := svc.Create(context.Background(), tt.userID, tt.req)
 
@@ -252,7 +253,7 @@ func TestMediaAssetsService_GetByID(t *testing.T) {
 
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			tt.setup(mockMediaAssetsRepo)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAsset, err := svc.GetByID(context.Background(), tt.mediaAssetID)
 
@@ -397,7 +398,7 @@ func TestMediaAssetsService_GetByStepID(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAssets, err := svc.GetByStepID(context.Background(), tt.userID, tt.stepID)
 
@@ -511,7 +512,7 @@ func TestMediaAssetsService_Update(t *testing.T) {
 
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			tt.setup(mockMediaAssetsRepo)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAsset, err := svc.Update(context.Background(), tt.mediaAssetID, tt.req)
 
@@ -588,7 +589,7 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			tt.setup(mockMediaAssetsRepo)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAsset, err := svc.Delete(context.Background(), tt.mediaAssetID)
 

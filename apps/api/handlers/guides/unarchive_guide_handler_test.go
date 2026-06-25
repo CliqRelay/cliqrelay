@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/CliqRelay/cliqrelay/config"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -79,7 +80,7 @@ func TestUnarchiveGuideHandler(t *testing.T) {
 					Once()
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
 			handler := NewUnarchiveGuideHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)

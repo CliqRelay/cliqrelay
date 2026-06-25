@@ -27,9 +27,10 @@ type StepsService struct {
 	mediaAssetsRepo interfaces.MediaAssetsRepository
 	logger          *slog.Logger
 	bucket          string
+	hooks           *interfaces.StepHooks
 }
 
-func NewStepsService(redisClient *redis.Client, stepsRepo interfaces.StepsRepository, guidesRepo interfaces.GuidesRepository, presignClient interfaces.PresignService, storageService interfaces.StorageService, mediaAssetsRepo interfaces.MediaAssetsRepository, bucket string, logger *slog.Logger) *StepsService {
+func NewStepsService(redisClient *redis.Client, stepsRepo interfaces.StepsRepository, guidesRepo interfaces.GuidesRepository, presignClient interfaces.PresignService, storageService interfaces.StorageService, mediaAssetsRepo interfaces.MediaAssetsRepository, bucket string, logger *slog.Logger, hooks *interfaces.StepHooks) *StepsService {
 	return &StepsService{
 		redisClient:     redisClient,
 		stepsRepo:       stepsRepo,
@@ -39,6 +40,7 @@ func NewStepsService(redisClient *redis.Client, stepsRepo interfaces.StepsReposi
 		mediaAssetsRepo: mediaAssetsRepo,
 		logger:          logger,
 		bucket:          bucket,
+		hooks:           hooks,
 	}
 }
 
@@ -58,6 +60,14 @@ func (s *StepsService) Create(ctx context.Context, userID string, req *types.Cre
 		return nil, constants.ErrGuideDeleted
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeCreate {
+			if err := hook(ctx, nil, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	step, err := s.stepsRepo.Create(ctx, &types.CreateStepDTO{
 		GuideID:            req.GuideID,
 		Type:               req.Type,
@@ -72,6 +82,14 @@ func (s *StepsService) Create(ctx context.Context, userID string, req *types.Cre
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterCreate {
+			if err := hook(ctx, step, userID); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return step, nil
@@ -164,6 +182,14 @@ func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 		return constants.ErrInvalidStepID
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeDelete {
+			if err := hook(ctx, stepID, ""); err != nil {
+				return err
+			}
+		}
+	}
+
 	mediaAssets, err := s.mediaAssetsRepo.GetByStepID(ctx, stepID)
 	if err != nil {
 		return err
@@ -171,6 +197,14 @@ func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 
 	if err := s.stepsRepo.Delete(ctx, stepID); err != nil {
 		return err
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterDelete {
+			if err := hook(ctx, stepID, ""); err != nil {
+				return err
+			}
+		}
 	}
 
 	if len(mediaAssets) <= 0 {

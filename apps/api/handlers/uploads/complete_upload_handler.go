@@ -8,17 +8,17 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
-	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type CompleteUploadHandler struct {
 	appConfig      *config.AppConfig
-	uploadsService *uploadsservice.UploadsService
+	uploadsService interfaces.UploadsService
 }
 
-func NewCompleteUploadHandler(appConfig *config.AppConfig, uploadsService *uploadsservice.UploadsService) *CompleteUploadHandler {
+func NewCompleteUploadHandler(appConfig *config.AppConfig, uploadsService interfaces.UploadsService) *CompleteUploadHandler {
 	return &CompleteUploadHandler{appConfig: appConfig, uploadsService: uploadsService}
 }
 

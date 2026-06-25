@@ -10,6 +10,7 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -108,7 +109,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockStarredRepo := new(tests.MockStarredGuidesRepository)
 			tt.setup(mockGuidesRepo, mockStarredRepo)
-			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil)
+			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
 			handler := handlersguides.NewGetAllGuidesHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, tt.path, nil)

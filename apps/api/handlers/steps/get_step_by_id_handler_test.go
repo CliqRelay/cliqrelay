@@ -12,6 +12,7 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlerssteps "github.com/CliqRelay/cliqrelay/handlers/steps"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -68,7 +69,7 @@ func TestGetStepByIDHandler(t *testing.T) {
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 			mockStepsRepo := new(tests.MockStepsRepository)
 			tt.setup(mockStepsRepo)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewGetStepByIDHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)

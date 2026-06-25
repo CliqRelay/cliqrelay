@@ -3,34 +3,21 @@ package routes
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	authulamiddleware "github.com/Authula/authula/middleware"
 	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/handlers/steps"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/openapi"
-	guidesrepositories "github.com/CliqRelay/cliqrelay/repositories/guides"
-	mediaassetsrepositories "github.com/CliqRelay/cliqrelay/repositories/media_assets"
-	stepsrepositories "github.com/CliqRelay/cliqrelay/repositories/steps"
-	"github.com/CliqRelay/cliqrelay/services/presign"
-	stepsservices "github.com/CliqRelay/cliqrelay/services/steps"
-	"github.com/CliqRelay/cliqrelay/services/storage"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func StepsRoutes(appConfig *config.AppConfig) []authulamodels.Route {
+func StepsRoutes(appConfig *config.AppConfig, stepsSvc interfaces.StepsService) []authulamodels.Route {
 	RegisterStepsOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
 
-	bunStepsRepo := stepsrepositories.NewBunStepsRepository(appConfig.DB)
-	bunGuidesRepo := guidesrepositories.NewBunGuidesRepository(appConfig.DB)
-	bunMediaAssetsRepo := mediaassetsrepositories.NewBunMediaAssetsRepository(appConfig.DB)
-
-	expiry, _ := time.ParseDuration(appConfig.EnvConfig.S3PresignedURLExpiry)
-	presignClient := presign.NewAWSPresignService(appConfig.S3Client, expiry)
-	storageService := storage.NewS3StorageService(appConfig.S3Client)
-	stepsService := stepsservices.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignClient, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger)
+	stepsService := stepsSvc
 
 	createHandler := steps.NewCreateStepHandler(appConfig, stepsService)
 	getAllHandler := steps.NewGetAllStepsHandler(appConfig, stepsService)

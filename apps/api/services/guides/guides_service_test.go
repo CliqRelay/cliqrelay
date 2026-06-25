@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -151,7 +152,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 			mockCache := new(tests.MockGuidesCacheService)
 			mockStepsRepo := new(tests.MockStepsRepository)
 			tt.setup(mockRepo, mockCache, mockStepsRepo)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, mockStepsRepo, testRedisClient())
+			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, mockStepsRepo, testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Publish(context.Background(), tt.userID, tt.guideID)
 
@@ -289,7 +290,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Unpublish(context.Background(), tt.userID, tt.guideID)
 
@@ -442,7 +443,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Archive(context.Background(), tt.userID, tt.guideID)
 
@@ -548,7 +549,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Restore(context.Background(), tt.userID, tt.guideID)
 
@@ -672,7 +673,7 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Unarchive(context.Background(), tt.userID, tt.guideID)
 
@@ -761,7 +762,7 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			// Act
 			guide, err := svc.Create(context.Background(), tt.userID, tt.req)
@@ -803,7 +804,7 @@ func TestGuidesService_GetByID_CacheHit(t *testing.T) {
 		Return(guide, nil).
 		Once()
 
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 	result, err := svc.GetByID(context.Background(), "user-123", guideID.String())
 
@@ -840,7 +841,7 @@ func TestGuidesService_GetByID_CacheMiss(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 	result, err := svc.GetByID(context.Background(), "user-123", guideID.String())
 
@@ -877,7 +878,7 @@ func TestGuidesService_GetByID_CacheWrongOwner(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 	result, err := svc.GetByID(context.Background(), "user-123", guideID.String())
 
@@ -912,7 +913,7 @@ func TestGuidesService_GetByID_NoCache(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 	result, err := svc.GetByID(context.Background(), "user-123", guideID.String())
 
@@ -946,7 +947,7 @@ func TestGuidesService_Update_InvalidatesCache(t *testing.T) {
 		Once()
 
 	title := "Updated Guide"
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 	result, err := svc.Update(context.Background(), userID, guideID.String(), &types.UpdateGuideRequest{
 		Title: &title,
@@ -981,7 +982,7 @@ func TestGuidesService_Delete_InvalidatesCache(t *testing.T) {
 		Return(nil).
 		Once()
 
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient())
+	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 	result, err := svc.Delete(context.Background(), userID, guideID.String())
 
@@ -1092,7 +1093,7 @@ func TestGuidesService_GetAll(t *testing.T) {
 			mockRepo := new(tests.MockGuidesRepository)
 			mockStarredRepo := new(tests.MockStarredGuidesRepository)
 			tt.setup(mockRepo, mockStarredRepo)
-			svc := guidesservice.NewGuidesService(mockRepo, mockStarredRepo, new(tests.MockGuidesCacheService), new(tests.MockStepsRepository), testRedisClient())
+			svc := guidesservice.NewGuidesService(mockRepo, mockStarredRepo, new(tests.MockGuidesCacheService), new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			result, err := svc.GetAll(context.Background(), tt.userID, tt.status)
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlerssteps "github.com/CliqRelay/cliqrelay/handlers/steps"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -70,7 +71,7 @@ func TestDeleteStepHandler(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			tt.setup(mockStepsRepo, mockMediaAssetsRepo)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, new(tests.MockPresignService), new(tests.MockStorageService), mockMediaAssetsRepo, "test-bucket", logger)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, new(tests.MockPresignService), new(tests.MockStorageService), mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewDeleteStepHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodDelete, path, nil)

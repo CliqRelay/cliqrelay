@@ -3,68 +3,38 @@ package routes
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	authulamiddleware "github.com/Authula/authula/middleware"
 	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/handlers/guides"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/openapi"
-	guideexportrepositories "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
-	guidesrepositories "github.com/CliqRelay/cliqrelay/repositories/guides"
-	starredguidesrepositories "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
-	stepsrepositories "github.com/CliqRelay/cliqrelay/repositories/steps"
-	"github.com/CliqRelay/cliqrelay/services/export"
-	guidesservices "github.com/CliqRelay/cliqrelay/services/guides"
-	"github.com/CliqRelay/cliqrelay/services/presign"
-	starredguidesservices "github.com/CliqRelay/cliqrelay/services/starred_guides"
-	"github.com/CliqRelay/cliqrelay/services/storage"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func GuidesRoutes(appConfig *config.AppConfig) []authulamodels.Route {
+func GuidesRoutes(appConfig *config.AppConfig, guidesSvc interfaces.GuidesService, starredSvc interfaces.StarredGuidesService, exportSvc interfaces.ExportService) []authulamodels.Route {
 	RegisterGuidesOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
 
-	bunGuidesRepo := guidesrepositories.NewBunGuidesRepository(appConfig.DB)
-	bunStarredGuidesRepo := starredguidesrepositories.NewBunStarredGuidesRepository(appConfig.DB)
-	bunStepsRepo := stepsrepositories.NewBunStepsRepository(appConfig.DB)
-	bunGuideExportsRepo := guideexportrepositories.NewBunGuideExportsRepository(appConfig.DB)
-	guidesCache := guidesservices.NewRedisGuidesCache(appConfig.RedisClient)
-	guidesService := guidesservices.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, guidesCache, bunStepsRepo, appConfig.RedisClient)
-
-	starredGuidesService := starredguidesservices.NewStarredGuidesService(bunStarredGuidesRepo)
-
-	storageService := storage.NewS3StorageService(appConfig.S3Client)
-	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
-	exportService := export.NewExportService(
-		bunGuideExportsRepo,
-		bunGuidesRepo,
-		bunStepsRepo,
-		storageService,
-		presignService,
-		appConfig.RedisClient,
-		appConfig.S3Bucket,
-	)
-
-	createHandler := guides.NewCreateGuideHandler(appConfig, guidesService)
-	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesService)
-	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesService)
-	updateHandler := guides.NewUpdateGuideHandler(appConfig, guidesService)
-	deleteHandler := guides.NewDeleteGuideHandler(appConfig, guidesService)
-	publishHandler := guides.NewPublishGuideHandler(appConfig, guidesService)
-	unpublishHandler := guides.NewUnpublishGuideHandler(appConfig, guidesService)
-	archiveHandler := guides.NewArchiveGuideHandler(appConfig, guidesService)
-	unarchiveHandler := guides.NewUnarchiveGuideHandler(appConfig, guidesService)
-	restoreHandler := guides.NewRestoreGuideHandler(appConfig, guidesService)
-	permanentlyDeleteHandler := guides.NewPermanentlyDeleteGuideHandler(appConfig, guidesService)
-	getGuidesCountHandler := guides.NewGetGuidesCountHandler(appConfig, guidesService)
-	getStarredGuidesHandler := guides.NewGetStarredGuidesHandler(appConfig, starredGuidesService)
-	starGuideHandler := guides.NewStarGuideHandler(appConfig, starredGuidesService)
-	unstarGuideHandler := guides.NewUnstarGuideHandler(appConfig, starredGuidesService)
-	recalculateDurationHandler := guides.NewRecalculateDurationHandler(appConfig, guidesService)
-	exportGuideHandler := guides.NewExportGuideHandler(appConfig, exportService)
-	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportService)
+	createHandler := guides.NewCreateGuideHandler(appConfig, guidesSvc)
+	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesSvc)
+	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesSvc)
+	updateHandler := guides.NewUpdateGuideHandler(appConfig, guidesSvc)
+	deleteHandler := guides.NewDeleteGuideHandler(appConfig, guidesSvc)
+	publishHandler := guides.NewPublishGuideHandler(appConfig, guidesSvc)
+	unpublishHandler := guides.NewUnpublishGuideHandler(appConfig, guidesSvc)
+	archiveHandler := guides.NewArchiveGuideHandler(appConfig, guidesSvc)
+	unarchiveHandler := guides.NewUnarchiveGuideHandler(appConfig, guidesSvc)
+	restoreHandler := guides.NewRestoreGuideHandler(appConfig, guidesSvc)
+	permanentlyDeleteHandler := guides.NewPermanentlyDeleteGuideHandler(appConfig, guidesSvc)
+	getGuidesCountHandler := guides.NewGetGuidesCountHandler(appConfig, guidesSvc)
+	getStarredGuidesHandler := guides.NewGetStarredGuidesHandler(appConfig, starredSvc)
+	starGuideHandler := guides.NewStarGuideHandler(appConfig, starredSvc)
+	unstarGuideHandler := guides.NewUnstarGuideHandler(appConfig, starredSvc)
+	recalculateDurationHandler := guides.NewRecalculateDurationHandler(appConfig, guidesSvc)
+	exportGuideHandler := guides.NewExportGuideHandler(appConfig, exportSvc)
+	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportSvc)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),

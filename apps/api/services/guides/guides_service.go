@@ -23,15 +23,17 @@ type GuidesService struct {
 	guidesCache       interfaces.GuidesCacheService
 	stepsRepo         interfaces.StepsRepository
 	redisClient       *redis.Client
+	hooks             *interfaces.GuideHooks
 }
 
-func NewGuidesService(guidesRepo interfaces.GuidesRepository, starredGuidesRepo interfaces.StarredGuidesRepository, guidesCache interfaces.GuidesCacheService, stepsRepo interfaces.StepsRepository, redisClient *redis.Client) *GuidesService {
+func NewGuidesService(guidesRepo interfaces.GuidesRepository, starredGuidesRepo interfaces.StarredGuidesRepository, guidesCache interfaces.GuidesCacheService, stepsRepo interfaces.StepsRepository, redisClient *redis.Client, hooks *interfaces.GuideHooks) *GuidesService {
 	return &GuidesService{
 		guidesRepo:        guidesRepo,
 		starredGuidesRepo: starredGuidesRepo,
 		guidesCache:       guidesCache,
 		stepsRepo:         stepsRepo,
 		redisClient:       redisClient,
+		hooks:             hooks,
 	}
 }
 
@@ -40,12 +42,28 @@ func (s *GuidesService) Create(ctx context.Context, userID string, req *types.Cr
 		return nil, constants.ErrInvalidUserID
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeCreate {
+			if err := hook(ctx, nil, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	guideCreated, err := s.guidesRepo.Create(ctx, userID, &types.CreateGuideDTO{
 		Title:       req.Title,
 		Description: req.Description,
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterCreate {
+			if err := hook(ctx, guideCreated, userID); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return guideCreated, nil
@@ -100,9 +118,11 @@ func (s *GuidesService) GetByID(ctx context.Context, userID string, guideID stri
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	cached, err := s.guidesCache.Get(ctx, guideID)
-	if err == nil && cached != nil && cached.CreatorID == userID {
-		return cached, nil
+	if s.guidesCache != nil {
+		cached, err := s.guidesCache.Get(ctx, guideID)
+		if err == nil && cached != nil && cached.CreatorID == userID {
+			return cached, nil
+		}
 	}
 
 	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
@@ -114,7 +134,9 @@ func (s *GuidesService) GetByID(ctx context.Context, userID string, guideID stri
 		return nil, constants.ErrGuideNotFound
 	}
 
-	_ = s.guidesCache.Set(ctx, guide)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Set(ctx, guide)
+	}
 
 	return guide, nil
 }
@@ -133,6 +155,15 @@ func (s *GuidesService) Update(ctx context.Context, userID string, guideID strin
 		return nil, constants.ErrInvalidGuideID
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeUpdate {
+			existing, _ := s.guidesRepo.GetByID(ctx, userID, guideID)
+			if err := hook(ctx, existing, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	updated, err := s.guidesRepo.Update(ctx, userID, &types.UpdateGuideDTO{
 		ID:          parsedID,
 		Title:       req.Title,
@@ -142,7 +173,19 @@ func (s *GuidesService) Update(ctx context.Context, userID string, guideID strin
 		return nil, err
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterUpdate {
+			if err := hook(ctx, updated, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return updated, nil
 }
@@ -156,6 +199,14 @@ func (s *GuidesService) Delete(ctx context.Context, userID string, guideID strin
 		return nil, constants.ErrInvalidGuideID
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeDelete {
+			if err := hook(ctx, guideID, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	deleted, err := s.guidesRepo.Delete(ctx, userID, guideID)
 	if err != nil {
 		return nil, err
@@ -165,20 +216,33 @@ func (s *GuidesService) Delete(ctx context.Context, userID string, guideID strin
 		return nil, constants.ErrGuideNotFound
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterDelete {
+			if err := hook(ctx, guideID, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return deleted, nil
 }
 
 func (s *GuidesService) recalculateDuration(ctx context.Context, userID string, guideID string) error {
-	steps, err := s.stepsRepo.GetByGuideID(ctx, guideID)
-	if err != nil {
+	if s.stepsRepo != nil {
+		steps, err := s.stepsRepo.GetByGuideID(ctx, guideID)
+		if err != nil {
+			return err
+		}
+
+		duration := models.CalculateSyntheticDuration(steps)
+		_, err = s.guidesRepo.UpdateDuration(ctx, userID, guideID, duration)
 		return err
 	}
-
-	duration := models.CalculateSyntheticDuration(steps)
-	_, err = s.guidesRepo.UpdateDuration(ctx, userID, guideID, duration)
-	return err
+	return nil
 }
 
 func (s *GuidesService) Publish(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
@@ -201,6 +265,14 @@ func (s *GuidesService) Publish(ctx context.Context, userID string, guideID stri
 		return nil, fmt.Errorf("only guides in draft status can be published")
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforePublish {
+			if err := hook(ctx, guide, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	if err := s.recalculateDuration(ctx, userID, guideID); err != nil {
 		return nil, err
 	}
@@ -214,7 +286,17 @@ func (s *GuidesService) Publish(ctx context.Context, userID string, guideID stri
 		return nil, constants.ErrGuideNotFound
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterPublish {
+			if err := hook(ctx, published, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return published, nil
 }
@@ -239,6 +321,14 @@ func (s *GuidesService) Unpublish(ctx context.Context, userID string, guideID st
 		return nil, fmt.Errorf("only guides in published status can be unpublished")
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeUnpublish {
+			if err := hook(ctx, guide, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	unpublished, err := s.guidesRepo.Unpublish(ctx, userID, guideID)
 	if err != nil {
 		return nil, err
@@ -248,7 +338,17 @@ func (s *GuidesService) Unpublish(ctx context.Context, userID string, guideID st
 		return nil, constants.ErrGuideNotFound
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterUnpublish {
+			if err := hook(ctx, unpublished, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return unpublished, nil
 }
@@ -273,6 +373,14 @@ func (s *GuidesService) Archive(ctx context.Context, userID string, guideID stri
 		return nil, fmt.Errorf("only guides in draft or published status can be archived")
 	}
 
+	if s.hooks != nil {
+		for _, hook := range s.hooks.BeforeArchive {
+			if err := hook(ctx, guide, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	archived, err := s.guidesRepo.Archive(ctx, userID, guideID)
 	if err != nil {
 		return nil, err
@@ -282,7 +390,17 @@ func (s *GuidesService) Archive(ctx context.Context, userID string, guideID stri
 		return nil, constants.ErrGuideNotFound
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterArchive {
+			if err := hook(ctx, archived, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return archived, nil
 }
@@ -316,7 +434,17 @@ func (s *GuidesService) Unarchive(ctx context.Context, userID string, guideID st
 		return nil, constants.ErrGuideNotFound
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
+
+	if s.hooks != nil {
+		for _, hook := range s.hooks.AfterArchive {
+			if err := hook(ctx, unarchived, userID); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	return unarchived, nil
 }
@@ -339,7 +467,9 @@ func (s *GuidesService) Restore(ctx context.Context, userID string, guideID stri
 		return nil, constants.ErrGuideNotFound
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
 
 	return restored, nil
 }
@@ -375,7 +505,9 @@ func (s *GuidesService) PermanentlyDelete(ctx context.Context, userID string, gu
 		return nil, constants.ErrGuideNotFound
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
 
 	if err := s.publishPurgeEvent(ctx, guideID); err != nil {
 		slog.Error("failed to publish purge event", "guide_id", guideID, "err", err)
@@ -416,7 +548,9 @@ func (s *GuidesService) RecalculateDuration(ctx context.Context, userID string, 
 		return nil, err
 	}
 
-	_ = s.guidesCache.Invalidate(ctx, guideID)
+	if s.guidesCache != nil {
+		_ = s.guidesCache.Invalidate(ctx, guideID)
+	}
 
 	return updated, nil
 }

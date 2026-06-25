@@ -10,8 +10,6 @@ import (
 	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	cliqmodels "github.com/CliqRelay/cliqrelay/models"
-	"github.com/CliqRelay/cliqrelay/services/export"
-	"github.com/CliqRelay/cliqrelay/services/purge"
 )
 
 func HandleMediaAssetsEvent(storageService interfaces.StorageService, bucket string) StreamHandler {
@@ -44,7 +42,7 @@ func handleMediaAssetDeleted(ctx context.Context, ev *events.Event, storageServi
 	return nil
 }
 
-func HandleGuidePurgeEvent(purgeService *purge.PurgeService) StreamHandler {
+func HandleGuidePurgeEvent(purgeService interfaces.PurgeService) StreamHandler {
 	return func(ctx context.Context, msgID string, payload []byte) error {
 		event, err := events.ReadEvent(payload)
 		if err != nil {
@@ -60,7 +58,7 @@ func HandleGuidePurgeEvent(purgeService *purge.PurgeService) StreamHandler {
 	}
 }
 
-func HandleGuideExportEvent(exportService *export.ExportService) StreamHandler {
+func HandleGuideExportEvent(exportService interfaces.ExportService) StreamHandler {
 	return func(ctx context.Context, msgID string, payload []byte) error {
 		event, err := events.ReadEvent(payload)
 		if err != nil {
@@ -76,7 +74,7 @@ func HandleGuideExportEvent(exportService *export.ExportService) StreamHandler {
 	}
 }
 
-func handleGuideExport(ctx context.Context, ev *events.Event, exportService *export.ExportService) error {
+func handleGuideExport(ctx context.Context, ev *events.Event, exportService interfaces.ExportService) error {
 	var payload events.GuideExportPayload
 	if err := ev.UnmarshalPayload(&payload); err != nil {
 		return &HandlerError{Err: fmt.Errorf("unmarshal payload: %w", err), Mode: NackModeFatal}
@@ -100,7 +98,7 @@ func handleGuideExport(ctx context.Context, ev *events.Event, exportService *exp
 	return nil
 }
 
-func handleGuidePurge(ctx context.Context, ev *events.Event, purgeService *purge.PurgeService) error {
+func handleGuidePurge(ctx context.Context, ev *events.Event, purgeService interfaces.PurgeService) error {
 	var payload events.GuidePurgePayload
 	if err := ev.UnmarshalPayload(&payload); err != nil {
 		return &HandlerError{Err: fmt.Errorf("unmarshal payload: %w", err), Mode: NackModeFatal}

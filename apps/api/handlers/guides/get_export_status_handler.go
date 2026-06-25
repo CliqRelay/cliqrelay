@@ -6,16 +6,16 @@ import (
 	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	"github.com/CliqRelay/cliqrelay/services/export"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type GetExportStatusHandler struct {
 	appConfig     *config.AppConfig
-	exportService *export.ExportService
+	exportService interfaces.ExportService
 }
 
-func NewGetExportStatusHandler(appConfig *config.AppConfig, exportService *export.ExportService) *GetExportStatusHandler {
+func NewGetExportStatusHandler(appConfig *config.AppConfig, exportService interfaces.ExportService) *GetExportStatusHandler {
 	return &GetExportStatusHandler{appConfig: appConfig, exportService: exportService}
 }
 

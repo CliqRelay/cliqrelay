@@ -6,16 +6,16 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	media_assetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type DeleteMediaAssetHandler struct {
 	appConfig          *config.AppConfig
-	mediaAssetsService *media_assetsservice.MediaAssetsService
+	mediaAssetsService interfaces.MediaAssetsService
 }
 
-func NewDeleteMediaAssetHandler(appConfig *config.AppConfig, mediaAssetsService *media_assetsservice.MediaAssetsService) *DeleteMediaAssetHandler {
+func NewDeleteMediaAssetHandler(appConfig *config.AppConfig, mediaAssetsService interfaces.MediaAssetsService) *DeleteMediaAssetHandler {
 	return &DeleteMediaAssetHandler{appConfig: appConfig, mediaAssetsService: mediaAssetsService}
 }
 

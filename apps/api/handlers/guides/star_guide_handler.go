@@ -6,16 +6,16 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type StarGuideHandler struct {
 	appConfig            *config.AppConfig
-	starredGuidesService *starredguidesservice.StarredGuidesService
+	starredGuidesService interfaces.StarredGuidesService
 }
 
-func NewStarGuideHandler(appConfig *config.AppConfig, starredGuidesService *starredguidesservice.StarredGuidesService) *StarGuideHandler {
+func NewStarGuideHandler(appConfig *config.AppConfig, starredGuidesService interfaces.StarredGuidesService) *StarGuideHandler {
 	return &StarGuideHandler{appConfig: appConfig, starredGuidesService: starredGuidesService}
 }
 

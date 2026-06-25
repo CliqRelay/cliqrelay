@@ -7,17 +7,17 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/models"
-	"github.com/CliqRelay/cliqrelay/services/export"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type ExportGuideHandler struct {
 	appConfig     *config.AppConfig
-	exportService *export.ExportService
+	exportService interfaces.ExportService
 }
 
-func NewExportGuideHandler(appConfig *config.AppConfig, exportService *export.ExportService) *ExportGuideHandler {
+func NewExportGuideHandler(appConfig *config.AppConfig, exportService interfaces.ExportService) *ExportGuideHandler {
 	return &ExportGuideHandler{appConfig: appConfig, exportService: exportService}
 }
 

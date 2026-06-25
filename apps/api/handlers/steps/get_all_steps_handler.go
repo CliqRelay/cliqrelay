@@ -6,16 +6,16 @@ import (
 	"github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type GetAllStepsHandler struct {
 	appConfig    *config.AppConfig
-	stepsService *stepsservice.StepsService
+	stepsService interfaces.StepsService
 }
 
-func NewGetAllStepsHandler(appConfig *config.AppConfig, stepsService *stepsservice.StepsService) *GetAllStepsHandler {
+func NewGetAllStepsHandler(appConfig *config.AppConfig, stepsService interfaces.StepsService) *GetAllStepsHandler {
 	return &GetAllStepsHandler{appConfig: appConfig, stepsService: stepsService}
 }
 
