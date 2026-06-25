@@ -58,10 +58,10 @@ For other platforms (macOS, ARM, Windows), see the [releases page](https://githu
 
 ### Standalone template testing
 
-The Typst template and test data live at `internal/templates/guides/`. You can compile a PDF directly to verify layout changes:
+The Typst template and test data live at `./templates/guides/`. You can compile a PDF directly to verify layout changes:
 
 ```sh
-cd internal/templates/guides/
+cd ./templates/guides/
 typst compile --font-path . guide.typ output.pdf
 open output.pdf
 ```
@@ -115,7 +115,7 @@ Or point to your own Postgres instance:
 
 ```bash
 TEST_DATABASE_URL="postgres://user:pass@host:5432/db?sslmode=disable" \
-  go test -race -count=1 ./internal/repositories/...
+  go test -race -count=1 ./repositories/...
 ```
 
 The default DSN is `postgres://postgres:postgres@localhost:5432/testdb?sslmode=disable`.

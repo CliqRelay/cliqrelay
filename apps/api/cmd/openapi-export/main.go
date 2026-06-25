@@ -6,9 +6,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/CliqRelay/cliqrelay/internal/constants"
-	"github.com/CliqRelay/cliqrelay/internal/openapi"
-	"github.com/CliqRelay/cliqrelay/internal/routes"
+	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/openapi"
+	"github.com/CliqRelay/cliqrelay/routes"
 )
 
 func main() {

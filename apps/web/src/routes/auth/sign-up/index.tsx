@@ -53,10 +53,10 @@ function SignupPage() {
 
 	const form = useForm({
 		defaultValues: {
-			name: "John Doe",
-			email: "john.doe@example.com",
-			password: "Pass!2345",
-			confirmPassword: "Pass!2345",
+			name: "",
+			email: "",
+			password: "",
+			confirmPassword: "",
 		} as SignUpFormData,
 		validators: {
 			onChange: signUpSchema,

@@ -38,8 +38,8 @@ function SignInPage() {
 
 	const form = useForm({
 		defaultValues: {
-			email: "john.doe@example.com",
-			password: "Pass!2345",
+			email: "",
+			password: "",
 		} as SignInFormData,
 		validators: {
 			onChange: signInSchema,

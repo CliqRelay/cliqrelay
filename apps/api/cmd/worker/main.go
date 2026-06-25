@@ -12,17 +12,17 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
-	"github.com/CliqRelay/cliqrelay/internal/constants"
-	"github.com/CliqRelay/cliqrelay/internal/events"
-	"github.com/CliqRelay/cliqrelay/internal/infra"
-	bunGuideExports "github.com/CliqRelay/cliqrelay/internal/repositories/guide_exports"
-	bunGuides "github.com/CliqRelay/cliqrelay/internal/repositories/guides"
-	bunSteps "github.com/CliqRelay/cliqrelay/internal/repositories/steps"
-	"github.com/CliqRelay/cliqrelay/internal/services/export"
-	"github.com/CliqRelay/cliqrelay/internal/services/presign"
-	"github.com/CliqRelay/cliqrelay/internal/services/purge"
-	"github.com/CliqRelay/cliqrelay/internal/services/storage"
-	"github.com/CliqRelay/cliqrelay/internal/worker"
+	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/events"
+	"github.com/CliqRelay/cliqrelay/infra"
+	bunGuideExports "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
+	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
+	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
+	"github.com/CliqRelay/cliqrelay/services/export"
+	"github.com/CliqRelay/cliqrelay/services/presign"
+	"github.com/CliqRelay/cliqrelay/services/purge"
+	"github.com/CliqRelay/cliqrelay/services/storage"
+	"github.com/CliqRelay/cliqrelay/worker"
 )
 
 func main() {

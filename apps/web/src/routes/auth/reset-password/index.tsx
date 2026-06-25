@@ -32,7 +32,7 @@ export const Route = createFileRoute("/auth/reset-password/")({
 });
 
 const requestResetSchema = z.object({
-	email: z.string().email("Please enter a valid email address"),
+	email: z.email("Please enter a valid email address"),
 });
 
 const changePasswordSchema = z

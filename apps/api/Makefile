@@ -136,7 +136,7 @@ test-pg: # Run repository tests against Postgres (auto-manages container lifecyc
 		sleep 1; \
 	done
 	@echo "Running repository tests against Postgres..."
-	@TEST_DATABASE_URL="postgres://postgres:postgres@$$(docker inspect cliqrelay-test-pg --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'):5432/testdb?sslmode=disable" go test -race -v -count=1 -p 1 ./internal/repositories/...; status=$$?; \
+	@TEST_DATABASE_URL="postgres://postgres:postgres@$$(docker inspect cliqrelay-test-pg --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'):5432/testdb?sslmode=disable" go test -race -v -count=1 -p 1 ./repositories/...; status=$$?; \
 		echo "Stopping test Postgres container..."; \
 		docker stop cliqrelay-test-pg >/dev/null 2>&1 || true; \
 		exit $$status
