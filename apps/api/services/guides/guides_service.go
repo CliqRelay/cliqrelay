@@ -42,7 +42,7 @@ func (s *GuidesService) Create(ctx context.Context, userID string, req *types.Cr
 		return nil, constants.ErrInvalidUserID
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeCreate != nil {
 		if err := s.hooks.BeforeCreate(ctx, userID, req); err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func (s *GuidesService) Create(ctx context.Context, userID string, req *types.Cr
 		return nil, err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterCreate != nil {
 		if err := s.hooks.AfterCreate(ctx, userID, guideCreated); err != nil {
 			return nil, err
 		}
@@ -151,7 +151,7 @@ func (s *GuidesService) Update(ctx context.Context, userID string, guideID strin
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
 		existing, _ := s.guidesRepo.GetByID(ctx, userID, guideID)
 		if err := s.hooks.BeforeUpdate(ctx, userID, existing); err != nil {
 			return nil, err
@@ -173,7 +173,7 @@ func (s *GuidesService) Update(ctx context.Context, userID string, guideID strin
 		}
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterUpdate != nil {
 		if err := s.hooks.AfterUpdate(ctx, userID, updated); err != nil {
 			return nil, err
 		}
@@ -191,7 +191,7 @@ func (s *GuidesService) Delete(ctx context.Context, userID string, guideID strin
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeDelete != nil {
 		if err := s.hooks.BeforeDelete(ctx, userID, guideID); err != nil {
 			return nil, err
 		}
@@ -210,7 +210,7 @@ func (s *GuidesService) Delete(ctx context.Context, userID string, guideID strin
 		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterDelete != nil {
 		if err := s.hooks.AfterDelete(ctx, userID, guideID); err != nil {
 			return nil, err
 		}
@@ -253,7 +253,7 @@ func (s *GuidesService) Publish(ctx context.Context, userID string, guideID stri
 		return nil, fmt.Errorf("only guides in draft status can be published")
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforePublish != nil {
 		if err := s.hooks.BeforePublish(ctx, userID, guide); err != nil {
 			return nil, err
 		}
@@ -276,7 +276,7 @@ func (s *GuidesService) Publish(ctx context.Context, userID string, guideID stri
 		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterPublish != nil {
 		if err := s.hooks.AfterPublish(ctx, userID, published); err != nil {
 			return nil, err
 		}
@@ -305,7 +305,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, userID string, guideID st
 		return nil, fmt.Errorf("only guides in published status can be unpublished")
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeUnpublish != nil {
 		if err := s.hooks.BeforeUnpublish(ctx, userID, guide); err != nil {
 			return nil, err
 		}
@@ -324,7 +324,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, userID string, guideID st
 		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterUnpublish != nil {
 		if err := s.hooks.AfterUnpublish(ctx, userID, unpublished); err != nil {
 			return nil, err
 		}
@@ -353,7 +353,7 @@ func (s *GuidesService) Archive(ctx context.Context, userID string, guideID stri
 		return nil, fmt.Errorf("only guides in draft or published status can be archived")
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeArchive != nil {
 		if err := s.hooks.BeforeArchive(ctx, userID, guide); err != nil {
 			return nil, err
 		}
@@ -372,7 +372,7 @@ func (s *GuidesService) Archive(ctx context.Context, userID string, guideID stri
 		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterArchive != nil {
 		if err := s.hooks.AfterArchive(ctx, userID, archived); err != nil {
 			return nil, err
 		}
@@ -401,7 +401,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, userID string, guideID st
 		return nil, fmt.Errorf("only guides in archived status can be unarchived")
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeUnarchive != nil {
 		if err := s.hooks.BeforeUnarchive(ctx, userID, guide); err != nil {
 			return nil, err
 		}
@@ -420,7 +420,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, userID string, guideID st
 		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterUnarchive != nil {
 		if err := s.hooks.AfterUnarchive(ctx, userID, unarchived); err != nil {
 			return nil, err
 		}

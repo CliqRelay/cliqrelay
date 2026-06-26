@@ -1,4 +1,4 @@
-package steps_test
+package repositories_test
 
 import (
 	"context"
@@ -13,28 +13,6 @@ import (
 	stepsrepositories "github.com/CliqRelay/cliqrelay/repositories/steps"
 	"github.com/CliqRelay/cliqrelay/types"
 )
-
-func seedGuide(t *testing.T, db bun.IDB, userID, title string) *models.Guide {
-	t.Helper()
-
-	if userID == "" {
-		userID = uuid.New().String()
-		_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-		require.NoError(t, err)
-	}
-
-	guide := &models.Guide{
-		ID:        uuid.New(),
-		CreatorID: userID,
-		Title:     title,
-		Status:    models.StatusDraft,
-	}
-
-	_, err := db.NewInsert().Model(guide).Exec(context.Background())
-	require.NoError(t, err)
-
-	return guide
-}
 
 func seedStep(t *testing.T, db bun.IDB, guideID uuid.UUID, stepType models.StepType, sortOrder string, action models.StepAction, canvasContent *models.StepCanvasContent) *models.Step {
 	t.Helper()
@@ -54,13 +32,13 @@ func seedStep(t *testing.T, db bun.IDB, guideID uuid.UUID, stepType models.StepT
 	return step
 }
 
-func seedMediaAsset(t *testing.T, db bun.IDB, stepID uuid.UUID, suffix string) *models.MediaAsset {
+func seedMediaAsset(t *testing.T, db bun.IDB, stepID uuid.UUID, storagePath string) *models.MediaAsset {
 	t.Helper()
 
 	mediaAsset := &models.MediaAsset{
 		ID:          uuid.New(),
 		StepID:      stepID,
-		StoragePath: "/path/to/" + suffix + ".png",
+		StoragePath: storagePath,
 	}
 
 	_, err := db.NewInsert().Model(mediaAsset).Exec(context.Background())
@@ -217,7 +195,7 @@ func TestBunStepsRepository_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := stepsDB
 			repo := stepsrepositories.NewBunStepsRepository(db)
 			ctx := context.Background()
 			dto := tt.setup(db)
@@ -235,6 +213,62 @@ func TestBunStepsRepository_Create(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBunStepsRepository_Create_Duplicate(t *testing.T) {
+	t.Parallel()
+
+	db := stepsDB
+	repo := stepsrepositories.NewBunStepsRepository(db)
+	ctx := context.Background()
+
+	guide := seedGuide(t, db, "", "Duplicate Test Guide")
+	action := models.StepActionClick
+	actionText := "click me"
+	url := "https://example.com"
+
+	original, err := repo.Create(ctx, &types.CreateStepDTO{
+		GuideID:    guide.ID,
+		Action:     &action,
+		ActionText: &actionText,
+		URL:        &url,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, original)
+
+	duplicate, err := repo.Create(ctx, &types.CreateStepDTO{
+		GuideID:    guide.ID,
+		Action:     &action,
+		ActionText: &actionText,
+		URL:        &url,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, duplicate)
+
+	assert.NotEqual(t, original.ID, duplicate.ID, "duplicate step must have a different ID")
+	assert.NotEqual(t, original.SortOrder, duplicate.SortOrder, "duplicate step must have a different sort order")
+
+	assert.Equal(t, guide.ID, original.GuideID)
+	assert.Equal(t, guide.ID, duplicate.GuideID)
+	assert.Equal(t, original.GuideID, duplicate.GuideID)
+
+	require.NotNil(t, duplicate.Action)
+	assert.Equal(t, action, *duplicate.Action)
+	require.NotNil(t, duplicate.ActionText)
+	assert.Equal(t, actionText, *duplicate.ActionText)
+	require.NotNil(t, duplicate.URL)
+	assert.Equal(t, url, *duplicate.URL)
+
+	steps, err := repo.GetByGuideID(ctx, guide.ID.String())
+	require.NoError(t, err)
+	require.Len(t, steps, 2)
+
+	ids := map[string]bool{}
+	for _, s := range steps {
+		ids[s.ID.String()] = true
+	}
+	assert.True(t, ids[original.ID.String()], "original step must be in guide")
+	assert.True(t, ids[duplicate.ID.String()], "duplicate step must be in guide")
 }
 
 func TestBunStepsRepository_GetByID(t *testing.T) {
@@ -267,7 +301,7 @@ func TestBunStepsRepository_GetByID(t *testing.T) {
 			setup: func(db *bun.DB) string {
 				guide := seedGuide(t, db, "", "Test Guide")
 				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
-				seedMediaAsset(t, db, step.ID, "get-by-id")
+				seedMediaAsset(t, db, step.ID, "/path/to/get-by-id.png")
 				return step.ID.String()
 			},
 			wantNil: false,
@@ -278,7 +312,7 @@ func TestBunStepsRepository_GetByID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := stepsDB
 			repo := stepsrepositories.NewBunStepsRepository(db)
 			targetID := tt.setup(db)
 			ctx := context.Background()
@@ -348,7 +382,7 @@ func TestBunStepsRepository_GetByGuideID(t *testing.T) {
 			setup: func(db *bun.DB) string {
 				guide := seedGuide(t, db, "", "Test Guide")
 				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
-				seedMediaAsset(t, db, step.ID, "get-by-guide-id")
+				seedMediaAsset(t, db, step.ID, "/path/to/get-by-guide-id.png")
 				return guide.ID.String()
 			},
 			wantLen: 1,
@@ -359,7 +393,7 @@ func TestBunStepsRepository_GetByGuideID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := stepsDB
 			repo := stepsrepositories.NewBunStepsRepository(db)
 			guideID := tt.setup(db)
 			ctx := context.Background()
@@ -377,7 +411,6 @@ func TestBunStepsRepository_GetByGuideID(t *testing.T) {
 						assert.LessOrEqual(t, steps[i-1].SortOrder, steps[i].SortOrder)
 					}
 
-					// For the "media assets" test case, verify MediaAssets is populated
 					if tt.name == "returns steps with media assets eagerly loaded" {
 						require.Len(t, steps[0].MediaAssets, 1)
 						assert.Equal(t, "/path/to/get-by-guide-id.png", steps[0].MediaAssets[0].StoragePath)
@@ -557,7 +590,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 			setup: func(db *bun.DB) *types.UpdateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
 				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
-				seedMediaAsset(t, db, step.ID, "screenshot")
+				seedMediaAsset(t, db, step.ID, "/path/to/screenshot.png")
 				notes := "updated notes"
 				return &types.UpdateStepDTO{
 					ID:    step.ID,
@@ -587,7 +620,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := stepsDB
 			repo := stepsrepositories.NewBunStepsRepository(db)
 			dto := tt.setup(db)
 			ctx := context.Background()
@@ -640,7 +673,7 @@ func TestBunStepsRepository_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := stepsDB
 			repo := stepsrepositories.NewBunStepsRepository(db)
 			targetID := tt.setup(db)
 			ctx := context.Background()
@@ -654,7 +687,6 @@ func TestBunStepsRepository_Delete(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				// Verify step is actually deleted
 				found, err := repo.GetByID(ctx, targetID)
 				require.NoError(t, err)
 				assert.Nil(t, found)
@@ -735,7 +767,7 @@ func TestBunStepsRepository_Reorder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := stepsDB
 			repo := stepsrepositories.NewBunStepsRepository(db)
 			guideID, targetStepID, prevStepID, nextStepID := tt.setup(db, repo)
 			ctx := context.Background()

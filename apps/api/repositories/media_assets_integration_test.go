@@ -1,4 +1,4 @@
-package media_assets_test
+package repositories_test
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func seedStep(t *testing.T, db bun.IDB) uuid.UUID {
+func seedSimpleStep(t *testing.T, db bun.IDB) uuid.UUID {
 	t.Helper()
 
 	userID := uuid.New().String()
@@ -42,21 +42,6 @@ func seedStep(t *testing.T, db bun.IDB) uuid.UUID {
 	return step.ID
 }
 
-func seedMediaAsset(t *testing.T, db bun.IDB, stepID uuid.UUID, storagePath string) *models.MediaAsset {
-	t.Helper()
-
-	mediaAsset := &models.MediaAsset{
-		ID:          uuid.New(),
-		StepID:      stepID,
-		StoragePath: storagePath,
-	}
-
-	_, err := db.NewInsert().Model(mediaAsset).Exec(context.Background())
-	require.NoError(t, err)
-
-	return mediaAsset
-}
-
 func TestBunMediaAssetsRepository_Create(t *testing.T) {
 	t.Parallel()
 
@@ -69,15 +54,15 @@ func TestBunMediaAssetsRepository_Create(t *testing.T) {
 		{
 			name: "creates media asset with given fields",
 			setup: func(db *bun.DB) *types.CreateMediaAssetDTO {
-				stepID := seedStep(t, db)
+				stepID := seedSimpleStep(t, db)
 				return &types.CreateMediaAssetDTO{
 					StepID:      stepID,
 					StoragePath: "/uploads/test.png",
-					MimeType:    strPtr("image/png"),
-					AltText:     strPtr("Test image"),
-					Height:      intPtr(200),
-					Width:       intPtr(400),
-					ByteSize:    intPtr(1024),
+					MimeType:    new("image/png"),
+					AltText:     new("Test image"),
+					Height:      new(200),
+					Width:       new(400),
+					ByteSize:    new(1024),
 				}
 			},
 			check: func(t *testing.T, a *models.MediaAsset) {
@@ -98,7 +83,7 @@ func TestBunMediaAssetsRepository_Create(t *testing.T) {
 		{
 			name: "enforces storage_path uniqueness",
 			setup: func(db *bun.DB) *types.CreateMediaAssetDTO {
-				stepID := seedStep(t, db)
+				stepID := seedSimpleStep(t, db)
 				seedMediaAsset(t, db, stepID, "/uploads/unique.png")
 				return &types.CreateMediaAssetDTO{
 					StepID:      stepID,
@@ -113,7 +98,7 @@ func TestBunMediaAssetsRepository_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := mediaAssetsDB
 			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
 			ctx := context.Background()
 
@@ -146,7 +131,7 @@ func TestBunMediaAssetsRepository_GetByID(t *testing.T) {
 		{
 			name: "returns media asset by ID",
 			setup: func(db *bun.DB) string {
-				stepID := seedStep(t, db)
+				stepID := seedSimpleStep(t, db)
 				asset := seedMediaAsset(t, db, stepID, "/uploads/get-by-id.png")
 				return asset.ID.String()
 			},
@@ -165,7 +150,7 @@ func TestBunMediaAssetsRepository_GetByID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := mediaAssetsDB
 			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
 			targetID := tt.setup(db)
 			ctx := context.Background()
@@ -199,7 +184,7 @@ func TestBunMediaAssetsRepository_GetByStepID(t *testing.T) {
 		{
 			name: "returns all media assets for a step",
 			setup: func(db *bun.DB) string {
-				stepID := seedStep(t, db)
+				stepID := seedSimpleStep(t, db)
 				seedMediaAsset(t, db, stepID, "/uploads/first.png")
 				seedMediaAsset(t, db, stepID, "/uploads/second.png")
 				return stepID.String()
@@ -209,8 +194,8 @@ func TestBunMediaAssetsRepository_GetByStepID(t *testing.T) {
 		{
 			name: "only returns assets for the given step",
 			setup: func(db *bun.DB) string {
-				stepID1 := seedStep(t, db)
-				stepID2 := seedStep(t, db)
+				stepID1 := seedSimpleStep(t, db)
+				stepID2 := seedSimpleStep(t, db)
 				seedMediaAsset(t, db, stepID1, "/uploads/step1.png")
 				seedMediaAsset(t, db, stepID2, "/uploads/step2.png")
 				return stepID1.String()
@@ -230,7 +215,7 @@ func TestBunMediaAssetsRepository_GetByStepID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := mediaAssetsDB
 			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
 			stepID := tt.setup(db)
 			ctx := context.Background()
@@ -260,11 +245,11 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 		{
 			name: "updates alt_text",
 			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
-				stepID := seedStep(t, db)
+				stepID := seedSimpleStep(t, db)
 				asset := seedMediaAsset(t, db, stepID, "/uploads/alt-text.png")
 				return &types.UpdateMediaAssetDTO{
 					ID:      asset.ID,
-					AltText: strPtr("Updated alt text"),
+					AltText: new("Updated alt text"),
 				}
 			},
 			check: func(t *testing.T, a *models.MediaAsset) {
@@ -275,11 +260,11 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 		{
 			name: "updates mime_type",
 			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
-				stepID := seedStep(t, db)
+				stepID := seedSimpleStep(t, db)
 				asset := seedMediaAsset(t, db, stepID, "/uploads/mime-type.png")
 				return &types.UpdateMediaAssetDTO{
 					ID:       asset.ID,
-					MimeType: strPtr("image/webp"),
+					MimeType: new("image/webp"),
 				}
 			},
 			check: func(t *testing.T, a *models.MediaAsset) {
@@ -290,15 +275,15 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 		{
 			name: "updates multiple fields",
 			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
-				stepID := seedStep(t, db)
+				stepID := seedSimpleStep(t, db)
 				asset := seedMediaAsset(t, db, stepID, "/uploads/multi.png")
 				return &types.UpdateMediaAssetDTO{
 					ID:       asset.ID,
-					AltText:  strPtr("Multi alt"),
-					MimeType: strPtr("image/jpeg"),
-					Height:   intPtr(300),
-					Width:    intPtr(600),
-					ByteSize: intPtr(2048),
+					AltText:  new("Multi alt"),
+					MimeType: new("image/jpeg"),
+					Height:   new(300),
+					Width:    new(600),
+					ByteSize: new(2048),
 				}
 			},
 			check: func(t *testing.T, a *models.MediaAsset) {
@@ -319,7 +304,7 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
 				return &types.UpdateMediaAssetDTO{
 					ID:      uuid.New(),
-					AltText: strPtr("Should not exist"),
+					AltText: new("Should not exist"),
 				}
 			},
 			wantNil: true,
@@ -330,7 +315,7 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := mediaAssetsDB
 			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
 			dto := tt.setup(db)
 			ctx := context.Background()
@@ -364,7 +349,7 @@ func TestBunMediaAssetsRepository_Delete(t *testing.T) {
 		{
 			name: "hard deletes a media asset",
 			setup: func(db *bun.DB) string {
-				stepID := seedStep(t, db)
+				stepID := seedSimpleStep(t, db)
 				asset := seedMediaAsset(t, db, stepID, "/uploads/to-delete.png")
 				return asset.ID.String()
 			},
@@ -383,7 +368,7 @@ func TestBunMediaAssetsRepository_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			db := testDB
+			db := mediaAssetsDB
 			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
 			targetID := tt.setup(db)
 			ctx := context.Background()
@@ -406,12 +391,4 @@ func TestBunMediaAssetsRepository_Delete(t *testing.T) {
 			}
 		})
 	}
-}
-
-func strPtr(s string) *string {
-	return &s
-}
-
-func intPtr(i int) *int {
-	return &i
 }

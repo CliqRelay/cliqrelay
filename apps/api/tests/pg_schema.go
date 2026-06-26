@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/lib/pq"
@@ -14,12 +13,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/migrations"
 )
 
-func SetupTestSchema(packageName string) (*bun.DB, func(), error) {
-	dsn := os.Getenv("TEST_DATABASE_URL")
-	if dsn == "" {
-		dsn = "postgres://postgres:postgres@localhost:5432/testdb?sslmode=disable"
-	}
-
+func SetupTestSchema(packageName, dsn string) (*bun.DB, func(), error) {
 	schemaName := fmt.Sprintf("%s_%d", packageName, time.Now().UnixNano())
 
 	adminDB, err := sql.Open("postgres", dsn)

@@ -50,7 +50,7 @@ func (s *MediaAssetsService) Create(ctx context.Context, userID string, req *typ
 		return nil, err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeCreate != nil {
 		if err := s.hooks.BeforeCreate(ctx, userID, req); err != nil {
 			return nil, err
 		}
@@ -69,7 +69,7 @@ func (s *MediaAssetsService) Create(ctx context.Context, userID string, req *typ
 		return nil, err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterCreate != nil {
 		if err := s.hooks.AfterCreate(ctx, userID, mediaAsset); err != nil {
 			return nil, err
 		}
@@ -157,7 +157,7 @@ func (s *MediaAssetsService) Update(ctx context.Context, userID string, mediaAss
 		return nil, err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
 		if err := s.hooks.BeforeUpdate(ctx, userID, req); err != nil {
 			return nil, err
 		}
@@ -178,7 +178,7 @@ func (s *MediaAssetsService) Update(ctx context.Context, userID string, mediaAss
 		return nil, constants.ErrMediaAssetNotFound
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterUpdate != nil {
 		if err := s.hooks.AfterUpdate(ctx, userID, mediaAsset); err != nil {
 			return nil, err
 		}
@@ -200,7 +200,7 @@ func (s *MediaAssetsService) Delete(ctx context.Context, userID string, mediaAss
 		return nil, err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeDelete != nil {
 		if err := s.hooks.BeforeDelete(ctx, mediaAssetID, ""); err != nil {
 			return nil, err
 		}
@@ -214,7 +214,7 @@ func (s *MediaAssetsService) Delete(ctx context.Context, userID string, mediaAss
 		return nil, constants.ErrMediaAssetNotFound
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterDelete != nil {
 		if err := s.hooks.AfterDelete(ctx, mediaAssetID, ""); err != nil {
 			return nil, err
 		}

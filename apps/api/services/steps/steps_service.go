@@ -54,7 +54,7 @@ func (s *StepsService) Create(ctx context.Context, userID string, req *types.Cre
 		return nil, err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeCreate != nil {
 		if err := s.hooks.BeforeCreate(ctx, userID, req); err != nil {
 			return nil, err
 		}
@@ -76,7 +76,7 @@ func (s *StepsService) Create(ctx context.Context, userID string, req *types.Cre
 		return nil, err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterCreate != nil {
 		if err := s.hooks.AfterCreate(ctx, userID, step); err != nil {
 			return nil, err
 		}
@@ -152,7 +152,7 @@ func (s *StepsService) Update(ctx context.Context, userID string, stepID string,
 		return nil, err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
 		if err := s.hooks.BeforeUpdate(ctx, userID, req); err != nil {
 			return nil, err
 		}
@@ -177,7 +177,7 @@ func (s *StepsService) Update(ctx context.Context, userID string, stepID string,
 
 	s.enrichMediaAssets(ctx, step)
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterUpdate != nil {
 		if err := s.hooks.AfterUpdate(ctx, userID, step); err != nil {
 			return nil, err
 		}
@@ -200,7 +200,7 @@ func (s *StepsService) Delete(ctx context.Context, userID string, stepID string)
 		return err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.BeforeDelete != nil {
 		if err := s.hooks.BeforeDelete(ctx, userID, step); err != nil {
 			return err
 		}
@@ -215,7 +215,7 @@ func (s *StepsService) Delete(ctx context.Context, userID string, stepID string)
 		return err
 	}
 
-	if s.hooks != nil {
+	if s.hooks != nil && s.hooks.AfterDelete != nil {
 		if err := s.hooks.AfterDelete(ctx, userID, stepID); err != nil {
 			return err
 		}

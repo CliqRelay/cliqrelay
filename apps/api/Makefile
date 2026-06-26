@@ -51,6 +51,10 @@ test: # Run all tests
 	@echo "Running tests..."
 	@go test -race -v ./...
 
+test-integrations: # Run repository tests against Postgres (auto-starts container via testcontainers)
+	@echo "Running repository tests (testcontainers will auto-start Postgres)..."
+	@go test -race -v -count=1 -p 1 ./repositories/
+
 test-coverage: # Run tests with coverage report
 	@echo "Running tests with coverage..."
 	@go test -race -v -coverprofile=coverage.out ./...
@@ -107,42 +111,6 @@ check: fmt vet lint test # Run all checks (format, vet, lint, test)
 quick-check: fmt vet test # Run quick checks (format, vet, fast tests)
 
 ci: clean install check # CI pipeline (clean, install, check)
-
-# Postgres test database management
-test-pg-up: # Start a test Postgres container
-	@echo "Starting test Postgres container..."
-	@docker run -d --name cliqrelay-test-pg \
-		-e POSTGRES_USER=postgres \
-		-e POSTGRES_PASSWORD=postgres \
-		-e POSTGRES_DB=testdb \
-		-p 5432:5432 \
-		postgres:18-alpine
-
-test-pg-down: # Stop and remove the test Postgres container
-	@echo "Stopping test Postgres container..."
-	@docker rm -f cliqrelay-test-pg 2>/dev/null || true
-
-test-pg: # Run repository tests against Postgres (auto-manages container lifecycle)
-	@echo "Starting test Postgres container..."
-	@docker run -d --rm --name cliqrelay-test-pg \
-		-e POSTGRES_USER=postgres \
-		-e POSTGRES_PASSWORD=postgres \
-		-e POSTGRES_DB=testdb \
-		-p 5432:5432 \
-		postgres:18-alpine >/dev/null 2>&1 || true
-	@echo "Waiting for Postgres to be ready..."
-	@for i in $$(seq 1 30); do \
-		if docker exec cliqrelay-test-pg pg_isready -q 2>/dev/null; then break; fi; \
-		sleep 1; \
-	done
-	@echo "Running repository tests against Postgres..."
-	@TEST_DATABASE_URL="postgres://postgres:postgres@$$(docker inspect cliqrelay-test-pg --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'):5432/testdb?sslmode=disable" go test -race -v -count=1 -p 1 ./repositories/...; status=$$?; \
-		echo "Stopping test Postgres container..."; \
-		docker stop cliqrelay-test-pg >/dev/null 2>&1 || true; \
-		exit $$status
-
-# Integration testing
-integration-test: docker-down docker-up docker-test # Run integration tests with Docker
 
 # Default target
 .DEFAULT_GOAL := help

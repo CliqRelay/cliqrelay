@@ -94,36 +94,31 @@ All commands are available via `make`:
 
 ## Testing
 
-Repository tests run against a real PostgreSQL database using schema-isolated connections. Each package gets its own Postgres schema (`pkgname_nanotimestamp`) with full migration DDL applied via the Authula migrator.
+Repository tests run against a real PostgreSQL database using schema-isolated connections. Each domain (guides, steps, media_assets) gets its own Postgres schema (`domain_nanotimestamp`) with full migration DDL applied via the Authula migrator.
 
 ### Setup
 
-Start a Postgres container and run the repository tests:
+Run the repository tests -- a Postgres container is automatically started via testcontainers:
 
 ```bash
-# Start the test Postgres container (detached)
-$ make test-pg-up
-
-# Run repository tests against Postgres
 $ make test-pg
-
-# Stop the container when done
-$ make test-pg-down
 ```
 
-Or point to your own Postgres instance:
+Or point to your own Postgres instance (skips testcontainers):
 
 ```bash
 TEST_DATABASE_URL="postgres://user:pass@host:5432/db?sslmode=disable" \
-  go test -race -count=1 ./repositories/...
+  go test -race -count=1 ./repositories/
 ```
 
-The default DSN is `postgres://postgres:postgres@localhost:5432/testdb?sslmode=disable`.
+If no `TEST_DATABASE_URL` is set, testcontainers starts a `postgres:18-alpine` container automatically.
 
 ### Test architecture
 
-- `TestMain` in each repository package creates a unique Postgres schema, runs the Authula `Migrator` to apply all migrations, and stores the `*bun.DB` in a package-level `testDB` variable.
-- After all tests complete, the schema is dropped with `DROP SCHEMA ... CASCADE`.
+- A single `TestMain` in `repositories/repositories_test.go` starts one global Postgres container (via testcontainers-go) for the entire test suite.
+- Three isolated schemas are created -- one per domain -- with full migration DDL applied via the Authula `Migrator`.
+- Each schema has its own `*bun.DB` connection (`guidesDB`, `stepsDB`, `mediaAssetsDB`).
+- After all tests complete, schemas are dropped and the container is terminated.
 - UUID-based data isolation within each schema enables `t.Parallel()` across test cases.
 - Seed helpers (`seedGuide`) auto-create `users` table rows when `userID == ""`, satisfying FK constraints.
 
