@@ -38,16 +38,16 @@ func TestStepsService_Create(t *testing.T) {
 	}{
 		{
 			name:   "creates step successfully",
-			userID: uuid.New().String(),
+			userID: "test-create-user",
 			req: &types.CreateStepRequest{
 				GuideID: uuid.New(),
 				Action:  new(models.StepActionClick),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-create-user", mock.AnythingOfType("string")).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: "test-create-user",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -64,7 +64,7 @@ func TestStepsService_Create(t *testing.T) {
 		},
 		{
 			name:   "creates canvas step",
-			userID: uuid.New().String(),
+			userID: "test-create-canvas-user",
 			req: &types.CreateStepRequest{
 				GuideID: uuid.New(),
 				Type:    models.StepTypeCanvas,
@@ -73,10 +73,10 @@ func TestStepsService_Create(t *testing.T) {
 				},
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-create-canvas-user", mock.AnythingOfType("string")).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: "test-create-canvas-user",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -119,12 +119,12 @@ func TestStepsService_Create(t *testing.T) {
 		},
 		{
 			name:   "returns error when guide not found",
-			userID: uuid.New().String(),
+			userID: "test-create-guide-not-found",
 			req: &types.CreateStepRequest{
 				GuideID: uuid.New(),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-create-guide-not-found", mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
 			},
@@ -132,15 +132,15 @@ func TestStepsService_Create(t *testing.T) {
 		},
 		{
 			name:   "propagates repository error",
-			userID: uuid.New().String(),
+			userID: "test-create-propagate-err",
 			req: &types.CreateStepRequest{
 				GuideID: uuid.New(),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-create-propagate-err", mock.AnythingOfType("string")).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: "test-create-propagate-err",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -193,57 +193,78 @@ func TestStepsService_Create(t *testing.T) {
 func TestStepsService_GetByID(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
+	type testCase struct {
 		name    string
+		userID  string
 		stepID  string
-		setup   func(*tests.MockStepsRepository, *tests.MockPresignService)
+		setup   func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
 		wantErr bool
-	}{
-		{
-			name:   "returns step successfully",
-			stepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
-					Return(&models.Step{
-						ID:        uuid.New(),
-						GuideID:   uuid.New(),
-						SortOrder: "a0",
-						Action:    new(models.StepActionClick),
-					}, nil).
-					Once()
-			},
-		},
-		{
-			name:   "enriches media assets with presigned URLs",
-			stepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockPresignClient *tests.MockPresignService) {
+	}
+
+	// Helper to create a success case setup with a fixed userID
+	successCase := func(name string, withAssets bool) testCase {
+		userID := uuid.New().String()
+		stepID := uuid.New().String()
+		guideID := uuid.New()
+		return testCase{
+			name:   name,
+			userID: userID,
+			stepID: stepID,
+			setup: func(t *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockPresignClient *tests.MockPresignService) {
 				storagePath := "uploads/guides/abc/steps/def/123"
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
-					Return(&models.Step{
-						ID:        uuid.New(),
-						GuideID:   uuid.New(),
-						SortOrder: "a0",
-						Action:    new(models.StepActionClick),
-						MediaAssets: []*models.MediaAsset{
-							{ID: uuid.New(), StepID: uuid.New(), StoragePath: storagePath, MimeType: new("image/png")},
-						},
+				step := &models.Step{
+					ID:        uuid.New(),
+					GuideID:   guideID,
+					SortOrder: "a0",
+					Action:    new(models.StepActionClick),
+				}
+				if withAssets {
+					step.MediaAssets = []*models.MediaAsset{
+						{ID: uuid.New(), StepID: uuid.New(), StoragePath: storagePath, MimeType: new("image/png")},
+					}
+				}
+				mockStepsRepo.On("GetByID", mock.Anything, stepID).
+					Return(step, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: userID,
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
-					Return("https://presigned.test/asset", nil).
-					Once()
+				if withAssets {
+					mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
+						Return("https://presigned.test/asset", nil).
+						Once()
+				}
 			},
+		}
+	}
+
+	cases := []testCase{
+		successCase("returns step successfully", false),
+		successCase("enriches media assets with presigned URLs", true),
+		{
+			name:    "returns error for empty userID",
+			userID:  "",
+			stepID:  uuid.New().String(),
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
+			wantErr: true,
 		},
 		{
 			name:    "returns error for empty stepID",
+			userID:  uuid.New().String(),
 			stepID:  "",
-			setup:   func(_ *tests.MockStepsRepository, _ *tests.MockPresignService) {},
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
 			wantErr: true,
 		},
 		{
 			name:   "returns error when step not found",
+			userID: uuid.New().String(),
 			stepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {
 				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
@@ -252,8 +273,9 @@ func TestStepsService_GetByID(t *testing.T) {
 		},
 		{
 			name:   "propagates repository error",
+			userID: uuid.New().String(),
 			stepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {
 				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, assert.AnError).
 					Once()
@@ -268,17 +290,21 @@ func TestStepsService_GetByID(t *testing.T) {
 
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 			mockStepsRepo := new(tests.MockStepsRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockPresignClient := new(tests.MockPresignService)
-			tt.setup(mockStepsRepo, mockPresignClient)
+			tt.setup(t, mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
-			step, err := svc.GetByID(context.Background(), tt.stepID)
+			step, err := svc.GetByID(context.Background(), tt.userID, tt.stepID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, step)
+				if tt.userID == "" {
+					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
+				}
 				if tt.stepID == "" {
 					assert.ErrorIs(t, err, constants.ErrInvalidStepID)
 				}
@@ -295,6 +321,7 @@ func TestStepsService_GetByID(t *testing.T) {
 			}
 
 			mockStepsRepo.AssertExpectations(t)
+			mockGuidesRepo.AssertExpectations(t)
 			mockPresignClient.AssertExpectations(t)
 		})
 	}
@@ -303,81 +330,72 @@ func TestStepsService_GetByID(t *testing.T) {
 func TestStepsService_GetByGuideID(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
+	type testCase struct {
 		name    string
 		userID  string
 		guideID string
-		setup   func(*tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
+		setup   func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
 		wantErr bool
 		wantLen int
-	}{
-		{
-			name:    "returns steps successfully",
-			userID:  uuid.New().String(),
-			guideID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
-					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
+	}
+
+	guideID := uuid.New()
+	guideIDStr := guideID.String()
+
+	successCase := func(name string, withAssets bool, wantLen int) testCase {
+		userID := "test-get-by-guide-" + name
+		return testCase{
+			name:    name,
+			userID:  userID,
+			guideID: guideIDStr,
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockPresignClient *tests.MockPresignService) {
+				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideIDStr).
+					Return(&models.Guide{ID: guideID, CreatorID: userID, Title: "Test Guide", Status: models.StatusDraft}, nil).
 					Once()
-				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.AnythingOfType("string")).
-					Return([]*models.Step{
-						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "a0", Action: new(models.StepActionClick)},
-						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "b0", Action: new(models.StepActionInput)},
-					}, nil).
-					Once()
-			},
-			wantLen: 2,
-		},
-		{
-			name:    "enriches media assets with presigned URLs",
-			userID:  uuid.New().String(),
-			guideID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockPresignClient *tests.MockPresignService) {
 				storagePath := "uploads/guides/abc/steps/def/123"
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
-					Return(&models.Guide{ID: uuid.New(), CreatorID: uuid.New().String(), Title: "Test Guide", Status: models.StatusDraft}, nil).
-					Once()
-				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.AnythingOfType("string")).
-					Return([]*models.Step{
-						{
-							ID: uuid.New(), GuideID: uuid.New(), SortOrder: "a0",
-							MediaAssets: []*models.MediaAsset{
-								{ID: uuid.New(), StepID: uuid.New(), StoragePath: storagePath, MimeType: new("image/png")},
-							},
-						},
-					}, nil).
-					Once()
-				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
-					Return("https://presigned.test/asset", nil).
+				steps := make([]*models.Step, wantLen)
+				for i := range steps {
+					steps[i] = &models.Step{ID: uuid.New(), GuideID: guideID, SortOrder: string(rune('a' + i)) + "0", Action: new(models.StepActionClick)}
+				}
+				if withAssets && len(steps) > 0 {
+					steps[0].MediaAssets = []*models.MediaAsset{
+						{ID: uuid.New(), StepID: uuid.New(), StoragePath: storagePath, MimeType: new("image/png")},
+					}
+					mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
+						Return("https://presigned.test/asset", nil).
+						Once()
+				}
+				mockStepsRepo.On("GetByGuideID", mock.Anything, guideIDStr).
+					Return(steps, nil).
 					Once()
 			},
-			wantLen: 1,
-		},
+			wantLen: wantLen,
+		}
+	}
+
+	cases := []testCase{
+		successCase("returns steps successfully", false, 2),
+		successCase("enriches media assets with presigned URLs", true, 1),
 		{
 			name:    "returns error for empty user ID",
 			userID:  "",
 			guideID: uuid.New().String(),
-			setup:   func(_ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
 			wantErr: true,
 		},
 		{
 			name:    "returns error for empty guide ID",
-			userID:  uuid.New().String(),
+			userID:  "test-get-by-guide-empty",
 			guideID: "",
-			setup:   func(_ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
 			wantErr: true,
 		},
 		{
 			name:    "returns error when guide not found",
-			userID:  uuid.New().String(),
+			userID:  "test-get-by-guide-not-found",
 			guideID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-get-by-guide-not-found", mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
 			},
@@ -385,18 +403,18 @@ func TestStepsService_GetByGuideID(t *testing.T) {
 		},
 		{
 			name:    "propagates repository error",
-			userID:  uuid.New().String(),
-			guideID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+			userID:  "test-get-by-guide-propagate",
+			guideID: guideIDStr,
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-get-by-guide-propagate", guideIDStr).
 					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						ID:        guideID,
+						CreatorID: "test-get-by-guide-propagate",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByGuideID", mock.Anything, guideIDStr).
 					Return([]*models.Step{}, assert.AnError).
 					Once()
 			},
@@ -412,7 +430,7 @@ func TestStepsService_GetByGuideID(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockPresignClient := new(tests.MockPresignService)
-			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient)
+			tt.setup(t, mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
@@ -451,81 +469,107 @@ func TestStepsService_GetByGuideID(t *testing.T) {
 func TestStepsService_Update(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
+	type testCase struct {
 		name    string
+		userID  string
 		stepID  string
 		req     *types.UpdateStepRequest
-		setup   func(*tests.MockStepsRepository, *tests.MockPresignService)
+		setup   func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
 		check   func(*testing.T, *models.Step)
 		wantErr bool
-	}{
-		{
-			name:   "updates step successfully",
-			stepID: uuid.New().String(),
-			req: &types.UpdateStepRequest{
-				Action: new(models.StepActionNavigation),
-			},
-			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
+	}
+
+	updateSuccessCase := func(name string, req *types.UpdateStepRequest, check func(*testing.T, *models.Step)) testCase {
+		userID := uuid.New().String()
+		stepID := uuid.New().String()
+		guideID := uuid.New()
+		return testCase{
+			name:   name,
+			userID: userID,
+			stepID: stepID,
+			req:    req,
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
+				mockStepsRepo.On("GetByID", mock.Anything, stepID).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: userID,
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockStepsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateStepDTO")).
 					Return(&models.Step{
 						ID:        uuid.New(),
-						GuideID:   uuid.New(),
+						GuideID:   guideID,
 						SortOrder: "a0",
-						Action:    new(models.StepActionNavigation),
+						Action:    req.Action,
+						Type: func() models.StepType {
+							if req.Type != nil { return *req.Type }
+							return ""
+						}(),
+						CanvasContent: req.CanvasContent,
 					}, nil).
 					Once()
 			},
-		},
+			check: check,
+		}
+	}
+
+	cases := []testCase{
+		updateSuccessCase("updates step successfully", &types.UpdateStepRequest{
+			Action: new(models.StepActionNavigation),
+		}, nil),
+		updateSuccessCase("updates canvas content", &types.UpdateStepRequest{
+			Type: new(models.StepType(models.StepTypeCanvas)),
+			CanvasContent: &models.StepCanvasContent{
+				Type: models.StepCanvasTypeCallout,
+			},
+		}, func(t *testing.T, step *models.Step) {
+			assert.Equal(t, models.StepTypeCanvas, step.Type)
+			require.NotNil(t, step.CanvasContent)
+			assert.Equal(t, models.StepCanvasTypeCallout, step.CanvasContent.Type)
+		}),
 		{
-			name:   "updates canvas content",
-			stepID: uuid.New().String(),
-			req: &types.UpdateStepRequest{
-				Type: new(models.StepType(models.StepTypeCanvas)),
-				CanvasContent: &models.StepCanvasContent{
-					Type: models.StepCanvasTypeCallout,
-				},
-			},
-			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
-				mockStepsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateStepDTO")).
-					Return(&models.Step{
-						ID:        uuid.New(),
-						GuideID:   uuid.New(),
-						SortOrder: "a0",
-						Type:      models.StepTypeCanvas,
-						CanvasContent: &models.StepCanvasContent{
-							Type: models.StepCanvasTypeCallout,
-						},
-					}, nil).
-					Once()
-			},
-			check: func(t *testing.T, step *models.Step) {
-				assert.Equal(t, models.StepTypeCanvas, step.Type)
-				require.NotNil(t, step.CanvasContent)
-				assert.Equal(t, models.StepCanvasTypeCallout, step.CanvasContent.Type)
-			},
+			name:    "returns error for empty userID",
+			userID:  "",
+			stepID:  uuid.New().String(),
+			req:     &types.UpdateStepRequest{},
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
+			wantErr: true,
 		},
 		{
 			name:    "returns error for empty stepID",
+			userID:  uuid.New().String(),
 			stepID:  "",
 			req:     &types.UpdateStepRequest{},
-			setup:   func(_ *tests.MockStepsRepository, _ *tests.MockPresignService) {},
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
 			wantErr: true,
 		},
 		{
 			name:    "returns error for invalid UUID",
+			userID:  uuid.New().String(),
 			stepID:  "not-a-uuid",
 			req:     &types.UpdateStepRequest{},
-			setup:   func(_ *tests.MockStepsRepository, _ *tests.MockPresignService) {},
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
 			wantErr: true,
 		},
 		{
 			name:   "returns error when step not found",
+			userID: uuid.New().String(),
 			stepID: uuid.New().String(),
 			req: &types.UpdateStepRequest{
 				Action: new(models.StepActionClick),
 			},
-			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
-				mockStepsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateStepDTO")).
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {
+				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
 			},
@@ -533,11 +577,29 @@ func TestStepsService_Update(t *testing.T) {
 		},
 		{
 			name:   "propagates repository error",
+			userID: "test-update-user",
 			stepID: uuid.New().String(),
 			req: &types.UpdateStepRequest{
 				Action: new(models.StepActionClick),
 			},
-			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
+				guideID := uuid.New()
+				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-update-user", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-update-user",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockStepsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateStepDTO")).
 					Return(nil, assert.AnError).
 					Once()
@@ -551,18 +613,22 @@ func TestStepsService_Update(t *testing.T) {
 			t.Parallel()
 
 			mockStepsRepo := new(tests.MockStepsRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockPresignClient := new(tests.MockPresignService)
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-			tt.setup(mockStepsRepo, mockPresignClient)
+			tt.setup(t, mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
-			step, err := svc.Update(context.Background(), tt.stepID, tt.req)
+			step, err := svc.Update(context.Background(), tt.userID, tt.stepID, tt.req)
 
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, step)
+				if tt.userID == "" {
+					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
+				}
 				if tt.stepID == "" || tt.stepID == "not-a-uuid" {
 					assert.ErrorIs(t, err, constants.ErrInvalidStepID)
 				}
@@ -577,6 +643,7 @@ func TestStepsService_Update(t *testing.T) {
 			}
 
 			mockStepsRepo.AssertExpectations(t)
+			mockGuidesRepo.AssertExpectations(t)
 			mockPresignClient.AssertExpectations(t)
 		})
 	}
@@ -585,49 +652,97 @@ func TestStepsService_Update(t *testing.T) {
 func TestStepsService_Delete(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
+	type testCase struct {
 		name    string
+		userID  string
 		stepID  string
-		setup   func(*tests.MockStepsRepository, *tests.MockMediaAssetsRepository)
+		setup   func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockMediaAssetsRepository)
 		wantErr bool
-	}{
-		{
-			name:   "deletes step with assets",
-			stepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				storagePath := "uploads/test/asset.png"
-				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.AnythingOfType("string")).
-					Return([]*models.MediaAsset{
-						{ID: uuid.New(), StepID: uuid.New(), StoragePath: storagePath},
+	}
+
+	deleteSuccessCase := func(name string, withAssets bool) testCase {
+		userID := "test-delete-user-" + name
+		stepID := uuid.New().String()
+		guideID := uuid.New()
+		storagePath := "uploads/test/asset.png"
+		return testCase{
+			name:   name,
+			userID: userID,
+			stepID: stepID,
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+				mockStepsRepo.On("GetByID", mock.Anything, stepID).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockStepsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: userID,
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
+				if withAssets {
+					mockMediaAssetsRepo.On("GetByStepID", mock.Anything, stepID).
+						Return([]*models.MediaAsset{
+							{ID: uuid.New(), StepID: uuid.New(), StoragePath: storagePath},
+						}, nil).
+						Once()
+				} else {
+					mockMediaAssetsRepo.On("GetByStepID", mock.Anything, stepID).
+						Return([]*models.MediaAsset{}, nil).
+						Once()
+				}
+				mockStepsRepo.On("Delete", mock.Anything, stepID).
 					Return(nil).
 					Once()
 			},
-		},
+		}
+	}
+
+	cases := []testCase{
+		deleteSuccessCase("deletes step with assets", true),
+		deleteSuccessCase("deletes step without assets", false),
 		{
-			name:   "deletes step without assets",
-			stepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.AnythingOfType("string")).
-					Return([]*models.MediaAsset{}, nil).
-					Once()
-				mockStepsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
-					Return(nil).
-					Once()
-			},
+			name:    "returns error for empty userID",
+			userID:  "",
+			stepID:  uuid.New().String(),
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockMediaAssetsRepository) {},
+			wantErr: true,
 		},
 		{
 			name:    "returns error for empty stepID",
+			userID:  "test-delete-user-empty-step",
 			stepID:  "",
-			setup:   func(_ *tests.MockStepsRepository, _ *tests.MockMediaAssetsRepository) {},
+			setup:   func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockMediaAssetsRepository) {},
 			wantErr: true,
 		},
 		{
 			name:   "returns error when GetByStepID fails",
+			userID: "test-delete-user-getbystepid-fail",
 			stepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+				guideID := uuid.New()
+				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-delete-user-getbystepid-fail", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-delete-user-getbystepid-fail",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, assert.AnError).
 					Once()
@@ -636,8 +751,26 @@ func TestStepsService_Delete(t *testing.T) {
 		},
 		{
 			name:   "returns error when repo delete fails",
+			userID: "test-delete-user-repo-delete-fail",
 			stepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+				guideID := uuid.New()
+				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-delete-user-repo-delete-fail", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-delete-user-repo-delete-fail",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.AnythingOfType("string")).
 					Return([]*models.MediaAsset{}, nil).
 					Once()
@@ -654,17 +787,21 @@ func TestStepsService_Delete(t *testing.T) {
 			t.Parallel()
 
 			mockStepsRepo := new(tests.MockStepsRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-			tt.setup(mockStepsRepo, mockMediaAssetsRepo)
+			tt.setup(t, mockStepsRepo, mockGuidesRepo, mockMediaAssetsRepo)
 			mockPresignClient := new(tests.MockPresignService)
 			mockStorageService := new(tests.MockStorageService)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
-			err := svc.Delete(context.Background(), tt.stepID)
+			err := svc.Delete(context.Background(), tt.userID, tt.stepID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
+				if tt.userID == "" {
+					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
+				}
 				if tt.stepID == "" {
 					assert.ErrorIs(t, err, constants.ErrInvalidStepID)
 				}
@@ -673,6 +810,7 @@ func TestStepsService_Delete(t *testing.T) {
 			}
 
 			mockStepsRepo.AssertExpectations(t)
+			mockGuidesRepo.AssertExpectations(t)
 			mockMediaAssetsRepo.AssertExpectations(t)
 		})
 	}
@@ -681,103 +819,72 @@ func TestStepsService_Delete(t *testing.T) {
 func TestStepsService_Reorder(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
+	type testCase struct {
 		name         string
 		userID       string
 		guideID      string
 		targetStepID string
 		prevStepID   *string
 		nextStepID   *string
-		setup        func(*tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
+		setup        func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
 		wantErr      bool
 		wantLen      int
-	}{
-		{
-			name:         "reorders steps successfully",
-			userID:       uuid.New().String(),
-			guideID:      uuid.New().String(),
+	}
+
+	successCase := func(name string, wantLen int, prevStepID *string, nextStepID *string) testCase {
+		userID := "test-reorder-" + name
+		guideID := uuid.New().String()
+		guideUUID := uuid.MustParse(guideID)
+		return testCase{
+			name:         name,
+			userID:       userID,
+			guideID:      guideID,
 			targetStepID: uuid.New().String(),
-			prevStepID:   new(uuid.New().String()),
-			nextStepID:   new(uuid.New().String()),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
-					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
+			prevStepID:   prevStepID,
+			nextStepID:   nextStepID,
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
+				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideID).
+					Return(&models.Guide{ID: guideUUID, CreatorID: userID, Title: "Test Guide", Status: models.StatusDraft}, nil).
 					Once()
-				mockStepsRepo.On("Reorder", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
-					Return([]*models.Step{
-						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "a0", Action: new(models.StepActionClick)},
-						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "b0", Action: new(models.StepActionInput)},
-					}, nil).
+				reorderedSteps := make([]*models.Step, wantLen)
+				for i := range reorderedSteps {
+					reorderedSteps[i] = &models.Step{ID: uuid.New(), GuideID: guideUUID, SortOrder: string(rune('a' + i)) + "0", Action: new(models.StepActionClick)}
+				}
+				mockStepsRepo.On("Reorder", mock.Anything, guideID, mock.AnythingOfType("string"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
+					Return(reorderedSteps, nil).
 					Once()
 			},
-			wantLen: 2,
-		},
-		{
-			name:         "reorders step to beginning",
-			userID:       uuid.New().String(),
-			guideID:      uuid.New().String(),
-			targetStepID: uuid.New().String(),
-			prevStepID:   nil,
-			nextStepID:   new(uuid.New().String()),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
-					Return(&models.Guide{ID: uuid.New(), CreatorID: uuid.New().String(), Title: "Test Guide", Status: models.StatusDraft}, nil).
-					Once()
-				mockStepsRepo.On("Reorder", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
-					Return([]*models.Step{
-						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "a0", Action: new(models.StepActionClick)},
-					}, nil).
-					Once()
-			},
-			wantLen: 1,
-		},
-		{
-			name:         "reorders step to end",
-			userID:       uuid.New().String(),
-			guideID:      uuid.New().String(),
-			targetStepID: uuid.New().String(),
-			prevStepID:   new(uuid.New().String()),
-			nextStepID:   nil,
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
-					Return(&models.Guide{ID: uuid.New(), CreatorID: uuid.New().String(), Title: "Test Guide", Status: models.StatusDraft}, nil).
-					Once()
-				mockStepsRepo.On("Reorder", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
-					Return([]*models.Step{
-						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "a0", Action: new(models.StepActionClick)},
-					}, nil).
-					Once()
-			},
-			wantLen: 1,
-		},
+			wantLen: wantLen,
+		}
+	}
+
+	cases := []testCase{
+		successCase("reorders steps successfully", 2, new(uuid.New().String()), new(uuid.New().String())),
+		successCase("reorders step to beginning", 1, nil, new(uuid.New().String())),
+		successCase("reorders step to end", 1, new(uuid.New().String()), nil),
 		{
 			name:         "returns error for empty user ID",
 			userID:       "",
 			guideID:      uuid.New().String(),
 			targetStepID: uuid.New().String(),
-			setup:        func(_ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
+			setup:        func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
 			wantErr:      true,
 		},
 		{
 			name:         "returns error for empty guide ID",
-			userID:       uuid.New().String(),
+			userID:       "test-reorder-empty-guide",
 			guideID:      "",
 			targetStepID: uuid.New().String(),
-			setup:        func(_ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
+			setup:        func(_ *testing.T, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
 			wantErr:      true,
 		},
 		{
 			name:         "returns error when guide not found",
-			userID:       uuid.New().String(),
+			userID:       "test-reorder-guide-not-found",
 			guideID:      uuid.New().String(),
 			targetStepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-reorder-guide-not-found", mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
 			},
@@ -785,14 +892,14 @@ func TestStepsService_Reorder(t *testing.T) {
 		},
 		{
 			name:         "propagates repository error",
-			userID:       uuid.New().String(),
+			userID:       "test-reorder-propagate",
 			guideID:      uuid.New().String(),
 			targetStepID: uuid.New().String(),
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+			setup: func(_ *testing.T, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-reorder-propagate", mock.AnythingOfType("string")).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: "test-reorder-propagate",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -813,7 +920,7 @@ func TestStepsService_Reorder(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockPresignClient := new(tests.MockPresignService)
-			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient)
+			tt.setup(t, mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
@@ -960,6 +1067,12 @@ func TestStepsService_Duplicate(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideID.String()).
 					Return(baseGuide, nil).
 					Once()
+				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePaths[0]).
+					Return("https://presigned.test/old1", nil).
+					Once()
+				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePaths[1]).
+					Return("https://presigned.test/old2", nil).
+					Once()
 				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
 					Return(newStep, nil).
 					Once()
@@ -1020,6 +1133,9 @@ func TestStepsService_Duplicate(t *testing.T) {
 					Once()
 				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideID.String()).
 					Return(baseGuide, nil).
+					Once()
+				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
+					Return("https://presigned.test/old-thumb", nil).
 					Once()
 				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
 					Return(newStep, nil).
@@ -1146,7 +1262,7 @@ func TestStepsService_Duplicate(t *testing.T) {
 			userID: userID,
 			stepID: stepID.String(),
 			req:    &types.DuplicateStepRequest{},
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService, mockStorageService *tests.MockStorageService, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockPresignClient *tests.MockPresignService, mockStorageService *tests.MockStorageService, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
 				storagePaths := []string{
 					"uploads/guides/" + guideID.String() + "/steps/" + stepID.String() + "/123.webp",
 					"uploads/guides/" + guideID.String() + "/steps/" + stepID.String() + "/456.webp",
@@ -1174,6 +1290,12 @@ func TestStepsService_Duplicate(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideID.String()).
 					Return(baseGuide, nil).
 					Once()
+				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePaths[0]).
+					Return("https://presigned.test/s3fail1", nil).
+					Once()
+				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePaths[1]).
+					Return("https://presigned.test/s3fail2", nil).
+					Once()
 				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
 					Return(newStep, nil).
 					Once()
@@ -1194,7 +1316,7 @@ func TestStepsService_Duplicate(t *testing.T) {
 			userID: userID,
 			stepID: stepID.String(),
 			req:    &types.DuplicateStepRequest{},
-			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService, mockStorageService *tests.MockStorageService, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockPresignClient *tests.MockPresignService, mockStorageService *tests.MockStorageService, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
 				storagePath := "uploads/guides/" + guideID.String() + "/steps/" + stepID.String() + "/123.webp"
 				newPath := "uploads/guides/" + guideID.String() + "/steps/" + newStepID.String() + "/123.webp"
 
@@ -1214,6 +1336,9 @@ func TestStepsService_Duplicate(t *testing.T) {
 					Once()
 				mockGuidesRepo.On("GetByID", mock.Anything, userID, guideID.String()).
 					Return(baseGuide, nil).
+					Once()
+				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
+					Return("https://presigned.test/macreatefail", nil).
 					Once()
 				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
 					Return(newStep, nil).

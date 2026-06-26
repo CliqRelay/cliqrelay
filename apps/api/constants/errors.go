@@ -10,6 +10,7 @@ var (
 	ErrGuideNotFound           = errors.New("guide not found")
 	ErrGuideDeleted            = errors.New("guide has been deleted")
 	ErrGuidePermanentlyDeleted = errors.New("guide has been permanently deleted")
+	ErrGuideNotOwnedByUser     = errors.New("you do not own this guide")
 
 	ErrInvalidStepID = errors.New("invalid step ID")
 	ErrStepNotFound  = errors.New("step not found")

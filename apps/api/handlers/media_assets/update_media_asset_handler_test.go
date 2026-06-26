@@ -27,7 +27,7 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 		assetID        string
 		payload        any
 		rawBody        []byte
-		setup          func(*tests.MockMediaAssetsRepository)
+		setup          func(*tests.MockMediaAssetsRepository, *tests.MockStepsRepository, *tests.MockGuidesRepository)
 		expectedStatus int
 		expectedBody   string
 	}{
@@ -37,7 +37,31 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 			payload: types.UpdateMediaAssetRequest{
 				AltText: new("updated alt text"),
 			},
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.MediaAsset{
+						ID:          uuid.New(),
+						StepID:      stepID,
+						StoragePath: "screenshots/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-user-123",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateMediaAssetDTO")).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
@@ -54,7 +78,7 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 			name:           "invalid JSON body",
 			assetID:        uuid.New().String(),
 			rawBody:        []byte("{invalid json}"),
-			setup:          func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {},
+			setup:          func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedBody:   "invalid character",
 		},
@@ -64,7 +88,31 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 			payload: types.UpdateMediaAssetRequest{
 				AltText: new("updated alt text"),
 			},
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.MediaAsset{
+						ID:          uuid.New(),
+						StepID:      stepID,
+						StoragePath: "screenshots/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-user-123",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateMediaAssetDTO")).
 					Return(nil, assert.AnError).
 					Once()
@@ -84,7 +132,7 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
-			tt.setup(mockMediaAssetsRepo)
+			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 			handler := handlersmediaassets.NewUpdateMediaAssetHandler(appConfig, svc)
 
@@ -109,6 +157,8 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 			}
 
 			mockMediaAssetsRepo.AssertExpectations(t)
+			mockStepsRepo.AssertExpectations(t)
+			mockGuidesRepo.AssertExpectations(t)
 		})
 	}
 }

@@ -26,7 +26,7 @@ func (h *DeleteStepHandler) Handle() http.HandlerFunc {
 
 		stepID := r.PathValue("id")
 
-		err := h.stepsService.Delete(ctx, stepID)
+		err := h.stepsService.Delete(ctx, reqCtx.Actor.ID, stepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

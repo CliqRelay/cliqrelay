@@ -35,7 +35,7 @@ func TestMediaAssetsService_Create(t *testing.T) {
 	}{
 		{
 			name:   "creates media asset successfully",
-			userID: uuid.New().String(),
+			userID: "test-ma-create-user",
 			req: &types.CreateMediaAssetRequest{
 				StepID:      uuid.New(),
 				StoragePath: "uploads/test.png",
@@ -46,18 +46,19 @@ func TestMediaAssetsService_Create(t *testing.T) {
 				ByteSize:    &byteSize,
 			},
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
 				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Step{
 						ID:        uuid.New(),
-						GuideID:   uuid.New(),
+						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-create-user", guideID.String()).
 					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						ID:        guideID,
+						CreatorID: "test-ma-create-user",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -100,7 +101,7 @@ func TestMediaAssetsService_Create(t *testing.T) {
 		},
 		{
 			name:   "returns error when step not found",
-			userID: uuid.New().String(),
+			userID: "test-ma-create-step-not-found",
 			req: &types.CreateMediaAssetRequest{
 				StepID:      uuid.New(),
 				StoragePath: "uploads/test.png",
@@ -114,21 +115,22 @@ func TestMediaAssetsService_Create(t *testing.T) {
 		},
 		{
 			name:   "returns error when guide not found",
-			userID: uuid.New().String(),
+			userID: "test-ma-create-guide-not-found",
 			req: &types.CreateMediaAssetRequest{
 				StepID:      uuid.New(),
 				StoragePath: "uploads/test.png",
 			},
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
 				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Step{
 						ID:        uuid.New(),
-						GuideID:   uuid.New(),
+						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-create-guide-not-found", guideID.String()).
 					Return(nil, nil).
 					Once()
 			},
@@ -136,24 +138,25 @@ func TestMediaAssetsService_Create(t *testing.T) {
 		},
 		{
 			name:   "propagates repository error",
-			userID: uuid.New().String(),
+			userID: "test-ma-create-propagate",
 			req: &types.CreateMediaAssetRequest{
 				StepID:      uuid.New(),
 				StoragePath: "uploads/test.png",
 			},
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
 				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Step{
 						ID:        uuid.New(),
-						GuideID:   uuid.New(),
+						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-create-propagate", guideID.String()).
 					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						ID:        guideID,
+						CreatorID: "test-ma-create-propagate",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -202,33 +205,62 @@ func TestMediaAssetsService_GetByID(t *testing.T) {
 
 	cases := []struct {
 		name         string
+		userID       string
 		mediaAssetID string
-		setup        func(*tests.MockMediaAssetsRepository)
+		setup        func(*tests.MockMediaAssetsRepository, *tests.MockStepsRepository, *tests.MockGuidesRepository)
 		wantErr      bool
 	}{
 		{
 			name:         "returns media asset successfully",
+			userID:       "test-ma-get-by-id",
 			mediaAssetID: uuid.New().String(),
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
 				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
-						StepID:      uuid.New(),
+						StepID:      stepID,
 						StoragePath: "uploads/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-get-by-id", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-ma-get-by-id",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
 					}, nil).
 					Once()
 			},
 		},
 		{
+			name:         "returns error for empty user ID",
+			userID:       "",
+			mediaAssetID: uuid.New().String(),
+			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
+			wantErr:      true,
+		},
+		{
 			name:         "returns error for empty ID",
+			userID:       "test-ma-get-by-id-empty",
 			mediaAssetID: "",
-			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {},
+			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			wantErr:      true,
 		},
 		{
 			name:         "returns error when media asset not found",
+			userID:       uuid.New().String(),
 			mediaAssetID: uuid.New().String(),
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
@@ -237,8 +269,9 @@ func TestMediaAssetsService_GetByID(t *testing.T) {
 		},
 		{
 			name:         "propagates repository error",
+			userID:       uuid.New().String(),
 			mediaAssetID: uuid.New().String(),
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, assert.AnError).
 					Once()
@@ -252,14 +285,19 @@ func TestMediaAssetsService_GetByID(t *testing.T) {
 			t.Parallel()
 
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			tt.setup(mockMediaAssetsRepo)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil, (*interfaces.MediaAssetHooks)(nil))
+			mockStepsRepo := new(tests.MockStepsRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
+			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 
-			mediaAsset, err := svc.GetByID(context.Background(), tt.mediaAssetID)
+			mediaAsset, err := svc.GetByID(context.Background(), tt.userID, tt.mediaAssetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, mediaAsset)
+				if tt.userID == "" {
+					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
+				}
 				if tt.mediaAssetID == "" {
 					assert.ErrorIs(t, err, constants.ErrInvalidMediaAssetID)
 				}
@@ -270,6 +308,8 @@ func TestMediaAssetsService_GetByID(t *testing.T) {
 			}
 
 			mockMediaAssetsRepo.AssertExpectations(t)
+			mockStepsRepo.AssertExpectations(t)
+			mockGuidesRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -287,21 +327,22 @@ func TestMediaAssetsService_GetByStepID(t *testing.T) {
 	}{
 		{
 			name:   "returns media assets successfully",
-			userID: uuid.New().String(),
+			userID: "test-ma-get-by-step",
 			stepID: uuid.New().String(),
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
 				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Step{
 						ID:        uuid.New(),
-						GuideID:   uuid.New(),
+						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-get-by-step", guideID.String()).
 					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						ID:        guideID,
+						CreatorID: "test-ma-get-by-step",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -325,7 +366,7 @@ func TestMediaAssetsService_GetByStepID(t *testing.T) {
 		},
 		{
 			name:   "returns error for empty step ID",
-			userID: uuid.New().String(),
+			userID: "test-ma-get-by-step-empty",
 			stepID: "",
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 			},
@@ -344,18 +385,19 @@ func TestMediaAssetsService_GetByStepID(t *testing.T) {
 		},
 		{
 			name:   "returns error when guide not found",
-			userID: uuid.New().String(),
+			userID: "test-ma-get-by-step-guide-not-found",
 			stepID: uuid.New().String(),
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
 				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Step{
 						ID:        uuid.New(),
-						GuideID:   uuid.New(),
+						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-get-by-step-guide-not-found", guideID.String()).
 					Return(nil, nil).
 					Once()
 			},
@@ -363,21 +405,22 @@ func TestMediaAssetsService_GetByStepID(t *testing.T) {
 		},
 		{
 			name:   "propagates repository error",
-			userID: uuid.New().String(),
+			userID: "test-ma-get-by-step-propagate",
 			stepID: uuid.New().String(),
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
 				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Step{
 						ID:        uuid.New(),
-						GuideID:   uuid.New(),
+						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-get-by-step-propagate", guideID.String()).
 					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						ID:        guideID,
+						CreatorID: "test-ma-get-by-step-propagate",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -434,13 +477,15 @@ func TestMediaAssetsService_Update(t *testing.T) {
 
 	cases := []struct {
 		name         string
+		userID       string
 		mediaAssetID string
 		req          *types.UpdateMediaAssetRequest
-		setup        func(*tests.MockMediaAssetsRepository)
+		setup        func(*tests.MockMediaAssetsRepository, *tests.MockStepsRepository, *tests.MockGuidesRepository)
 		wantErr      bool
 	}{
 		{
 			name:         "updates media asset successfully",
+			userID:       "test-ma-update-success",
 			mediaAssetID: uuid.New().String(),
 			req: &types.UpdateMediaAssetRequest{
 				AltText:  &altText,
@@ -449,7 +494,32 @@ func TestMediaAssetsService_Update(t *testing.T) {
 				Width:    &width,
 				ByteSize: &byteSize,
 			},
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.MediaAsset{
+						ID:          uuid.New(),
+						StepID:      stepID,
+						StoragePath: "uploads/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-update-success", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-ma-update-success",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateMediaAssetDTO")).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
@@ -465,26 +535,62 @@ func TestMediaAssetsService_Update(t *testing.T) {
 			},
 		},
 		{
+			name:         "returns error for empty user ID",
+			userID:       "",
+			mediaAssetID: uuid.New().String(),
+			req:          &types.UpdateMediaAssetRequest{},
+			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
+			wantErr:      true,
+		},
+		{
 			name:         "returns error for empty ID",
+			userID:       uuid.New().String(),
 			mediaAssetID: "",
 			req:          &types.UpdateMediaAssetRequest{},
-			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {},
+			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			wantErr:      true,
 		},
 		{
 			name:         "returns error for invalid UUID",
+			userID:       uuid.New().String(),
 			mediaAssetID: "not-a-uuid",
 			req:          &types.UpdateMediaAssetRequest{},
-			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {},
+			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			wantErr:      true,
 		},
 		{
 			name:         "returns error when media asset not found",
+			userID:       "test-ma-update-not-found",
 			mediaAssetID: uuid.New().String(),
 			req: &types.UpdateMediaAssetRequest{
 				AltText: &altText,
 			},
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.MediaAsset{
+						ID:          uuid.New(),
+						StepID:      stepID,
+						StoragePath: "uploads/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-update-not-found", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-ma-update-not-found",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateMediaAssetDTO")).
 					Return(nil, nil).
 					Once()
@@ -493,11 +599,37 @@ func TestMediaAssetsService_Update(t *testing.T) {
 		},
 		{
 			name:         "propagates repository error",
+			userID:       "test-ma-update-propagate",
 			mediaAssetID: uuid.New().String(),
 			req: &types.UpdateMediaAssetRequest{
 				AltText: &altText,
 			},
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.MediaAsset{
+						ID:          uuid.New(),
+						StepID:      stepID,
+						StoragePath: "uploads/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-update-propagate", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-ma-update-propagate",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateMediaAssetDTO")).
 					Return(nil, assert.AnError).
 					Once()
@@ -511,14 +643,19 @@ func TestMediaAssetsService_Update(t *testing.T) {
 			t.Parallel()
 
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			tt.setup(mockMediaAssetsRepo)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil, (*interfaces.MediaAssetHooks)(nil))
+			mockStepsRepo := new(tests.MockStepsRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
+			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 
-			mediaAsset, err := svc.Update(context.Background(), tt.mediaAssetID, tt.req)
+			mediaAsset, err := svc.Update(context.Background(), tt.userID, tt.mediaAssetID, tt.req)
 
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, mediaAsset)
+				if tt.userID == "" {
+					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
+				}
 				if tt.mediaAssetID == "" || tt.mediaAssetID == "not-a-uuid" {
 					assert.ErrorIs(t, err, constants.ErrInvalidMediaAssetID)
 				}
@@ -529,6 +666,8 @@ func TestMediaAssetsService_Update(t *testing.T) {
 			}
 
 			mockMediaAssetsRepo.AssertExpectations(t)
+			mockStepsRepo.AssertExpectations(t)
+			mockGuidesRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -538,14 +677,41 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 
 	cases := []struct {
 		name         string
+		userID       string
 		mediaAssetID string
-		setup        func(*tests.MockMediaAssetsRepository)
+		setup        func(*tests.MockMediaAssetsRepository, *tests.MockStepsRepository, *tests.MockGuidesRepository)
 		wantErr      bool
 	}{
 		{
 			name:         "deletes media asset successfully",
+			userID:       "test-ma-delete-success",
 			mediaAssetID: uuid.New().String(),
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.MediaAsset{
+						ID:          uuid.New(),
+						StepID:      stepID,
+						StoragePath: "uploads/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-delete-success", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-ma-delete-success",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
@@ -556,15 +722,49 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 			},
 		},
 		{
+			name:         "returns error for empty user ID",
+			userID:       "",
+			mediaAssetID: uuid.New().String(),
+			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
+			wantErr:      true,
+		},
+		{
 			name:         "returns error for empty ID",
+			userID:       uuid.New().String(),
 			mediaAssetID: "",
-			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {},
+			setup:        func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			wantErr:      true,
 		},
 		{
 			name:         "returns error when media asset not found",
+			userID:       "test-ma-delete-not-found",
 			mediaAssetID: uuid.New().String(),
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.MediaAsset{
+						ID:          uuid.New(),
+						StepID:      stepID,
+						StoragePath: "uploads/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-delete-not-found", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-ma-delete-not-found",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
@@ -573,8 +773,34 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 		},
 		{
 			name:         "propagates repository error",
+			userID:       "test-ma-delete-propagate",
 			mediaAssetID: uuid.New().String(),
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				stepID := uuid.New()
+				guideID := uuid.New()
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.MediaAsset{
+						ID:          uuid.New(),
+						StepID:      stepID,
+						StoragePath: "uploads/test.png",
+					}, nil).
+					Once()
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:        stepID,
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-ma-delete-propagate", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-ma-delete-propagate",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockMediaAssetsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, assert.AnError).
 					Once()
@@ -588,14 +814,19 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 			t.Parallel()
 
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-			tt.setup(mockMediaAssetsRepo)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, nil, nil, (*interfaces.MediaAssetHooks)(nil))
+			mockStepsRepo := new(tests.MockStepsRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
+			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 
-			mediaAsset, err := svc.Delete(context.Background(), tt.mediaAssetID)
+			mediaAsset, err := svc.Delete(context.Background(), tt.userID, tt.mediaAssetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, mediaAsset)
+				if tt.userID == "" {
+					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
+				}
 				if tt.mediaAssetID == "" {
 					assert.ErrorIs(t, err, constants.ErrInvalidMediaAssetID)
 				}
@@ -605,6 +836,8 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 			}
 
 			mockMediaAssetsRepo.AssertExpectations(t)
+			mockStepsRepo.AssertExpectations(t)
+			mockGuidesRepo.AssertExpectations(t)
 		})
 	}
 }

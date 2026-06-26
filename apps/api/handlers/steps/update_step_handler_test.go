@@ -29,10 +29,10 @@ func TestUpdateStepHandler(t *testing.T) {
 		stepID         string
 		payload        any
 		rawBody        []byte
-		setup          func(*tests.MockStepsRepository)
+		setup          func(*tests.MockStepsRepository, *tests.MockGuidesRepository)
 		expectedStatus int
 		expectedBody   string
-		responseKey    string // JSON key for success response check, defaults to "step.action"
+		responseKey    string
 	}{
 		{
 			name:   "success",
@@ -40,7 +40,24 @@ func TestUpdateStepHandler(t *testing.T) {
 			payload: types.UpdateStepRequest{
 				Action: new(models.StepActionNavigation),
 			},
-			setup: func(mockStepsRepo *tests.MockStepsRepository) {
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
+				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-user-123",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockStepsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateStepDTO")).
 					Return(&models.Step{
 						ID:        uuid.New(),
@@ -62,7 +79,24 @@ func TestUpdateStepHandler(t *testing.T) {
 					Type: models.StepCanvasTypeCallout,
 				},
 			},
-			setup: func(mockStepsRepo *tests.MockStepsRepository) {
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
+				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-user-123",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockStepsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateStepDTO")).
 					Return(&models.Step{
 						ID:        uuid.New(),
@@ -83,7 +117,7 @@ func TestUpdateStepHandler(t *testing.T) {
 			name:           "invalid JSON body",
 			stepID:         uuid.New().String(),
 			rawBody:        []byte("{invalid json}"),
-			setup:          func(mockStepsRepo *tests.MockStepsRepository) {},
+			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedBody:   "invalid character",
 		},
@@ -93,7 +127,7 @@ func TestUpdateStepHandler(t *testing.T) {
 			payload: types.UpdateStepRequest{
 				Action: new(models.StepAction("invalid_action")),
 			},
-			setup:          func(mockStepsRepo *tests.MockStepsRepository) {},
+			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedBody:   "failed on the 'oneof' tag",
 		},
@@ -104,7 +138,7 @@ func TestUpdateStepHandler(t *testing.T) {
 				Type:   new(models.StepType(models.StepTypeCanvas)),
 				Action: new(models.StepActionClick),
 			},
-			setup:          func(mockStepsRepo *tests.MockStepsRepository) {},
+			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedBody:   "action is not applicable for canvas steps",
 		},
@@ -117,7 +151,7 @@ func TestUpdateStepHandler(t *testing.T) {
 					Type: models.StepCanvasTypeCallout,
 				},
 			},
-			setup:          func(mockStepsRepo *tests.MockStepsRepository) {},
+			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedBody:   "canvas_content is not applicable for interaction steps",
 		},
@@ -127,7 +161,24 @@ func TestUpdateStepHandler(t *testing.T) {
 			payload: types.UpdateStepRequest{
 				Action: new(models.StepActionClick),
 			},
-			setup: func(mockStepsRepo *tests.MockStepsRepository) {
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
+				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Action:    new(models.StepActionClick),
+					}, nil).
+					Once()
+				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: "test-user-123",
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockStepsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateStepDTO")).
 					Return(nil, assert.AnError).
 					Once()
@@ -146,8 +197,9 @@ func TestUpdateStepHandler(t *testing.T) {
 
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 			mockStepsRepo := new(tests.MockStepsRepository)
-			tt.setup(mockStepsRepo)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, nil, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			mockGuidesRepo := new(tests.MockGuidesRepository)
+			tt.setup(mockStepsRepo, mockGuidesRepo)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewUpdateStepHandler(appConfig, svc)
 
 			var req tests.HandlerTestRequest
@@ -175,6 +227,7 @@ func TestUpdateStepHandler(t *testing.T) {
 			}
 
 			mockStepsRepo.AssertExpectations(t)
+			mockGuidesRepo.AssertExpectations(t)
 		})
 	}
 }

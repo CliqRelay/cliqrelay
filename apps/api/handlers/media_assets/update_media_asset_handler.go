@@ -39,7 +39,7 @@ func (h *UpdateMediaAssetHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		mediaAsset, err := h.mediaAssetsService.Update(ctx, id, &request)
+		mediaAsset, err := h.mediaAssetsService.Update(ctx, reqCtx.Actor.ID, id, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

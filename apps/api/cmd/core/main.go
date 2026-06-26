@@ -28,8 +28,8 @@ import (
 	"github.com/CliqRelay/cliqrelay/services/presign"
 	"github.com/CliqRelay/cliqrelay/services/purge"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
-	"github.com/CliqRelay/cliqrelay/services/storage"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
+	"github.com/CliqRelay/cliqrelay/services/storage"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
 	"github.com/CliqRelay/cliqrelay/worker"
 )
@@ -88,22 +88,22 @@ func main() {
 	stepHooks := (*interfaces.StepHooks)(nil)
 	mediaHooks := (*interfaces.MediaAssetHooks)(nil)
 
-	guidesSvc := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, guidesCache, bunStepsRepo, appConfig.RedisClient, guideHooks)
-	starredSvc := starredguidesservice.NewStarredGuidesService(bunStarredGuidesRepo)
-	stepsSvc := stepsservice.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignService, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger, stepHooks)
-	mediaAssetsSvc := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, mediaHooks)
-	exportSvc := export.NewExportService(bunGuideExportsRepo, bunGuidesRepo, bunStepsRepo, storageService, presignService, appConfig.RedisClient, appConfig.S3Bucket)
-	uploadsSvc := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, appConfig.S3Bucket)
-	purgeSvc := purge.NewPurgeService(bunGuidesRepo, storageService, appConfig.S3Bucket)
+	guidesService := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, guidesCache, bunStepsRepo, appConfig.RedisClient, guideHooks)
+	starredService := starredguidesservice.NewStarredGuidesService(bunStarredGuidesRepo)
+	stepsService := stepsservice.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignService, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger, stepHooks)
+	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, mediaHooks)
+	exportService := export.NewExportService(bunGuideExportsRepo, bunGuidesRepo, bunStepsRepo, storageService, presignService, appConfig.RedisClient, appConfig.S3Bucket)
+	uploadsService := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, appConfig.S3Bucket)
+	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, appConfig.S3Bucket)
 
 	svcs := &interfaces.DomainServices{
-		GuidesService:      guidesSvc,
-		StepsService:       stepsSvc,
-		StarredGuidesSvc:   starredSvc,
-		MediaAssetsService: mediaAssetsSvc,
-		ExportService:      exportSvc,
-		UploadsService:     uploadsSvc,
-		PurgeService:       purgeSvc,
+		GuidesService:        guidesService,
+		StepsService:         stepsService,
+		StarredGuidesService: starredService,
+		MediaAssetsService:   mediaAssetsService,
+		ExportService:        exportService,
+		UploadsService:       uploadsService,
+		PurgeService:         purgeService,
 	}
 
 	routes.InitRoutes(appConfig, svcs)
@@ -111,8 +111,8 @@ func main() {
 	if envConfig.StandaloneMode == "true" {
 		consumer := worker.NewStreamConsumer(infraCfg.RedisClient, "cliqrelay-standalone-consumer-group", 5, worker.WithConcurrency(5))
 		consumer.RegisterHandler(events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, worker.HandleMediaAssetsEvent(storageService, infraCfg.S3Bucket))
-		consumer.RegisterHandler(events.TopicGuides, events.EventTypeGuidePurge, worker.HandleGuidePurgeEvent(purgeSvc))
-		consumer.RegisterHandler(events.TopicGuideExports, events.EventTypeGuideExport, worker.HandleGuideExportEvent(exportSvc))
+		consumer.RegisterHandler(events.TopicGuides, events.EventTypeGuidePurge, worker.HandleGuidePurgeEvent(purgeService))
+		consumer.RegisterHandler(events.TopicGuideExports, events.EventTypeGuideExport, worker.HandleGuideExportEvent(exportService))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
