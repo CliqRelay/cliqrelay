@@ -7,7 +7,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 
 const config = defineConfig({
-	resolve: { tsconfigPaths: true },
+	resolve: {
+		tsconfigPaths: true,
+	},
 	plugins: [
 		devtools(),
 		nitro({ rollupConfig: { external: [/^@sentry\//] } } as any),
@@ -15,20 +17,26 @@ const config = defineConfig({
 		tanstackStart(),
 		viteReact(),
 		babel({ presets: [reactCompilerPreset()] }),
-		// ensures virtual:extensions is always a no-op
 		{
-			name: "virtual-extensions",
+			name: "virtual:extensions",
 			resolveId(id) {
-				if (id === "virtual:extensions") return "\0virtual:extensions";
+				if (id === "virtual:extensions") {
+					return "\0virtual:extensions";
+				}
 			},
 			load(id) {
-				if (id === "\0virtual:extensions") return "";
+				if (id === "\0virtual:extensions") {
+					return "";
+				}
 			},
 		},
 	],
 	server: {
 		host: "::",
 		port: 3000,
+		fs: {
+			strict: false,
+		},
 	},
 });
 
