@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "lint": "biome lint ./src/**/*.ts",
+    "format": "biome format --write",
     "test": "vitest --run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
