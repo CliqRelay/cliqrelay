@@ -15,8 +15,6 @@ import (
 )
 
 func UploadRoutes(appConfig *config.AppConfig, uploadSvc interfaces.UploadsService) []authulamodels.Route {
-	RegisterUploadsOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
-
 	uploadsSvc := uploadSvc
 
 	presignUploadHandler := handlersuploads.NewPresignUploadHandler(appConfig, uploadsSvc)

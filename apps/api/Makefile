@@ -7,7 +7,7 @@ WORKER_BINARY=./tmp/$(APP_NAME)-worker
 .PHONY: help build build-exe run dev test clean install setup
 .PHONY: test-coverage
 .PHONY: lint fmt vet deps-update all check quick-check ci
-.PHONY: openapi-export build-openapi-export
+.PHONY: openapi-export
 
 # Help command
 help: # Display this help screen
@@ -43,7 +43,7 @@ run-worker: # Run the worker standalone
 
 openapi-export: # Export the OpenAPI spec to a file (default: openapi.json). Usage: make openapi-export ARGS="--output ../../packages/api-client/openapi.json --format json"
 	@echo "Exporting OpenAPI spec..."
-	@go run ./cmd/openapi-export/ $(ARGS)
+	@go run ./cmd/openapi/ $(ARGS)
 	@echo "Done!"
 
 # Test commands

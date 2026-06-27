@@ -2,7 +2,7 @@ import { UserRound } from "lucide-react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import UserDropdown from "./user-dropdown";
-import { ModeToggle } from "./mode-toggle";
+import { ThemeToggle } from "./theme-toggle";
 import type { AppUser } from "@/models/auth";
 import { Button } from "../ui/button";
 
@@ -17,7 +17,7 @@ export function SiteHeader({ user }: Props) {
 				<SidebarTrigger className="-ml-1 h-8 w-8 cursor-pointer" />
 			</div>
 			<div className="flex items-center gap-1">
-				<ModeToggle />
+				<ThemeToggle />
 				<UserDropdown
 					user={user}
 					defaultOpen={false}

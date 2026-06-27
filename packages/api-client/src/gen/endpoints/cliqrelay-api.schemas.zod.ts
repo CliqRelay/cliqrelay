@@ -86,6 +86,51 @@ export const CreateGuideResponse = zod.object({
 export type CreateGuideResponse = zod.input<typeof CreateGuideResponse>;
 export type CreateGuideResponseOutput = zod.output<typeof CreateGuideResponse>;
 
+export const CreateMediaAssetRequest = zod.object({
+	altText: zod.string().nullish(),
+	byteSize: zod.number().nullish(),
+	height: zod.number().nullish(),
+	mimeType: zod.string().nullish(),
+	stepId: Uuid,
+	storagePath: zod.string(),
+	thumbnail: zod.string().nullish(),
+	width: zod.number().nullish(),
+});
+
+export type CreateMediaAssetRequest = zod.input<typeof CreateMediaAssetRequest>;
+export type CreateMediaAssetRequestOutput = zod.output<
+	typeof CreateMediaAssetRequest
+>;
+
+export const MediaAsset = zod.object({
+	altText: zod.string().nullish(),
+	byteSize: zod.number().nullish(),
+	createdAt: zod.iso.datetime({ offset: true }),
+	height: zod.number().nullish(),
+	id: Uuid,
+	mimeType: zod.string().nullish(),
+	stepId: Uuid,
+	storagePath: zod.string(),
+	thumbnail: zod.string().nullish(),
+	updatedAt: zod.iso.datetime({ offset: true }),
+	url: zod.string().nullish(),
+	width: zod.number().nullish(),
+});
+
+export type MediaAsset = zod.input<typeof MediaAsset>;
+export type MediaAssetOutput = zod.output<typeof MediaAsset>;
+
+export const CreateMediaAssetResponse = zod.object({
+	mediaAsset: MediaAsset,
+});
+
+export type CreateMediaAssetResponse = zod.input<
+	typeof CreateMediaAssetResponse
+>;
+export type CreateMediaAssetResponseOutput = zod.output<
+	typeof CreateMediaAssetResponse
+>;
+
 export const StepAction = zod
 	.enum(["click", "input", "navigation"])
 	.describe("The browser interaction type captured for the step");
@@ -132,24 +177,6 @@ export const CreateStepRequest = zod.object({
 export type CreateStepRequest = zod.input<typeof CreateStepRequest>;
 export type CreateStepRequestOutput = zod.output<typeof CreateStepRequest>;
 
-export const MediaAsset = zod.object({
-	altText: zod.string().nullish(),
-	byteSize: zod.number().nullish(),
-	createdAt: zod.iso.datetime({ offset: true }),
-	height: zod.number().nullish(),
-	id: Uuid,
-	mimeType: zod.string().nullish(),
-	stepId: Uuid,
-	storagePath: zod.string(),
-	thumbnail: zod.string().nullish(),
-	updatedAt: zod.iso.datetime({ offset: true }),
-	url: zod.string().nullish(),
-	width: zod.number().nullish(),
-});
-
-export type MediaAsset = zod.input<typeof MediaAsset>;
-export type MediaAssetOutput = zod.output<typeof MediaAsset>;
-
 export const Step = zod.object({
 	action: zod.union([zod.null(), StepAction]).optional(),
 	actionText: zod.string().nullish(),
@@ -182,6 +209,17 @@ export const DeleteGuideResponse = zod.object({
 
 export type DeleteGuideResponse = zod.input<typeof DeleteGuideResponse>;
 export type DeleteGuideResponseOutput = zod.output<typeof DeleteGuideResponse>;
+
+export const DeleteMediaAssetResponse = zod.object({
+	message: zod.string(),
+});
+
+export type DeleteMediaAssetResponse = zod.input<
+	typeof DeleteMediaAssetResponse
+>;
+export type DeleteMediaAssetResponseOutput = zod.output<
+	typeof DeleteMediaAssetResponse
+>;
 
 export const DeleteStepResponse = zod.object({
 	message: zod.string(),
@@ -240,6 +278,17 @@ export type GetAllGuidesResponseOutput = zod.output<
 	typeof GetAllGuidesResponse
 >;
 
+export const GetAllMediaAssetsResponse = zod.object({
+	mediaAssets: zod.array(MediaAsset),
+});
+
+export type GetAllMediaAssetsResponse = zod.input<
+	typeof GetAllMediaAssetsResponse
+>;
+export type GetAllMediaAssetsResponseOutput = zod.output<
+	typeof GetAllMediaAssetsResponse
+>;
+
 export const GetAllStepsResponse = zod.object({
 	steps: zod.array(Step),
 });
@@ -288,6 +337,17 @@ export const GetGuidesCountResponse = zod.object({
 export type GetGuidesCountResponse = zod.input<typeof GetGuidesCountResponse>;
 export type GetGuidesCountResponseOutput = zod.output<
 	typeof GetGuidesCountResponse
+>;
+
+export const GetMediaAssetByIDResponse = zod.object({
+	mediaAsset: zod.union([zod.null(), MediaAsset]),
+});
+
+export type GetMediaAssetByIDResponse = zod.input<
+	typeof GetMediaAssetByIDResponse
+>;
+export type GetMediaAssetByIDResponseOutput = zod.output<
+	typeof GetMediaAssetByIDResponse
 >;
 
 export const GetStepByIDResponse = zod.object({
@@ -429,6 +489,31 @@ export const UpdateGuideResponse = zod.object({
 
 export type UpdateGuideResponse = zod.input<typeof UpdateGuideResponse>;
 export type UpdateGuideResponseOutput = zod.output<typeof UpdateGuideResponse>;
+
+export const UpdateMediaAssetRequest = zod.object({
+	altText: zod.string().nullish(),
+	byteSize: zod.number().nullish(),
+	height: zod.number().nullish(),
+	mimeType: zod.string().nullish(),
+	thumbnail: zod.string().nullish(),
+	width: zod.number().nullish(),
+});
+
+export type UpdateMediaAssetRequest = zod.input<typeof UpdateMediaAssetRequest>;
+export type UpdateMediaAssetRequestOutput = zod.output<
+	typeof UpdateMediaAssetRequest
+>;
+
+export const UpdateMediaAssetResponse = zod.object({
+	mediaAsset: MediaAsset,
+});
+
+export type UpdateMediaAssetResponse = zod.input<
+	typeof UpdateMediaAssetResponse
+>;
+export type UpdateMediaAssetResponseOutput = zod.output<
+	typeof UpdateMediaAssetResponse
+>;
 
 export const UpdateStepRequest = zod.object({
 	action: StepAction.optional(),
