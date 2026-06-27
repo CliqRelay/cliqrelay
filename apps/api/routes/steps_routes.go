@@ -15,8 +15,6 @@ import (
 )
 
 func StepsRoutes(appConfig *config.AppConfig, stepsSvc interfaces.StepsService) []authulamodels.Route {
-	RegisterStepsOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
-
 	stepsService := stepsSvc
 
 	createHandler := steps.NewCreateStepHandler(appConfig, stepsService)
