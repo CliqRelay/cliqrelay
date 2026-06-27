@@ -6,6 +6,12 @@ import SimpleBar from "simplebar-react";
 import "simplebar-react/dist/simplebar.min.css";
 
 import {
+	ExtensionSlot,
+	extensionRegistry,
+	type NavItemRegistration,
+} from "@repo/extension-api";
+
+import {
 	Sidebar,
 	SidebarContent,
 	SidebarHeader,
@@ -27,7 +33,7 @@ export type NavItem = {
 	isActive?: boolean;
 };
 
-const navData: NavItem[] = [
+const baseNavData: NavItem[] = [
 	{ label: "Insights", isSection: true },
 	{
 		title: "Dashboard",
@@ -52,6 +58,54 @@ const navData: NavItem[] = [
 	},
 ];
 
+function buildPluginNavItems(): NavItem[] {
+	const pluginNavItems: NavItem[] = [];
+
+	const routeNavSections = new Map<string, NavItem[]>();
+
+	for (const route of extensionRegistry.getRoutes()) {
+		if (route.meta?.navSection) {
+			const section = route.meta.navSection;
+			if (!routeNavSections.has(section)) {
+				routeNavSections.set(section, []);
+			}
+			routeNavSections.get(section)?.push({
+				title: route.meta.label || route.key,
+				icon: route.meta.icon,
+				href: `/dashboard${route.path.startsWith("/") ? "" : "/"}${route.path}`,
+			});
+		}
+	}
+
+	for (const [section, items] of routeNavSections) {
+		pluginNavItems.push({ label: section, isSection: true });
+		pluginNavItems.push(...items);
+	}
+
+	const explicitNavItems = extensionRegistry.getNavItems();
+	if (explicitNavItems.length > 0) {
+		pluginNavItems.push({ label: "Extensions", isSection: true });
+		for (const item of explicitNavItems) {
+			pluginNavItems.push(mapNavItemRegistration(item));
+		}
+	}
+
+	return pluginNavItems;
+}
+
+function mapNavItemRegistration(item: NavItemRegistration): NavItem {
+	return {
+		title: item.title,
+		icon: item.icon,
+		href: item.href,
+		children: item.children?.map((child) => ({
+			title: child.title,
+			icon: child.icon,
+			href: child.href,
+		})),
+	};
+}
+
 type Props = {
 	user: AppUser;
 };
@@ -61,10 +115,13 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 		select: (state) => state.matches.some((m) => !!m.context?.hideSiteHeader),
 	});
 
+	const navData = [...baseNavData, ...buildPluginNavItems()];
+
 	return (
 		<SidebarProvider>
 			<Sidebar className="py-4 px-0 bg-background">
 				<div className="flex flex-col gap-6 bg-background">
+					<ExtensionSlot name="dashboard-sidebar-top" />
 					<SidebarHeader className="py-0 px-4">
 						<SidebarMenu>
 							<SidebarMenuItem>
@@ -94,6 +151,7 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 								<NavMain items={navData} />
 							</div>
 						</SimpleBar>
+						<ExtensionSlot name="dashboard-sidebar-bottom" />
 					</SidebarContent>
 				</div>
 			</Sidebar>

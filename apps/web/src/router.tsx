@@ -6,8 +6,13 @@ import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query
 import type { QueryClient } from "@tanstack/react-query";
 import type { User } from "authula";
 
+import { extensionRegistry } from "@repo/extension-api";
+
 import { getContext } from "./integrations/tanstack-query/RootProvider";
 import { routeTree } from "./routeTree.gen";
+
+await import("virtual:extensions");
+extensionRegistry.freeze();
 
 export interface MyRouterContext {
 	queryClient: QueryClient;

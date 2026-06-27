@@ -1,5 +1,7 @@
 import { UserRound } from "lucide-react";
 
+import { ExtensionSlot } from "@repo/extension-api";
+
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import UserDropdown from "./user-dropdown";
 import { ModeToggle } from "./mode-toggle";
@@ -17,6 +19,7 @@ export function SiteHeader({ user }: Props) {
 				<SidebarTrigger className="-ml-1 h-8 w-8 cursor-pointer" />
 			</div>
 			<div className="flex items-center gap-1">
+				<ExtensionSlot name="site-header-actions" />
 				<ModeToggle />
 				<UserDropdown
 					user={user}

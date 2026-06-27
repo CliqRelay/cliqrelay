@@ -51,6 +51,7 @@
     "@radix-ui/react-tooltip": "^1.2.10",
     "@repo/api-client": "workspace:*",
     "@repo/data-commons": "workspace:*",
+    "@repo/extension-api": "workspace:*",
     "@storybook/react-vite": "^10.4.6",
     "@t3-oss/env-core": "^0.13.11",
     "@tanstack/pacer": "^0.21.1",

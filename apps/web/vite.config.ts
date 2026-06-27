@@ -15,6 +15,16 @@ const config = defineConfig({
 		tanstackStart(),
 		viteReact(),
 		babel({ presets: [reactCompilerPreset()] }),
+		// ensures virtual:extensions is always a no-op
+		{
+			name: "virtual-extensions",
+			resolveId(id) {
+				if (id === "virtual:extensions") return "\0virtual:extensions";
+			},
+			load(id) {
+				if (id === "\0virtual:extensions") return "";
+			},
+		},
 	],
 	server: {
 		host: "::",

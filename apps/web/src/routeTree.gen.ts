@@ -13,6 +13,7 @@ import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardSplatRouteImport } from './routes/dashboard/$'
 import { Route as DashboardTrashIndexRouteImport } from './routes/dashboard/trash/index'
 import { Route as DashboardStarredIndexRouteImport } from './routes/dashboard/starred/index'
 import { Route as DashboardGuidesIndexRouteImport } from './routes/dashboard/guides/index'
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardSplatRoute = DashboardSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardTrashIndexRoute = DashboardTrashIndexRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/dashboard/$': typeof DashboardSplatRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/guides/$guideId': typeof DashboardGuidesGuideIdRoute
   '/auth/change-password/': typeof AuthChangePasswordIndexRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
+  '/dashboard/$': typeof DashboardSplatRoute
   '/dashboard': typeof DashboardIndexRoute
   '/dashboard/guides/$guideId': typeof DashboardGuidesGuideIdRoute
   '/auth/change-password': typeof AuthChangePasswordIndexRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/dashboard/$': typeof DashboardSplatRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/dashboard/guides/$guideId': typeof DashboardGuidesGuideIdRoute
   '/auth/change-password/': typeof AuthChangePasswordIndexRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/dashboard/$'
     | '/dashboard/'
     | '/dashboard/guides/$guideId'
     | '/auth/change-password/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/dashboard/$'
     | '/dashboard'
     | '/dashboard/guides/$guideId'
     | '/auth/change-password'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/dashboard/$'
     | '/dashboard/'
     | '/dashboard/guides/$guideId'
     | '/auth/change-password/'
@@ -216,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/$': {
+      id: '/dashboard/$'
+      path: '/$'
+      fullPath: '/dashboard/$'
+      preLoaderRoute: typeof DashboardSplatRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/trash/': {
@@ -305,6 +324,7 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface DashboardRouteRouteChildren {
+  DashboardSplatRoute: typeof DashboardSplatRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
   DashboardGuidesGuideIdRoute: typeof DashboardGuidesGuideIdRoute
   DashboardGuidesIndexRoute: typeof DashboardGuidesIndexRoute
@@ -313,6 +333,7 @@ interface DashboardRouteRouteChildren {
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardSplatRoute: DashboardSplatRoute,
   DashboardIndexRoute: DashboardIndexRoute,
   DashboardGuidesGuideIdRoute: DashboardGuidesGuideIdRoute,
   DashboardGuidesIndexRoute: DashboardGuidesIndexRoute,
