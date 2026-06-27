@@ -15,8 +15,6 @@ import (
 )
 
 func MediaAssetsRoutes(appConfig *config.AppConfig, mediaSvc interfaces.MediaAssetsService) []authulamodels.Route {
-	RegisterMediaAssetsOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
-
 	mediaAssetsService := mediaSvc
 
 	createHandler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, mediaAssetsService)

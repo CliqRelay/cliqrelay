@@ -12,8 +12,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { queryClient } from "@/constants/query-client";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import TanStackQueryDevtools from "../integrations/tanstack-query/Devtools";
-import appCss from "../styles.css?url";
 import type { MyRouterContext } from "@/router";
+import appCss from "../styles.css?url";
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	head: () => ({

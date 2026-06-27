@@ -13,8 +13,6 @@ import (
 )
 
 func HealthRoutes(appConfig *config.AppConfig) []authulamodels.Route {
-	RegisterHealthOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
-
 	healthHandler := health.NewHealthHandler(appConfig)
 
 	return []authulamodels.Route{

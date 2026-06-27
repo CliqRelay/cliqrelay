@@ -15,8 +15,6 @@ import (
 )
 
 func GuidesRoutes(appConfig *config.AppConfig, guidesSvc interfaces.GuidesService, starredSvc interfaces.StarredGuidesService, exportSvc interfaces.ExportService) []authulamodels.Route {
-	RegisterGuidesOpenAPIDocs(appConfig.OpenAPIService, appConfig.BasePath)
-
 	createHandler := guides.NewCreateGuideHandler(appConfig, guidesSvc)
 	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesSvc)
 	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesSvc)
