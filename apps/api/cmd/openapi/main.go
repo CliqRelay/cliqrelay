@@ -11,9 +11,10 @@ import (
 func main() {
 	outputPath := flag.String("output", "openapi.json", "Path to write the OpenAPI spec file")
 	format := flag.String("format", "json", "Output format: json or yaml")
+	openAPIVersion := flag.String("openapi-version", "3.1.0", "OpenAPI spec version: 3.0.3 or 3.1.0")
 	flag.Parse()
 
-	if err := openapiexport.ExportSpecToFile(*outputPath, *format, nil); err != nil {
+	if err := openapiexport.ExportSpecToFileWithVersion(*outputPath, *format, *openAPIVersion, nil); err != nil {
 		log.Fatal("Error exporting OpenAPI spec: ", err)
 	}
 

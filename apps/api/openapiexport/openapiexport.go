@@ -19,6 +19,10 @@ func GenerateService(title, apiVersion, description, serverURL, basePath string,
 }
 
 func ExportSpecToFile(outputPath, format string, extraDocs []routes.OpenAPIDocFunc) error {
+	return ExportSpecToFileWithVersion(outputPath, format, "3.1.0", extraDocs)
+}
+
+func ExportSpecToFileWithVersion(outputPath, format, openAPIVersion string, extraDocs []routes.OpenAPIDocFunc) error {
 	if format != "json" && format != "yaml" {
 		return fmt.Errorf("unsupported format: %s (use json or yaml)", format)
 	}
@@ -32,7 +36,7 @@ func ExportSpecToFile(outputPath, format string, extraDocs []routes.OpenAPIDocFu
 		envConfig.BaseURL,
 		"/api/v1",
 		extraDocs,
-		openapi.WithOpenAPIVersion("3.1.0"),
+		openapi.WithOpenAPIVersion(openAPIVersion),
 		openapi.WithShortSchemaNames(),
 	)
 	if err != nil {
