@@ -8,7 +8,7 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/openapi"
-	"github.com/CliqRelay/cliqrelay/routes"
+	"github.com/CliqRelay/cliqrelay/openapiexport"
 )
 
 func main() {
@@ -19,19 +19,19 @@ func main() {
 
 	envConfig := constants.LoadEnvConfig()
 
-	svc, err := openapi.NewOpenAPIService(
+	svc, err := openapiexport.GenerateService(
 		"CliqRelay API",
 		envConfig.OpenAPISpecVersion,
 		"CliqRelay API - step-by-step visual documentation platform",
 		envConfig.BaseURL,
+		"/api/v1",
+		nil,
 		openapi.WithOpenAPIVersion(*openAPIVersion),
 		openapi.WithShortSchemaNames(),
 	)
 	if err != nil {
 		log.Fatal("Error initializing OpenAPI service: ", err)
 	}
-
-	routes.RegisterAllOpenAPIDocs(svc, "/api/v1")
 
 	var data []byte
 	switch *format {
