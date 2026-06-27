@@ -53,7 +53,7 @@ test: # Run all tests
 
 test-integrations: # Run repository tests against Postgres (auto-starts container via testcontainers)
 	@echo "Running repository tests (testcontainers will auto-start Postgres)..."
-	@go test -race -v -count=1 -p 1 ./...
+	@go test -race -v -count=1 -p 1 ./repositories/
 
 test-coverage: # Run tests with coverage report
 	@echo "Running tests with coverage..."
