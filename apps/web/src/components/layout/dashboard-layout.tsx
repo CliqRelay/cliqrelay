@@ -121,7 +121,6 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 		<SidebarProvider>
 			<Sidebar className="py-4 px-0 bg-background">
 				<div className="flex flex-col gap-6 bg-background">
-					<ExtensionSlot name="dashboard-sidebar-top" />
 					<SidebarHeader className="py-0 px-4">
 						<SidebarMenu>
 							<SidebarMenuItem>
