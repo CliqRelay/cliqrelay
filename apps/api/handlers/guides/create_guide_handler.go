@@ -37,7 +37,7 @@ func (h *CreateGuideHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		guide, err := h.guidesService.Create(ctx, reqCtx.Actor.ID, &request)
+		guide, err := h.guidesService.Create(ctx, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

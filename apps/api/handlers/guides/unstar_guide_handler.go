@@ -26,7 +26,7 @@ func (h *UnstarGuideHandler) Handle() http.HandlerFunc {
 
 		guideID := r.PathValue("id")
 
-		err := h.starredGuidesService.Unstar(ctx, reqCtx.Actor.ID, guideID)
+		err := h.starredGuidesService.Unstar(ctx, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

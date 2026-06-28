@@ -144,7 +144,11 @@ func TestGetAllStepsHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockPresignClient := new(tests.MockPresignService)
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			mockIdentity := new(tests.MockIdentityService)
+			mockAuthz := new(tests.MockAuthorizationService)
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything).Return(nil)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockIdentity, mockAuthz, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewGetAllStepsHandler(appConfig, svc)
 
 			path := "/api/v1/steps?guideId=" + tt.guideID

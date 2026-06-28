@@ -8,10 +8,10 @@ import (
 )
 
 type StepHooks struct {
-	BeforeCreate func(ctx context.Context, userID string, req *types.CreateStepRequest) error
-	AfterCreate  func(ctx context.Context, userID string, step *models.Step) error
-	BeforeUpdate func(ctx context.Context, userID string, req *types.UpdateStepRequest) error
-	AfterUpdate  func(ctx context.Context, userID string, step *models.Step) error
-	BeforeDelete func(ctx context.Context, userID string, step *models.Step) error
-	AfterDelete  func(ctx context.Context, userID string, stepID string) error
+	BeforeCreate func(ctx context.Context, identity *models.Identity, req *types.CreateStepRequest) error
+	AfterCreate  func(ctx context.Context, identity *models.Identity, step *models.Step) error
+	BeforeUpdate func(ctx context.Context, identity *models.Identity, req *types.UpdateStepRequest) error
+	AfterUpdate  func(ctx context.Context, identity *models.Identity, step *models.Step) error
+	BeforeDelete func(ctx context.Context, identity *models.Identity, step *models.Step) error
+	AfterDelete  func(ctx context.Context, identity *models.Identity, stepID string) error
 }

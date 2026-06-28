@@ -18,6 +18,8 @@ type UploadsService struct {
 	stepsRepo       interfaces.StepsRepository
 	mediaAssetsRepo interfaces.MediaAssetsRepository
 	presignClient   interfaces.PresignService
+	identityService interfaces.IdentityService
+	authzService    interfaces.AuthorizationService
 	bucket          string
 }
 
@@ -26,6 +28,8 @@ func NewUploadsService(
 	stepsRepo interfaces.StepsRepository,
 	mediaAssetsRepo interfaces.MediaAssetsRepository,
 	presignClient interfaces.PresignService,
+	identityService interfaces.IdentityService,
+	authzService interfaces.AuthorizationService,
 	bucket string,
 ) *UploadsService {
 	return &UploadsService{
@@ -33,14 +37,15 @@ func NewUploadsService(
 		stepsRepo:       stepsRepo,
 		mediaAssetsRepo: mediaAssetsRepo,
 		presignClient:   presignClient,
+		identityService: identityService,
+		authzService:    authzService,
 		bucket:          bucket,
 	}
 }
 
-func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, userID, guideID, stepID string) (*types.PresignedURLResult, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, guideID, stepID string) (*types.PresignedURLResult, error) {
+	identity := s.identityService.Current(ctx)
+
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -48,11 +53,15 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, userID, gu
 		return nil, constants.ErrInvalidStepID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
 	if guide == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -80,10 +89,9 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, userID, gu
 	}, nil
 }
 
-func (s *UploadsService) CompleteUpload(ctx context.Context, userID, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *UploadsService) CompleteUpload(ctx context.Context, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
+	identity := s.identityService.Current(ctx)
+
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
@@ -96,11 +104,15 @@ func (s *UploadsService) CompleteUpload(ctx context.Context, userID, stepID, sto
 		return nil, constants.ErrStepNotFound
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, userID, step.GuideID.String())
+	guide, err := s.guidesRepo.GetByID(ctx, step.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
 	if guide == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 

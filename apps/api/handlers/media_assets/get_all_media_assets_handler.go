@@ -26,7 +26,7 @@ func (h *GetAllMediaAssetsHandler) Handle() http.HandlerFunc {
 
 		stepID := r.URL.Query().Get("stepId")
 
-		mediaAssets, err := h.mediaAssetsService.GetByStepID(ctx, reqCtx.Actor.ID, stepID)
+		mediaAssets, err := h.mediaAssetsService.GetByStepID(ctx, stepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -25,7 +25,7 @@ func (h *GetGuideByIDHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 
 		guideID := r.PathValue("id")
-		guide, err := h.guidesService.GetByID(ctx, reqCtx.Actor.ID, guideID)
+		guide, err := h.guidesService.GetByID(ctx, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

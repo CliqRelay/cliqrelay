@@ -26,7 +26,7 @@ func (h *PermanentlyDeleteGuideHandler) Handle() http.HandlerFunc {
 
 		guideID := r.PathValue("id")
 
-		guide, err := h.guidesService.PermanentlyDelete(ctx, reqCtx.Actor.ID, guideID)
+		guide, err := h.guidesService.PermanentlyDelete(ctx, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

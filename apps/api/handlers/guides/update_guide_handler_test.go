@@ -74,10 +74,21 @@ func TestUpdateGuideHandler(t *testing.T) {
 			path := "/api/v1/guides/" + guideID
 
 			mockRepo := new(tests.MockGuidesRepository)
+			mockIdentity := new(tests.MockIdentityService)
+			mockAuthz := new(tests.MockAuthorizationService)
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
 
 			switch tt.name {
 			case "success":
-				mockRepo.On("Update", mock.Anything, "test-user-123", mock.AnythingOfType("*types.UpdateGuideDTO")).
+				mockRepo.On("GetByID", mock.Anything, guideID).
+					Return(&models.Guide{
+						ID:        uuid.MustParse(guideID),
+						CreatorID: "test-user-123",
+						Title:     "Draft Title",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
+				mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateGuideDTO")).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -85,13 +96,23 @@ func TestUpdateGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
+				mockAuthz.On("CanEditGuide", mock.Anything, mock.AnythingOfType("*models.Identity"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			case "service error":
-				mockRepo.On("Update", mock.Anything, "test-user-123", mock.AnythingOfType("*types.UpdateGuideDTO")).
+				mockRepo.On("GetByID", mock.Anything, guideID).
+					Return(&models.Guide{
+						ID:        uuid.MustParse(guideID),
+						CreatorID: "test-user-123",
+						Title:     "Draft Title",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
+				mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateGuideDTO")).
 					Return(nil, assert.AnError).
 					Once()
+				mockAuthz.On("CanEditGuide", mock.Anything, mock.AnythingOfType("*models.Identity"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockIdentity, mockAuthz, (*interfaces.GuideHooks)(nil))
 			handler := handlersguides.NewUpdateGuideHandler(appConfig, svc)
 
 			var req tests.HandlerTestRequest

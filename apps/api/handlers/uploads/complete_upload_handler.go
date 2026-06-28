@@ -39,7 +39,7 @@ func (h *CompleteUploadHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.uploadsService.CompleteUpload(ctx, reqCtx.Actor.ID, request.StepID, request.StoragePath, request.FileSize, request.MimeType, request.Thumbnail, request.Width, request.Height)
+		result, err := h.uploadsService.CompleteUpload(ctx, request.StepID, request.StoragePath, request.FileSize, request.MimeType, request.Thumbnail, request.Width, request.Height)
 		if err != nil {
 			status := http.StatusInternalServerError
 			switch {

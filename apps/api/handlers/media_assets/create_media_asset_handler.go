@@ -37,7 +37,7 @@ func (h *CreateMediaAssetHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		mediaAsset, err := h.mediaAssetsService.Create(ctx, reqCtx.Actor.ID, &request)
+		mediaAsset, err := h.mediaAssetsService.Create(ctx, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

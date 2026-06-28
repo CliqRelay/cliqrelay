@@ -49,9 +49,12 @@ func TestUnpublishGuideHandler(t *testing.T) {
 			path := "/api/v1/guides/" + guideID + "/unpublish"
 
 			mockRepo := new(tests.MockGuidesRepository)
+			mockIdentity := new(tests.MockIdentityService)
+			mockAuthz := new(tests.MockAuthorizationService)
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
 
 			if tt.expectedStatus == http.StatusOK {
-				mockRepo.On("GetByID", mock.Anything, "test-user-123", guideID).
+				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -59,7 +62,7 @@ func TestUnpublishGuideHandler(t *testing.T) {
 						Status:    models.StatusPublished,
 					}, nil).
 					Once()
-				mockRepo.On("Unpublish", mock.Anything, "test-user-123", guideID).
+				mockRepo.On("Unpublish", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -67,8 +70,9 @@ func TestUnpublishGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
+				mockAuthz.On("CanEditGuide", mock.Anything, mock.AnythingOfType("*models.Identity"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			} else {
-				mockRepo.On("GetByID", mock.Anything, "test-user-123", guideID).
+				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -76,12 +80,13 @@ func TestUnpublishGuideHandler(t *testing.T) {
 						Status:    models.StatusPublished,
 					}, nil).
 					Once()
-				mockRepo.On("Unpublish", mock.Anything, "test-user-123", guideID).
+				mockRepo.On("Unpublish", mock.Anything, guideID).
 					Return(nil, assert.AnError).
 					Once()
+				mockAuthz.On("CanEditGuide", mock.Anything, mock.AnythingOfType("*models.Identity"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockIdentity, mockAuthz, (*interfaces.GuideHooks)(nil))
 			handler := handlersguides.NewUnpublishGuideHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)

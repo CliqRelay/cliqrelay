@@ -7,7 +7,7 @@ import (
 )
 
 type StarredGuidesService interface {
-	Star(ctx context.Context, userID string, guideID string) error
-	Unstar(ctx context.Context, userID string, guideID string) error
-	GetStarredGuides(ctx context.Context, userID string) ([]*models.Guide, error)
+	Star(ctx context.Context, guideID string) error
+	Unstar(ctx context.Context, guideID string) error
+	GetStarredGuides(ctx context.Context) ([]*models.Guide, error)
 }
