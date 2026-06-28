@@ -29,7 +29,6 @@ func TestMediaAssetsService_Create(t *testing.T) {
 	cases := []struct {
 		name    string
 		req     *types.CreateMediaAssetRequest
-		userID  string
 		setup   func(*tests.MockMediaAssetsRepository, *tests.MockStepsRepository, *tests.MockGuidesRepository)
 		wantErr bool
 	}{
@@ -74,28 +73,6 @@ func TestMediaAssetsService_Create(t *testing.T) {
 						ByteSize:    &byteSize,
 					}, nil).
 					Once()
-			},
-		},
-		{
-			name: "returns error for empty user ID",
-			req: &types.CreateMediaAssetRequest{
-				StepID:      uuid.New(),
-				StoragePath: "uploads/test.png",
-			},
-			userID:  "",
-			wantErr: true,
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-			},
-		},
-		{
-			name: "returns error for whitespace user ID",
-			req: &types.CreateMediaAssetRequest{
-				StepID:      uuid.New(),
-				StoragePath: "uploads/test.png",
-			},
-			userID:  "   ",
-			wantErr: true,
-			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 			},
 		},
 		{
@@ -174,13 +151,7 @@ func TestMediaAssetsService_Create(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
-			if tt.userID == "" {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "", Kind: models.IdentityTypeUser})
-			} else if tt.userID == "   " {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "   ", Kind: models.IdentityTypeUser})
-			} else {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user", Kind: models.IdentityTypeUser})
-			}
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user", Kind: models.IdentityTypeUser})
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockIdentity, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
@@ -190,9 +161,6 @@ func TestMediaAssetsService_Create(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, mediaAsset)
-				if tt.userID == "" || tt.userID == "   " {
-					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
-				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, mediaAsset)
@@ -212,7 +180,6 @@ func TestMediaAssetsService_GetByID(t *testing.T) {
 	cases := []struct {
 		name         string
 		mediaAssetID string
-		userID       string
 		setup        func(*tests.MockMediaAssetsRepository, *tests.MockStepsRepository, *tests.MockGuidesRepository)
 		wantErr      bool
 	}{

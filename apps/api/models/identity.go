@@ -3,9 +3,9 @@ package models
 type IdentityType string
 
 const (
-	IdentityTypeUser   IdentityType = "user"
-	IdentityTypeM2M    IdentityType = "m2m"
-	IdentityTypeAPIKey IdentityType = "api_key"
+	IdentityTypeUser    IdentityType = "user"
+	IdentityTypeAPIKey  IdentityType = "api_key"
+	IdentityTypeMachine IdentityType = "machine"
 )
 
 type Identity struct {

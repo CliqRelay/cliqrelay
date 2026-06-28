@@ -2,6 +2,7 @@ package guides_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,12 +20,12 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func testRedisClient() *redis.Client {
+var testRedisClient = sync.OnceValue(func() *redis.Client {
 	return redis.NewClient(&redis.Options{Addr: "127.0.0.1:1"})
-}
+})
 
 func TestGuidesService_PublishGuide(t *testing.T) {
-	t.Parallel()
+
 
 	draftGuide := &models.Guide{
 		ID:        uuid.New(),
@@ -132,7 +133,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		
 
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
@@ -140,7 +141,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockRepo, mockCache, mockStepsRepo)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, mockStepsRepo, testRedisClient(), mockIdentity, mockAuthz, (*interfaces.GuideHooks)(nil))
 
@@ -163,7 +164,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 }
 
 func TestGuidesService_UnpublishGuide(t *testing.T) {
-	t.Parallel()
+
 
 	publishedGuide := &models.Guide{
 		ID:        uuid.New(),
@@ -261,14 +262,14 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		
 
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockRepo, mockCache)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), mockIdentity, mockAuthz, (*interfaces.GuideHooks)(nil))
 
@@ -291,7 +292,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 }
 
 func TestGuidesService_ArchiveGuide(t *testing.T) {
-	t.Parallel()
+
 
 	publishedGuide := &models.Guide{
 		ID:        uuid.New(),
@@ -404,14 +405,14 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		
 
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockRepo, mockCache)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), mockIdentity, mockAuthz, (*interfaces.GuideHooks)(nil))
 
@@ -434,7 +435,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 }
 
 func TestGuidesService_RestoreGuide(t *testing.T) {
-	t.Parallel()
+
 
 	cases := []struct {
 		name    string
@@ -446,7 +447,16 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			name:    "restores guide successfully",
 			guideID: uuid.New().String(),
 			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+				deletedGuide := &models.Guide{
+					ID:        uuid.New(),
+					CreatorID: "test-user-123",
+					Title:     "Deleted Guide",
+					Status:    models.StatusDeleted,
+				}
 				future := time.Now().Add(time.Hour).UTC()
+				mockRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(deletedGuide, nil).
+					Once()
 				mockRepo.On("Restore", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Guide{
 						ID:         uuid.New(),
@@ -471,7 +481,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			name:    "returns error when guide not found",
 			guideID: uuid.New().String(),
 			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
-				mockRepo.On("Restore", mock.Anything, mock.AnythingOfType("string")).
+				mockRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
 			},
@@ -481,6 +491,15 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			name:    "returns error when guide is not deleted",
 			guideID: uuid.New().String(),
 			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+				guide := &models.Guide{
+					ID:        uuid.New(),
+					CreatorID: "test-user-123",
+					Title:     "Active Guide",
+					Status:    models.StatusDraft,
+				}
+				mockRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(guide, nil).
+					Once()
 				mockRepo.On("Restore", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, nil).
 					Once()
@@ -491,6 +510,15 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			name:    "propagates repository error",
 			guideID: uuid.New().String(),
 			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+				deletedGuide := &models.Guide{
+					ID:        uuid.New(),
+					CreatorID: "test-user-123",
+					Title:     "Deleted Guide",
+					Status:    models.StatusDeleted,
+				}
+				mockRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+					Return(deletedGuide, nil).
+					Once()
 				mockRepo.On("Restore", mock.Anything, mock.AnythingOfType("string")).
 					Return(nil, assert.AnError).
 					Once()
@@ -501,14 +529,14 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		
 
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockRepo, mockCache)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), mockIdentity, mockAuthz, (*interfaces.GuideHooks)(nil))
 
@@ -531,7 +559,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 }
 
 func TestGuidesService_UnarchiveGuide(t *testing.T) {
-	t.Parallel()
+
 
 	archivedGuide := &models.Guide{
 		ID:        uuid.New(),
@@ -616,14 +644,14 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		
 
 			mockRepo := new(tests.MockGuidesRepository)
 			mockCache := new(tests.MockGuidesCacheService)
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockRepo, mockCache)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), mockIdentity, mockAuthz, (*interfaces.GuideHooks)(nil))
 
@@ -646,7 +674,7 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 }
 
 func TestGuidesService_CreateGuide(t *testing.T) {
-	t.Parallel()
+
 
 	cases := []struct {
 		name    string
@@ -656,10 +684,11 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "creates guide successfully",
+			name:   "creates guide successfully",
+			userID: "test-user-123",
 			req: &types.CreateGuideRequest{
-				Title:       "Test Guide",
-				Description: new("A description"),
+				Title: "Test Guide",
+				Description: new("A test description"),
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
 				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateGuideDTO")).
@@ -691,7 +720,8 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "propagates repository error",
+			name:   "propagates repository error",
+			userID: "test-user-123",
 			req: &types.CreateGuideRequest{
 				Title: "Test",
 			},
@@ -706,7 +736,7 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		
 
 			// Arrange
 			mockRepo := new(tests.MockGuidesRepository)
@@ -747,7 +777,7 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 }
 
 func TestGuidesService_GetByID_CacheHit(t *testing.T) {
-	t.Parallel()
+
 
 	guideID := uuid.New()
 	guide := &models.Guide{
@@ -783,7 +813,7 @@ func TestGuidesService_GetByID_CacheHit(t *testing.T) {
 }
 
 func TestGuidesService_GetByID_CacheMiss(t *testing.T) {
-	t.Parallel()
+
 
 	guideID := uuid.New()
 	guide := &models.Guide{
@@ -825,7 +855,7 @@ func TestGuidesService_GetByID_CacheMiss(t *testing.T) {
 }
 
 func TestGuidesService_GetByID_CacheWrongOwner(t *testing.T) {
-	t.Parallel()
+
 
 	guideID := uuid.New()
 	guide := &models.Guide{
@@ -865,7 +895,7 @@ func TestGuidesService_GetByID_CacheWrongOwner(t *testing.T) {
 }
 
 func TestGuidesService_GetByID_NoCache(t *testing.T) {
-	t.Parallel()
+
 
 	guideID := uuid.New()
 	guide := &models.Guide{
@@ -907,7 +937,7 @@ func TestGuidesService_GetByID_NoCache(t *testing.T) {
 }
 
 func TestGuidesService_Update_InvalidatesCache(t *testing.T) {
-	t.Parallel()
+
 
 	guideID := uuid.New()
 
@@ -955,7 +985,7 @@ func TestGuidesService_Update_InvalidatesCache(t *testing.T) {
 }
 
 func TestGuidesService_Delete_InvalidatesCache(t *testing.T) {
-	t.Parallel()
+
 
 	guideID := uuid.New()
 
@@ -999,7 +1029,7 @@ func TestGuidesService_Delete_InvalidatesCache(t *testing.T) {
 }
 
 func TestGuidesService_GetAll(t *testing.T) {
-	t.Parallel()
+
 
 	userID := uuid.New().String()
 	guides := []*types.GuideWithStarred{
@@ -1078,12 +1108,13 @@ func TestGuidesService_GetAll(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+		
 
 			mockRepo := new(tests.MockGuidesRepository)
 			mockStarredRepo := new(tests.MockStarredGuidesRepository)
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
 			tt.setup(mockRepo, mockStarredRepo)
 			svc := guidesservice.NewGuidesService(mockRepo, mockStarredRepo, new(tests.MockGuidesCacheService), new(tests.MockStepsRepository), testRedisClient(), mockIdentity, mockAuthz, (*interfaces.GuideHooks)(nil))

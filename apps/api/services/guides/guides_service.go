@@ -116,9 +116,10 @@ func (s *GuidesService) GetAll(ctx context.Context, status *string) ([]*models.G
 	}
 
 	statusVal := models.GuideStatus(*status)
-	filter.Status = &statusVal
+	clonedFilter := *filter
+	clonedFilter.Status = &statusVal
 
-	rows, err := s.starredGuidesRepo.GetAll(ctx, filter)
+	rows, err := s.starredGuidesRepo.GetAll(ctx, &clonedFilter)
 	if err != nil {
 		return nil, err
 	}

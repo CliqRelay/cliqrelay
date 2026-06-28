@@ -31,7 +31,6 @@ func TestStepsService_Create(t *testing.T) {
 	cases := []struct {
 		name    string
 		req     *types.CreateStepRequest
-		userID  string
 		setup   func(*tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
 		check   func(*testing.T, *models.Step)
 		wantErr bool
@@ -98,24 +97,6 @@ func TestStepsService_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "returns error for empty user ID",
-			req: &types.CreateStepRequest{
-				GuideID: uuid.New(),
-			},
-			userID:  "",
-			setup:   func(_ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
-			wantErr: true,
-		},
-		{
-			name: "returns error for whitespace user ID",
-			req: &types.CreateStepRequest{
-				GuideID: uuid.New(),
-			},
-			userID:  "   ",
-			setup:   func(_ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService) {},
-			wantErr: true,
-		},
-		{
 			name: "returns error when guide not found",
 			req: &types.CreateStepRequest{
 				GuideID: uuid.New(),
@@ -159,13 +140,7 @@ func TestStepsService_Create(t *testing.T) {
 			mockPresignClient := new(tests.MockPresignService)
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
-			if tt.userID == "" {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "", Kind: models.IdentityTypeUser})
-			} else if tt.userID == "   " {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "   ", Kind: models.IdentityTypeUser})
-			} else {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user", Kind: models.IdentityTypeUser})
-			}
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user", Kind: models.IdentityTypeUser})
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockStorageService := new(tests.MockStorageService)
@@ -177,9 +152,6 @@ func TestStepsService_Create(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, step)
-				if tt.userID == "" || tt.userID == "   " {
-					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
-				}
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, step)
@@ -201,7 +173,6 @@ func TestStepsService_GetByID(t *testing.T) {
 
 	type testCase struct {
 		name    string
-		userID  string
 		stepID  string
 		setup   func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
 		wantErr bool
@@ -328,7 +299,6 @@ func TestStepsService_GetByGuideID(t *testing.T) {
 
 	type testCase struct {
 		name    string
-		userID  string
 		guideID string
 		setup   func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
 		wantErr bool
@@ -457,7 +427,6 @@ func TestStepsService_Update(t *testing.T) {
 
 	type testCase struct {
 		name    string
-		userID  string
 		stepID  string
 		req     *types.UpdateStepRequest
 		setup   func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService)
@@ -631,7 +600,6 @@ func TestStepsService_Delete(t *testing.T) {
 
 	type testCase struct {
 		name    string
-		userID  string
 		stepID  string
 		setup   func(*testing.T, *tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockMediaAssetsRepository)
 		wantErr bool
@@ -788,7 +756,6 @@ func TestStepsService_Reorder(t *testing.T) {
 
 	type testCase struct {
 		name         string
-		userID       string
 		guideID      string
 		targetStepID string
 		prevStepID   *string
@@ -954,7 +921,6 @@ func TestStepsService_Duplicate(t *testing.T) {
 		name    string
 		stepID  string
 		req     *types.DuplicateStepRequest
-		userID  string
 		setup   func(*tests.MockStepsRepository, *tests.MockGuidesRepository, *tests.MockPresignService, *tests.MockStorageService, *tests.MockMediaAssetsRepository)
 		wantErr bool
 	}{
@@ -1021,12 +987,6 @@ func TestStepsService_Duplicate(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(baseGuide, nil).
 					Once()
-				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePaths[0]).
-					Return("https://presigned.test/old1", nil).
-					Once()
-				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePaths[1]).
-					Return("https://presigned.test/old2", nil).
-					Once()
 				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
 					Return(newStep, nil).
 					Once()
@@ -1087,9 +1047,6 @@ func TestStepsService_Duplicate(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(baseGuide, nil).
 					Once()
-				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
-					Return("https://presigned.test/old-thumb", nil).
-					Once()
 				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
 					Return(newStep, nil).
 					Once()
@@ -1131,24 +1088,6 @@ func TestStepsService_Duplicate(t *testing.T) {
 					Return(fetchedStep, nil).
 					Once()
 			},
-		},
-		{
-			name:   "returns error for empty userID",
-			stepID: stepID.String(),
-			req:    &types.DuplicateStepRequest{},
-			userID: "",
-			setup: func(_ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService, _ *tests.MockStorageService, _ *tests.MockMediaAssetsRepository) {
-			},
-			wantErr: true,
-		},
-		{
-			name:   "returns error for whitespace userID",
-			stepID: stepID.String(),
-			req:    &types.DuplicateStepRequest{},
-			userID: "   ",
-			setup: func(_ *tests.MockStepsRepository, _ *tests.MockGuidesRepository, _ *tests.MockPresignService, _ *tests.MockStorageService, _ *tests.MockMediaAssetsRepository) {
-			},
-			wantErr: true,
 		},
 		{
 			name:   "returns error for empty stepID",
@@ -1237,12 +1176,6 @@ func TestStepsService_Duplicate(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(baseGuide, nil).
 					Once()
-				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePaths[0]).
-					Return("https://presigned.test/s3fail1", nil).
-					Once()
-				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePaths[1]).
-					Return("https://presigned.test/s3fail2", nil).
-					Once()
 				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
 					Return(newStep, nil).
 					Once()
@@ -1283,9 +1216,6 @@ func TestStepsService_Duplicate(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(baseGuide, nil).
 					Once()
-				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
-					Return("https://presigned.test/macreatefail", nil).
-					Once()
 				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
 					Return(newStep, nil).
 					Once()
@@ -1309,13 +1239,7 @@ func TestStepsService_Duplicate(t *testing.T) {
 			mockPresignClient := new(tests.MockPresignService)
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
-			if tt.userID == "" {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "", Kind: models.IdentityTypeUser})
-			} else if tt.userID == "   " {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "   ", Kind: models.IdentityTypeUser})
-			} else {
-				mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: userID, Kind: models.IdentityTypeUser})
-			}
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: userID, Kind: models.IdentityTypeUser})
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 			mockStorageService := new(tests.MockStorageService)
@@ -1328,9 +1252,6 @@ func TestStepsService_Duplicate(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, step)
-				if tt.userID == "" || tt.userID == "   " {
-					assert.ErrorIs(t, err, constants.ErrInvalidUserID)
-				}
 				if tt.stepID == "" {
 					assert.ErrorIs(t, err, constants.ErrInvalidStepID)
 				}

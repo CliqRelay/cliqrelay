@@ -48,7 +48,7 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 						SortOrder: "a0",
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -87,7 +87,7 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
-			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockIdentity, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
 			handler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, svc)
 

@@ -53,7 +53,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 						Action:    &stepAction,
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, creatorUserID, guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: creatorUserID,
@@ -140,7 +140,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 						Action:    &stepAction,
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, creatorUserID, otherGuideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, otherGuideID.String()).
 					Return(nil, nil).
 					Once()
 			},
@@ -178,7 +178,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, mockIdentity, mockAuthz, "test-bucket")
 			handler := handlersuploads.NewCompleteUploadHandler(appConfig, svc)
 

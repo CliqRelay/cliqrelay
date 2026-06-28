@@ -50,7 +50,7 @@ func TestUpdateStepHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -89,7 +89,7 @@ func TestUpdateStepHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -171,7 +171,7 @@ func TestUpdateStepHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -202,7 +202,7 @@ func TestUpdateStepHandler(t *testing.T) {
 			mockIdentity := new(tests.MockIdentityService)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockIdentity, mockAuthz, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewUpdateStepHandler(appConfig, svc)
 
