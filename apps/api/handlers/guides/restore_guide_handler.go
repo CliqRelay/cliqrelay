@@ -26,7 +26,7 @@ func (h *RestoreGuideHandler) Handle() http.HandlerFunc {
 
 		guideID := r.PathValue("id")
 
-		guide, err := h.guidesService.Restore(ctx, reqCtx.Actor.ID, guideID)
+		guide, err := h.guidesService.Restore(ctx, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

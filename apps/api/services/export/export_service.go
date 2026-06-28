@@ -15,7 +15,6 @@ import (
 	cliqmodels "github.com/CliqRelay/cliqrelay/models"
 )
 
-// ExportService orchestrates guide export requests and generates export artifacts.
 type ExportService struct {
 	guideExportsRepo interfaces.GuideExportsRepository
 	guidesRepo       interfaces.GuidesRepository
@@ -118,10 +117,14 @@ func (s *ExportService) GeneratePDF(ctx context.Context, exportID uuid.UUID, gui
 		return fmt.Errorf("update status to processing: %w", err)
 	}
 
-	guide, err := s.guidesRepo.GetByIDAnyUser(ctx, guideID.String())
+	guide, err := s.guidesRepo.GetByID(ctx, guideID.String())
 	if err != nil {
 		s.markFailed(ctx, exportID, fmt.Sprintf("fetch guide: %v", err))
 		return fmt.Errorf("fetch guide: %w", err)
+	}
+	if guide == nil {
+		s.markFailed(ctx, exportID, "guide not found")
+		return fmt.Errorf("guide not found")
 	}
 
 	steps, err := s.stepsRepo.GetByGuideID(ctx, guideID.String())

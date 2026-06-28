@@ -38,7 +38,7 @@ func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.uploadsService.GeneratePresignedPutURL(ctx, reqCtx.Actor.ID, request.GuideID, request.StepID)
+		result, err := h.uploadsService.GeneratePresignedPutURL(ctx, request.GuideID, request.StepID)
 		if err != nil {
 			status := http.StatusInternalServerError
 			switch err {

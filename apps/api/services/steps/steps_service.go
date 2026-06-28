@@ -25,12 +25,26 @@ type StepsService struct {
 	presignClient   interfaces.PresignService
 	storageService  interfaces.StorageService
 	mediaAssetsRepo interfaces.MediaAssetsRepository
+	identityService interfaces.IdentityService
+	authzService    interfaces.AuthorizationService
 	logger          *slog.Logger
 	bucket          string
 	hooks           *interfaces.StepHooks
 }
 
-func NewStepsService(redisClient *redis.Client, stepsRepo interfaces.StepsRepository, guidesRepo interfaces.GuidesRepository, presignClient interfaces.PresignService, storageService interfaces.StorageService, mediaAssetsRepo interfaces.MediaAssetsRepository, bucket string, logger *slog.Logger, hooks *interfaces.StepHooks) *StepsService {
+func NewStepsService(
+	redisClient *redis.Client,
+	stepsRepo interfaces.StepsRepository,
+	guidesRepo interfaces.GuidesRepository,
+	presignClient interfaces.PresignService,
+	storageService interfaces.StorageService,
+	mediaAssetsRepo interfaces.MediaAssetsRepository,
+	bucket string,
+	logger *slog.Logger,
+	identityService interfaces.IdentityService,
+	authzService interfaces.AuthorizationService,
+	hooks *interfaces.StepHooks,
+) *StepsService {
 	return &StepsService{
 		redisClient:     redisClient,
 		stepsRepo:       stepsRepo,
@@ -38,24 +52,28 @@ func NewStepsService(redisClient *redis.Client, stepsRepo interfaces.StepsReposi
 		presignClient:   presignClient,
 		storageService:  storageService,
 		mediaAssetsRepo: mediaAssetsRepo,
+		identityService: identityService,
+		authzService:    authzService,
 		logger:          logger,
 		bucket:          bucket,
 		hooks:           hooks,
 	}
 }
 
-func (s *StepsService) Create(ctx context.Context, userID string, req *types.CreateStepRequest) (*models.Step, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest) (*models.Step, error) {
+	identity := s.identityService.Current(ctx)
 
-	guide, err := s.getGuideForStep(ctx, userID, req.GuideID.String())
+	guide, err := s.getGuideForStep(ctx, identity, req.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
 
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, userID, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, identity, req); err != nil {
 			return nil, err
 		}
 	}
@@ -77,7 +95,7 @@ func (s *StepsService) Create(ctx context.Context, userID string, req *types.Cre
 	}
 
 	if s.hooks != nil && s.hooks.AfterCreate != nil {
-		if err := s.hooks.AfterCreate(ctx, userID, step); err != nil {
+		if err := s.hooks.AfterCreate(ctx, identity, step); err != nil {
 			return nil, err
 		}
 	}
@@ -85,10 +103,8 @@ func (s *StepsService) Create(ctx context.Context, userID string, req *types.Cre
 	return step, nil
 }
 
-func (s *StepsService) GetByID(ctx context.Context, userID string, stepID string) (*models.Step, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *StepsService) GetByID(ctx context.Context, stepID string) (*models.Step, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
@@ -102,8 +118,13 @@ func (s *StepsService) GetByID(ctx context.Context, userID string, stepID string
 		return nil, constants.ErrStepNotFound
 	}
 
-	if _, err := s.getGuideForStep(ctx, userID, step.GuideID.String()); err != nil {
+	guide, err := s.getGuideForStep(ctx, identity, step.GuideID.String())
+	if err != nil {
 		return nil, err
+	}
+
+	if err := s.authzService.CanReadGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
 	}
 
 	s.enrichMediaAssets(ctx, step)
@@ -111,17 +132,20 @@ func (s *StepsService) GetByID(ctx context.Context, userID string, stepID string
 	return step, nil
 }
 
-func (s *StepsService) GetByGuideID(ctx context.Context, userID string, guideID string) ([]*models.Step, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *StepsService) GetByGuideID(ctx context.Context, guideID string) ([]*models.Step, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	if _, err := s.getGuideForStep(ctx, userID, guideID); err != nil {
+	guide, err := s.getGuideForStep(ctx, identity, guideID)
+	if err != nil {
 		return nil, err
+	}
+
+	if err := s.authzService.CanReadGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
 	}
 
 	steps, err := s.stepsRepo.GetByGuideID(ctx, guideID)
@@ -134,10 +158,8 @@ func (s *StepsService) GetByGuideID(ctx context.Context, userID string, guideID 
 	return steps, nil
 }
 
-func (s *StepsService) Update(ctx context.Context, userID string, stepID string, req *types.UpdateStepRequest) (*models.Step, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *StepsService) Update(ctx context.Context, stepID string, req *types.UpdateStepRequest) (*models.Step, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
@@ -148,17 +170,30 @@ func (s *StepsService) Update(ctx context.Context, userID string, stepID string,
 		return nil, constants.ErrInvalidStepID
 	}
 
-	if _, err := s.GetByID(ctx, userID, stepID); err != nil {
+	step, err := s.stepsRepo.GetByID(ctx, stepID)
+	if err != nil {
+		return nil, err
+	}
+	if step == nil {
+		return nil, constants.ErrStepNotFound
+	}
+
+	guide, err := s.getGuideForStep(ctx, identity, step.GuideID.String())
+	if err != nil {
 		return nil, err
 	}
 
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, userID, req); err != nil {
+		if err := s.hooks.BeforeUpdate(ctx, identity, req); err != nil {
 			return nil, err
 		}
 	}
 
-	step, err := s.stepsRepo.Update(ctx, &types.UpdateStepDTO{
+	updated, err := s.stepsRepo.Update(ctx, &types.UpdateStepDTO{
 		ID:            parsedID,
 		Type:          req.Type,
 		Action:        req.Action,
@@ -171,37 +206,47 @@ func (s *StepsService) Update(ctx context.Context, userID string, stepID string,
 	if err != nil {
 		return nil, err
 	}
-	if step == nil {
+	if updated == nil {
 		return nil, constants.ErrStepNotFound
 	}
 
-	s.enrichMediaAssets(ctx, step)
+	s.enrichMediaAssets(ctx, updated)
 
 	if s.hooks != nil && s.hooks.AfterUpdate != nil {
-		if err := s.hooks.AfterUpdate(ctx, userID, step); err != nil {
+		if err := s.hooks.AfterUpdate(ctx, identity, updated); err != nil {
 			return nil, err
 		}
 	}
 
-	return step, nil
+	return updated, nil
 }
 
-func (s *StepsService) Delete(ctx context.Context, userID string, stepID string) error {
-	if strings.TrimSpace(userID) == "" {
-		return constants.ErrInvalidUserID
-	}
+func (s *StepsService) Delete(ctx context.Context, stepID string) error {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(stepID) == "" {
 		return constants.ErrInvalidStepID
 	}
 
-	step, err := s.GetByID(ctx, userID, stepID)
+	step, err := s.stepsRepo.GetByID(ctx, stepID)
+	if err != nil {
+		return err
+	}
+	if step == nil {
+		return constants.ErrStepNotFound
+	}
+
+	guide, err := s.getGuideForStep(ctx, identity, step.GuideID.String())
 	if err != nil {
 		return err
 	}
 
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return constants.ErrGuideNotFound
+	}
+
 	if s.hooks != nil && s.hooks.BeforeDelete != nil {
-		if err := s.hooks.BeforeDelete(ctx, userID, step); err != nil {
+		if err := s.hooks.BeforeDelete(ctx, identity, step); err != nil {
 			return err
 		}
 	}
@@ -216,7 +261,7 @@ func (s *StepsService) Delete(ctx context.Context, userID string, stepID string)
 	}
 
 	if s.hooks != nil && s.hooks.AfterDelete != nil {
-		if err := s.hooks.AfterDelete(ctx, userID, stepID); err != nil {
+		if err := s.hooks.AfterDelete(ctx, identity, stepID); err != nil {
 			return err
 		}
 	}
@@ -237,17 +282,20 @@ func (s *StepsService) Delete(ctx context.Context, userID string, stepID string)
 	return nil
 }
 
-func (s *StepsService) Reorder(ctx context.Context, userID string, guideID string, targetStepID string, prevStepID *string, nextStepID *string) ([]*models.Step, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *StepsService) Reorder(ctx context.Context, guideID string, targetStepID string, prevStepID *string, nextStepID *string) ([]*models.Step, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	if _, err := s.getGuideForStep(ctx, userID, guideID); err != nil {
+	guide, err := s.getGuideForStep(ctx, identity, guideID)
+	if err != nil {
 		return nil, err
+	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
 	}
 
 	steps, err := s.stepsRepo.Reorder(ctx, guideID, targetStepID, prevStepID, nextStepID)
@@ -258,20 +306,28 @@ func (s *StepsService) Reorder(ctx context.Context, userID string, guideID strin
 	return steps, nil
 }
 
-func (s *StepsService) Duplicate(ctx context.Context, userID string, stepID string, req *types.DuplicateStepRequest) (*models.Step, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *StepsService) Duplicate(ctx context.Context, stepID string, req *types.DuplicateStepRequest) (*models.Step, error) {
+	identity := s.identityService.Current(ctx)
+
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
 
-	original, err := s.GetByID(ctx, userID, stepID)
+	original, err := s.stepsRepo.GetByID(ctx, stepID)
 	if err != nil {
 		return nil, err
 	}
 	if original == nil {
 		return nil, constants.ErrStepNotFound
+	}
+
+	guide, err := s.getGuideForStep(ctx, identity, original.GuideID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
 	}
 
 	insertBeforeStepID := req.InsertBeforeStepID
@@ -349,16 +405,13 @@ func (s *StepsService) Duplicate(ctx context.Context, userID string, stepID stri
 	return result, nil
 }
 
-func (s *StepsService) getGuideForStep(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+func (s *StepsService) getGuideForStep(ctx context.Context, ident *models.Identity, guideID string) (*models.Guide, error) {
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
 	if guide == nil {
 		return nil, constants.ErrGuideNotFound
-	}
-	if guide.CreatorID != userID {
-		return nil, constants.ErrGuideNotOwnedByUser
 	}
 	if guide.DeletedAt != nil {
 		return nil, constants.ErrGuideDeleted

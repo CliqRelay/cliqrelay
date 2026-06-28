@@ -40,7 +40,7 @@ func TestGetAllMediaAssetsHandler(t *testing.T) {
 						SortOrder: "a0",
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -69,7 +69,7 @@ func TestGetAllMediaAssetsHandler(t *testing.T) {
 						SortOrder: "a0",
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -105,7 +105,11 @@ func TestGetAllMediaAssetsHandler(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
-			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			mockIdentity := new(tests.MockIdentityService)
+			mockAuthz := new(tests.MockAuthorizationService)
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockIdentity, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
 			handler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, svc)
 
 			path := "/api/v1/media-assets?stepId=" + tt.stepID

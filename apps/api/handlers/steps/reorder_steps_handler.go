@@ -37,7 +37,7 @@ func (h *ReorderStepsHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		steps, err := h.stepsService.Reorder(ctx, reqCtx.Actor.ID, request.GuideID.String(), request.TargetStepID, request.PrevStepID, request.NextStepID)
+		steps, err := h.stepsService.Reorder(ctx, request.GuideID.String(), request.TargetStepID, request.PrevStepID, request.NextStepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -26,7 +26,7 @@ func (h *GetStepByIDHandler) Handle() http.HandlerFunc {
 
 		stepID := r.PathValue("id")
 
-		step, err := h.stepsService.GetByID(ctx, reqCtx.Actor.ID, stepID)
+		step, err := h.stepsService.GetByID(ctx, stepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

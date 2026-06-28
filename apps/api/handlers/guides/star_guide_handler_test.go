@@ -10,6 +10,7 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
+	"github.com/CliqRelay/cliqrelay/models"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
 	"github.com/CliqRelay/cliqrelay/tests"
 )
@@ -53,18 +54,40 @@ func TestStarGuideHandler(t *testing.T) {
 			path := "/api/v1/guides/" + guideID + "/star"
 
 			mockStarredRepo := new(tests.MockStarredGuidesRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
+			mockIdentity := new(tests.MockIdentityService)
+			mockAuthz := new(tests.MockAuthorizationService)
+			mockIdentity.On("Current", mock.Anything).Return(&models.Identity{ID: "test-user-123", Kind: models.IdentityTypeUser})
 
 			if tt.name == "success" || tt.name == "already starred (idempotent)" {
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID).
+					Return(&models.Guide{
+						ID:        uuid.MustParse(guideID),
+						CreatorID: "test-user-123",
+						Title:     "Guide Title",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockStarredRepo.On("Star", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(nil).
 					Once()
+				mockAuthz.On("CanReadGuide", mock.Anything, mock.AnythingOfType("*models.Identity"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			} else {
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID).
+					Return(&models.Guide{
+						ID:        uuid.MustParse(guideID),
+						CreatorID: "test-user-123",
+						Title:     "Guide Title",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
 				mockStarredRepo.On("Star", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(assert.AnError).
 					Once()
+				mockAuthz.On("CanReadGuide", mock.Anything, mock.AnythingOfType("*models.Identity"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			}
 
-			svc := starredguidesservice.NewStarredGuidesService(mockStarredRepo)
+			svc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo, mockIdentity, mockAuthz)
 			handler := handlersguides.NewStarGuideHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)

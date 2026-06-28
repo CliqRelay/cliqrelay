@@ -13,16 +13,31 @@ import (
 
 type StarredGuidesService struct {
 	starredGuidesRepo interfaces.StarredGuidesRepository
+	guidesRepo        interfaces.GuidesRepository
+	identityService   interfaces.IdentityService
+	authzService      interfaces.AuthorizationService
 }
 
-func NewStarredGuidesService(starredGuidesRepo interfaces.StarredGuidesRepository) *StarredGuidesService {
-	return &StarredGuidesService{starredGuidesRepo: starredGuidesRepo}
-}
-
-func (s *StarredGuidesService) Star(ctx context.Context, userID string, guideID string) error {
-	if strings.TrimSpace(userID) == "" {
-		return constants.ErrInvalidUserID
+func NewStarredGuidesService(
+	starredGuidesRepo interfaces.StarredGuidesRepository,
+	guidesRepo interfaces.GuidesRepository,
+	identityService interfaces.IdentityService,
+	authzService interfaces.AuthorizationService,
+) *StarredGuidesService {
+	return &StarredGuidesService{
+		starredGuidesRepo: starredGuidesRepo,
+		guidesRepo:        guidesRepo,
+		identityService:   identityService,
+		authzService:      authzService,
 	}
+}
+
+func (s *StarredGuidesService) Star(ctx context.Context, guideID string) error {
+	identity := s.identityService.Current(ctx)
+	if identity == nil {
+		return constants.ErrForbidden
+	}
+
 	if strings.TrimSpace(guideID) == "" {
 		return constants.ErrInvalidGuideID
 	}
@@ -30,13 +45,28 @@ func (s *StarredGuidesService) Star(ctx context.Context, userID string, guideID 
 	if err != nil {
 		return constants.ErrInvalidGuideID
 	}
-	return s.starredGuidesRepo.Star(ctx, userID, parsedID)
+
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	if err != nil {
+		return err
+	}
+	if guide == nil {
+		return constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanReadGuide(ctx, identity, guide); err != nil {
+		return constants.ErrGuideNotFound
+	}
+
+	return s.starredGuidesRepo.Star(ctx, identity.ID, parsedID)
 }
 
-func (s *StarredGuidesService) Unstar(ctx context.Context, userID string, guideID string) error {
-	if strings.TrimSpace(userID) == "" {
-		return constants.ErrInvalidUserID
+func (s *StarredGuidesService) Unstar(ctx context.Context, guideID string) error {
+	identity := s.identityService.Current(ctx)
+	if identity == nil {
+		return constants.ErrForbidden
 	}
+
 	if strings.TrimSpace(guideID) == "" {
 		return constants.ErrInvalidGuideID
 	}
@@ -44,17 +74,30 @@ func (s *StarredGuidesService) Unstar(ctx context.Context, userID string, guideI
 	if err != nil {
 		return constants.ErrInvalidGuideID
 	}
-	return s.starredGuidesRepo.Unstar(ctx, userID, parsedID)
+	return s.starredGuidesRepo.Unstar(ctx, identity.ID, parsedID)
 }
 
-func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, userID string) ([]*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
+func (s *StarredGuidesService) GetStarredGuides(ctx context.Context) ([]*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
+	if identity == nil {
+		return nil, constants.ErrForbidden
 	}
 
-	guides, err := s.starredGuidesRepo.GetStarredGuides(ctx, userID)
+	filter, err := s.authzService.GuideListFilter(ctx, identity)
 	if err != nil {
 		return nil, err
+	}
+
+	rows, err := s.starredGuidesRepo.GetAll(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	guides := make([]*models.Guide, 0)
+	for _, row := range rows {
+		if row.IsStarred {
+			guides = append(guides, &row.Guide)
+		}
 	}
 
 	return guides, nil

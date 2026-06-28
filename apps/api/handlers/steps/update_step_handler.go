@@ -39,7 +39,7 @@ func (h *UpdateStepHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		step, err := h.stepsService.Update(ctx, reqCtx.Actor.ID, stepID, &request)
+		step, err := h.stepsService.Update(ctx, stepID, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

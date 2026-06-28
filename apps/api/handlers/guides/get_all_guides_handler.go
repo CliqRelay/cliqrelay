@@ -29,7 +29,7 @@ func (h *GetAllGuidesHandler) Handle() http.HandlerFunc {
 			status = &s
 		}
 
-		guides, err := h.guidesService.GetAll(ctx, reqCtx.Actor.ID, status)
+		guides, err := h.guidesService.GetAll(ctx, status)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

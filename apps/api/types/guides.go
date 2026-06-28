@@ -1,6 +1,8 @@
 package types
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/models"
@@ -31,6 +33,35 @@ func (r *GuideStatus) Validate() error {
 	return validator.Validate.Struct(r)
 }
 
+type GuideSortField string
+
+const (
+	GuideSortCreatedAt GuideSortField = "created_at"
+	GuideSortUpdatedAt GuideSortField = "updated_at"
+)
+
+type GuideWithStarred struct {
+	models.Guide `json:",inline"`
+	IsStarred    bool `json:"is_starred"`
+}
+
+type GuideFilter struct {
+	IDs             []uuid.UUID
+	CreatorID       *string
+	ViewerUserID    *string
+	Status          *models.GuideStatus
+	Search          *string
+	IncludeDeleted  bool
+	IncludeArchived bool
+	PublishedOnly   bool
+	CreatedAfter    *time.Time
+	CreatedBefore   *time.Time
+	Limit           int
+	Offset          int
+	SortBy          GuideSortField
+	SortDesc        bool
+}
+
 type CreateGuideRequest struct {
 	Title       string  `json:"title" validate:"required,lte=255" required:"true"`
 	Description *string `json:"description,omitempty" nullable:"true"`
@@ -44,6 +75,7 @@ func (r *CreateGuideRequest) Validate() error {
 }
 
 type CreateGuideDTO struct {
+	CreatorID   string  `json:"-"`
 	Title       string  `json:"title" required:"true" validate:"required,lte=255"`
 	Description *string `json:"description,omitempty"`
 }

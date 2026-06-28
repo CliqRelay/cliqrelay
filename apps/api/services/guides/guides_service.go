@@ -23,32 +23,52 @@ type GuidesService struct {
 	guidesCache       interfaces.GuidesCacheService
 	stepsRepo         interfaces.StepsRepository
 	redisClient       *redis.Client
+	identityService   interfaces.IdentityService
+	authzService      interfaces.AuthorizationService
 	hooks             *interfaces.GuideHooks
 }
 
-func NewGuidesService(guidesRepo interfaces.GuidesRepository, starredGuidesRepo interfaces.StarredGuidesRepository, guidesCache interfaces.GuidesCacheService, stepsRepo interfaces.StepsRepository, redisClient *redis.Client, hooks *interfaces.GuideHooks) *GuidesService {
+func NewGuidesService(
+	guidesRepo interfaces.GuidesRepository,
+	starredGuidesRepo interfaces.StarredGuidesRepository,
+	guidesCache interfaces.GuidesCacheService,
+	stepsRepo interfaces.StepsRepository,
+	redisClient *redis.Client,
+	identityService interfaces.IdentityService,
+	authzService interfaces.AuthorizationService,
+	hooks *interfaces.GuideHooks,
+) *GuidesService {
 	return &GuidesService{
 		guidesRepo:        guidesRepo,
 		starredGuidesRepo: starredGuidesRepo,
 		guidesCache:       guidesCache,
 		stepsRepo:         stepsRepo,
 		redisClient:       redisClient,
+		identityService:   identityService,
+		authzService:      authzService,
 		hooks:             hooks,
 	}
 }
 
-func (s *GuidesService) Create(ctx context.Context, userID string, req *types.CreateGuideRequest) (*models.Guide, error) {
+func (s *GuidesService) Create(ctx context.Context, req *types.CreateGuideRequest) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
+	if err := s.authzService.CanCreateGuide(ctx, identity); err != nil {
+		return nil, err
+	}
+
+	userID := identity.ID
 	if strings.TrimSpace(userID) == "" {
 		return nil, constants.ErrInvalidUserID
 	}
 
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, userID, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, identity, req); err != nil {
 			return nil, err
 		}
 	}
 
-	guideCreated, err := s.guidesRepo.Create(ctx, userID, &types.CreateGuideDTO{
+	guideCreated, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
+		CreatorID:   userID,
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -57,7 +77,7 @@ func (s *GuidesService) Create(ctx context.Context, userID string, req *types.Cr
 	}
 
 	if s.hooks != nil && s.hooks.AfterCreate != nil {
-		if err := s.hooks.AfterCreate(ctx, userID, guideCreated); err != nil {
+		if err := s.hooks.AfterCreate(ctx, identity, guideCreated); err != nil {
 			return nil, err
 		}
 	}
@@ -65,15 +85,23 @@ func (s *GuidesService) Create(ctx context.Context, userID string, req *types.Cr
 	return guideCreated, nil
 }
 
-func (s *GuidesService) GetAll(ctx context.Context, userID string, status *string) ([]*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
+func (s *GuidesService) GetAll(ctx context.Context, status *string) ([]*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
+
+	filter, err := s.authzService.GuideListFilter(ctx, identity)
+	if err != nil {
+		return nil, err
 	}
 
 	if status == nil {
-		guides, err := s.starredGuidesRepo.GetAllWithStarred(ctx, userID)
+		rows, err := s.starredGuidesRepo.GetAll(ctx, filter)
 		if err != nil {
 			return nil, err
+		}
+		guides := make([]*models.Guide, len(rows))
+		for i, row := range rows {
+			guides[i] = &row.Guide
+			guides[i].IsStarred = row.IsStarred
 		}
 		return guides, nil
 	}
@@ -87,28 +115,24 @@ func (s *GuidesService) GetAll(ctx context.Context, userID string, status *strin
 		return nil, fmt.Errorf("invalid status: %s", *status)
 	}
 
-	switch models.GuideStatus(*status) {
-	case models.StatusDeleted:
-		guides, err := s.guidesRepo.GetAllByStatus(ctx, userID, models.StatusDeleted)
-		if err != nil {
-			return nil, err
-		}
-		return guides, nil
-	case models.StatusDraft, models.StatusPublished, models.StatusArchived:
-		guides, err := s.starredGuidesRepo.GetAllByStatusWithStarred(ctx, userID, models.GuideStatus(*status))
-		if err != nil {
-			return nil, err
-		}
-		return guides, nil
-	default:
-		return nil, fmt.Errorf("invalid status: %s", *status)
+	statusVal := models.GuideStatus(*status)
+	clonedFilter := *filter
+	clonedFilter.Status = &statusVal
+
+	rows, err := s.starredGuidesRepo.GetAll(ctx, &clonedFilter)
+	if err != nil {
+		return nil, err
 	}
+	guides := make([]*models.Guide, len(rows))
+	for i, row := range rows {
+		guides[i] = &row.Guide
+		guides[i].IsStarred = row.IsStarred
+	}
+	return guides, nil
 }
 
-func (s *GuidesService) GetByID(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) GetByID(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
@@ -116,17 +140,24 @@ func (s *GuidesService) GetByID(ctx context.Context, userID string, guideID stri
 
 	if s.guidesCache != nil {
 		cached, err := s.guidesCache.Get(ctx, guideID)
-		if err == nil && cached != nil && cached.CreatorID == userID {
+		if err == nil && cached != nil && identity != nil && cached.CreatorID == identity.ID {
+			if err := s.authzService.CanReadGuide(ctx, identity, cached); err != nil {
+				return nil, constants.ErrGuideNotFound
+			}
 			return cached, nil
 		}
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
 
 	if guide == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanReadGuide(ctx, identity, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -137,10 +168,8 @@ func (s *GuidesService) GetByID(ctx context.Context, userID string, guideID stri
 	return guide, nil
 }
 
-func (s *GuidesService) Update(ctx context.Context, userID string, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
@@ -151,14 +180,25 @@ func (s *GuidesService) Update(ctx context.Context, userID string, guideID strin
 		return nil, constants.ErrInvalidGuideID
 	}
 
+	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, existing); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		existing, _ := s.guidesRepo.GetByID(ctx, userID, guideID)
-		if err := s.hooks.BeforeUpdate(ctx, userID, existing); err != nil {
+		if err := s.hooks.BeforeUpdate(ctx, identity, existing); err != nil {
 			return nil, err
 		}
 	}
 
-	updated, err := s.guidesRepo.Update(ctx, userID, &types.UpdateGuideDTO{
+	updated, err := s.guidesRepo.Update(ctx, &types.UpdateGuideDTO{
 		ID:          parsedID,
 		Title:       req.Title,
 		Description: req.Description,
@@ -168,13 +208,11 @@ func (s *GuidesService) Update(ctx context.Context, userID string, guideID strin
 	}
 
 	if s.guidesCache != nil {
-		if s.guidesCache != nil {
-			_ = s.guidesCache.Invalidate(ctx, guideID)
-		}
+		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
 	if s.hooks != nil && s.hooks.AfterUpdate != nil {
-		if err := s.hooks.AfterUpdate(ctx, userID, updated); err != nil {
+		if err := s.hooks.AfterUpdate(ctx, identity, updated); err != nil {
 			return nil, err
 		}
 	}
@@ -182,22 +220,32 @@ func (s *GuidesService) Update(ctx context.Context, userID string, guideID strin
 	return updated, nil
 }
 
-func (s *GuidesService) Delete(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) Delete(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
+	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanDeleteGuide(ctx, identity, existing); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if s.hooks != nil && s.hooks.BeforeDelete != nil {
-		if err := s.hooks.BeforeDelete(ctx, userID, guideID); err != nil {
+		if err := s.hooks.BeforeDelete(ctx, identity, guideID); err != nil {
 			return nil, err
 		}
 	}
 
-	deleted, err := s.guidesRepo.Delete(ctx, userID, guideID)
+	deleted, err := s.guidesRepo.Delete(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +259,7 @@ func (s *GuidesService) Delete(ctx context.Context, userID string, guideID strin
 	}
 
 	if s.hooks != nil && s.hooks.AfterDelete != nil {
-		if err := s.hooks.AfterDelete(ctx, userID, guideID); err != nil {
+		if err := s.hooks.AfterDelete(ctx, identity, guideID); err != nil {
 			return nil, err
 		}
 	}
@@ -219,7 +267,7 @@ func (s *GuidesService) Delete(ctx context.Context, userID string, guideID strin
 	return deleted, nil
 }
 
-func (s *GuidesService) recalculateDuration(ctx context.Context, userID string, guideID string) error {
+func (s *GuidesService) recalculateDuration(ctx context.Context, guideID string) error {
 	if s.stepsRepo != nil {
 		steps, err := s.stepsRepo.GetByGuideID(ctx, guideID)
 		if err != nil {
@@ -227,43 +275,46 @@ func (s *GuidesService) recalculateDuration(ctx context.Context, userID string, 
 		}
 
 		duration := models.CalculateSyntheticDuration(steps)
-		_, err = s.guidesRepo.UpdateDuration(ctx, userID, guideID, duration)
+		_, err = s.guidesRepo.UpdateDuration(ctx, guideID, duration)
 		return err
 	}
 	return nil
 }
 
-func (s *GuidesService) Publish(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) Publish(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
 	if guide == nil {
 		return nil, constants.ErrGuideNotFound
 	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if guide.Status != models.StatusDraft {
 		return nil, fmt.Errorf("only guides in draft status can be published")
 	}
 
 	if s.hooks != nil && s.hooks.BeforePublish != nil {
-		if err := s.hooks.BeforePublish(ctx, userID, guide); err != nil {
+		if err := s.hooks.BeforePublish(ctx, identity, guide); err != nil {
 			return nil, err
 		}
 	}
 
-	if err := s.recalculateDuration(ctx, userID, guideID); err != nil {
+	if err := s.recalculateDuration(ctx, guideID); err != nil {
 		return nil, err
 	}
 
-	published, err := s.guidesRepo.Publish(ctx, userID, guideID)
+	published, err := s.guidesRepo.Publish(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +328,7 @@ func (s *GuidesService) Publish(ctx context.Context, userID string, guideID stri
 	}
 
 	if s.hooks != nil && s.hooks.AfterPublish != nil {
-		if err := s.hooks.AfterPublish(ctx, userID, published); err != nil {
+		if err := s.hooks.AfterPublish(ctx, identity, published); err != nil {
 			return nil, err
 		}
 	}
@@ -285,33 +336,36 @@ func (s *GuidesService) Publish(ctx context.Context, userID string, guideID stri
 	return published, nil
 }
 
-func (s *GuidesService) Unpublish(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) Unpublish(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
 	if guide == nil {
 		return nil, constants.ErrGuideNotFound
 	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if guide.Status != models.StatusPublished {
 		return nil, fmt.Errorf("only guides in published status can be unpublished")
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUnpublish != nil {
-		if err := s.hooks.BeforeUnpublish(ctx, userID, guide); err != nil {
+		if err := s.hooks.BeforeUnpublish(ctx, identity, guide); err != nil {
 			return nil, err
 		}
 	}
 
-	unpublished, err := s.guidesRepo.Unpublish(ctx, userID, guideID)
+	unpublished, err := s.guidesRepo.Unpublish(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +379,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, userID string, guideID st
 	}
 
 	if s.hooks != nil && s.hooks.AfterUnpublish != nil {
-		if err := s.hooks.AfterUnpublish(ctx, userID, unpublished); err != nil {
+		if err := s.hooks.AfterUnpublish(ctx, identity, unpublished); err != nil {
 			return nil, err
 		}
 	}
@@ -333,33 +387,36 @@ func (s *GuidesService) Unpublish(ctx context.Context, userID string, guideID st
 	return unpublished, nil
 }
 
-func (s *GuidesService) Archive(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) Archive(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
 	if guide == nil {
 		return nil, constants.ErrGuideNotFound
 	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if guide.Status != models.StatusDraft && guide.Status != models.StatusPublished {
 		return nil, fmt.Errorf("only guides in draft or published status can be archived")
 	}
 
 	if s.hooks != nil && s.hooks.BeforeArchive != nil {
-		if err := s.hooks.BeforeArchive(ctx, userID, guide); err != nil {
+		if err := s.hooks.BeforeArchive(ctx, identity, guide); err != nil {
 			return nil, err
 		}
 	}
 
-	archived, err := s.guidesRepo.Archive(ctx, userID, guideID)
+	archived, err := s.guidesRepo.Archive(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +430,7 @@ func (s *GuidesService) Archive(ctx context.Context, userID string, guideID stri
 	}
 
 	if s.hooks != nil && s.hooks.AfterArchive != nil {
-		if err := s.hooks.AfterArchive(ctx, userID, archived); err != nil {
+		if err := s.hooks.AfterArchive(ctx, identity, archived); err != nil {
 			return nil, err
 		}
 	}
@@ -381,33 +438,36 @@ func (s *GuidesService) Archive(ctx context.Context, userID string, guideID stri
 	return archived, nil
 }
 
-func (s *GuidesService) Unarchive(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) Unarchive(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
 	if guide == nil {
 		return nil, constants.ErrGuideNotFound
 	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if guide.Status != models.StatusArchived {
 		return nil, fmt.Errorf("only guides in archived status can be unarchived")
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUnarchive != nil {
-		if err := s.hooks.BeforeUnarchive(ctx, userID, guide); err != nil {
+		if err := s.hooks.BeforeUnarchive(ctx, identity, guide); err != nil {
 			return nil, err
 		}
 	}
 
-	unarchived, err := s.guidesRepo.Unarchive(ctx, userID, guideID)
+	unarchived, err := s.guidesRepo.Unarchive(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -421,7 +481,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, userID string, guideID st
 	}
 
 	if s.hooks != nil && s.hooks.AfterUnarchive != nil {
-		if err := s.hooks.AfterUnarchive(ctx, userID, unarchived); err != nil {
+		if err := s.hooks.AfterUnarchive(ctx, identity, unarchived); err != nil {
 			return nil, err
 		}
 	}
@@ -429,16 +489,26 @@ func (s *GuidesService) Unarchive(ctx context.Context, userID string, guideID st
 	return unarchived, nil
 }
 
-func (s *GuidesService) Restore(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) Restore(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	restored, err := s.guidesRepo.Restore(ctx, userID, guideID)
+	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanEditGuide(ctx, identity, existing); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	restored, err := s.guidesRepo.Restore(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -454,12 +524,15 @@ func (s *GuidesService) Restore(ctx context.Context, userID string, guideID stri
 	return restored, nil
 }
 
-func (s *GuidesService) GetCount(ctx context.Context, userID string) (int, error) {
-	if strings.TrimSpace(userID) == "" {
-		return 0, constants.ErrInvalidUserID
+func (s *GuidesService) GetCount(ctx context.Context) (int, error) {
+	identity := s.identityService.Current(ctx)
+
+	filter, err := s.authzService.GuideListFilter(ctx, identity)
+	if err != nil {
+		return 0, err
 	}
 
-	count, err := s.guidesRepo.GetCount(ctx, userID)
+	count, err := s.guidesRepo.GetCount(ctx, filter)
 	if err != nil {
 		return 0, err
 	}
@@ -467,16 +540,26 @@ func (s *GuidesService) GetCount(ctx context.Context, userID string) (int, error
 	return count, nil
 }
 
-func (s *GuidesService) PermanentlyDelete(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) PermanentlyDelete(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	deleted, err := s.guidesRepo.PermanentlyDelete(ctx, userID, guideID)
+	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanDeleteGuide(ctx, identity, existing); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	deleted, err := s.guidesRepo.PermanentlyDelete(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -502,16 +585,14 @@ func (s *GuidesService) publishPurgeEvent(ctx context.Context, guideID string) e
 	})
 }
 
-func (s *GuidesService) RecalculateDuration(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
+func (s *GuidesService) RecalculateDuration(ctx context.Context, guideID string) (*models.Guide, error) {
+	identity := s.identityService.Current(ctx)
 
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -519,11 +600,15 @@ func (s *GuidesService) RecalculateDuration(ctx context.Context, userID string, 
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.recalculateDuration(ctx, userID, guideID); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, identity, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := s.recalculateDuration(ctx, guideID); err != nil {
 		return nil, err
 	}
 
-	updated, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+	updated, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}

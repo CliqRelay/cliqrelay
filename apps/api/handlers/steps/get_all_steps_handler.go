@@ -26,7 +26,7 @@ func (h *GetAllStepsHandler) Handle() http.HandlerFunc {
 
 		guideID := r.URL.Query().Get("guideId")
 
-		steps, err := h.stepsService.GetByGuideID(ctx, reqCtx.Actor.ID, guideID)
+		steps, err := h.stepsService.GetByGuideID(ctx, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
