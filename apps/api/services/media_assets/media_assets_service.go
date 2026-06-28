@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	authulamodels "github.com/Authula/authula/models"
 	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -16,6 +17,7 @@ type MediaAssetsService struct {
 	mediaAssetsRepo interfaces.MediaAssetsRepository
 	stepsRepo       interfaces.StepsRepository
 	guidesRepo      interfaces.GuidesRepository
+	authzService    interfaces.AuthorizationService
 	hooks           *interfaces.MediaAssetHooks
 }
 
@@ -23,21 +25,19 @@ func NewMediaAssetsService(
 	mediaAssetsRepo interfaces.MediaAssetsRepository,
 	stepsRepo interfaces.StepsRepository,
 	guidesRepo interfaces.GuidesRepository,
+	authzService interfaces.AuthorizationService,
 	hooks *interfaces.MediaAssetHooks,
 ) *MediaAssetsService {
 	return &MediaAssetsService{
 		mediaAssetsRepo: mediaAssetsRepo,
 		stepsRepo:       stepsRepo,
 		guidesRepo:      guidesRepo,
+		authzService:    authzService,
 		hooks:           hooks,
 	}
 }
 
-func (s *MediaAssetsService) Create(ctx context.Context, userID string, req *types.CreateMediaAssetRequest) (*models.MediaAsset, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
-
+func (s *MediaAssetsService) Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateMediaAssetRequest) (*models.MediaAsset, error) {
 	step, err := s.stepsRepo.GetByID(ctx, req.StepID.String())
 	if err != nil {
 		return nil, err
@@ -46,12 +46,17 @@ func (s *MediaAssetsService) Create(ctx context.Context, userID string, req *typ
 		return nil, constants.ErrStepNotFound
 	}
 
-	if _, err := s.getGuideForMediaAsset(ctx, userID, step.GuideID.String()); err != nil {
+	guide, err := s.getGuideForMediaAsset(ctx, actor, step.GuideID.String())
+	if err != nil {
 		return nil, err
 	}
 
+	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, userID, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, actor, req); err != nil {
 			return nil, err
 		}
 	}
@@ -70,7 +75,7 @@ func (s *MediaAssetsService) Create(ctx context.Context, userID string, req *typ
 	}
 
 	if s.hooks != nil && s.hooks.AfterCreate != nil {
-		if err := s.hooks.AfterCreate(ctx, userID, mediaAsset); err != nil {
+		if err := s.hooks.AfterCreate(ctx, actor, mediaAsset); err != nil {
 			return nil, err
 		}
 	}
@@ -78,11 +83,7 @@ func (s *MediaAssetsService) Create(ctx context.Context, userID string, req *typ
 	return mediaAsset, nil
 }
 
-func (s *MediaAssetsService) GetByID(ctx context.Context, userID string, mediaAssetID string) (*models.MediaAsset, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
-
+func (s *MediaAssetsService) GetByID(ctx context.Context, actor *authulamodels.Actor, mediaAssetID string) (*models.MediaAsset, error) {
 	if strings.TrimSpace(mediaAssetID) == "" {
 		return nil, constants.ErrInvalidMediaAssetID
 	}
@@ -103,18 +104,19 @@ func (s *MediaAssetsService) GetByID(ctx context.Context, userID string, mediaAs
 		return nil, constants.ErrStepNotFound
 	}
 
-	if _, err := s.getGuideForMediaAsset(ctx, userID, step.GuideID.String()); err != nil {
+	guide, err := s.getGuideForMediaAsset(ctx, actor, step.GuideID.String())
+	if err != nil {
 		return nil, err
+	}
+
+	if err := s.authzService.CanReadGuide(ctx, actor, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
 	}
 
 	return mediaAsset, nil
 }
 
-func (s *MediaAssetsService) GetByStepID(ctx context.Context, userID string, stepID string) ([]*models.MediaAsset, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
-
+func (s *MediaAssetsService) GetByStepID(ctx context.Context, actor *authulamodels.Actor, stepID string) ([]*models.MediaAsset, error) {
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
@@ -127,8 +129,13 @@ func (s *MediaAssetsService) GetByStepID(ctx context.Context, userID string, ste
 		return nil, constants.ErrStepNotFound
 	}
 
-	if _, err := s.getGuideForMediaAsset(ctx, userID, step.GuideID.String()); err != nil {
+	guide, err := s.getGuideForMediaAsset(ctx, actor, step.GuideID.String())
+	if err != nil {
 		return nil, err
+	}
+
+	if err := s.authzService.CanReadGuide(ctx, actor, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
 	}
 
 	mediaAssets, err := s.mediaAssetsRepo.GetByStepID(ctx, stepID)
@@ -139,11 +146,7 @@ func (s *MediaAssetsService) GetByStepID(ctx context.Context, userID string, ste
 	return mediaAssets, nil
 }
 
-func (s *MediaAssetsService) Update(ctx context.Context, userID string, mediaAssetID string, req *types.UpdateMediaAssetRequest) (*models.MediaAsset, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
-
+func (s *MediaAssetsService) Update(ctx context.Context, actor *authulamodels.Actor, mediaAssetID string, req *types.UpdateMediaAssetRequest) (*models.MediaAsset, error) {
 	if strings.TrimSpace(mediaAssetID) == "" {
 		return nil, constants.ErrInvalidMediaAssetID
 	}
@@ -153,17 +156,38 @@ func (s *MediaAssetsService) Update(ctx context.Context, userID string, mediaAss
 		return nil, constants.ErrInvalidMediaAssetID
 	}
 
-	if _, err := s.GetByID(ctx, userID, mediaAssetID); err != nil {
+	mediaAsset, err := s.mediaAssetsRepo.GetByID(ctx, mediaAssetID)
+	if err != nil {
+		return nil, err
+	}
+	if mediaAsset == nil {
+		return nil, constants.ErrMediaAssetNotFound
+	}
+
+	step, err := s.stepsRepo.GetByID(ctx, mediaAsset.StepID.String())
+	if err != nil {
+		return nil, err
+	}
+	if step == nil {
+		return nil, constants.ErrStepNotFound
+	}
+
+	guide, err := s.getGuideForMediaAsset(ctx, actor, step.GuideID.String())
+	if err != nil {
 		return nil, err
 	}
 
+	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
 	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, userID, req); err != nil {
+		if err := s.hooks.BeforeUpdate(ctx, actor, req); err != nil {
 			return nil, err
 		}
 	}
 
-	mediaAsset, err := s.mediaAssetsRepo.Update(ctx, &types.UpdateMediaAssetDTO{
+	updated, err := s.mediaAssetsRepo.Update(ctx, &types.UpdateMediaAssetDTO{
 		ID:       parsedID,
 		AltText:  req.AltText,
 		MimeType: req.MimeType,
@@ -174,39 +198,25 @@ func (s *MediaAssetsService) Update(ctx context.Context, userID string, mediaAss
 	if err != nil {
 		return nil, err
 	}
-	if mediaAsset == nil {
+	if updated == nil {
 		return nil, constants.ErrMediaAssetNotFound
 	}
 
 	if s.hooks != nil && s.hooks.AfterUpdate != nil {
-		if err := s.hooks.AfterUpdate(ctx, userID, mediaAsset); err != nil {
+		if err := s.hooks.AfterUpdate(ctx, actor, updated); err != nil {
 			return nil, err
 		}
 	}
 
-	return mediaAsset, nil
+	return updated, nil
 }
 
-func (s *MediaAssetsService) Delete(ctx context.Context, userID string, mediaAssetID string) (*models.MediaAsset, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
-
+func (s *MediaAssetsService) Delete(ctx context.Context, actor *authulamodels.Actor, mediaAssetID string) (*models.MediaAsset, error) {
 	if strings.TrimSpace(mediaAssetID) == "" {
 		return nil, constants.ErrInvalidMediaAssetID
 	}
 
-	if _, err := s.GetByID(ctx, userID, mediaAssetID); err != nil {
-		return nil, err
-	}
-
-	if s.hooks != nil && s.hooks.BeforeDelete != nil {
-		if err := s.hooks.BeforeDelete(ctx, mediaAssetID, ""); err != nil {
-			return nil, err
-		}
-	}
-
-	mediaAsset, err := s.mediaAssetsRepo.Delete(ctx, mediaAssetID)
+	mediaAsset, err := s.mediaAssetsRepo.GetByID(ctx, mediaAssetID)
 	if err != nil {
 		return nil, err
 	}
@@ -214,25 +224,53 @@ func (s *MediaAssetsService) Delete(ctx context.Context, userID string, mediaAss
 		return nil, constants.ErrMediaAssetNotFound
 	}
 
-	if s.hooks != nil && s.hooks.AfterDelete != nil {
-		if err := s.hooks.AfterDelete(ctx, mediaAssetID, ""); err != nil {
+	step, err := s.stepsRepo.GetByID(ctx, mediaAsset.StepID.String())
+	if err != nil {
+		return nil, err
+	}
+	if step == nil {
+		return nil, constants.ErrStepNotFound
+	}
+
+	guide, err := s.getGuideForMediaAsset(ctx, actor, step.GuideID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	if s.hooks != nil && s.hooks.BeforeDelete != nil {
+		if err := s.hooks.BeforeDelete(ctx, actor, mediaAssetID); err != nil {
 			return nil, err
 		}
 	}
 
-	return mediaAsset, nil
+	deleted, err := s.mediaAssetsRepo.Delete(ctx, mediaAssetID)
+	if err != nil {
+		return nil, err
+	}
+	if deleted == nil {
+		return nil, constants.ErrMediaAssetNotFound
+	}
+
+	if s.hooks != nil && s.hooks.AfterDelete != nil {
+		if err := s.hooks.AfterDelete(ctx, actor, mediaAssetID); err != nil {
+			return nil, err
+		}
+	}
+
+	return deleted, nil
 }
 
-func (s *MediaAssetsService) getGuideForMediaAsset(ctx context.Context, userID string, guideID string) (*models.Guide, error) {
-	guide, err := s.guidesRepo.GetByID(ctx, userID, guideID)
+func (s *MediaAssetsService) getGuideForMediaAsset(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
 	if guide == nil {
 		return nil, constants.ErrGuideNotFound
-	}
-	if guide.CreatorID != userID {
-		return nil, constants.ErrGuideNotOwnedByUser
 	}
 	if guide.DeletedAt != nil {
 		return nil, constants.ErrGuideDeleted

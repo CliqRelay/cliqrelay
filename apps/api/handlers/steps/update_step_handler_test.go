@@ -50,7 +50,7 @@ func TestUpdateStepHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -89,7 +89,7 @@ func TestUpdateStepHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -171,7 +171,7 @@ func TestUpdateStepHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "test-user-123", guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -199,7 +199,9 @@ func TestUpdateStepHandler(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			mockAuthz := new(tests.MockAuthorizationService)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewUpdateStepHandler(appConfig, svc)
 
 			var req tests.HandlerTestRequest

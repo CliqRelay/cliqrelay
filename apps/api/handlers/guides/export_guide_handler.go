@@ -6,8 +6,8 @@ import (
 	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
-	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )

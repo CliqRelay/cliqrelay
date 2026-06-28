@@ -13,7 +13,13 @@ interface Props {
 	variant?: "default" | "trash";
 }
 
-export function GuideList({ guides, onCreateGuide, onAction, showFilterBar = true, variant = "default" }: Props) {
+export function GuideList({
+	guides,
+	onCreateGuide,
+	onAction,
+	showFilterBar = true,
+	variant = "default",
+}: Props) {
 	const filteredGuides = useFilteredGuides(guides);
 
 	return (
@@ -24,7 +30,12 @@ export function GuideList({ guides, onCreateGuide, onAction, showFilterBar = tru
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 					{filteredGuides.map((guide) => (
-						<GuideCard key={guide.id} guide={guide} onAction={onAction} variant={variant} />
+						<GuideCard
+							key={guide.id}
+							guide={guide}
+							onAction={onAction}
+							variant={variant}
+						/>
 					))}
 				</div>
 			)}

@@ -24,6 +24,7 @@ func (h *UpdateGuideHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		guideID := r.PathValue("id")
 
@@ -39,7 +40,7 @@ func (h *UpdateGuideHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		guide, err := h.guidesService.Update(ctx, reqCtx.Actor.ID, guideID, &request)
+		guide, err := h.guidesService.Update(ctx, actor, guideID, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

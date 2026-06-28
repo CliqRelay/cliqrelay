@@ -5,13 +5,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/CliqRelay/cliqrelay/models"
+	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type StarredGuidesRepository interface {
-	GetAllWithStarred(ctx context.Context, userID string) ([]*models.Guide, error)
-	GetStarredGuides(ctx context.Context, userID string) ([]*models.Guide, error)
-	GetAllByStatusWithStarred(ctx context.Context, userID string, status models.GuideStatus) ([]*models.Guide, error)
+	GetAll(ctx context.Context, filter *types.GuideFilter) ([]*types.GuideWithStarred, error)
 	Star(ctx context.Context, userID string, guideID uuid.UUID) error
 	Unstar(ctx context.Context, userID string, guideID uuid.UUID) error
 }

@@ -24,6 +24,7 @@ func (h *CreateStepHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		var request types.CreateStepRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
@@ -37,7 +38,7 @@ func (h *CreateStepHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		step, err := h.stepsService.Create(ctx, reqCtx.Actor.ID, &request)
+		step, err := h.stepsService.Create(ctx, actor, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -24,6 +24,7 @@ func (h *DuplicateStepHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		stepID := r.PathValue("id")
 
@@ -34,7 +35,7 @@ func (h *DuplicateStepHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		step, err := h.stepsService.Duplicate(ctx, reqCtx.Actor.ID, stepID, &request)
+		step, err := h.stepsService.Duplicate(ctx, actor, stepID, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

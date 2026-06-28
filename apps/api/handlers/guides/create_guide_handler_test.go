@@ -37,7 +37,7 @@ func TestCreateGuideHandler(t *testing.T) {
 				Description: new("A description"),
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
-				mockRepo.On("Create", mock.Anything, "test-user-123", mock.AnythingOfType("*types.CreateGuideDTO")).
+				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateGuideDTO")).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -71,7 +71,7 @@ func TestCreateGuideHandler(t *testing.T) {
 				Title: "Test",
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
-				mockRepo.On("Create", mock.Anything, "test-user-123", mock.AnythingOfType("*types.CreateGuideDTO")).
+				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateGuideDTO")).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -86,7 +86,9 @@ func TestCreateGuideHandler(t *testing.T) {
 
 			mockRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockRepo)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			mockAuthz := new(tests.MockAuthorizationService)
+			mockAuthz.On("CanCreateGuide", mock.Anything, mock.AnythingOfType("*models.Actor")).Return(nil)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
 			handler := handlersguides.NewCreateGuideHandler(appConfig, svc)
 
 			var req tests.HandlerTestRequest

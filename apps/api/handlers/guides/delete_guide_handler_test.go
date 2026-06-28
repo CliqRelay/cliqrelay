@@ -49,9 +49,18 @@ func TestDeleteGuideHandler(t *testing.T) {
 			path := "/api/v1/guides/" + guideID
 
 			mockRepo := new(tests.MockGuidesRepository)
+			mockAuthz := new(tests.MockAuthorizationService)
 
 			if tt.expectedStatus == http.StatusOK {
-				mockRepo.On("Delete", mock.Anything, "test-user-123", guideID).
+				mockRepo.On("GetByID", mock.Anything, guideID).
+					Return(&models.Guide{
+						ID:        uuid.MustParse(guideID),
+						CreatorID: "test-user-123",
+						Title:     "Existing Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
+				mockRepo.On("Delete", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -59,13 +68,23 @@ func TestDeleteGuideHandler(t *testing.T) {
 						Status:    models.GuideStatus("deleted"),
 					}, nil).
 					Once()
+				mockAuthz.On("CanDeleteGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			} else {
-				mockRepo.On("Delete", mock.Anything, "test-user-123", guideID).
+				mockRepo.On("GetByID", mock.Anything, guideID).
+					Return(&models.Guide{
+						ID:        uuid.MustParse(guideID),
+						CreatorID: "test-user-123",
+						Title:     "Existing Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
+				mockRepo.On("Delete", mock.Anything, guideID).
 					Return(nil, assert.AnError).
 					Once()
+				mockAuthz.On("CanDeleteGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
 			handler := handlersguides.NewDeleteGuideHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodDelete, path, nil)

@@ -12,6 +12,7 @@ func RegisterAllOpenAPIDocs(svc openapi.OpenAPIService, basePath string, extra .
 	RegisterStepsOpenAPIDocs(svc, basePath)
 	RegisterMediaAssetsOpenAPIDocs(svc, basePath)
 	RegisterUploadsOpenAPIDocs(svc, basePath)
+
 	for _, fn := range extra {
 		fn(svc, basePath)
 	}

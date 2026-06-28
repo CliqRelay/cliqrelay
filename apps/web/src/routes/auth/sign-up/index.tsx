@@ -63,10 +63,7 @@ function SignupPage() {
 		},
 		onSubmit: async ({ value }) => {
 			try {
-				await authulaClient.emailPassword.signUp<{
-					user: User;
-					session: Session;
-				}>({
+				await authulaClient.emailPassword.signUp({
 					name: value.name,
 					email: value.email,
 					password: value.password,

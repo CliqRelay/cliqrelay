@@ -50,9 +50,12 @@ function StarredGuidesError({ error }: { error: Error }) {
 					<div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-muted">
 						<AlertTriangle className="h-12 w-12 text-destructive" />
 					</div>
-					<h2 className="mb-2 text-xl font-semibold">Failed to load starred guides</h2>
+					<h2 className="mb-2 text-xl font-semibold">
+						Failed to load starred guides
+					</h2>
 					<p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
-						{error?.message ?? "An unexpected error occurred. Please try again."}
+						{error?.message ??
+							"An unexpected error occurred. Please try again."}
 					</p>
 					<Button onClick={() => router.invalidate()}>
 						<RefreshCw className="mr-2 h-4 w-4" />

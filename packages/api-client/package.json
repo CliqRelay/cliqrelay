@@ -16,9 +16,9 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.2",
+		"@biomejs/biome": "^2.5.3",
 		"@faker-js/faker": "^10.5.0",
-		"@types/node": "^26.1.0",
+		"@types/node": "^26.1.1",
 		"@vitest/coverage-v8": "^4.1.10",
 		"@vitest/ui": "^4.1.10",
 		"orval": "^8.20.0",

@@ -24,6 +24,7 @@ func (h *CreateMediaAssetHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		var request types.CreateMediaAssetRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
@@ -37,7 +38,7 @@ func (h *CreateMediaAssetHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		mediaAsset, err := h.mediaAssetsService.Create(ctx, reqCtx.Actor.ID, &request)
+		mediaAsset, err := h.mediaAssetsService.Create(ctx, actor, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

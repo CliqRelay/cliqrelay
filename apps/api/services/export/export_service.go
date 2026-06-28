@@ -15,7 +15,6 @@ import (
 	cliqmodels "github.com/CliqRelay/cliqrelay/models"
 )
 
-// ExportService orchestrates guide export requests and generates export artifacts.
 type ExportService struct {
 	guideExportsRepo interfaces.GuideExportsRepository
 	guidesRepo       interfaces.GuidesRepository
@@ -59,14 +58,11 @@ func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, guid
 		return nil, fmt.Errorf("create export: %w", err)
 	}
 
-	cookie := reqCtx.Request.Header.Get("Cookie")
-
 	if err := events.Publish(ctx, s.redisClient, events.TopicGuideExports, events.EventTypeGuideExport, &events.GuideExportPayload{
 		ExportID: export.ID.String(),
 		GuideID:  guideID,
 		UserID:   reqCtx.Actor.ID,
 		Format:   format.ToString(),
-		Cookie:   cookie,
 	}); err != nil {
 		return nil, fmt.Errorf("publish export event: %w", err)
 	}
@@ -118,10 +114,14 @@ func (s *ExportService) GeneratePDF(ctx context.Context, exportID uuid.UUID, gui
 		return fmt.Errorf("update status to processing: %w", err)
 	}
 
-	guide, err := s.guidesRepo.GetByIDAnyUser(ctx, guideID.String())
+	guide, err := s.guidesRepo.GetByID(ctx, guideID.String())
 	if err != nil {
 		s.markFailed(ctx, exportID, fmt.Sprintf("fetch guide: %v", err))
 		return fmt.Errorf("fetch guide: %w", err)
+	}
+	if guide == nil {
+		s.markFailed(ctx, exportID, "guide not found")
+		return fmt.Errorf("guide not found")
 	}
 
 	steps, err := s.stepsRepo.GetByGuideID(ctx, guideID.String())

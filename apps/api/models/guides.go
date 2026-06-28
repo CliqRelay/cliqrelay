@@ -76,7 +76,7 @@ type Guide struct {
 	DeletedAt        *time.Time  `json:"deleted_at,omitempty" bun:"column:deleted_at" nullable:"true"`
 	RestoredAt       *time.Time  `json:"restored_at,omitempty" bun:"column:restored_at" nullable:"true"`
 	PurgeRequestedAt *time.Time  `json:"purge_requested_at,omitempty" bun:"column:purge_requested_at" nullable:"true"`
-	IsStarred        bool        `bun:"-" json:"is_starred" required:"true"`
+	IsStarred        bool        `json:"is_starred" bun:"-" required:"true"`
 	CreatedAt        time.Time   `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true"`
 	UpdatedAt        time.Time   `json:"updated_at" bun:"column:updated_at,default:current_timestamp" required:"true"`
 }
