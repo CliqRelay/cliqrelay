@@ -102,5 +102,4 @@ type GuideExportPayload struct {
 	GuideID  string `json:"guide_id"`
 	UserID   string `json:"user_id"`
 	Format   string `json:"format"`
-	Cookie   string `json:"cookie,omitempty"`
 }

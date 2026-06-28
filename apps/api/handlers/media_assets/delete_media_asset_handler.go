@@ -23,10 +23,11 @@ func (h *DeleteMediaAssetHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		id := r.PathValue("id")
 
-		_, err := h.mediaAssetsService.Delete(ctx, reqCtx.Actor.ID, id)
+		_, err := h.mediaAssetsService.Delete(ctx, actor, id)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -24,6 +24,7 @@ func (h *CreateGuideHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		var request types.CreateGuideRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
@@ -37,7 +38,7 @@ func (h *CreateGuideHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		guide, err := h.guidesService.Create(ctx, reqCtx.Actor.ID, &request)
+		guide, err := h.guidesService.Create(ctx, actor, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

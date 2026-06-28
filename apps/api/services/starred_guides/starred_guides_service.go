@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	authulamodels "github.com/Authula/authula/models"
 	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -13,16 +14,27 @@ import (
 
 type StarredGuidesService struct {
 	starredGuidesRepo interfaces.StarredGuidesRepository
+	guidesRepo        interfaces.GuidesRepository
+	authzService      interfaces.AuthorizationService
 }
 
-func NewStarredGuidesService(starredGuidesRepo interfaces.StarredGuidesRepository) *StarredGuidesService {
-	return &StarredGuidesService{starredGuidesRepo: starredGuidesRepo}
-}
-
-func (s *StarredGuidesService) Star(ctx context.Context, userID string, guideID string) error {
-	if strings.TrimSpace(userID) == "" {
-		return constants.ErrInvalidUserID
+func NewStarredGuidesService(
+	starredGuidesRepo interfaces.StarredGuidesRepository,
+	guidesRepo interfaces.GuidesRepository,
+	authzService interfaces.AuthorizationService,
+) *StarredGuidesService {
+	return &StarredGuidesService{
+		starredGuidesRepo: starredGuidesRepo,
+		guidesRepo:        guidesRepo,
+		authzService:      authzService,
 	}
+}
+
+func (s *StarredGuidesService) Star(ctx context.Context, actor *authulamodels.Actor, guideID string) error {
+	if actor == nil {
+		return constants.ErrForbidden
+	}
+
 	if strings.TrimSpace(guideID) == "" {
 		return constants.ErrInvalidGuideID
 	}
@@ -30,13 +42,27 @@ func (s *StarredGuidesService) Star(ctx context.Context, userID string, guideID 
 	if err != nil {
 		return constants.ErrInvalidGuideID
 	}
-	return s.starredGuidesRepo.Star(ctx, userID, parsedID)
+
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	if err != nil {
+		return err
+	}
+	if guide == nil {
+		return constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanReadGuide(ctx, actor, guide); err != nil {
+		return constants.ErrGuideNotFound
+	}
+
+	return s.starredGuidesRepo.Star(ctx, actor.ID, parsedID)
 }
 
-func (s *StarredGuidesService) Unstar(ctx context.Context, userID string, guideID string) error {
-	if strings.TrimSpace(userID) == "" {
-		return constants.ErrInvalidUserID
+func (s *StarredGuidesService) Unstar(ctx context.Context, actor *authulamodels.Actor, guideID string) error {
+	if actor == nil {
+		return constants.ErrForbidden
 	}
+
 	if strings.TrimSpace(guideID) == "" {
 		return constants.ErrInvalidGuideID
 	}
@@ -44,17 +70,29 @@ func (s *StarredGuidesService) Unstar(ctx context.Context, userID string, guideI
 	if err != nil {
 		return constants.ErrInvalidGuideID
 	}
-	return s.starredGuidesRepo.Unstar(ctx, userID, parsedID)
+	return s.starredGuidesRepo.Unstar(ctx, actor.ID, parsedID)
 }
 
-func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, userID string) ([]*models.Guide, error) {
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
+func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, actor *authulamodels.Actor) ([]*models.Guide, error) {
+	if actor == nil {
+		return nil, constants.ErrForbidden
 	}
 
-	guides, err := s.starredGuidesRepo.GetStarredGuides(ctx, userID)
+	filter, err := s.authzService.GuideListFilter(ctx, actor)
 	if err != nil {
 		return nil, err
+	}
+
+	rows, err := s.starredGuidesRepo.GetAll(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	guides := make([]*models.Guide, 0)
+	for _, row := range rows {
+		if row.IsStarred {
+			guides = append(guides, &row.Guide)
+		}
 	}
 
 	return guides, nil

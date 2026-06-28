@@ -23,10 +23,11 @@ func (h *GetAllMediaAssetsHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		stepID := r.URL.Query().Get("stepId")
 
-		mediaAssets, err := h.mediaAssetsService.GetByStepID(ctx, reqCtx.Actor.ID, stepID)
+		mediaAssets, err := h.mediaAssetsService.GetByStepID(ctx, actor, stepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

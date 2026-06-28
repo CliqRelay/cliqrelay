@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrUnauthorized = errors.New("unauthorized")
+	ErrForbidden    = errors.New("forbidden")
 
 	ErrInvalidUserID           = errors.New("invalid user ID")
 	ErrInvalidGuideID          = errors.New("invalid guide ID")

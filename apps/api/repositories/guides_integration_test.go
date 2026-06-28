@@ -121,7 +121,8 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 			_, userErr := db.NewRaw("INSERT INTO users (id) VALUES (?)", tt.userID).Exec(ctx)
 			require.NoError(t, userErr)
 
-			guide, err := repo.Create(ctx, tt.userID, &types.CreateGuideDTO{
+			guide, err := repo.Create(ctx, &types.CreateGuideDTO{
+				CreatorID:   tt.userID,
 				Title:       tt.title,
 				Description: tt.desc,
 			})
@@ -203,7 +204,7 @@ func TestBunGuidesRepository_GetAll(t *testing.T) {
 			userID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			result, err := repo.GetAll(ctx, userID)
+			result, err := repo.GetAll(ctx, &types.GuideFilter{CreatorID: &userID})
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -271,9 +272,9 @@ func TestBunGuidesRepository_GetAllByStatus(t *testing.T) {
 				guide := seedGuide(t, db, "", "PermDeleted")
 				softDeleteGuide(t, db, guide.ID)
 				permanentlyDeleteGuide(t, db, guide.ID)
-				return guide.CreatorID, 0
+				return guide.CreatorID, 1
 			},
-			wantLen: 0,
+			wantLen: 1,
 		},
 	}
 
@@ -300,7 +301,7 @@ func TestBunGuidesRepository_GetAllByStatus(t *testing.T) {
 				status = models.StatusDraft
 			}
 
-			result, err := repo.GetAllByStatus(ctx, userID, status)
+			result, err := repo.GetAll(ctx, &types.GuideFilter{CreatorID: &userID, Status: &status})
 
 			require.NoError(t, err)
 			assert.Len(t, result, tt.wantLen)
@@ -333,12 +334,12 @@ func TestBunGuidesRepository_GetByID(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name: "returns nil when guide belongs to another user",
+			name: "returns guide even for different user",
 			setup: func(db *bun.DB) (string, string) {
 				guide := seedGuide(t, db, "", "Other Guide")
 				return uuid.New().String(), guide.ID.String()
 			},
-			wantNil: true,
+			wantNil: false,
 		},
 		{
 			name: "returns nil for deleted guide",
@@ -357,10 +358,10 @@ func TestBunGuidesRepository_GetByID(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			userID, targetID := tt.setup(db)
+			_, targetID := tt.setup(db)
 			ctx := context.Background()
 
-			found, err := repo.GetByID(ctx, userID, targetID)
+			found, err := repo.GetByID(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -454,7 +455,7 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name: "rejects update by different user",
+			name: "updates guide even for different user",
 			setup: func(db *bun.DB) (string, *models.Guide) {
 				guide := seedGuide(t, db, "", "Original")
 				return uuid.New().String(), guide
@@ -462,10 +463,12 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
 					ID:    guide.ID,
-					Title: new("Hacked"),
+					Title: new("Updated"),
 				}
 			},
-			wantNil: true,
+			check: func(t *testing.T, guide *models.Guide) {
+				assert.Equal(t, "Updated", guide.Title)
+			},
 		},
 	}
 
@@ -475,11 +478,11 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			userID, existing := tt.setup(db)
+			_, existing := tt.setup(db)
 			dto := tt.dto(existing)
 			ctx := context.Background()
 
-			updated, err := repo.Update(ctx, userID, dto)
+			updated, err := repo.Update(ctx, dto)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -521,12 +524,12 @@ func TestBunGuidesRepository_Delete(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name: "rejects delete by different user",
+			name: "deletes guide even for different user",
 			setup: func(db *bun.DB) (string, string) {
 				guide := seedGuide(t, db, "", "Other")
 				return uuid.New().String(), guide.ID.String()
 			},
-			wantNil: true,
+			wantNil: false,
 		},
 		{
 			name: "is idempotent on already deleted guide",
@@ -545,10 +548,10 @@ func TestBunGuidesRepository_Delete(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			userID, targetID := tt.setup(db)
+			_, targetID := tt.setup(db)
 			ctx := context.Background()
 
-			deleted, err := repo.Delete(ctx, userID, targetID)
+			deleted, err := repo.Delete(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -591,14 +594,13 @@ func TestBunGuidesRepository_RestoreGuide(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name: "rejects restore by different user",
+			name: "restores guide even for different user",
 			setup: func(db *bun.DB) (string, string) {
 				userID := uuid.New().String()
 				guide := seedGuide(t, db, "", "Other")
 				softDeleteGuide(t, db, guide.ID)
 				return userID, guide.ID.String()
 			},
-			wantNil: true,
 		},
 		{
 			name: "returns nil for non-deleted guide",
@@ -616,10 +618,10 @@ func TestBunGuidesRepository_RestoreGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			userID, targetID := tt.setup(db)
+			_, targetID := tt.setup(db)
 			ctx := context.Background()
 
-			restored, err := repo.Restore(ctx, userID, targetID)
+			restored, err := repo.Restore(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -662,12 +664,11 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name: "rejects publish by different user",
+			name: "publishes guide even for different user",
 			setup: func(db *bun.DB) (string, string) {
 				guide := seedGuide(t, db, "", "Other")
 				return uuid.New().String(), guide.ID.String()
 			},
-			wantNil: true,
 		},
 		{
 			name: "returns nil for deleted guide",
@@ -686,10 +687,10 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			userID, targetID := tt.setup(db)
+			_, targetID := tt.setup(db)
 			ctx := context.Background()
 
-			published, err := repo.Publish(ctx, userID, targetID)
+			published, err := repo.Publish(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -733,13 +734,12 @@ func TestBunGuidesRepository_UnpublishGuide(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name: "rejects unpublish by different user",
+			name: "unpublishes guide even for different user",
 			setup: func(db *bun.DB) (string, string) {
 				guide := seedGuide(t, db, "", "Other")
 				publishGuide(t, db, guide.ID)
 				return uuid.New().String(), guide.ID.String()
 			},
-			wantNil: true,
 		},
 		{
 			name: "returns nil for deleted guide",
@@ -759,10 +759,10 @@ func TestBunGuidesRepository_UnpublishGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			userID, targetID := tt.setup(db)
+			_, targetID := tt.setup(db)
 			ctx := context.Background()
 
-			guide, err := repo.Unpublish(ctx, userID, targetID)
+			guide, err := repo.Unpublish(ctx, targetID)
 
 			if tt.wantNil {
 				require.NoError(t, err)
@@ -803,12 +803,11 @@ func TestBunGuidesRepository_ArchiveGuide(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name: "rejects archive by different user",
+			name: "archives guide even for different user",
 			setup: func(db *bun.DB) (string, string) {
 				guide := seedGuide(t, db, "", "Other")
 				return uuid.New().String(), guide.ID.String()
 			},
-			wantNil: true,
 		},
 		{
 			name: "returns nil for deleted guide",
@@ -827,10 +826,10 @@ func TestBunGuidesRepository_ArchiveGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			userID, targetID := tt.setup(db)
+			_, targetID := tt.setup(db)
 			ctx := context.Background()
 
-			archived, err := repo.Archive(ctx, userID, targetID)
+			archived, err := repo.Archive(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -872,13 +871,12 @@ func TestBunGuidesRepository_UnarchiveGuide(t *testing.T) {
 			wantNil: true,
 		},
 		{
-			name: "rejects unarchive by different user",
+			name: "unarchives guide even for different user",
 			setup: func(db *bun.DB) (string, string) {
 				guide := seedGuide(t, db, "", "Other")
 				archiveGuide(t, db, guide.ID)
 				return uuid.New().String(), guide.ID.String()
 			},
-			wantNil: true,
 		},
 		{
 			name: "returns nil for deleted guide",
@@ -897,10 +895,10 @@ func TestBunGuidesRepository_UnarchiveGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			userID, targetID := tt.setup(db)
+			_, targetID := tt.setup(db)
 			ctx := context.Background()
 
-			guide, err := repo.Unarchive(ctx, userID, targetID)
+			guide, err := repo.Unarchive(ctx, targetID)
 
 			if tt.wantNil {
 				require.NoError(t, err)

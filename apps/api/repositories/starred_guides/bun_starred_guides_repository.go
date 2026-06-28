@@ -7,6 +7,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/CliqRelay/cliqrelay/models"
+	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type BunStarredGuidesRepository struct {
@@ -17,88 +18,45 @@ func NewBunStarredGuidesRepository(db bun.IDB) *BunStarredGuidesRepository {
 	return &BunStarredGuidesRepository{db: db}
 }
 
-func (r *BunStarredGuidesRepository) GetAllWithStarred(ctx context.Context, userID string) ([]*models.Guide, error) {
-	type guideRow struct {
-		models.Guide `bun:",inherit"`
-		IsStarred    bool `bun:"is_starred"`
+func (r *BunStarredGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*types.GuideWithStarred, error) {
+	var rows []*types.GuideWithStarred
+
+	query := r.db.NewSelect().
+		ColumnExpr("g.*").
+		ColumnExpr("CASE WHEN sg.user_id IS NOT NULL THEN true ELSE false END AS is_starred").
+		TableExpr("guides g").
+		Join("LEFT JOIN starred_guides sg ON sg.guide_id = g.id AND sg.user_id = ?", filter.ViewerUserID)
+
+	if filter.CreatorID != nil && *filter.CreatorID != "" {
+		query = query.Where("g.creator_id = ?", *filter.CreatorID)
 	}
 
-	var rows []*guideRow
-	err := r.db.NewRaw(`
-		SELECT g.*, CASE WHEN sg.user_id IS NOT NULL THEN true ELSE false END as is_starred
-		FROM guides g
-		LEFT JOIN starred_guides sg ON sg.guide_id = g.id AND sg.user_id = ?
-		WHERE g.creator_id = ?
-		AND g.deleted_at IS NULL
-		AND g.status IN (?, ?, ?)
-		ORDER BY g.updated_at DESC
-	`, userID, userID, models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()).Scan(ctx, &rows)
+	if filter.Status != nil {
+		query = query.Where("g.status = ?", *filter.Status)
+	} else if filter.IncludeDeleted {
+		query = query.Where("g.deleted_at IS NOT NULL")
+		query = query.Where("g.status = ?", models.StatusDeleted)
+	} else {
+		query = query.Where("g.deleted_at IS NULL")
+		if filter.PublishedOnly {
+			query = query.Where("g.status = ?", models.StatusPublished)
+		} else if filter.IncludeArchived {
+			query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
+		} else {
+			query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()}))
+		}
+	}
+
+	if filter.Search != nil {
+		query = query.Where("g.title ILIKE ?", "%"+*filter.Search+"%")
+	}
+
+	err := query.Scan(ctx, &rows)
 	if err != nil {
 		return nil, err
 	}
 
-	guides := make([]*models.Guide, len(rows))
-	for i, row := range rows {
-		guides[i] = &row.Guide
-		guides[i].IsStarred = row.IsStarred
-	}
-	return guides, nil
-}
-
-func (r *BunStarredGuidesRepository) GetAllByStatusWithStarred(ctx context.Context, userID string, status models.GuideStatus) ([]*models.Guide, error) {
-	type guideRow struct {
-		models.Guide `bun:",inherit"`
-		IsStarred    bool `bun:"is_starred"`
-	}
-
-	var rows []*guideRow
-	err := r.db.NewRaw(`
-		SELECT g.*, CASE WHEN sg.user_id IS NOT NULL THEN true ELSE false END as is_starred
-		FROM guides g
-		LEFT JOIN starred_guides sg ON sg.guide_id = g.id AND sg.user_id = ?
-		WHERE g.creator_id = ?
-		AND g.deleted_at IS NULL
-		AND g.status IN (?)
-		ORDER BY g.updated_at DESC
-	`, userID, userID, status).Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
-
-	guides := make([]*models.Guide, len(rows))
-	for i, row := range rows {
-		guides[i] = &row.Guide
-		guides[i].IsStarred = row.IsStarred
-	}
-	return guides, nil
-}
-
-func (r *BunStarredGuidesRepository) GetStarredGuides(ctx context.Context, userID string) ([]*models.Guide, error) {
-	type guideRow struct {
-		models.Guide `bun:",inherit"`
-		IsStarred    bool `bun:"is_starred"`
-	}
-
-	var rows []*guideRow
-	err := r.db.NewRaw(`
-		SELECT g.*, true as is_starred
-		FROM guides g
-		INNER JOIN starred_guides sg ON sg.guide_id = g.id AND sg.user_id = ?
-		WHERE g.creator_id = ?
-		AND g.deleted_at IS NULL
-		AND g.status IN (?, ?, ?)
-		ORDER BY g.updated_at DESC
-	`, userID, userID, models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()).Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
-
-	guides := make([]*models.Guide, len(rows))
-	for i, row := range rows {
-		guides[i] = &row.Guide
-		guides[i].IsStarred = row.IsStarred
-	}
-	return guides, nil
+	return rows, nil
 }
 
 func (r *BunStarredGuidesRepository) Star(ctx context.Context, userID string, guideID uuid.UUID) error {

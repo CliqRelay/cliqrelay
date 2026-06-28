@@ -25,6 +25,7 @@ func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		var request types.PresignUploadRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
@@ -38,7 +39,7 @@ func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.uploadsService.GeneratePresignedPutURL(ctx, reqCtx.Actor.ID, request.GuideID, request.StepID)
+		result, err := h.uploadsService.GeneratePresignedPutURL(ctx, actor, request.GuideID, request.StepID)
 		if err != nil {
 			status := http.StatusInternalServerError
 			switch err {

@@ -23,10 +23,11 @@ func (h *UnstarGuideHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		guideID := r.PathValue("id")
 
-		err := h.starredGuidesService.Unstar(ctx, reqCtx.Actor.ID, guideID)
+		err := h.starredGuidesService.Unstar(ctx, actor, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
