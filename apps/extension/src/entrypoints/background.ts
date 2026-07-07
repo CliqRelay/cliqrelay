@@ -107,12 +107,12 @@ export default defineBackground(() => {
 
 	browser.action.onClicked.addListener(async (tab) => {
 		try {
-			const isFirefox = typeof browser.runtime.getBrowserInfo === "function";
+			const isChrome = "sidePanel" in browser;
 
-			if (isFirefox) {
-				await firefoxBrowser.sidebarAction.open();
-			} else if (tab.windowId != null) {
+			if (isChrome) {
 				await browser.sidePanel.open({ windowId: tab.windowId });
+			} else {
+				await firefoxBrowser.sidebarAction.open();
 			}
 		} catch (error) {
 			console.warn("[background] Failed to open side panel:", error);

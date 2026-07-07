@@ -251,7 +251,7 @@ export function OnboardingChecklist() {
 						return;
 					}
 
-					const response = await runtime.sendMessage<{ success: boolean }>(
+					const response = await runtime.sendMessage<{ success: boolean; requiresToolbarClick?: boolean }>(
 						envClient.extensionId,
 						{
 							action: CliqRelayEvents.OPEN_SIDE_PANEL,
@@ -259,12 +259,20 @@ export function OnboardingChecklist() {
 					);
 
 					if (response?.success) {
-						toast({
-							title: "Side Panel Opened",
-							description:
-								"The side panel has been opened. You can start capturing your guide steps there.",
-						});
-						// completeStep("capture-guide");
+						if (response.requiresToolbarClick) {
+							toast({
+								title: "Almost there!",
+								description:
+									"Click the CliqRelay icon in your browser toolbar to open the sidebar and start capturing.",
+							});
+						} else {
+							toast({
+								title: "Side Panel Opened",
+								description:
+									"The side panel has been opened. You can start capturing your guide steps there.",
+							});
+						}
+						completeStep("capture-guide");
 					} else {
 						toast({
 							title: "Failed to Open Side Panel",

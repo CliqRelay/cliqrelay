@@ -16,10 +16,27 @@ function generateMessageId(): string {
 	return `cliqrelay_${Date.now()}_${messageIdCounter}`;
 }
 
+function getDirectSendMessage():
+	| ((extensionId: string, message: unknown) => Promise<unknown>)
+	| null {
+	const chromeRuntime = (globalThis as any).chrome?.runtime;
+	if (chromeRuntime?.sendMessage) {
+		return chromeRuntime.sendMessage.bind(chromeRuntime);
+	}
+	const browserRuntime = (globalThis as any).browser?.runtime;
+	if (browserRuntime?.sendMessage) {
+		return browserRuntime.sendMessage.bind(browserRuntime);
+	}
+	return null;
+}
+
 export function createExtensionRuntime() {
 	function isAvailable(): boolean {
 		if (typeof document === "undefined") {
 			return false;
+		}
+		if (getDirectSendMessage()) {
+			return true;
 		}
 		return document.documentElement.dataset.cliqrelayExtension === "true";
 	}
@@ -29,6 +46,15 @@ export function createExtensionRuntime() {
 			return Promise.reject(new Error("Not in a browser context"));
 		}
 
+		const directSend = getDirectSendMessage();
+		if (directSend) {
+			return directSend(extensionId, msg) as Promise<T>;
+		}
+
+		return sendViaBridge<T>(extensionId, msg);
+	}
+
+	function sendViaBridge<T>(extensionId: string, msg: unknown): Promise<T> {
 		return new Promise<T>((resolve, reject) => {
 			const messageId = generateMessageId();
 
@@ -37,7 +63,11 @@ export function createExtensionRuntime() {
 				reject(new Error("Extension runtime request timed out"));
 			}, 5000);
 
-			pendingRequests.set(messageId, { resolve: resolve as (value: unknown) => void, reject, timer });
+			pendingRequests.set(messageId, {
+				resolve: resolve as (value: unknown) => void,
+				reject,
+				timer,
+			});
 
 			window.postMessage(
 				{
