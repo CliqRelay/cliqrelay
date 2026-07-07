@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.5.1/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
@@ -18,17 +18,11 @@
 						"groups": [
 							"react",
 							":BLANK_LINE:",
-							[
-								":PACKAGE:",
-								"!@repo/**"
-							],
+							[":PACKAGE:", "!@repo/**"],
 							":BLANK_LINE:",
 							"@repo/**",
 							":BLANK_LINE:",
-							[
-								":ALIAS:",
-								":PATH:"
-							]
+							[":ALIAS:", ":PATH:"]
 						]
 					}
 				}
