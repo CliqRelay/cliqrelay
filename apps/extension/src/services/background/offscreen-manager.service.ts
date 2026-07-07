@@ -2,12 +2,17 @@ import { browser } from "wxt/browser";
 
 import type { CaptureBridgeMessage } from "@/models";
 import type { OffscreenCommand, OffscreenEvent } from "@/models/offscreen";
+import { createOffscreenRuntime } from "@/services/offscreen/offscreen-runtime.service";
 import { getChromeOffscreen } from "@/utils/message";
 
 export type OffscreenManager = ReturnType<typeof createOffscreenManager>;
 
 export const createOffscreenManager = (
 	onEvent: (event: OffscreenEvent) => void,
+	getOrCreateGuideId: () => Promise<{
+		guideId: string;
+		isNew: boolean;
+	}>,
 ) => {
 	let sessionId: string | null = null;
 	let offscreenApi: ReturnType<typeof getChromeOffscreen> = null;
@@ -123,6 +128,43 @@ export const createOffscreenManager = (
 	};
 
 	const getSessionId = (): string | null => sessionId;
+
+	if (!checkAvailability()) {
+		const runtime = createOffscreenRuntime({
+			onEvent,
+			getOrCreateGuideId,
+		});
+
+		return {
+			startSession: async (
+				newSessionId: string,
+				guideId?: string,
+			) => {
+				runtime.startSession(newSessionId, guideId);
+				sessionId = newSessionId;
+				return true;
+			},
+			sendJob: async (
+				jobId: string,
+				capture: CaptureBridgeMessage,
+				screenshotDataUrl: string,
+				tabId: number,
+			) => {
+				runtime.sendJob(jobId, capture, screenshotDataUrl, tabId);
+			},
+			stopSession: async () => {
+				runtime.stopSession();
+				sessionId = null;
+			},
+			closeDocument: async () => {
+				// No-op in Firefox — no offscreen document to close
+			},
+			syncState: async () => {
+				runtime.getState();
+			},
+			getSessionId: () => sessionId,
+		};
+	}
 
 	return {
 		startSession,

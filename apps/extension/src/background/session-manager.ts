@@ -1,3 +1,6 @@
+import { api } from "@repo/api-client";
+
+import { withCsrf } from "@/lib/csrf";
 import type { CaptureMetadataEntry, OffscreenEvent, RecordingStateMachine, SessionService, SidePanelCommand, StepJobProgress } from "@/models";
 import type { PortManager } from "@/services/sidepanel/port-manager.service";
 import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
@@ -25,6 +28,20 @@ export const createSessionManager = (
 	const setClearPendingActivations = (fn: () => void) => {
 		clearPendingActivations = fn;
 	};
+
+	const getOrCreateGuideId =
+		async (): Promise<{ guideId: string; isNew: boolean }> => {
+			const activeGuideId = await sessionService.getActiveGuideId();
+			if (activeGuideId) {
+				return { guideId: activeGuideId, isNew: false };
+			}
+			const guideResponse = await api.guides.createGuide(
+				{ title: "Untitled Guide" },
+				await withCsrf(),
+			);
+			await sessionService.setActiveGuideId(guideResponse.guide.id);
+			return { guideId: guideResponse.guide.id, isNew: true };
+		};
 
 	const setPortManager = (pm: PortManager) => {
 		currentPortManager = pm;
@@ -169,7 +186,10 @@ export const createSessionManager = (
 		await broadcastUpdate();
 	};
 
-	const offscreenManager = createOffscreenManager(handleOffscreenEvent);
+	const offscreenManager = createOffscreenManager(
+		handleOffscreenEvent,
+		getOrCreateGuideId,
+	);
 
 	const commandHandler = createCommandHandler(
 		stateUpdateBuilder,
