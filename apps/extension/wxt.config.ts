@@ -77,8 +77,8 @@ export default defineConfig({
       version: "0.1.0",
       permissions,
       host_permissions: ["<all_urls>"],
-      name: "CliqRelay Extension",
-      description: "Capture cursor, clicks, and navigation from any tab into CliqRelay",
+      name: "CliqRelay",
+      description: "Transforms page clicks and interactions into beautiful, step-by-step visual documentation. An alternative to Scribe, Tango and others.",
       action: {},
       content_security_policy: {
         extension_pages: extensionPagesCSP,
@@ -113,7 +113,7 @@ export default defineConfig({
         // to load sidebar panels without crashing or breaking development lifecycle anchors.
         browser_specific_settings: {
           gecko: {
-            id: "cliqrelay-extension@cliqrelay.com",
+            id: "extension@cliqrelay.com",
             strict_min_version: "109.0",
           },
         },
