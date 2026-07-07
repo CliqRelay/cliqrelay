@@ -5,10 +5,7 @@ import {
 	MousePointerClick,
 	Eye,
 	Puzzle,
-	Check,
-	FolderPlus,
 	Video,
-	FileText,
 	MousePointer2,
 } from "lucide-react";
 
@@ -28,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { OnboardingChecklistItemType } from "@/models";
+import useExtensionRuntime from "@/hooks/use-extension-runtime";
 
 function InstallExtensionCard() {
 	return (
@@ -111,6 +109,8 @@ type ChecklistItem = {
 export function OnboardingChecklist() {
 	const navigate = useNavigate();
 
+	const runtime = useExtensionRuntime();
+
 	const { toast } = useToast();
 	const completedSteps = useOnboardingStore((s) => s.completedSteps);
 	const completeStep = useOnboardingStore((s) => s.completeStep);
@@ -122,26 +122,21 @@ export function OnboardingChecklist() {
 	const isDevMode = import.meta.env.MODE === "development";
 
 	useEffect(() => {
-		const handleEvents = () => {
-			if (!chrome?.runtime) {
-				return;
-			}
+		if (!runtime.isAvailable()) {
+			return;
+		}
 
-			chrome.runtime.sendMessage(
-				envClient.extensionId,
-				{
-					action: CliqRelayEvents.PING,
-				},
-				(response) => {
-					if (response?.success) {
-						completeStep("install-extension");
-					}
-				},
-			);
-		};
-
-		handleEvents();
-	}, [completeStep]);
+		runtime
+			.sendMessage<{ success: boolean }>(envClient.extensionId, {
+				action: CliqRelayEvents.PING,
+			})
+			.then((response) => {
+				if (response?.success) {
+					completeStep("install-extension");
+				}
+			})
+			.catch((error) => console.error(error));
+	}, [runtime, completeStep]);
 
 	useEffect(() => {
 		rehydrate();
@@ -244,50 +239,55 @@ export function OnboardingChecklist() {
 			bgColour: "bg-brand/10",
 			cta: { label: "Start Capturing", icon: <Video size={16} /> },
 			preview: <CaptureGuideCard />,
-			action: () => {
-				if (!chrome?.runtime) {
-					toast({
-						title: "Extension Not Found",
-						description:
-							"The CliqRelay extension is not installed. Install it first to start capturing guides.",
-						variant: "destructive",
-					});
-					return;
-				}
+			action: async () => {
+				try {
+					if (!runtime.isAvailable()) {
+						toast({
+							title: "Extension Not Found",
+							description:
+								"The CliqRelay extension is not installed. Install it first to start capturing guides.",
+							variant: "destructive",
+						});
+						return;
+					}
 
-				chrome.runtime.sendMessage(
-					envClient.extensionId,
-					{
-						action: CliqRelayEvents.OPEN_SIDE_PANEL,
-					},
-					(response) => {
-						if (chrome.runtime.lastError) {
+					const response = await runtime.sendMessage<{ success: boolean; requiresToolbarClick?: boolean }>(
+						envClient.extensionId,
+						{
+							action: CliqRelayEvents.OPEN_SIDE_PANEL,
+						},
+					);
+
+					if (response?.success) {
+						if (response.requiresToolbarClick) {
 							toast({
-								title: "Extension Not Installed",
+								title: "Almost there!",
 								description:
-									"Install the CliqRelay extension first, then try again.",
-								variant: "destructive",
+									"Click the CliqRelay icon in your browser toolbar to open the sidebar and start capturing.",
 							});
-							return;
-						}
-
-						if (response?.success) {
+						} else {
 							toast({
 								title: "Side Panel Opened",
 								description:
 									"The side panel has been opened. You can start capturing your guide steps there.",
 							});
-							completeStep("capture-guide");
-						} else {
-							toast({
-								title: "Failed to Open Side Panel",
-								description:
-									"An error occurred while opening the side panel. Please try again.",
-								variant: "destructive",
-							});
 						}
-					},
-				);
+						completeStep("capture-guide");
+					} else {
+						toast({
+							title: "Failed to Open Side Panel",
+							description:
+								"An error occurred while opening the side panel. Please try again.",
+							variant: "destructive",
+						});
+					}
+				} catch (error: any) {
+					toast({
+						title: "Failed to Open Side Panel",
+						description: error.message || "Unknown error",
+						variant: "destructive",
+					});
+				}
 			},
 		},
 	];
