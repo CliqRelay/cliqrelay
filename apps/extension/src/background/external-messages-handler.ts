@@ -1,6 +1,6 @@
 import { CliqRelayEvents } from "@repo/data-commons";
 
-export const handleOnMessageExternalEvents = async (
+export const handleOnMessageExternalEvents = (
 	message: any,
 	sender: Browser.runtime.MessageSender,
 	sendResponse: (response?: any) => void,
@@ -11,14 +11,20 @@ export const handleOnMessageExternalEvents = async (
 			break;
 		}
 		case CliqRelayEvents.OPEN_SIDE_PANEL: {
-			if (sender.tab?.id) {
-				try {
-					await browser.sidePanel.open({ tabId: sender.tab.id });
-					sendResponse({ success: true });
-				} catch (error: any) {
-					console.error("Failed to open side panel:", error);
-					sendResponse({ success: false, error: error.message });
-				}
+			const isChrome = "sidePanel" in browser;
+
+			if (isChrome) {
+				browser.sidePanel
+					.open({ tabId: sender.tab!.id! })
+					.then(() => {
+						sendResponse({ success: true });
+					})
+					.catch((error: any) => {
+						console.error("Failed to open side panel:", error);
+						sendResponse({ success: false, error: error.message });
+					});
+			} else {
+				sendResponse({ success: true, requiresToolbarClick: true });
 			}
 			break;
 		}
@@ -30,4 +36,6 @@ export const handleOnMessageExternalEvents = async (
 			break;
 		}
 	}
+
+	return true;
 };
