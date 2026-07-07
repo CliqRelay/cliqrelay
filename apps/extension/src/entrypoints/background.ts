@@ -1,17 +1,18 @@
 import { browser } from "wxt/browser";
 
+import { createCaptureHandler } from "@/background/capture-handler";
+import { handleOnMessageExternalEvents } from "@/background/external-messages-handler";
+import { createSessionManager } from "@/background/session-manager";
+import { firefoxBrowser } from "@/constants/firefox-browser";
 import { SIDEPANEL_PORT_NAME } from "@/models/sidepanel";
+import { createNavigationListener } from "@/services/background";
 import { createRecordingStateMachine } from "@/services/recording";
 import { screenshotService } from "@/services/screenshot";
 import { sessionService } from "@/services/session";
 import { getSettings, updateSettings } from "@/services/settings";
 import { createPortManager } from "@/services/sidepanel/port-manager.service";
-import { createCaptureHandler } from "@/background/capture-handler";
-import { createSessionManager } from "@/background/session-manager";
-import { createNavigationListener } from "@/services/background";
-import { isOffscreenEvent, isSidePanelCommand } from "@/utils/message";
 import { generateCaptureId } from "@/utils/id";
-import { handleOnMessageExternalEvents } from "@/background/external-messages-handler";
+import { isOffscreenEvent, isSidePanelCommand } from "@/utils/message";
 
 export default defineBackground(() => {
 	const recording = createRecordingStateMachine("idle");
@@ -54,10 +55,7 @@ export default defineBackground(() => {
 					capture.tabId,
 				);
 			} catch (error) {
-				console.warn(
-					"[background] Failed to process buffered capture:",
-					error,
-				);
+				console.warn("[background] Failed to process buffered capture:", error);
 			}
 		}
 		const stateUpdate = await stateUpdateBuilder();
@@ -76,19 +74,29 @@ export default defineBackground(() => {
 	sessionManager.setClearDedup(clearDedup);
 	sessionManager.setClearPendingActivations(clearPendingActivations);
 
-	browser.runtime.onMessage.addListener((message: unknown, sender) => {
-		if (captureHandler.handleCapture(message, sender)) {
-			return;
-		}
+	browser.runtime.onMessage.addListener(
+		(message: unknown, sender, sendResponse) => {
+			if (captureHandler.handleCapture(message, sender)) {
+				return;
+			}
 
-		if (isSidePanelCommand(message)) {
-			return sessionManager.handleSidePanelCommand(message);
-		}
+			if (isSidePanelCommand(message)) {
+				return sessionManager.handleSidePanelCommand(message);
+			}
 
-		if (isOffscreenEvent(message)) {
-			void sessionManager.handleOffscreenEvent(message);
-		}
-	});
+			if (isOffscreenEvent(message)) {
+				void sessionManager.handleOffscreenEvent(message);
+			}
+
+			if (
+				typeof message === "object" &&
+				message !== null &&
+				"action" in message
+			) {
+				return handleOnMessageExternalEvents(message, sender, sendResponse);
+			}
+		},
+	);
 
 	browser.runtime.onConnect.addListener((port) => {
 		if (port.name !== SIDEPANEL_PORT_NAME) {
@@ -99,7 +107,11 @@ export default defineBackground(() => {
 
 	browser.action.onClicked.addListener(async (tab) => {
 		try {
-			if (tab.windowId != null) {
+			const isFirefox = typeof browser.runtime.getBrowserInfo === "function";
+
+			if (isFirefox) {
+				await firefoxBrowser.sidebarAction.open();
+			} else if (tab.windowId != null) {
 				await browser.sidePanel.open({ windowId: tab.windowId });
 			}
 		} catch (error) {
