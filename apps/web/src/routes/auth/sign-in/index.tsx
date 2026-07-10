@@ -4,7 +4,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import type { Session, User } from "authula";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,10 +45,7 @@ function SignInPage() {
 		},
 		onSubmit: async ({ value }) => {
 			try {
-				await authulaClient.emailPassword.signIn<{
-					user: User;
-					session: Session;
-				}>(value);
+				await authulaClient.emailPassword.signIn(value);
 
 				toast({
 					title: "Success",

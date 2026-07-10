@@ -14,28 +14,20 @@ type MockGuidesRepository struct {
 	mock.Mock
 }
 
-func (m *MockGuidesRepository) Create(ctx context.Context, userID string, data *types.CreateGuideDTO) (*models.Guide, error) {
-	args := m.Called(ctx, userID, data)
+func (m *MockGuidesRepository) Create(ctx context.Context, data *types.CreateGuideDTO) (*models.Guide, error) {
+	args := m.Called(ctx, data)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) GetAll(ctx context.Context, userID string) ([]*models.Guide, error) {
-	args := m.Called(ctx, userID)
+func (m *MockGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, error) {
+	args := m.Called(ctx, filter)
 	return args.Get(0).([]*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) GetByID(ctx context.Context, userID string, id string) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.Guide), args.Error(1)
-}
-
-func (m *MockGuidesRepository) GetByIDAnyUser(ctx context.Context, id string) (*models.Guide, error) {
+func (m *MockGuidesRepository) GetByID(ctx context.Context, id string) (*models.Guide, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -43,82 +35,77 @@ func (m *MockGuidesRepository) GetByIDAnyUser(ctx context.Context, id string) (*
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Update(ctx context.Context, userID string, data *types.UpdateGuideDTO) (*models.Guide, error) {
-	args := m.Called(ctx, userID, data)
+func (m *MockGuidesRepository) Update(ctx context.Context, data *types.UpdateGuideDTO) (*models.Guide, error) {
+	args := m.Called(ctx, data)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Delete(ctx context.Context, userID string, id string) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id)
+func (m *MockGuidesRepository) Delete(ctx context.Context, id string) (*models.Guide, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Publish(ctx context.Context, userID string, id string) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id)
+func (m *MockGuidesRepository) Publish(ctx context.Context, id string) (*models.Guide, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Unpublish(ctx context.Context, userID string, id string) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id)
+func (m *MockGuidesRepository) Unpublish(ctx context.Context, id string) (*models.Guide, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Archive(ctx context.Context, userID string, id string) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id)
+func (m *MockGuidesRepository) Archive(ctx context.Context, id string) (*models.Guide, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Unarchive(ctx context.Context, userID string, id string) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id)
+func (m *MockGuidesRepository) Unarchive(ctx context.Context, id string) (*models.Guide, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Restore(ctx context.Context, userID string, id string) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id)
+func (m *MockGuidesRepository) Restore(ctx context.Context, id string) (*models.Guide, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) GetAllByStatus(ctx context.Context, userID string, status models.GuideStatus) ([]*models.Guide, error) {
-	args := m.Called(ctx, userID, status)
-	return args.Get(0).([]*models.Guide), args.Error(1)
+func (m *MockGuidesRepository) PermanentlyDelete(ctx context.Context, id string) (*models.Guide, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) GetCount(ctx context.Context, userID string) (int, error) {
-	args := m.Called(ctx, userID)
+func (m *MockGuidesRepository) GetCount(ctx context.Context, filter *types.GuideFilter) (int, error) {
+	args := m.Called(ctx, filter)
 	return args.Int(0), args.Error(1)
 }
 
-func (m *MockGuidesRepository) PermanentlyDelete(ctx context.Context, userID string, id string) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.Guide), args.Error(1)
-}
-
-func (m *MockGuidesRepository) UpdateDuration(ctx context.Context, userID string, id string, durationSeconds int) (*models.Guide, error) {
-	args := m.Called(ctx, userID, id, durationSeconds)
+func (m *MockGuidesRepository) UpdateDuration(ctx context.Context, id string, durationSeconds int) (*models.Guide, error) {
+	args := m.Called(ctx, id, durationSeconds)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

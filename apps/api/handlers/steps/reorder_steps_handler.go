@@ -24,6 +24,7 @@ func (h *ReorderStepsHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		var request types.ReorderStepsRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
@@ -37,7 +38,7 @@ func (h *ReorderStepsHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		steps, err := h.stepsService.Reorder(ctx, reqCtx.Actor.ID, request.GuideID.String(), request.TargetStepID, request.PrevStepID, request.NextStepID)
+		steps, err := h.stepsService.Reorder(ctx, actor, request.GuideID.String(), request.TargetStepID, request.PrevStepID, request.NextStepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -23,10 +23,11 @@ func (h *PermanentlyDeleteGuideHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		guideID := r.PathValue("id")
 
-		guide, err := h.guidesService.PermanentlyDelete(ctx, reqCtx.Actor.ID, guideID)
+		guide, err := h.guidesService.PermanentlyDelete(ctx, actor, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

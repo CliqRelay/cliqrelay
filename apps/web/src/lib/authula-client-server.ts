@@ -1,6 +1,6 @@
 import { getStartContext } from "@tanstack/start-storage-context";
 import { createClient } from "authula";
-import { CSRFPlugin, EmailPasswordPlugin } from "authula/plugins";
+import { CorePlugin, CSRFPlugin, EmailPasswordPlugin } from "authula/plugins";
 
 import { envServer } from "@/constants/env-server";
 
@@ -12,7 +12,7 @@ export const authulaServerClient = createClient({
 			if (!ctx) {
 				return {
 					getAll: () => [],
-					set: () => {},
+					set: () => { },
 				};
 			}
 
@@ -27,16 +27,17 @@ export const authulaServerClient = createClient({
 
 			return {
 				getAll: () => cookies,
-				set: () => {},
+				set: () => { },
 			};
 		} catch {
 			return {
 				getAll: () => [],
-				set: () => {},
+				set: () => { },
 			};
 		}
 	},
 	plugins: [
+		new CorePlugin(),
 		new EmailPasswordPlugin(),
 		new CSRFPlugin({
 			cookieName: "authula_csrf_token",

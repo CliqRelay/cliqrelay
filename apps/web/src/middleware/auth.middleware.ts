@@ -1,13 +1,12 @@
 import { createMiddleware } from "@tanstack/react-start";
-import type { GetMeResponse } from "authula";
 
 import { authulaClient } from "@/lib/authula-client";
 
 export const authMiddleware = createMiddleware().server(
 	async ({ request, next }) => {
 		try {
-			const me = await authulaClient.getMe<GetMeResponse>();
-			if (!me.user?.emailVerified) {
+			const response = await authulaClient.core.getMe();
+			if (!response.user?.emailVerified) {
 				return Response.json(new Error("Unauthorized: Email not verified"), {
 					status: 401,
 				});

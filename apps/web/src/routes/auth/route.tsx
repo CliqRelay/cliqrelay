@@ -4,7 +4,6 @@ import {
 	Outlet,
 	redirect,
 } from "@tanstack/react-router";
-import type { GetMeResponse } from "authula";
 
 import type { UserWithModifiedMetadata } from "@/models";
 import { authulaClient } from "@/lib/authula-client";
@@ -12,14 +11,14 @@ import { authulaClient } from "@/lib/authula-client";
 export const Route = createFileRoute("/auth")({
 	beforeLoad: async ({ location }) => {
 		try {
-			const me = await authulaClient.getMe<GetMeResponse>();
-			if (!me.user.emailVerified) {
+			const response = await authulaClient.core.getMe();
+			if (!response.user.emailVerified) {
 				if (location.pathname !== "/auth/email-verification") {
 					throw redirect({ to: "/auth/email-verification" });
 				}
 
 				return {
-					user: me.user as UserWithModifiedMetadata,
+					user: response.user as UserWithModifiedMetadata,
 				};
 			}
 			throw redirect({ to: "/dashboard" });

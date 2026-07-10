@@ -50,8 +50,10 @@ func TestGetGuideHandler(t *testing.T) {
 
 			mockRepo := new(tests.MockGuidesRepository)
 
+			mockAuthz := new(tests.MockAuthorizationService)
+
 			if tt.expectedStatus == http.StatusOK {
-				mockRepo.On("GetByID", mock.Anything, "test-user-123", guideID).
+				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -59,13 +61,14 @@ func TestGetGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
+				mockAuthz.On("CanReadGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
 			} else {
-				mockRepo.On("GetByID", mock.Anything, "test-user-123", guideID).
+				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(nil, assert.AnError).
 					Once()
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
 			handler := handlersguides.NewGetGuideByIDHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)

@@ -26,6 +26,7 @@ func (h *CompleteUploadHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		var request types.CompleteUploadRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
@@ -39,7 +40,7 @@ func (h *CompleteUploadHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.uploadsService.CompleteUpload(ctx, reqCtx.Actor.ID, request.StepID, request.StoragePath, request.FileSize, request.MimeType, request.Thumbnail, request.Width, request.Height)
+		result, err := h.uploadsService.CompleteUpload(ctx, actor, request.StepID, request.StoragePath, request.FileSize, request.MimeType, request.Thumbnail, request.Width, request.Height)
 		if err != nil {
 			status := http.StatusInternalServerError
 			switch {

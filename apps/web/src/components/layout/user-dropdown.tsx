@@ -49,7 +49,7 @@ export default function UserDropdown({
 
 	const handleSignOut = async () => {
 		try {
-			await authulaClient.signOut({});
+			await authulaClient.core.signOut();
 			navigate({ to: "/auth/sign-in" });
 		} catch (error) {
 			console.error("Error signing out:", error);

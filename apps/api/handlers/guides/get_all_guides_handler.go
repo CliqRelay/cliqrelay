@@ -23,13 +23,14 @@ func (h *GetAllGuidesHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
+		actor := reqCtx.Actor
 
 		var status *string
 		if s := r.URL.Query().Get("status"); s != "" {
 			status = &s
 		}
 
-		guides, err := h.guidesService.GetAll(ctx, reqCtx.Actor.ID, status)
+		guides, err := h.guidesService.GetAll(ctx, actor, status)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

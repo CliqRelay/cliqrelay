@@ -53,6 +53,8 @@ func TestUnstarGuideHandler(t *testing.T) {
 			path := "/api/v1/guides/" + guideID + "/star"
 
 			mockStarredRepo := new(tests.MockStarredGuidesRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
+			mockAuthz := new(tests.MockAuthorizationService)
 
 			if tt.name == "success" || tt.name == "not starred (safe)" {
 				mockStarredRepo.On("Unstar", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
@@ -64,7 +66,7 @@ func TestUnstarGuideHandler(t *testing.T) {
 					Once()
 			}
 
-			svc := starredguidesservice.NewStarredGuidesService(mockStarredRepo)
+			svc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo, mockAuthz)
 			handler := handlersguides.NewUnstarGuideHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodDelete, path, nil)

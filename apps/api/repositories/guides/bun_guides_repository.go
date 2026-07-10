@@ -21,10 +21,10 @@ func NewBunGuidesRepository(db bun.IDB) *BunGuidesRepository {
 	return &BunGuidesRepository{db: db}
 }
 
-func (r *BunGuidesRepository) Create(ctx context.Context, userID string, dto *types.CreateGuideDTO) (*models.Guide, error) {
+func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuideDTO) (*models.Guide, error) {
 	guide := &models.Guide{
 		ID:          uuid.New(),
-		CreatorID:   userID,
+		CreatorID:   dto.CreatorID,
 		Title:       dto.Title,
 		Description: dto.Description,
 		Status:      models.StatusDraft,
@@ -49,53 +49,80 @@ func (r *BunGuidesRepository) Create(ctx context.Context, userID string, dto *ty
 	return guide, err
 }
 
-func (r *BunGuidesRepository) GetAll(ctx context.Context, userID string) ([]*models.Guide, error) {
-	guides := make([]*models.Guide, 0)
-
-	err := r.db.NewSelect().
-		Model(&guides).
-		Where("creator_id = ?", userID).
-		Where("deleted_at IS NULL").
-		Where("status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()})).
-		Order("updated_at DESC").
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guides, nil
-}
-
-func (r *BunGuidesRepository) GetAllByStatus(ctx context.Context, userID string, status models.GuideStatus) ([]*models.Guide, error) {
-	guides := make([]*models.Guide, 0)
-
+func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, error) {
+	var rows []*types.GuideWithStarred
 	query := r.db.NewSelect().
-		Model(&guides).
-		Where("creator_id = ?", userID)
+		ColumnExpr("g.*").
+		TableExpr("guides g")
 
-	if status == models.StatusDeleted {
-		cutoff := time.Now().AddDate(0, 0, -30)
-		query = query.Where("deleted_at >= ?", cutoff).Where("status = ?", models.StatusDeleted)
+	if filter != nil {
+		if filter.ViewerUserID != nil {
+			query = query.
+				ColumnExpr("CASE WHEN sg.user_id IS NOT NULL THEN true ELSE false END AS is_starred").
+				Join("LEFT JOIN starred_guides sg ON sg.guide_id = g.id AND sg.user_id = ?", *filter.ViewerUserID)
+		} else {
+			query = query.ColumnExpr("false AS is_starred")
+		}
+
+		if filter.CreatorID != nil {
+			query = query.Where("g.creator_id = ?", *filter.CreatorID)
+		}
+		if filter.Status != nil {
+			query = query.Where("g.status = ?", *filter.Status)
+		} else if filter.IncludeDeleted {
+			query = query.Where("g.deleted_at IS NOT NULL")
+			query = query.Where("g.status = ?", models.StatusDeleted)
+		} else {
+			query = query.Where("g.deleted_at IS NULL")
+			if filter.PublishedOnly {
+				query = query.Where("g.status = ?", models.StatusPublished)
+			} else if filter.IncludeArchived {
+				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
+			} else {
+				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()}))
+			}
+		}
+		if filter.Search != nil {
+			query = query.Where("g.title ILIKE ?", "%"+*filter.Search+"%")
+		}
+		if filter.CreatedBefore != nil {
+			query = query.Where("g.created_at < ?", *filter.CreatedBefore)
+		}
+		if filter.CreatedAfter != nil {
+			query = query.Where("g.created_at > ?", *filter.CreatedAfter)
+		}
+		if filter.Limit > 0 {
+			query = query.Limit(filter.Limit)
+		}
+		if filter.Offset > 0 {
+			query = query.Offset(filter.Offset)
+		}
 	} else {
-		query = query.Where("status = ?", status).Where("deleted_at IS NULL")
+		query = query.ColumnExpr("false AS is_starred").
+			Where("g.deleted_at IS NULL").
+			Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()}))
 	}
 
-	err := query.Order("updated_at DESC").Scan(ctx)
+	err := query.Order("g.updated_at DESC").Scan(ctx, &rows)
 	if err != nil {
 		return nil, err
+	}
+
+	guides := make([]*models.Guide, len(rows))
+	for i, row := range rows {
+		guides[i] = &row.Guide
+		guides[i].IsStarred = row.IsStarred
 	}
 
 	return guides, nil
 }
 
-func (r *BunGuidesRepository) GetByID(ctx context.Context, userID string, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) GetByID(ctx context.Context, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
-		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -107,31 +134,12 @@ func (r *BunGuidesRepository) GetByID(ctx context.Context, userID string, id str
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) GetByIDAnyUser(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return guide, nil
-}
-
-func (r *BunGuidesRepository) Update(ctx context.Context, userID string, data *types.UpdateGuideDTO) (*models.Guide, error) {
+func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuideDTO) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", data.ID).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -167,12 +175,11 @@ func (r *BunGuidesRepository) Update(ctx context.Context, userID string, data *t
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Delete(ctx context.Context, userID string, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Delete(ctx context.Context, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -200,13 +207,12 @@ func (r *BunGuidesRepository) Delete(ctx context.Context, userID string, id stri
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Publish(ctx context.Context, userID string, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Publish(ctx context.Context, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -234,13 +240,12 @@ func (r *BunGuidesRepository) Publish(ctx context.Context, userID string, id str
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Unpublish(ctx context.Context, userID string, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Unpublish(ctx context.Context, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -267,13 +272,12 @@ func (r *BunGuidesRepository) Unpublish(ctx context.Context, userID string, id s
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Archive(ctx context.Context, userID string, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Archive(ctx context.Context, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -301,13 +305,12 @@ func (r *BunGuidesRepository) Archive(ctx context.Context, userID string, id str
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Unarchive(ctx context.Context, userID string, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Unarchive(ctx context.Context, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -335,12 +338,11 @@ func (r *BunGuidesRepository) Unarchive(ctx context.Context, userID string, id s
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) PermanentlyDelete(ctx context.Context, userID string, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) PermanentlyDelete(ctx context.Context, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NOT NULL").
 		Scan(ctx)
 	if err != nil {
@@ -367,13 +369,19 @@ func (r *BunGuidesRepository) PermanentlyDelete(ctx context.Context, userID stri
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) GetCount(ctx context.Context, userID string) (int, error) {
-	count, err := r.db.NewSelect().
-		Model((*models.Guide)(nil)).
-		Where("creator_id = ?", userID).
-		Where("deleted_at IS NULL").
-		Where("status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()})).
-		Count(ctx)
+func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideFilter) (int, error) {
+	query := r.db.NewSelect().Model((*models.Guide)(nil))
+
+	if filter != nil {
+		if filter.CreatorID != nil {
+			query = query.Where("creator_id = ?", *filter.CreatorID)
+		}
+	}
+
+	query = query.Where("deleted_at IS NULL").
+		Where("status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
+
+	count, err := query.Count(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -381,13 +389,12 @@ func (r *BunGuidesRepository) GetCount(ctx context.Context, userID string) (int,
 	return count, nil
 }
 
-func (r *BunGuidesRepository) UpdateDuration(ctx context.Context, userID string, id string, durationSeconds int) (*models.Guide, error) {
+func (r *BunGuidesRepository) UpdateDuration(ctx context.Context, id string, durationSeconds int) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -438,13 +445,12 @@ func (r *BunGuidesRepository) HardDelete(ctx context.Context, id string) error {
 	return err
 }
 
-func (r *BunGuidesRepository) Restore(ctx context.Context, userID string, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Restore(ctx context.Context, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
-		Where("creator_id = ?", userID).
 		Where("deleted_at IS NOT NULL").
 		Scan(ctx)
 	if err != nil {
