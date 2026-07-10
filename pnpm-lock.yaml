@@ -137,7 +137,7 @@ importers:
         version: 6.0.3(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       '@wxt-dev/module-react':
         specifier: ^1.2.2
-        version: 1.2.2(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))(wxt@0.20.26(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0))
+        version: 1.2.2(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))(wxt@0.20.27(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0))
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1
@@ -154,8 +154,8 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@29.1.1)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       wxt:
-        specifier: 0.20.26
-        version: 0.20.26(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0)
+        specifier: ^0.20.27
+        version: 0.20.27(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0)
 
   apps/web:
     dependencies:
@@ -3647,6 +3647,9 @@ packages:
   '@wxt-dev/browser@0.1.43':
     resolution: {integrity: sha512-RMB0zgfe7uuiTp18s9taLeKXoOCLBV418797dnEggiMWmM1JDJekiLtlvrNc6QeZg+amDBy2/KKYuQB2kh/K9A==}
 
+  '@wxt-dev/browser@0.2.2':
+    resolution: {integrity: sha512-QqLOdEE1UQxieRuMbv9rwczD+xUv45fy+i5gw1eo+/vlPtGX+/rBd6tlIfLFCU3xAN/UTH57bxqOeU2IZg7dEg==}
+
   '@wxt-dev/module-react@1.2.2':
     resolution: {integrity: sha512-+lRLi1r9dAXpLySWSIWHLJ1h/nFzR20iQnx3RNrKyA6oJg4+ClOluVXozHjfPg9Okfy/umtffiOopGayASrg6w==}
     peerDependencies:
@@ -6929,49 +6932,6 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  vite@8.1.3:
-    resolution: {integrity: sha512-Ds+gBRbj0lwRO2Y5hwnUBdxSwlAve9LeRyU4sNnAr0ewW0gWF0n5bgXgUzbgZ49MV9BVUAQUFYVcDUcilUExMA==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    hasBin: true
-    peerDependencies:
-      '@types/node': ^20.19.0 || >=22.12.0
-      '@vitejs/devtools': ^0.3.0
-      esbuild: ^0.27.0 || ^0.28.0
-      jiti: '>=1.21.0'
-      less: ^4.0.0
-      sass: ^1.70.0
-      sass-embedded: ^1.70.0
-      stylus: '>=0.54.8'
-      sugarss: ^5.0.0
-      terser: ^5.16.0
-      tsx: ^4.8.1
-      yaml: ^2.4.2
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-      '@vitejs/devtools':
-        optional: true
-      esbuild:
-        optional: true
-      jiti:
-        optional: true
-      less:
-        optional: true
-      sass:
-        optional: true
-      sass-embedded:
-        optional: true
-      stylus:
-        optional: true
-      sugarss:
-        optional: true
-      terser:
-        optional: true
-      tsx:
-        optional: true
-      yaml:
-        optional: true
-
   vite@8.1.4:
     resolution: {integrity: sha512-bTT9PsdWO+MQMNG9ZXIP/qM9wGh37DFxTV/sPq9cFpHr3w4jkgef032PkAL9jAqhk3Nz8NQw3O8n6/xFkqO4QQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -7167,8 +7127,8 @@ packages:
     resolution: {integrity: sha512-g/eziiSUNBSsdDJtCLB8bdYEUMj4jR7AGeUo96p/3dTafgjHhpF4RiCFPiRILwjQoDXx5MqkBr4fwWtR3Ky4Wg==}
     engines: {node: '>=20'}
 
-  wxt@0.20.26:
-    resolution: {integrity: sha512-PMGz7sAlONJgwBkOriInXOoEU6/jlGKrhSFvZfiBPHZocyYPfnw1lod9rGDra957H83WO+TnGjYwJiGYciSIqA==}
+  wxt@0.20.27:
+    resolution: {integrity: sha512-dm6yixz2awM4YMqpTJnsCa8aOPiTrjiIjbWslgR5hCjgwhuft+hLlla339Dt7gIKwQloee4oOruoK++vaX0APA==}
     engines: {bun: '>=1.2.0', node: '>=20.12.0'}
     hasBin: true
     peerDependencies:
@@ -10416,11 +10376,16 @@ snapshots:
       '@types/filesystem': 0.0.36
       '@types/har-format': 1.2.16
 
-  '@wxt-dev/module-react@1.2.2(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))(wxt@0.20.26(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0))':
+  '@wxt-dev/browser@0.2.2':
+    dependencies:
+      '@types/filesystem': 0.0.36
+      '@types/har-format': 1.2.16
+
+  '@wxt-dev/module-react@1.2.2(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))(wxt@0.20.27(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0))':
     dependencies:
       '@vitejs/plugin-react': 6.0.3(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       vite: 8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
-      wxt: 0.20.26(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0)
+      wxt: 0.20.27(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@rolldown/plugin-babel'
       - babel-plugin-react-compiler
@@ -13715,7 +13680,7 @@ snapshots:
       trough: 2.2.0
       vfile: 6.0.3
 
-  unimport@6.3.0(esbuild@0.27.7)(oxc-parser@0.127.0)(rolldown@1.1.5)(vite@8.1.3(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)):
+  unimport@6.3.0(esbuild@0.27.7)(oxc-parser@0.127.0)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)):
     dependencies:
       acorn: 8.17.0
       escape-string-regexp: 5.0.0
@@ -13729,7 +13694,7 @@ snapshots:
       scule: 1.3.0
       strip-literal: 3.1.0
       tinyglobby: 0.2.17
-      unplugin: 3.3.0(esbuild@0.27.7)(rolldown@1.1.5)(vite@8.1.3(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      unplugin: 3.3.0(esbuild@0.27.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
       unplugin-utils: 0.3.2
     optionalDependencies:
       oxc-parser: 0.127.0
@@ -13782,16 +13747,6 @@ snapshots:
       acorn: 8.17.0
       picomatch: 4.0.5
       webpack-virtual-modules: 0.6.2
-
-  unplugin@3.3.0(esbuild@0.27.7)(rolldown@1.1.5)(vite@8.1.3(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)):
-    dependencies:
-      '@jridgewell/remapping': 2.3.5
-      picomatch: 4.0.5
-      webpack-virtual-modules: 0.6.2
-    optionalDependencies:
-      esbuild: 0.27.7
-      rolldown: 1.1.5
-      vite: 8.1.3(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
 
   unplugin@3.3.0(esbuild@0.27.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)):
     dependencies:
@@ -13913,7 +13868,7 @@ snapshots:
       es-module-lexer: 2.3.0
       obug: 2.1.3
       pathe: 2.0.3
-      vite: 8.1.3(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
+      vite: 8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@types/node'
       - '@vitejs/devtools'
@@ -13927,20 +13882,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-
-  vite@8.1.3(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0):
-    dependencies:
-      lightningcss: 1.32.0
-      picomatch: 4.0.5
-      postcss: 8.5.16
-      rolldown: 1.1.5
-      tinyglobby: 0.2.17
-    optionalDependencies:
-      '@types/node': 26.1.1
-      esbuild: 0.27.7
-      fsevents: 2.3.3
-      jiti: 2.7.0
-      yaml: 2.9.0
 
   vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0):
     dependencies:
@@ -14150,14 +14091,14 @@ snapshots:
       is-wsl: 3.1.1
       powershell-utils: 0.1.0
 
-  wxt@0.20.26(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0):
+  wxt@0.20.27(@types/node@26.1.1)(jiti@2.7.0)(oxc-parser@0.127.0)(rolldown@1.1.5)(yaml@2.9.0):
     dependencies:
       '@1natsu/wait-element': 4.2.0
       '@aklinker1/rollup-plugin-visualizer': 5.12.0
       '@webext-core/fake-browser': 1.5.2
       '@webext-core/isolated-element': 1.1.5
       '@webext-core/match-patterns': 1.1.0
-      '@wxt-dev/browser': 0.1.43
+      '@wxt-dev/browser': 0.2.2
       '@wxt-dev/storage': 1.2.8
       async-mutex: 0.5.0
       c12: 3.3.4(magicast@0.5.3)
@@ -14190,8 +14131,8 @@ snapshots:
       publish-browser-extension: 4.0.5
       scule: 1.3.0
       tinyglobby: 0.2.17
-      unimport: 6.3.0(esbuild@0.27.7)(oxc-parser@0.127.0)(rolldown@1.1.5)(vite@8.1.3(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
-      vite: 8.1.3(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
+      unimport: 6.3.0(esbuild@0.27.7)(oxc-parser@0.127.0)(rolldown@1.1.5)(vite@8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      vite: 8.1.4(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
       vite-node: 6.0.0(@types/node@26.1.1)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
       web-ext-run: 0.2.4
     transitivePeerDependencies:
