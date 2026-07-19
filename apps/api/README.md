@@ -43,7 +43,7 @@ PDF generation requires the `typst` binary on `$PATH`. Install it from the prebu
 
 ```sh
 # Download and extract (Linux x86_64)
-curl -sL "https://github.com/typst/typst/releases/download/v0.15.0/typst-x86_64-unknown-linux-musl.tar.xz" \
+curl -sL "https://github.com/typst/typst/releases/download/v0.15.1/typst-x86_64-unknown-linux-musl.tar.xz" \
   | tar -xJ -C /tmp
 
 # Install to a directory on your PATH
