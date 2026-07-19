@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Code, File, FileText, Globe, Loader2 } from "lucide-react";
+import { Code, File, Loader2 } from "lucide-react";
 
 import { api, type ExportGuideFormat } from "@repo/api-client";
 
@@ -18,7 +18,7 @@ import SoonBadge from "@/components/shared/ComingSoonBadge";
 import { toast } from "@/hooks/use-toast";
 
 const POLL_INTERVAL = 2000;
-const MAX_POLL_TIME = 120_000;
+const MAX_POLL_TIME = 60_000;
 
 const formats = [
 	{
@@ -34,20 +34,6 @@ const formats = [
 		icon: Code,
 		disabled: true,
 		tag: "Soon" as const,
-	},
-	{
-		id: "markdown",
-		name: "Markdown",
-		icon: FileText,
-		disabled: true,
-		tag: "PRO" as const,
-	},
-	{
-		id: "html",
-		name: "HTML",
-		icon: Globe,
-		disabled: true,
-		tag: "PRO" as const,
 	},
 ] as const;
 
@@ -113,7 +99,9 @@ export function ExportDialog({
 	}, [clearTimeoutRef]);
 
 	useEffect(() => {
-		if (!exportId) return;
+		if (!exportId) {
+			return;
+		}
 
 		const elapsed = Date.now() - startTimeRef.current;
 		if (elapsed >= MAX_POLL_TIME && statusQuery.isFetched) {
@@ -127,7 +115,9 @@ export function ExportDialog({
 		}
 
 		const result = statusQuery.data?.export;
-		if (!result) return;
+		if (!result) {
+			return;
+		}
 
 		if (result.status === "completed") {
 			resetExport();
@@ -211,11 +201,6 @@ export function ExportDialog({
 									<div>
 										<div className="font-medium">{format.name}</div>
 									</div>
-									{format.tag === "PRO" ? (
-										<ProBadge />
-									) : format.tag === "Soon" ? (
-										<SoonBadge />
-									) : null}
 								</div>
 							</Button>
 						))}
