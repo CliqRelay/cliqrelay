@@ -9,13 +9,7 @@ allowBuilds:
   spawn-sync: true
   tesseract.js: true
 minimumReleaseAgeExclude:
-  - '@aws-sdk/client-s3@3.1084.0'
-  - '@dotenvx/dotenvx@2.3.4'
-  - '@dotenvx/primitives@1.8.1'
-  - '@dotenvx/tooling@1.0.2'
-  - '@tanstack/form-core@1.33.1'
-  - '@tanstack/react-form@1.33.1'
-  - authula@0.6.3
-  - lucide-react@1.24.0
-  - marked@18.0.6
-  - vite@8.1.4
+  - "@tanstack/react-start-rsc@0.1.31"
+  - "@tanstack/react-start@1.168.32"
+  - "@tanstack/router-plugin@1.168.23"
+  - "@tanstack/start-plugin-core@1.171.24"

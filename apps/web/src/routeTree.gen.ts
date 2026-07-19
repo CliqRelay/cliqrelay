@@ -9,24 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
-import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteRouteImport } from './routes/auth/route'
+import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardSplatRouteImport } from './routes/dashboard/$'
-import { Route as DashboardTrashIndexRouteImport } from './routes/dashboard/trash/index'
-import { Route as DashboardStarredIndexRouteImport } from './routes/dashboard/starred/index'
-import { Route as DashboardGuidesIndexRouteImport } from './routes/dashboard/guides/index'
-import { Route as AuthSignUpIndexRouteImport } from './routes/auth/sign-up/index'
-import { Route as AuthSignInIndexRouteImport } from './routes/auth/sign-in/index'
-import { Route as AuthResetPasswordIndexRouteImport } from './routes/auth/reset-password/index'
-import { Route as AuthEmailVerificationIndexRouteImport } from './routes/auth/email-verification/index'
 import { Route as AuthChangePasswordIndexRouteImport } from './routes/auth/change-password/index'
+import { Route as AuthEmailVerificationIndexRouteImport } from './routes/auth/email-verification/index'
+import { Route as AuthResetPasswordIndexRouteImport } from './routes/auth/reset-password/index'
+import { Route as AuthSignInIndexRouteImport } from './routes/auth/sign-in/index'
+import { Route as AuthSignUpIndexRouteImport } from './routes/auth/sign-up/index'
+import { Route as DashboardGuidesIndexRouteImport } from './routes/dashboard/guides/index'
 import { Route as DashboardGuidesGuideIdRouteImport } from './routes/dashboard/guides/$guideId'
+import { Route as DashboardStarredIndexRouteImport } from './routes/dashboard/starred/index'
+import { Route as DashboardTrashIndexRouteImport } from './routes/dashboard/trash/index'
 
-const DashboardRouteRoute = DashboardRouteRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
@@ -34,9 +34,9 @@ const AuthRouteRoute = AuthRouteRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DashboardRouteRoute = DashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -49,34 +49,9 @@ const DashboardSplatRoute = DashboardSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardTrashIndexRoute = DashboardTrashIndexRouteImport.update({
-  id: '/trash/',
-  path: '/trash/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-const DashboardStarredIndexRoute = DashboardStarredIndexRouteImport.update({
-  id: '/starred/',
-  path: '/starred/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-const DashboardGuidesIndexRoute = DashboardGuidesIndexRouteImport.update({
-  id: '/guides/',
-  path: '/guides/',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
-const AuthSignUpIndexRoute = AuthSignUpIndexRouteImport.update({
-  id: '/sign-up/',
-  path: '/sign-up/',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthSignInIndexRoute = AuthSignInIndexRouteImport.update({
-  id: '/sign-in/',
-  path: '/sign-in/',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthResetPasswordIndexRoute = AuthResetPasswordIndexRouteImport.update({
-  id: '/reset-password/',
-  path: '/reset-password/',
+const AuthChangePasswordIndexRoute = AuthChangePasswordIndexRouteImport.update({
+  id: '/change-password/',
+  path: '/change-password/',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthEmailVerificationIndexRoute =
@@ -85,14 +60,39 @@ const AuthEmailVerificationIndexRoute =
     path: '/email-verification/',
     getParentRoute: () => AuthRouteRoute,
   } as any)
-const AuthChangePasswordIndexRoute = AuthChangePasswordIndexRouteImport.update({
-  id: '/change-password/',
-  path: '/change-password/',
+const AuthResetPasswordIndexRoute = AuthResetPasswordIndexRouteImport.update({
+  id: '/reset-password/',
+  path: '/reset-password/',
   getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSignInIndexRoute = AuthSignInIndexRouteImport.update({
+  id: '/sign-in/',
+  path: '/sign-in/',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSignUpIndexRoute = AuthSignUpIndexRouteImport.update({
+  id: '/sign-up/',
+  path: '/sign-up/',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const DashboardGuidesIndexRoute = DashboardGuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardGuidesGuideIdRoute = DashboardGuidesGuideIdRouteImport.update({
   id: '/guides/$guideId',
   path: '/guides/$guideId',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardStarredIndexRoute = DashboardStarredIndexRouteImport.update({
+  id: '/starred/',
+  path: '/starred/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardTrashIndexRoute = DashboardTrashIndexRouteImport.update({
+  id: '/trash/',
+  path: '/trash/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 
@@ -202,11 +202,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -216,11 +216,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -237,46 +237,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSplatRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/trash/': {
-      id: '/dashboard/trash/'
-      path: '/trash'
-      fullPath: '/dashboard/trash/'
-      preLoaderRoute: typeof DashboardTrashIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/starred/': {
-      id: '/dashboard/starred/'
-      path: '/starred'
-      fullPath: '/dashboard/starred/'
-      preLoaderRoute: typeof DashboardStarredIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/dashboard/guides/': {
-      id: '/dashboard/guides/'
-      path: '/guides'
-      fullPath: '/dashboard/guides/'
-      preLoaderRoute: typeof DashboardGuidesIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
-    '/auth/sign-up/': {
-      id: '/auth/sign-up/'
-      path: '/sign-up'
-      fullPath: '/auth/sign-up/'
-      preLoaderRoute: typeof AuthSignUpIndexRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/auth/sign-in/': {
-      id: '/auth/sign-in/'
-      path: '/sign-in'
-      fullPath: '/auth/sign-in/'
-      preLoaderRoute: typeof AuthSignInIndexRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/auth/reset-password/': {
-      id: '/auth/reset-password/'
-      path: '/reset-password'
-      fullPath: '/auth/reset-password/'
-      preLoaderRoute: typeof AuthResetPasswordIndexRouteImport
+    '/auth/change-password/': {
+      id: '/auth/change-password/'
+      path: '/change-password'
+      fullPath: '/auth/change-password/'
+      preLoaderRoute: typeof AuthChangePasswordIndexRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/auth/email-verification/': {
@@ -286,18 +251,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthEmailVerificationIndexRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/auth/change-password/': {
-      id: '/auth/change-password/'
-      path: '/change-password'
-      fullPath: '/auth/change-password/'
-      preLoaderRoute: typeof AuthChangePasswordIndexRouteImport
+    '/auth/reset-password/': {
+      id: '/auth/reset-password/'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password/'
+      preLoaderRoute: typeof AuthResetPasswordIndexRouteImport
       parentRoute: typeof AuthRouteRoute
+    }
+    '/auth/sign-in/': {
+      id: '/auth/sign-in/'
+      path: '/sign-in'
+      fullPath: '/auth/sign-in/'
+      preLoaderRoute: typeof AuthSignInIndexRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/auth/sign-up/': {
+      id: '/auth/sign-up/'
+      path: '/sign-up'
+      fullPath: '/auth/sign-up/'
+      preLoaderRoute: typeof AuthSignUpIndexRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/dashboard/guides/': {
+      id: '/dashboard/guides/'
+      path: '/guides'
+      fullPath: '/dashboard/guides/'
+      preLoaderRoute: typeof DashboardGuidesIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/guides/$guideId': {
       id: '/dashboard/guides/$guideId'
       path: '/guides/$guideId'
       fullPath: '/dashboard/guides/$guideId'
       preLoaderRoute: typeof DashboardGuidesGuideIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/starred/': {
+      id: '/dashboard/starred/'
+      path: '/starred'
+      fullPath: '/dashboard/starred/'
+      preLoaderRoute: typeof DashboardStarredIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/trash/': {
+      id: '/dashboard/trash/'
+      path: '/trash'
+      fullPath: '/dashboard/trash/'
+      preLoaderRoute: typeof DashboardTrashIndexRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
   }

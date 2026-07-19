@@ -1,7 +1,7 @@
 {
 	"name": "cliqrelay",
 	"private": true,
-	"packageManager": "pnpm@11.9.0",
+	"packageManager": "pnpm@11.15.0",
 	"engines": {
 		"node": ">=24"
 	},
@@ -13,8 +13,8 @@
 		"check-types": "turbo run check-types"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.3",
-		"turbo": "^2.10.4",
+		"@biomejs/biome": "^2.5.4",
+		"turbo": "^2.10.5",
 		"typescript": "^6.0.3"
 	}
 }
