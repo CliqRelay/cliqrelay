@@ -24,7 +24,7 @@ RUN case "$TARGETARCH" in \
     arm64) TYPST_ARCH="aarch64" ;; \
     *) echo "unsupported architecture: $TARGETARCH"; exit 1 ;; \
     esac; \
-    curl -sL "https://github.com/typst/typst/releases/download/v0.15.0/typst-${TYPST_ARCH}-unknown-linux-musl.tar.xz" \
+    curl -sL "https://github.com/typst/typst/releases/download/v0.15.1/typst-${TYPST_ARCH}-unknown-linux-musl.tar.xz" \
     | tar -xJ -C /tmp; \
     mv "/tmp/typst-${TYPST_ARCH}-unknown-linux-musl/typst" /usr/local/bin/typst; \
     rm -rf "/tmp/typst-${TYPST_ARCH}-unknown-linux-musl"; \
