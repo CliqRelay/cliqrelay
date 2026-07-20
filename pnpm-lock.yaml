@@ -169,8 +169,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.7)
       '@dotenvx/dotenvx':
-        specifier: ^2.3.4
-        version: 2.3.4
+        specifier: ^2.14.0
+        version: 2.14.0
       '@radix-ui/react-accordion':
         specifier: ^1.2.16
         version: 1.2.16(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -948,15 +948,15 @@ packages:
     resolution: {integrity: sha512-/BITOC9dmS/edY2zQwZNicQ059O6RKabtQfyEafV0nGtfYRNHYy1DIPiYVcov40+tob9hfmBnbR963dS+EQ1DQ==}
     hasBin: true
 
-  '@dotenvx/dotenvx@2.3.4':
-    resolution: {integrity: sha512-Yb8vBLQK/EbArDf/NrbS6poCHlcumUOrXelCcR217f+tjdC+dHz3pOaKzCtRm1GGQPF42j5pWNsGNgjZaxl2mw==}
+  '@dotenvx/dotenvx@2.14.0':
+    resolution: {integrity: sha512-cNXKhPSSwl5H8udv31bLnBz8SW/R/9Ijbi96rUIovmG62i8B5zcp9IvWY3tAe/i4IPZaROGaJNZIsOD8OuUR2g==}
     hasBin: true
 
   '@dotenvx/primitives@0.8.0':
     resolution: {integrity: sha512-VYJy0uhFm9zTJ1TxBaW/pA8bjbOM/OttaNMwZ1RHG4JKyRG7DhSdiqD1ipQoAyoD22olUtxbP78W9xY3Wd11bg==}
 
-  '@dotenvx/primitives@1.8.1':
-    resolution: {integrity: sha512-xcEkhZDDA9E/ElU27Ft6ZaBBZN4EkXDmD0H4kZB7CcEMfQr43P6RMb7AMU6xYvqLyg2zT8rb0lEuaE8gUlUEiw==}
+  '@dotenvx/primitives@2.1.0':
+    resolution: {integrity: sha512-GIpMSSgjZk4URRCtAw12vBmobnw3VeSKL+p7/y8ypWvTHFW+StAMZvq4wCjdX+QKuw4alXu0IMGW6QPhKo6ufg==}
 
   '@dotenvx/tooling@1.0.2':
     resolution: {integrity: sha512-yf4VwIZUzSqlLy2pe0kH2xk6dME73oYW5XqcHE7M1zA1H0RX/dSUThsSRmpCjp622iW9f6VGQl5Aa6szt5Xc0w==}
@@ -7757,15 +7757,15 @@ snapshots:
       which: 4.0.0
       yocto-spinner: 1.2.1
 
-  '@dotenvx/dotenvx@2.3.4':
+  '@dotenvx/dotenvx@2.14.0':
     dependencies:
-      '@dotenvx/primitives': 1.8.1
+      '@dotenvx/primitives': 2.1.0
       '@dotenvx/tooling': 1.0.2
       yocto-spinner: 1.2.1
 
   '@dotenvx/primitives@0.8.0': {}
 
-  '@dotenvx/primitives@1.8.1': {}
+  '@dotenvx/primitives@2.1.0': {}
 
   '@dotenvx/tooling@1.0.2': {}
 
