@@ -1,4 +1,4 @@
-import type { ComponentType, PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 
 import { useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Library, Star, Trash } from "lucide-react";
@@ -6,7 +6,7 @@ import { LayoutDashboard, Library, Star, Trash } from "lucide-react";
 import {
 	ExtensionSlot,
 	extensionRegistry,
-	type NavItemRegistration,
+	type NavItem,
 } from "@repo/extensions-sdk";
 
 import {
@@ -20,16 +20,6 @@ import {
 import { NavMain } from "./nav-main";
 import { SiteHeader } from "./site-header";
 import type { AppUser } from "@/models/auth";
-
-export type NavItem = {
-	label?: string;
-	isSection?: boolean;
-	title?: string;
-	icon?: ComponentType<{ className?: string; size?: number }>;
-	href?: string;
-	children?: NavItem[];
-	isActive?: boolean;
-};
 
 const baseNavData: NavItem[] = [
 	{ label: "Insights", isSection: true },
@@ -56,31 +46,6 @@ const baseNavData: NavItem[] = [
 	},
 ];
 
-function buildPluginNavItems(): NavItem[] {
-	const explicitNavItems = extensionRegistry.getNavItems();
-	if (explicitNavItems.length === 0) {
-		return [];
-	}
-
-	return [
-		{ label: "Extensions", isSection: true },
-		...explicitNavItems.map(mapNavItemRegistration),
-	];
-}
-
-function mapNavItemRegistration(item: NavItemRegistration): NavItem {
-	return {
-		title: item.title,
-		icon: item.icon,
-		href: item.href,
-		children: item.children?.map((child) => ({
-			title: child.title,
-			icon: child.icon,
-			href: child.href,
-		})),
-	};
-}
-
 type Props = {
 	user: AppUser;
 };
@@ -90,7 +55,7 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 		select: (state) => state.matches.some((m) => !!m.context?.hideSiteHeader),
 	});
 
-	const navData = [...baseNavData, ...buildPluginNavItems()];
+	const navData = [...baseNavData, ...(extensionRegistry.getNavItems() ?? [])];
 
 	return (
 		<SidebarProvider>

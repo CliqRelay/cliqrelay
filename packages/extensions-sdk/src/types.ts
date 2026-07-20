@@ -1,12 +1,14 @@
 import type { ComponentType } from "react";
 
-export interface NavItemRegistration {
-  title: string;
+export type NavItem = {
+  label?: string;
+  isSection?: boolean;
+  title?: string;
   icon?: ComponentType<{ className?: string; size?: number }>;
   href?: string;
-  children?: Omit<NavItemRegistration, "children">[];
-  order?: number;
-}
+  children?: NavItem[];
+  isActive?: boolean;
+};
 
 export interface SlotRegistration {
   name: string;
@@ -17,5 +19,5 @@ export interface ExtensionDefinition {
   id: string;
   name?: string;
   slots: SlotRegistration[];
-  navItems: NavItemRegistration[];
+  navItems: NavItem[];
 }

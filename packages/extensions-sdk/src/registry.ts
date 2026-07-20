@@ -1,6 +1,6 @@
 import type {
 	ExtensionDefinition,
-	NavItemRegistration,
+	NavItem,
 	SlotRegistration,
 } from "./types";
 
@@ -8,7 +8,7 @@ export class ExtensionRegistry {
 	private _frozen = false;
 	private _extensions = new Map<string, ExtensionDefinition>();
 	private _slots = new Map<string, SlotRegistration>();
-	private _navItems: NavItemRegistration[] = [];
+	private _navItems: NavItem[] = [];
 
 	private assertNotFrozen(): void {
 		if (this._frozen) {
@@ -42,7 +42,7 @@ export class ExtensionRegistry {
 		this._slots.set(slot.name, slot);
 	}
 
-	private _registerNavItem(navItem: NavItemRegistration): void {
+	private _registerNavItem(navItem: NavItem): void {
 		this._navItems.push(navItem);
 	}
 
@@ -62,7 +62,7 @@ export class ExtensionRegistry {
 		return this._slots.get(name);
 	}
 
-	getNavItems(): NavItemRegistration[] {
+	getNavItems(): NavItem[] {
 		return [...this._navItems];
 	}
 
