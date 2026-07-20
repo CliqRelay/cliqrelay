@@ -2,8 +2,6 @@ import type { ComponentType, PropsWithChildren } from "react";
 
 import { useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Library, Star, Trash } from "lucide-react";
-import SimpleBar from "simplebar-react";
-import "simplebar-react/dist/simplebar.min.css";
 
 import {
 	ExtensionSlot,
@@ -59,38 +57,15 @@ const baseNavData: NavItem[] = [
 ];
 
 function buildPluginNavItems(): NavItem[] {
-	const pluginNavItems: NavItem[] = [];
-
-	const routeNavSections = new Map<string, NavItem[]>();
-
-	for (const route of extensionRegistry.getRoutes()) {
-		if (route.meta?.navSection) {
-			const section = route.meta.navSection;
-			if (!routeNavSections.has(section)) {
-				routeNavSections.set(section, []);
-			}
-			routeNavSections.get(section)?.push({
-				title: route.meta.label || route.key,
-				icon: route.meta.icon,
-				href: `/dashboard${route.path.startsWith("/") ? "" : "/"}${route.path}`,
-			});
-		}
-	}
-
-	for (const [section, items] of routeNavSections) {
-		pluginNavItems.push({ label: section, isSection: true });
-		pluginNavItems.push(...items);
-	}
-
 	const explicitNavItems = extensionRegistry.getNavItems();
-	if (explicitNavItems.length > 0) {
-		pluginNavItems.push({ label: "Extensions", isSection: true });
-		for (const item of explicitNavItems) {
-			pluginNavItems.push(mapNavItemRegistration(item));
-		}
+	if (explicitNavItems.length === 0) {
+		return [];
 	}
 
-	return pluginNavItems;
+	return [
+		{ label: "Extensions", isSection: true },
+		...explicitNavItems.map(mapNavItemRegistration),
+	];
 }
 
 function mapNavItemRegistration(item: NavItemRegistration): NavItem {
@@ -142,14 +117,9 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 						</SidebarMenu>
 					</SidebarHeader>
 					<SidebarContent className="overflow-hidden gap-0 px-0">
-						<SimpleBar
-							autoHide={true}
-							className="h-[calc(100vh-180px)] border-b border-border"
-						>
-							<div className="px-4">
-								<NavMain items={navData} />
-							</div>
-						</SimpleBar>
+						<div className="px-4">
+							<NavMain items={navData} />
+						</div>
 						<ExtensionSlot name="dashboard-sidebar-bottom" />
 					</SidebarContent>
 				</div>

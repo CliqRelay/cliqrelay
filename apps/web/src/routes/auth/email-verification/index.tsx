@@ -15,7 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { authulaClient } from "@/lib/authula-client";
 import { envClient } from "@/constants/env-client";
 
-export const Route = createFileRoute("/auth/email-verification/")({
+export const Route = createFileRoute("/auth/email-verification")({
 	component: EmailVerificationPage,
 });
 

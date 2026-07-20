@@ -1,19 +1,12 @@
 import type {
 	ExtensionDefinition,
 	NavItemRegistration,
-	RouteRegistration,
 	SlotRegistration,
 } from "./types";
-
-export function normalizeRoute(path: string): string {
-	return path.replace(/^\/+/, "").replace(/\/+$/, "");
-}
 
 export class ExtensionRegistry {
 	private _frozen = false;
 	private _extensions = new Map<string, ExtensionDefinition>();
-	private _routes: RouteRegistration[] = [];
-	private _routesByPath = new Map<string, RouteRegistration>();
 	private _slots = new Map<string, SlotRegistration>();
 	private _navItems: NavItemRegistration[] = [];
 
@@ -36,10 +29,6 @@ export class ExtensionRegistry {
 
 		this._extensions.set(def.id, def);
 
-		for (const route of def.routes) {
-			this._registerRoute(route);
-		}
-
 		for (const slot of def.slots) {
 			this._registerSlot(slot);
 		}
@@ -47,13 +36,6 @@ export class ExtensionRegistry {
 		for (const navItem of def.navItems) {
 			this._registerNavItem(navItem);
 		}
-	}
-
-	private _registerRoute(route: RouteRegistration): void {
-		const normalized = normalizeRoute(route.path);
-		const entry = { ...route, path: normalized };
-		this._routes.push(entry);
-		this._routesByPath.set(normalized, entry);
 	}
 
 	private _registerSlot(slot: SlotRegistration): void {
@@ -70,19 +52,6 @@ export class ExtensionRegistry {
 
 	get isFrozen(): boolean {
 		return this._frozen;
-	}
-
-	getRoutes(): RouteRegistration[] {
-		return [...this._routes];
-	}
-
-	getRoute(path: string): RouteRegistration | undefined {
-		return this._routesByPath.get(normalizeRoute(path));
-	}
-
-	resolveRoute(urlPath: string): RouteRegistration | undefined {
-		const normalized = normalizeRoute(urlPath);
-		return this._routesByPath.get(normalized);
 	}
 
 	getSlots(): SlotRegistration[] {
@@ -104,8 +73,6 @@ export class ExtensionRegistry {
 	clear(): void {
 		this._frozen = false;
 		this._extensions.clear();
-		this._routes = [];
-		this._routesByPath.clear();
 		this._slots.clear();
 		this._navItems = [];
 	}

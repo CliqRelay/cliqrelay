@@ -11,7 +11,7 @@ import { CreateGuideDialog, GuideList } from "@/components/guides";
 import { Button } from "@/components/ui/button";
 import { getAllGuides } from "@/server-fns/guides";
 
-export const Route = createFileRoute("/dashboard/guides/")({
+export const Route = createFileRoute("/dashboard/guides")({
 	component: Guides,
 	loader: async ({ abortController }) => {
 		try {

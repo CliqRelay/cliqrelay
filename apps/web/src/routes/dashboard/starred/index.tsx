@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getStarredGuides } from "@/server-fns/guides";
 
-export const Route = createFileRoute("/dashboard/starred/")({
+export const Route = createFileRoute("/dashboard/starred")({
 	component: StarredGuides,
 	loader: async () => {
 		const guides = await getStarredGuides();

@@ -5,7 +5,7 @@ import { GuideList, TrashEmptyState } from "@/components/guides";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getTrashGuides } from "@/server-fns/guides";
 
-export const Route = createFileRoute("/dashboard/trash/")({
+export const Route = createFileRoute("/dashboard/trash")({
 	component: TrashGuides,
 	loader: async () => {
 		const guides = await getTrashGuides();

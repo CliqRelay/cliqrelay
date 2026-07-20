@@ -17,9 +17,8 @@ import {
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { authulaClient } from "@/lib/authula-client";
-import { ApiError } from "@repo/api-client";
 
-export const Route = createFileRoute("/auth/sign-in/")({
+export const Route = createFileRoute("/auth/sign-in")({
 	component: SignInPage,
 });
 

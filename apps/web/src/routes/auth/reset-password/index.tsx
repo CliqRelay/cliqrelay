@@ -24,7 +24,7 @@ import { toast } from "@/hooks/use-toast";
 import { authulaClient } from "@/lib/authula-client";
 import { envClient } from "@/constants/env-client";
 
-export const Route = createFileRoute("/auth/reset-password/")({
+export const Route = createFileRoute("/auth/reset-password")({
 	component: ResetPasswordPage,
 	validateSearch: (search: Record<string, string | undefined>) => ({
 		token: search.token,

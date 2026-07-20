@@ -3,6 +3,7 @@ import { Clock, FileText } from "lucide-react";
 
 import { api } from "@repo/api-client";
 import { formatTimeSaved } from "@repo/data-commons";
+import { ExtensionSlot } from "@repo/extensions-sdk";
 
 import { Kpi, OnboardingChecklist } from "@/components/dashboard";
 
@@ -22,6 +23,8 @@ function DashboardPage() {
 	return (
 		<div className="space-y-6 p-6">
 			<OnboardingChecklist />
+
+			<ExtensionSlot name="testcomp" />
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 				<Kpi

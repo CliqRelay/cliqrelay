@@ -23,7 +23,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { authulaClient } from "@/lib/authula-client";
 
-export const Route = createFileRoute("/auth/change-password/")({
+export const Route = createFileRoute("/auth/change-password")({
 	component: ChangePasswordPage,
 	validateSearch: (search: Record<string, string | undefined>) => ({
 		token: search.token,

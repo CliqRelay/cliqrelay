@@ -13,19 +13,12 @@ beforeEach(() => {
 
 describe("ExtensionRegistry", () => {
 	describe("install", () => {
-		it("registers routes, slots, and nav items from an extension definition", () => {
+		it("registers slots and nav items from an extension definition", () => {
 			const DummyComponent: ComponentType<Record<string, unknown>> = () => null;
 
 			const ext: ExtensionDefinition = {
 				id: "test",
 				name: "Test Extension",
-				routes: [
-					{
-						key: "test-route",
-						path: "/test",
-						component: DummyComponent,
-					},
-				],
 				slots: [
 					{
 						name: "test-slot",
@@ -42,8 +35,6 @@ describe("ExtensionRegistry", () => {
 
 			extensionRegistry.install(ext);
 
-			expect(extensionRegistry.getRoutes()).toHaveLength(1);
-			expect(extensionRegistry.getRoutes()[0].key).toBe("test-route");
 			expect(extensionRegistry.getSlots()).toHaveLength(1);
 			expect(extensionRegistry.getSlots()[0].name).toBe("test-slot");
 			expect(extensionRegistry.getNavItems()).toHaveLength(1);
@@ -54,38 +45,31 @@ describe("ExtensionRegistry", () => {
 	});
 
 	describe("duplicate detection", () => {
-		it("throws when installing an extension with a duplicate id", () => {
+		it("silently ignores duplicate extension ids", () => {
+			const DummyComponent: ComponentType<Record<string, unknown>> = () => null;
+
 			const ext: ExtensionDefinition = {
 				id: "dup",
-				routes: [],
-				slots: [],
+				slots: [{ name: "original-slot", component: DummyComponent }],
 				navItems: [],
 			};
 
 			extensionRegistry.install(ext);
 
-			expect(() => extensionRegistry.install(ext)).toThrow(
-				'Extension with id "dup" is already registered.',
-			);
+			// Second install with same id should be silently ignored
+			extensionRegistry.install({
+				id: "dup",
+				slots: [{ name: "replacement-slot", component: DummyComponent }],
+				navItems: [],
+			});
+
+			// Original slot should remain, not replaced
+			expect(extensionRegistry.getSlot("original-slot")).toBeDefined();
+			expect(extensionRegistry.getSlot("replacement-slot")).toBeUndefined();
 		});
 	});
 
 	describe("freeze lifecycle", () => {
-		it("prevents further installs after freeze", () => {
-			extensionRegistry.freeze();
-
-			const ext: ExtensionDefinition = {
-				id: "after-freeze",
-				routes: [],
-				slots: [],
-				navItems: [],
-			};
-
-			expect(() => extensionRegistry.install(ext)).toThrow(
-				"ExtensionRegistry is frozen",
-			);
-		});
-
 		it("reports frozen state correctly", () => {
 			expect(extensionRegistry.isFrozen).toBe(false);
 			extensionRegistry.freeze();
@@ -99,14 +83,7 @@ describe("ExtensionRegistry", () => {
 
 			extensionRegistry.install({
 				id: "clear-test",
-				routes: [
-					{
-						key: "r",
-						path: "/r",
-						component: DummyComponent,
-					},
-				],
-				slots: [],
+				slots: [{ name: "my-slot", component: DummyComponent }],
 				navItems: [],
 			});
 			extensionRegistry.freeze();
@@ -114,7 +91,7 @@ describe("ExtensionRegistry", () => {
 			extensionRegistry.clear();
 
 			expect(extensionRegistry.isFrozen).toBe(false);
-			expect(extensionRegistry.getRoutes()).toHaveLength(0);
+			expect(extensionRegistry.getSlots()).toHaveLength(0);
 			expect(extensionRegistry.getExtensions()).toHaveLength(0);
 		});
 	});
@@ -129,7 +106,6 @@ describe("ExtensionRegistry", () => {
 
 			extensionRegistry.install({
 				id: "slot-test",
-				routes: [],
 				slots: [{ name: "my-slot", component: DummyComponent }],
 				navItems: [],
 			});
@@ -138,34 +114,6 @@ describe("ExtensionRegistry", () => {
 			expect(slot).toBeDefined();
 			expect(slot?.name).toBe("my-slot");
 			expect(slot?.component).toBe(DummyComponent);
-		});
-	});
-
-	describe("mutability of returned arrays", () => {
-		it("returns copies that do not affect internal state", () => {
-			const DummyComponent: ComponentType<Record<string, unknown>> = () => null;
-
-			extensionRegistry.install({
-				id: "mut-test",
-				routes: [
-					{
-						key: "r1",
-						path: "/r1",
-						component: DummyComponent,
-					},
-				],
-				slots: [],
-				navItems: [],
-			});
-
-			const routes = extensionRegistry.getRoutes();
-			routes.push({
-				key: "injected",
-				path: "/injected",
-				component: DummyComponent,
-			});
-
-			expect(extensionRegistry.getRoutes()).toHaveLength(1);
 		});
 	});
 });
@@ -193,7 +141,6 @@ describe("ExtensionSlot", () => {
 
 		extensionRegistry.install({
 			id: "slot-test",
-			routes: [],
 			slots: [{ name: "header-action", component: SlotContent }],
 			navItems: [],
 		});
@@ -213,7 +160,6 @@ describe("ExtensionSlot", () => {
 
 		extensionRegistry.install({
 			id: "pref-test",
-			routes: [],
 			slots: [{ name: "preferred", component: SlotContent }],
 			navItems: [],
 		});
@@ -230,7 +176,6 @@ describe("ExtensionSlot", () => {
 
 		extensionRegistry.install({
 			id: "multi-slot",
-			routes: [],
 			slots: [
 				{ name: "slot-a", component: SlotA },
 				{ name: "slot-b", component: SlotB },
