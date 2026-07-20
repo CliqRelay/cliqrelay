@@ -1,13 +1,14 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { captureBridgeMessageType } from "@/models";
+import { CliqRelayEvents } from "@repo/data-commons";
+
 import { createRecordingStateMachine } from "./recording.service";
 
 const createCapture = (tabId: number) => ({
 	tabId,
 	message: {
 		source: "content-script" as const,
-		type: captureBridgeMessageType,
+		type: CliqRelayEvents.CAPTURE_EVENT,
 		payload: {
 			action: "click" as const,
 			capturedAt: "2026-06-01T12:00:00.000Z",

@@ -134,11 +134,125 @@ describe("capture service", () => {
 	test("ignores unsupported events", () => {
 		expect(
 			buildCaptureEventPayload(
-				new Event("keydown"),
+				new Event("submit"),
 				"https://example.com",
 				"2026-06-01T12:00:00.000Z",
 			),
 		).toBeNull();
+	});
+
+	test("builds keypress payload for modifier combo", () => {
+		const event = new KeyboardEvent("keydown", {
+			key: "c",
+			ctrlKey: true,
+			bubbles: true,
+		});
+		document.body.innerHTML = `<div>target</div>`;
+		Object.defineProperty(event, "target", {
+			value: document.querySelector("div"),
+		});
+
+		const payload = buildCaptureEventPayload(
+			event,
+			"https://example.com",
+			"2026-06-01T12:00:00.000Z",
+		);
+
+		expect(payload?.action).toBe("keypress");
+		expect(payload?.keyCombo).toBe("CTRL + C");
+	});
+
+	test("builds keypress payload for control key", () => {
+		const event = new KeyboardEvent("keydown", {
+			key: "Escape",
+			bubbles: true,
+		});
+		document.body.innerHTML = `<div>target</div>`;
+		Object.defineProperty(event, "target", {
+			value: document.querySelector("div"),
+		});
+
+		const payload = buildCaptureEventPayload(
+			event,
+			"https://example.com",
+			"2026-06-01T12:00:00.000Z",
+		);
+
+		expect(payload?.action).toBe("keypress");
+		expect(payload?.keyCombo).toBe("ESC");
+	});
+
+	test("returns input action for printable char outside input", () => {
+		const event = new KeyboardEvent("keydown", {
+			key: "a",
+			bubbles: true,
+		});
+		document.body.innerHTML = `<div>target</div>`;
+		Object.defineProperty(event, "target", {
+			value: document.querySelector("div"),
+		});
+
+		const payload = buildCaptureEventPayload(
+			event,
+			"https://example.com",
+			"2026-06-01T12:00:00.000Z",
+		);
+
+		expect(payload?.action).toBe("input");
+	});
+
+	test("ignores keydown inside input field", () => {
+		const event = new KeyboardEvent("keydown", {
+			key: "a",
+			bubbles: true,
+		});
+		document.body.innerHTML = `<input />`;
+		Object.defineProperty(event, "target", {
+			value: document.querySelector("input"),
+		});
+
+		const payload = buildCaptureEventPayload(
+			event,
+			"https://example.com",
+			"2026-06-01T12:00:00.000Z",
+		);
+
+		expect(payload).toBeNull();
+	});
+
+	test("typing buffer flushes on click event", () => {
+		vi.useFakeTimers();
+		const sink = vi.fn();
+		const captureService = createCaptureService(sink);
+		const stop = captureService.start(document);
+
+		document.body.innerHTML = `<div>content</div>`;
+		const target = document.querySelector("div")!;
+
+		// Type "ab" outside input
+		const keyA = new KeyboardEvent("keydown", { key: "a", bubbles: true });
+		Object.defineProperty(keyA, "target", { value: target });
+		document.dispatchEvent(keyA);
+
+		const keyB = new KeyboardEvent("keydown", { key: "b", bubbles: true });
+		Object.defineProperty(keyB, "target", { value: target });
+		document.dispatchEvent(keyB);
+
+		// Click should flush the buffer first, then send the click
+		const click = new MouseEvent("click", { bubbles: true });
+		Object.defineProperty(click, "target", { value: target });
+		document.dispatchEvent(click);
+
+		expect(sink).toHaveBeenCalledTimes(2);
+		const [first, second] = sink.mock.calls.map(
+			(c) => c[0] as { payload: { action: string; typedText?: string } },
+		);
+		expect(first.payload.action).toBe("input");
+		expect(first.payload.typedText).toBe("ab");
+		expect(second.payload.action).toBe("click");
+
+		stop();
+		vi.useRealTimers();
 	});
 
 	test("extracts selectors from ids and names", () => {
@@ -210,6 +324,16 @@ describe("capture service", () => {
 		);
 
 		expect(sink).toHaveBeenCalledTimes(1);
+
 		stop();
+
+		const sinkAfter = vi.fn();
+		const cap2 = createCaptureService(sinkAfter);
+		const stop2 = cap2.start(document);
+		const keydown = new KeyboardEvent("keydown", { key: "a", bubbles: true });
+		Object.defineProperty(keydown, "target", { value: button });
+		button.dispatchEvent(keydown);
+		expect(sinkAfter).toHaveBeenCalledTimes(0);
+		stop2();
 	});
 });

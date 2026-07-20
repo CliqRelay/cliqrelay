@@ -6,6 +6,7 @@ export const UPLOAD_MAX_ATTEMPTS = 3;
 export const WEBP_QUALITY = 1;
 export const THUMBNAIL_QUALITY = 0.5;
 export const THUMBNAIL_WIDTH = 20;
+export const TYPING_DEBOUNCE_MS = 1500;
 export const NAVIGATION_DEDUP_MS = 1000;
 export const NAVIGATION_TIMEOUT_MS = 10000;
 export const STORAGE_KEY_SETTINGS = "cliqrelay.extension-settings";

@@ -1,11 +1,16 @@
 import { z } from "zod";
 
+import { StepAction } from "@repo/api-client";
 import { CliqRelayEvents } from "@repo/data-commons";
 
 import { targetElementSchema } from "./elements";
 import { getValidationResult } from "./validation";
 
-const stepActionSchema = z.enum(["click", "input", "navigation"]);
+const stepActionValues = Object.values(StepAction) as [
+	(typeof StepAction)[keyof typeof StepAction],
+	...(typeof StepAction)[keyof typeof StepAction][],
+];
+const stepActionSchema = z.enum(stepActionValues);
 
 export const recentCaptureSchema = z.object({
 	action: z.string(),
@@ -19,7 +24,7 @@ export type RecentCapture = z.infer<typeof recentCaptureSchema>;
 // Schemas
 
 export const captureActionSchema = stepActionSchema;
-export type CaptureAction = z.infer<typeof captureActionSchema>;
+export type CaptureAction = StepAction;
 
 export const captureEventPayloadSchema = z.object({
 	captureId: z.string().optional(),
@@ -30,6 +35,8 @@ export const captureEventPayloadSchema = z.object({
 	targetElement: targetElementSchema.optional(),
 	screenshotUrl: z.string().optional(),
 	navigationUrl: z.string().optional(),
+	typedText: z.string().optional(),
+	keyCombo: z.string().optional(),
 });
 export type CaptureEventPayload = z.infer<typeof captureEventPayloadSchema>;
 
@@ -96,3 +103,8 @@ export type CaptureProcessor = {
 		navThumbnail?: string;
 	} | null>;
 };
+
+export type CreateStepWithoutScreenshot = (
+	captureId: string,
+	message: CaptureBridgeMessage,
+) => Promise<void>;

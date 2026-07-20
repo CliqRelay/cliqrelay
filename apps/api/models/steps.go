@@ -31,6 +31,7 @@ const (
 	StepActionClick      StepAction = "click"
 	StepActionInput      StepAction = "input"
 	StepActionNavigation StepAction = "navigation"
+	StepActionKeypress   StepAction = "keypress"
 )
 
 func (StepAction) PrepareJSONSchema(schema *jsonschema.Schema) error {
@@ -39,6 +40,7 @@ func (StepAction) PrepareJSONSchema(schema *jsonschema.Schema) error {
 		string(StepActionClick),
 		string(StepActionInput),
 		string(StepActionNavigation),
+		string(StepActionKeypress),
 	}
 	schema.WithDescription("The browser interaction type captured for the step")
 	return nil

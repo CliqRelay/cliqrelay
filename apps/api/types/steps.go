@@ -20,7 +20,7 @@ func (r *StepID) Validate() error {
 type CreateStepRequest struct {
 	GuideID            uuid.UUID                 `json:"guide_id" validate:"required,uuid" required:"true"`
 	Type               models.StepType           `json:"type" validate:"required,oneof=interaction canvas" required:"true"`
-	Action             *models.StepAction        `json:"action,omitempty" validate:"omitempty,oneof=click input navigation"`
+	Action             *models.StepAction        `json:"action,omitempty" validate:"omitempty,oneof=click input navigation keypress"`
 	ActionText         *string                   `json:"action_text,omitempty" nullable:"true"`
 	URL                *string                   `json:"url,omitempty" nullable:"true"`
 	Notes              *string                   `json:"notes,omitempty" nullable:"true"`
@@ -91,7 +91,7 @@ type GetStepByIDResponse struct {
 
 type UpdateStepRequest struct {
 	Type          *models.StepType          `json:"type,omitempty" validate:"omitempty,oneof=interaction canvas"`
-	Action        *models.StepAction        `json:"action,omitempty" validate:"omitempty,oneof=click input navigation"`
+	Action        *models.StepAction        `json:"action,omitempty" validate:"omitempty,oneof=click input navigation keypress"`
 	ActionText    *string                   `json:"action_text,omitempty" nullable:"true"`
 	URL           *string                   `json:"url,omitempty" nullable:"true"`
 	Notes         *string                   `json:"notes,omitempty" nullable:"true"`

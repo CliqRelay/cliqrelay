@@ -15,4 +15,5 @@ export const StepAction = {
 	click: "click",
 	input: "input",
 	navigation: "navigation",
+	keypress: "keypress",
 } as const;

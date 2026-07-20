@@ -1,11 +1,12 @@
 import { api } from "@repo/api-client";
 
 import { withCsrf } from "@/lib/csrf";
-import type { CaptureMetadataEntry, OffscreenEvent, RecordingStateMachine, SessionService, SidePanelCommand, StepJobProgress } from "@/models";
+import type { CaptureBridgeMessage, CaptureMetadataEntry, OffscreenEvent, RecordingStateMachine, SessionService, SidePanelCommand, StepJobProgress } from "@/models";
 import type { PortManager } from "@/services/sidepanel/port-manager.service";
 import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
 import { createOffscreenManager } from "@/services/background/offscreen-manager.service";
 import type { GetSettings, UpdateSettings } from "@/services/settings";
+import { buildActionText } from "@/utils/action-text";
 import { generateCaptureId } from "@/utils/id";
 
 export const createSessionManager = (
@@ -200,6 +201,37 @@ export const createSessionManager = (
 		updateSettings,
 	);
 
+	const handleFreeTypingCapture = async (
+		captureId: string,
+		message: CaptureBridgeMessage,
+	) => {
+		const payload = message.payload;
+		const { guideId } = await getOrCreateGuideId();
+		const actionText = buildActionText("input", undefined, payload.typedText);
+
+		const stepResponse = await api.steps.createStep(
+			{
+				guideId,
+				type: "interaction" as const,
+				action: "input" as const,
+				url: payload.url,
+				actionText,
+			},
+			await withCsrf(),
+		);
+
+		jobProgressMap.set(captureId, {
+			jobId: captureId,
+			stepId: stepResponse.step.id,
+			guideId,
+			action: "input",
+			actionText,
+			url: payload.url ?? "",
+			capturedAt: payload.capturedAt,
+			phase: "completed",
+		});
+	};
+
 	const handleSidePanelCommand = async (message: SidePanelCommand) => {
 		if (message.command === "start_recording") {
 			isDraining = false;
@@ -241,6 +273,7 @@ export const createSessionManager = (
 		setClearPendingActivations,
 		handleSidePanelCommand,
 		handleOffscreenEvent,
+		handleFreeTypingCapture,
 	};
 };
 

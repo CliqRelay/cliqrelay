@@ -9,6 +9,7 @@ const actionConfigMap: Record<
 	click: { icon: MousePointerClick, label: "Click" },
 	input: { icon: Keyboard, label: "Input" },
 	navigation: { icon: Compass, label: "Navigate" },
+	keypress: { icon: Keyboard, label: "Keypress" },
 };
 
 function getActionConfig(action: string) {
