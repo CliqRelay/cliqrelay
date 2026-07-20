@@ -94,8 +94,8 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 
 	return (
 		<SidebarProvider>
-			<Sidebar className="py-4 px-0 bg-background">
-				<div className="flex flex-col gap-6 bg-background">
+			<Sidebar className="pt-4 px-0 bg-background">
+				<div className="flex flex-col gap-6 bg-background min-h-0 flex-1">
 					<SidebarHeader className="py-0 px-4">
 						<SidebarMenu>
 							<SidebarMenuItem>
@@ -116,12 +116,14 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 							</SidebarMenuItem>
 						</SidebarMenu>
 					</SidebarHeader>
-					<SidebarContent className="overflow-hidden gap-0 px-0">
+					<SidebarContent className="overflow-hidden gap-0 px-0 flex-1">
 						<div className="px-4">
 							<NavMain items={navData} />
 						</div>
-						<ExtensionSlot name="dashboard-sidebar-bottom" />
 					</SidebarContent>
+					<div className="mt-auto">
+						<ExtensionSlot name="dashboard-sidebar-bottom" />
+					</div>
 				</div>
 			</Sidebar>
 			<div className="flex flex-1 flex-col">
