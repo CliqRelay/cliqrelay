@@ -11,9 +11,11 @@ import (
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestGetStarredGuidesHandler(t *testing.T) {
@@ -70,11 +72,15 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
-			svc := starredguidesservice.NewStarredGuidesService(mockRepo, mockGuidesRepo, mockAuthz)
-			handler := handlersguides.NewGetStarredGuidesHandler(appConfig, svc)
+			starredSvc := starredguidesservice.NewStarredGuidesService(mockRepo, mockGuidesRepo)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockRepo, nil, nil, nil, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
+			handler := handlersguides.NewGetStarredGuidesHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/starred", nil)
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
+			q := req.Req.URL.Query()
+			q.Set("workspace_id", uuid.New().String())
+			req.Req.URL.RawQuery = q.Encode()
 
 			handler.Handle()(req.W, req.Req)
 

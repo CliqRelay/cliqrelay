@@ -3,7 +3,7 @@ package guides
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -12,23 +12,22 @@ import (
 
 type ArchiveGuideHandler struct {
 	appConfig     *config.AppConfig
-	guidesService interfaces.GuidesService
+	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewArchiveGuideHandler(appConfig *config.AppConfig, guidesService interfaces.GuidesService) *ArchiveGuideHandler {
-	return &ArchiveGuideHandler{appConfig: appConfig, guidesService: guidesService}
+func NewArchiveGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *ArchiveGuideHandler {
+	return &ArchiveGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
 }
 
 func (h *ArchiveGuideHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.PathValue("workspaceId")
 		guideID := r.PathValue("id")
 
-		guide, err := h.guidesService.Archive(ctx, actor, workspaceID, guideID)
+		guide, err := h.guidesUseCase.Archive(ctx, actor, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

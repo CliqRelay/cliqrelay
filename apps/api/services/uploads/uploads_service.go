@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	authulamodels "github.com/Authula/authula/models"
 	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -19,7 +18,6 @@ type UploadsService struct {
 	stepsRepo       interfaces.StepsRepository
 	mediaAssetsRepo interfaces.MediaAssetsRepository
 	presignClient   interfaces.PresignService
-	authzService    interfaces.AuthorizationService
 	bucket          string
 }
 
@@ -28,7 +26,6 @@ func NewUploadsService(
 	stepsRepo interfaces.StepsRepository,
 	mediaAssetsRepo interfaces.MediaAssetsRepository,
 	presignClient interfaces.PresignService,
-	authzService interfaces.AuthorizationService,
 	bucket string,
 ) *UploadsService {
 	return &UploadsService{
@@ -36,12 +33,11 @@ func NewUploadsService(
 		stepsRepo:       stepsRepo,
 		mediaAssetsRepo: mediaAssetsRepo,
 		presignClient:   presignClient,
-		authzService:    authzService,
 		bucket:          bucket,
 	}
 }
 
-func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, actor *authulamodels.Actor, workspaceID, guideID, stepID string) (*types.PresignedURLResult, error) {
+func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, workspaceID, guideID, stepID string) (*types.PresignedURLResult, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -49,27 +45,12 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, actor *aut
 		return nil, constants.ErrInvalidStepID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
-	if err != nil {
-		return nil, err
-	}
-	if guide == nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
-	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
-	step, err := s.stepsRepo.GetByID(ctx, workspaceID, stepID)
+	step, err := s.stepsRepo.GetByID(ctx, stepID)
 	if err != nil {
 		return nil, err
 	}
 	if step == nil {
 		return nil, constants.ErrStepNotFound
-	}
-	if step.GuideID.String() != guideID {
-		return nil, constants.ErrStepNotInGuide
 	}
 
 	key := fmt.Sprintf("uploads/guides/%s/steps/%s/%d.webp", guideID, stepID, time.Now().UnixNano())
@@ -85,29 +66,17 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, actor *aut
 	}, nil
 }
 
-func (s *UploadsService) CompleteUpload(ctx context.Context, actor *authulamodels.Actor, workspaceID, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
+func (s *UploadsService) CompleteUpload(ctx context.Context, workspaceID, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
 
-	step, err := s.stepsRepo.GetByID(ctx, workspaceID, stepID)
+	step, err := s.stepsRepo.GetByID(ctx, stepID)
 	if err != nil {
 		return nil, err
 	}
 	if step == nil {
 		return nil, constants.ErrStepNotFound
-	}
-
-	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, step.GuideID.String())
-	if err != nil {
-		return nil, err
-	}
-	if guide == nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
-	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
 	}
 
 	parsedStepID, err := uuid.Parse(stepID)

@@ -3,7 +3,7 @@ package steps
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -13,20 +13,19 @@ import (
 
 type DuplicateStepHandler struct {
 	appConfig    *config.AppConfig
-	stepsService interfaces.StepsService
+	stepsUseCase interfaces.StepsUseCase
 }
 
-func NewDuplicateStepHandler(appConfig *config.AppConfig, stepsService interfaces.StepsService) *DuplicateStepHandler {
-	return &DuplicateStepHandler{appConfig: appConfig, stepsService: stepsService}
+func NewDuplicateStepHandler(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) *DuplicateStepHandler {
+	return &DuplicateStepHandler{appConfig: appConfig, stepsUseCase: stepsUseCase}
 }
 
 func (h *DuplicateStepHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.PathValue("workspaceId")
 		stepID := r.PathValue("id")
 
 		var request types.DuplicateStepRequest
@@ -36,7 +35,7 @@ func (h *DuplicateStepHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		step, err := h.stepsService.Duplicate(ctx, actor, workspaceID, stepID, &request)
+		step, err := h.stepsUseCase.Duplicate(ctx, actor, stepID, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

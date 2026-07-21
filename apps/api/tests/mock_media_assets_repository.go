@@ -21,16 +21,16 @@ func (m *MockMediaAssetsRepository) Create(ctx context.Context, dto *types.Creat
 	return args.Get(0).(*models.MediaAsset), args.Error(1)
 }
 
-func (m *MockMediaAssetsRepository) GetByID(ctx context.Context, workspaceID string, id string) (*models.MediaAsset, error) {
-	args := m.Called(ctx, workspaceID, id)
+func (m *MockMediaAssetsRepository) GetByID(ctx context.Context, id string) (*models.MediaAsset, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.MediaAsset), args.Error(1)
 }
 
-func (m *MockMediaAssetsRepository) GetByStepID(ctx context.Context, workspaceID string, stepID string) ([]*models.MediaAsset, error) {
-	args := m.Called(ctx, workspaceID, stepID)
+func (m *MockMediaAssetsRepository) GetByStepID(ctx context.Context, stepID string) ([]*models.MediaAsset, error) {
+	args := m.Called(ctx, stepID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -45,8 +45,8 @@ func (m *MockMediaAssetsRepository) Update(ctx context.Context, dto *types.Updat
 	return args.Get(0).(*models.MediaAsset), args.Error(1)
 }
 
-func (m *MockMediaAssetsRepository) Delete(ctx context.Context, workspaceID string, id string) (*models.MediaAsset, error) {
-	args := m.Called(ctx, workspaceID, id)
+func (m *MockMediaAssetsRepository) Delete(ctx context.Context, id string) (*models.MediaAsset, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

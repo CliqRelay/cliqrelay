@@ -14,28 +14,26 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func UploadRoutes(appConfig *config.AppConfig, uploadSvc interfaces.UploadsService) []authulamodels.Route {
-	uploadsSvc := uploadSvc
-
-	presignUploadHandler := handlersuploads.NewPresignUploadHandler(appConfig, uploadsSvc)
-	completeUploadHandler := handlersuploads.NewCompleteUploadHandler(appConfig, uploadsSvc)
+func UploadRoutes(appConfig *config.AppConfig, uploadUseCase interfaces.UploadsUseCase) []authulamodels.Route {
+	presignUploadHandler := handlersuploads.NewPresignUploadHandler(appConfig, uploadUseCase)
+	completeUploadHandler := handlersuploads.NewCompleteUploadHandler(appConfig, uploadUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
-	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", appConfig.BasePath)
+	base := appConfig.BasePath
 
 	return []authulamodels.Route{
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/uploads/presign", ws),
+			Path:       fmt.Sprintf("%s/uploads/presign", base),
 			Middleware: authMiddleware,
 			Handler:    presignUploadHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/uploads/complete", ws),
+			Path:       fmt.Sprintf("%s/uploads/complete", base),
 			Middleware: authMiddleware,
 			Handler:    completeUploadHandler.Handle(),
 		},
@@ -43,11 +41,9 @@ func UploadRoutes(appConfig *config.AppConfig, uploadSvc interfaces.UploadsServi
 }
 
 func RegisterUploadsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", basePath)
-
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/uploads/presign", ws),
+		fmt.Sprintf("%s/uploads/presign", basePath),
 		openapi.WithOperationID("presignUpload"),
 		openapi.WithSummary("Presign upload URL"),
 		openapi.WithDescription("Generates a presigned S3 URL for uploading a screenshot"),
@@ -57,7 +53,7 @@ func RegisterUploadsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 	)
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/uploads/complete", ws),
+		fmt.Sprintf("%s/uploads/complete", basePath),
 		openapi.WithOperationID("completeUpload"),
 		openapi.WithSummary("Complete upload"),
 		openapi.WithDescription("Creates a media asset record after the upload finishes"),

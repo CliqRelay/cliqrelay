@@ -26,7 +26,7 @@ func (h *ExportGuideHandler) Handle() http.HandlerFunc {
 		ctx := r.Context()
 		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 
-		workspaceID := r.PathValue("workspaceId")
+		workspaceID := r.URL.Query().Get("workspace_id")
 		guideID := r.PathValue("id")
 		if guideID == "" {
 			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{"message": "guide ID is required"})

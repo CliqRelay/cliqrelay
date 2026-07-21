@@ -14,23 +14,23 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func GuidesRoutes(appConfig *config.AppConfig, guidesSvc interfaces.GuidesService, starredSvc interfaces.StarredGuidesService, exportSvc interfaces.ExportService) []authulamodels.Route {
-	createHandler := guides.NewCreateGuideHandler(appConfig, guidesSvc)
-	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesSvc)
-	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesSvc)
-	updateHandler := guides.NewUpdateGuideHandler(appConfig, guidesSvc)
-	deleteHandler := guides.NewDeleteGuideHandler(appConfig, guidesSvc)
-	publishHandler := guides.NewPublishGuideHandler(appConfig, guidesSvc)
-	unpublishHandler := guides.NewUnpublishGuideHandler(appConfig, guidesSvc)
-	archiveHandler := guides.NewArchiveGuideHandler(appConfig, guidesSvc)
-	unarchiveHandler := guides.NewUnarchiveGuideHandler(appConfig, guidesSvc)
-	restoreHandler := guides.NewRestoreGuideHandler(appConfig, guidesSvc)
-	permanentlyDeleteHandler := guides.NewPermanentlyDeleteGuideHandler(appConfig, guidesSvc)
-	getGuidesCountHandler := guides.NewGetGuidesCountHandler(appConfig, guidesSvc)
-	getStarredGuidesHandler := guides.NewGetStarredGuidesHandler(appConfig, starredSvc)
-	starGuideHandler := guides.NewStarGuideHandler(appConfig, starredSvc)
-	unstarGuideHandler := guides.NewUnstarGuideHandler(appConfig, starredSvc)
-	recalculateDurationHandler := guides.NewRecalculateDurationHandler(appConfig, guidesSvc)
+func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
+	createHandler := guides.NewCreateGuideHandler(appConfig, guidesUseCase)
+	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesUseCase)
+	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesUseCase)
+	updateHandler := guides.NewUpdateGuideHandler(appConfig, guidesUseCase)
+	deleteHandler := guides.NewDeleteGuideHandler(appConfig, guidesUseCase)
+	publishHandler := guides.NewPublishGuideHandler(appConfig, guidesUseCase)
+	unpublishHandler := guides.NewUnpublishGuideHandler(appConfig, guidesUseCase)
+	archiveHandler := guides.NewArchiveGuideHandler(appConfig, guidesUseCase)
+	unarchiveHandler := guides.NewUnarchiveGuideHandler(appConfig, guidesUseCase)
+	restoreHandler := guides.NewRestoreGuideHandler(appConfig, guidesUseCase)
+	permanentlyDeleteHandler := guides.NewPermanentlyDeleteGuideHandler(appConfig, guidesUseCase)
+	getGuidesCountHandler := guides.NewGetGuidesCountHandler(appConfig, guidesUseCase)
+	getStarredGuidesHandler := guides.NewGetStarredGuidesHandler(appConfig, guidesUseCase)
+	starGuideHandler := guides.NewStarGuideHandler(appConfig, guidesUseCase)
+	unstarGuideHandler := guides.NewUnstarGuideHandler(appConfig, guidesUseCase)
+	recalculateDurationHandler := guides.NewRecalculateDurationHandler(appConfig, guidesUseCase)
 	exportGuideHandler := guides.NewExportGuideHandler(appConfig, exportSvc)
 	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportSvc)
 
@@ -39,114 +39,113 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesSvc interfaces.GuidesServic
 	}
 
 	base := appConfig.BasePath
-	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", base)
 
 	return []authulamodels.Route{
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides", ws),
+			Path:       fmt.Sprintf("%s/guides", base),
 			Middleware: authMiddleware,
 			Handler:    createHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guides", ws),
+			Path:       fmt.Sprintf("%s/guides", base),
 			Middleware: authMiddleware,
 			Handler:    getAllHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guides/count", ws),
+			Path:       fmt.Sprintf("%s/guides/count", base),
 			Middleware: authMiddleware,
 			Handler:    getGuidesCountHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guides/{id}", ws),
+			Path:       fmt.Sprintf("%s/guides/starred", base),
+			Middleware: authMiddleware,
+			Handler:    getStarredGuidesHandler.Handle(),
+		},
+		{
+			Method:     "GET",
+			Path:       fmt.Sprintf("%s/guides/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    getByIDHandler.Handle(),
 		},
 		{
 			Method:     "PATCH",
-			Path:       fmt.Sprintf("%s/guides/{id}", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    updateHandler.Handle(),
 		},
 		{
 			Method:     "DELETE",
-			Path:       fmt.Sprintf("%s/guides/{id}", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    deleteHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/publish", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/publish", base),
 			Middleware: authMiddleware,
 			Handler:    publishHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/unpublish", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/unpublish", base),
 			Middleware: authMiddleware,
 			Handler:    unpublishHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/recalculate-duration", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/recalculate-duration", base),
 			Middleware: authMiddleware,
 			Handler:    recalculateDurationHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/archive", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/archive", base),
 			Middleware: authMiddleware,
 			Handler:    archiveHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/unarchive", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/unarchive", base),
 			Middleware: authMiddleware,
 			Handler:    unarchiveHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/restore", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/restore", base),
 			Middleware: authMiddleware,
 			Handler:    restoreHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/permanently-delete", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/permanently-delete", base),
 			Middleware: authMiddleware,
 			Handler:    permanentlyDeleteHandler.Handle(),
 		},
 		{
-			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guides/starred", ws),
-			Middleware: authMiddleware,
-			Handler:    getStarredGuidesHandler.Handle(),
-		},
-		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/star", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/star", base),
 			Middleware: authMiddleware,
 			Handler:    starGuideHandler.Handle(),
 		},
 		{
 			Method:     "DELETE",
-			Path:       fmt.Sprintf("%s/guides/{id}/star", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/star", base),
 			Middleware: authMiddleware,
 			Handler:    unstarGuideHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/export", ws),
+			Path:       fmt.Sprintf("%s/guides/{id}/export", base),
 			Middleware: authMiddleware,
 			Handler:    exportGuideHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guide-exports/{exportID}", ws),
+			Path:       fmt.Sprintf("%s/guide-exports/{exportID}", base),
 			Middleware: authMiddleware,
 			Handler:    getExportStatusHandler.Handle(),
 		},
@@ -154,11 +153,9 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesSvc interfaces.GuidesServic
 }
 
 func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", basePath)
-
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides", ws),
+		fmt.Sprintf("%s/guides", basePath),
 		openapi.WithOperationID("createGuide"),
 		openapi.WithSummary("Create guide"),
 		openapi.WithDescription("Creates a new guide"),
@@ -169,7 +166,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/guides", ws),
+		fmt.Sprintf("%s/guides", basePath),
 		openapi.WithOperationID("getAllGuides"),
 		openapi.WithSummary("Get all guides"),
 		openapi.WithDescription("Get all guides for a user"),
@@ -180,7 +177,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/guides/count", ws),
+		fmt.Sprintf("%s/guides/count", basePath),
 		openapi.WithOperationID("getGuidesCount"),
 		openapi.WithSummary("Get guides count"),
 		openapi.WithDescription("Returns the total count of non-deleted guides for the authenticated user"),
@@ -190,7 +187,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/guides/{id}", ws),
+		fmt.Sprintf("%s/guides/{id}", basePath),
 		openapi.WithOperationID("getGuideById"),
 		openapi.WithSummary("Get guide by ID"),
 		openapi.WithDescription("Retrieves a single guide by its ID"),
@@ -201,7 +198,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPatch,
-		fmt.Sprintf("%s/guides/{id}", ws),
+		fmt.Sprintf("%s/guides/{id}", basePath),
 		openapi.WithOperationID("updateGuide"),
 		openapi.WithSummary("Update guide"),
 		openapi.WithDescription("Updates an existing guide"),
@@ -213,7 +210,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodDelete,
-		fmt.Sprintf("%s/guides/{id}", ws),
+		fmt.Sprintf("%s/guides/{id}", basePath),
 		openapi.WithOperationID("deleteGuide"),
 		openapi.WithSummary("Delete guide"),
 		openapi.WithDescription("Soft-deletes a guide"),
@@ -224,7 +221,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/publish", ws),
+		fmt.Sprintf("%s/guides/{id}/publish", basePath),
 		openapi.WithOperationID("publishGuide"),
 		openapi.WithSummary("Publish guide"),
 		openapi.WithDescription("Publishes a guide"),
@@ -235,7 +232,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/unpublish", ws),
+		fmt.Sprintf("%s/guides/{id}/unpublish", basePath),
 		openapi.WithOperationID("unpublishGuide"),
 		openapi.WithSummary("Unpublish guide"),
 		openapi.WithDescription("Unpublishes a guide and returns it to draft status"),
@@ -246,7 +243,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/recalculate-duration", ws),
+		fmt.Sprintf("%s/guides/{id}/recalculate-duration", basePath),
 		openapi.WithOperationID("recalculateGuideDuration"),
 		openapi.WithSummary("Recalculate guide duration"),
 		openapi.WithDescription("Recalculates the synthetic duration for a guide based on its steps"),
@@ -257,7 +254,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/archive", ws),
+		fmt.Sprintf("%s/guides/{id}/archive", basePath),
 		openapi.WithOperationID("archiveGuide"),
 		openapi.WithSummary("Archive guide"),
 		openapi.WithDescription("Archives a guide"),
@@ -268,7 +265,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/unarchive", ws),
+		fmt.Sprintf("%s/guides/{id}/unarchive", basePath),
 		openapi.WithOperationID("unarchiveGuide"),
 		openapi.WithSummary("Unarchive guide"),
 		openapi.WithDescription("Unarchives a guide and returns it to draft status"),
@@ -279,7 +276,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/restore", ws),
+		fmt.Sprintf("%s/guides/{id}/restore", basePath),
 		openapi.WithOperationID("restoreGuide"),
 		openapi.WithSummary("Restore guide"),
 		openapi.WithDescription("Restores a previously deleted guide"),
@@ -290,7 +287,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/permanently-delete", ws),
+		fmt.Sprintf("%s/guides/{id}/permanently-delete", basePath),
 		openapi.WithOperationID("permanentlyDeleteGuide"),
 		openapi.WithSummary("Permanently delete guide"),
 		openapi.WithDescription("Permanently deletes a soft-deleted guide"),
@@ -301,7 +298,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/guides/starred", ws),
+		fmt.Sprintf("%s/guides/starred", basePath),
 		openapi.WithOperationID("getStarredGuides"),
 		openapi.WithSummary("Get starred guides"),
 		openapi.WithDescription("Get all guides starred by the current user"),
@@ -311,7 +308,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/star", ws),
+		fmt.Sprintf("%s/guides/{id}/star", basePath),
 		openapi.WithOperationID("starGuide"),
 		openapi.WithSummary("Star guide"),
 		openapi.WithDescription("Stars a guide for the current user"),
@@ -322,7 +319,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodDelete,
-		fmt.Sprintf("%s/guides/{id}/star", ws),
+		fmt.Sprintf("%s/guides/{id}/star", basePath),
 		openapi.WithOperationID("unstarGuide"),
 		openapi.WithSummary("Unstar guide"),
 		openapi.WithDescription("Unstars a guide for the current user"),
@@ -333,7 +330,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/guides/{id}/export", ws),
+		fmt.Sprintf("%s/guides/{id}/export", basePath),
 		openapi.WithOperationID("exportGuide"),
 		openapi.WithSummary("Export guide"),
 		openapi.WithDescription("Triggers an async export of a guide (e.g. PDF)"),
@@ -345,7 +342,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/guide-exports/{exportID}", ws),
+		fmt.Sprintf("%s/guide-exports/{exportID}", basePath),
 		openapi.WithOperationID("getExportStatus"),
 		openapi.WithSummary("Get export status"),
 		openapi.WithDescription("Polls the status of a guide export"),

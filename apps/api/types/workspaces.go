@@ -18,7 +18,7 @@ type WorkspaceFilter struct {
 }
 
 type CreateWorkspaceRequest struct {
-	Name string              `json:"name" validate:"required,lte=255" required:"true"`
+	Name string                `json:"name" validate:"required,lte=255" required:"true"`
 	Type *models.WorkspaceType `json:"type,omitempty" nullable:"true"`
 }
 

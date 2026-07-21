@@ -114,7 +114,7 @@ func (s *ExportService) GeneratePDF(ctx context.Context, exportID uuid.UUID, gui
 		return fmt.Errorf("update status to processing: %w", err)
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, "", guideID.String()) // workspaceID not needed for background export worker
+	guide, err := s.guidesRepo.GetByID(ctx, guideID.String())
 	if err != nil {
 		s.markFailed(ctx, exportID, fmt.Sprintf("fetch guide: %v", err))
 		return fmt.Errorf("fetch guide: %w", err)
@@ -124,7 +124,7 @@ func (s *ExportService) GeneratePDF(ctx context.Context, exportID uuid.UUID, gui
 		return fmt.Errorf("guide not found")
 	}
 
-	steps, err := s.stepsRepo.GetByGuideID(ctx, "", guideID.String()) // workspaceID not needed for background export worker
+	steps, err := s.stepsRepo.GetByGuideID(ctx, guideID.String())
 	if err != nil {
 		s.markFailed(ctx, exportID, fmt.Sprintf("fetch steps: %v", err))
 		return fmt.Errorf("fetch steps: %w", err)

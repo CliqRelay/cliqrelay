@@ -15,6 +15,7 @@ import (
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestCreateGuideHandler(t *testing.T) {
@@ -88,8 +89,9 @@ func TestCreateGuideHandler(t *testing.T) {
 			tt.setup(mockRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanCreateGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
-			handler := handlersguides.NewCreateGuideHandler(appConfig, svc)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
+			handler := handlersguides.NewCreateGuideHandler(appConfig, uc)
 
 			var req tests.HandlerTestRequest
 			if tt.rawBody != nil {

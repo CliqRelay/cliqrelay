@@ -9,8 +9,8 @@ import (
 
 type MediaAssetsRepository interface {
 	Create(ctx context.Context, dto *types.CreateMediaAssetDTO) (*models.MediaAsset, error)
-	GetByID(ctx context.Context, workspaceID string, id string) (*models.MediaAsset, error)
-	GetByStepID(ctx context.Context, workspaceID string, stepID string) ([]*models.MediaAsset, error)
+	GetByID(ctx context.Context, id string) (*models.MediaAsset, error)
+	GetByStepID(ctx context.Context, stepID string) ([]*models.MediaAsset, error)
 	Update(ctx context.Context, dto *types.UpdateMediaAssetDTO) (*models.MediaAsset, error)
-	Delete(ctx context.Context, workspaceID string, id string) (*models.MediaAsset, error)
+	Delete(ctx context.Context, id string) (*models.MediaAsset, error)
 }

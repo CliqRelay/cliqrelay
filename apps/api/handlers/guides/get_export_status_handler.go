@@ -24,7 +24,7 @@ func (h *GetExportStatusHandler) Handle() http.HandlerFunc {
 		ctx := r.Context()
 		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 
-		workspaceID := r.PathValue("workspaceId")
+		workspaceID := r.URL.Query().Get("workspace_id")
 		exportID := r.PathValue("exportID")
 
 		export, err := h.exportService.GetExportStatus(reqCtx, workspaceID, exportID)

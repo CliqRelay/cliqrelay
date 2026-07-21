@@ -15,6 +15,7 @@ import (
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestGetAllGuidesHandler(t *testing.T) {
@@ -111,12 +112,15 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			tt.setup(mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
-			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
-			handler := handlersguides.NewGetAllGuidesHandler(appConfig, svc)
+			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
+			handler := handlersguides.NewGetAllGuidesHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, tt.path, nil)
 
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
+			q := req.Req.URL.Query()
+			q.Set("workspace_id", uuid.New().String())
+			req.Req.URL.RawQuery = q.Encode()
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

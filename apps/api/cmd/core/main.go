@@ -34,6 +34,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/services/storage"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
 	workspacesservice "github.com/CliqRelay/cliqrelay/services/workspaces"
+	"github.com/CliqRelay/cliqrelay/usecases"
 	"github.com/CliqRelay/cliqrelay/worker"
 )
 
@@ -95,23 +96,27 @@ func main() {
 	stepHooks := (*interfaces.StepHooks)(nil)
 	mediaHooks := (*interfaces.MediaAssetHooks)(nil)
 
-	guidesService := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, guidesCache, bunStepsRepo, appConfig.RedisClient, authorizationService, guideHooks)
-	starredService := starredguidesservice.NewStarredGuidesService(bunStarredGuidesRepo, bunGuidesRepo, authorizationService)
-	stepsService := stepsservice.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignService, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger, authorizationService, stepHooks)
-	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, authorizationService, mediaHooks)
+	guidesService := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, guidesCache, bunStepsRepo, appConfig.RedisClient, guideHooks)
+	starredService := starredguidesservice.NewStarredGuidesService(bunStarredGuidesRepo, bunGuidesRepo)
+	stepsService := stepsservice.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignService, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger, stepHooks)
+	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, mediaHooks)
 	exportService := export.NewExportService(bunGuideExportsRepo, bunGuidesRepo, bunStepsRepo, storageService, presignService, appConfig.RedisClient, appConfig.S3Bucket)
-	uploadsService := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, authorizationService, appConfig.S3Bucket)
+	uploadsService := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, appConfig.S3Bucket)
 	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, appConfig.S3Bucket)
 
-	svcs := &interfaces.DomainServices{
-		WorkspaceService:     workspaceService,
-		GuidesService:        guidesService,
-		StepsService:         stepsService,
-		StarredGuidesService: starredService,
-		MediaAssetsService:   mediaAssetsService,
-		ExportService:        exportService,
-		UploadsService:       uploadsService,
-		PurgeService:         purgeService,
+	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, guidesService, starredService)
+	stepsUseCase := usecases.NewStepsUseCase(authorizationService, stepsService, guidesService)
+	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, mediaAssetsService, stepsService, guidesService)
+	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, uploadsService, guidesService, stepsService)
+
+	svcs := &interfaces.DomainUseCases{
+		WorkspaceService:   workspaceService,
+		GuidesUseCase:      guidesUseCase,
+		StepsUseCase:       stepsUseCase,
+		MediaAssetsUseCase: mediaAssetsUseCase,
+		ExportService:      exportService,
+		UploadsUseCase:     uploadsUseCase,
+		PurgeService:       purgeService,
 	}
 
 	routes.InitRoutes(appConfig, svcs)

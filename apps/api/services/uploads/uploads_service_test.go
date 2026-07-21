@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	authulamodels "github.com/Authula/authula/models"
-
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/models"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
@@ -36,27 +34,16 @@ func TestUploadsService_GeneratePresignedPutURL(t *testing.T) {
 	successStepID := uuid.New()
 	errGuideID := uuid.New()
 	errStepID := uuid.New()
-	mismatchStepID := uuid.New()
-
 	cases := []testCase{
 		{
 			name:    "generates presigned URL successfully",
 			guideID: successGuideID.String(),
 			stepID:  successStepID.String(),
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService, gid, sid string) {
-				parsedGuideID := uuid.MustParse(gid)
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", gid).
-					Return(&models.Guide{
-						ID:        parsedGuideID,
-						CreatorID: uuid.New().String(),
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
-					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
+				mockStepsRepo.On("GetByID", mock.Anything, sid).
 					Return(&models.Step{
 						ID:        uuid.MustParse(sid),
-						GuideID:   parsedGuideID,
+						GuideID:   uuid.MustParse(gid),
 						SortOrder: "a0",
 						Action:    &stepAction,
 					}, nil).
@@ -83,41 +70,11 @@ func TestUploadsService_GeneratePresignedPutURL(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "returns error when guide not found",
-			guideID: uuid.New().String(),
-			stepID:  uuid.New().String(),
-			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService, gid, sid string) {
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", gid).
-					Return(nil, nil).
-					Once()
-			},
-			wantErr: true,
-		},
-		{
-			name:    "propagates guide repository error",
-			guideID: uuid.New().String(),
-			stepID:  uuid.New().String(),
-			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService, gid, sid string) {
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", gid).
-					Return(nil, assert.AnError).
-					Once()
-			},
-			wantErr: true,
-		},
-		{
 			name:    "returns error when step not found",
 			guideID: errGuideID.String(),
 			stepID:  errStepID.String(),
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService, gid, sid string) {
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", gid).
-					Return(&models.Guide{
-						ID:        uuid.MustParse(gid),
-						CreatorID: uuid.New().String(),
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
-					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
+				mockStepsRepo.On("GetByID", mock.Anything, sid).
 					Return(nil, nil).
 					Once()
 			},
@@ -128,41 +85,8 @@ func TestUploadsService_GeneratePresignedPutURL(t *testing.T) {
 			guideID: uuid.New().String(),
 			stepID:  uuid.New().String(),
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService, gid, sid string) {
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", gid).
-					Return(&models.Guide{
-						ID:        uuid.MustParse(gid),
-						CreatorID: uuid.New().String(),
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
-					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
+				mockStepsRepo.On("GetByID", mock.Anything, sid).
 					Return(nil, assert.AnError).
-					Once()
-			},
-			wantErr: true,
-		},
-		{
-			name:    "returns error when step does not belong to guide",
-			guideID: uuid.New().String(),
-			stepID:  mismatchStepID.String(),
-			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService, gid, sid string) {
-				parsedGuideID := uuid.MustParse(gid)
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", gid).
-					Return(&models.Guide{
-						ID:        parsedGuideID,
-						CreatorID: uuid.New().String(),
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
-					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
-					Return(&models.Step{
-						ID:        uuid.MustParse(sid),
-						GuideID:   uuid.MustParse("00000000-0000-0000-0000-000000000001"),
-						SortOrder: "a0",
-						Action:    &stepAction,
-					}, nil).
 					Once()
 			},
 			wantErr: true,
@@ -172,19 +96,10 @@ func TestUploadsService_GeneratePresignedPutURL(t *testing.T) {
 			guideID: uuid.New().String(),
 			stepID:  uuid.New().String(),
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService, gid, sid string) {
-				parsedGuideID := uuid.MustParse(gid)
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", gid).
-					Return(&models.Guide{
-						ID:        parsedGuideID,
-						CreatorID: uuid.New().String(),
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
-					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
+				mockStepsRepo.On("GetByID", mock.Anything, sid).
 					Return(&models.Step{
 						ID:        uuid.MustParse(sid),
-						GuideID:   parsedGuideID,
+						GuideID:   uuid.MustParse(gid),
 						SortOrder: "a0",
 						Action:    &stepAction,
 					}, nil).
@@ -205,13 +120,10 @@ func TestUploadsService_GeneratePresignedPutURL(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			mockPresignClient := new(tests.MockPresignService)
-			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, tt.guideID, tt.stepID)
-			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, mockAuthz, bucket)
+			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, bucket)
 
-			testActor := &authulamodels.Actor{ID: "test-user"}
-			result, err := svc.GeneratePresignedPutURL(context.Background(), testActor, "00000000-0000-0000-0000-000000000001", tt.guideID, tt.stepID)
+			result, err := svc.GeneratePresignedPutURL(context.Background(), "00000000-0000-0000-0000-000000000001", tt.guideID, tt.stepID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -257,7 +169,6 @@ func TestUploadsService_CompleteUpload(t *testing.T) {
 	successStepID := uuid.New()
 	errStepID := uuid.New()
 	notFoundStepID := uuid.New()
-	mismatchStepID := uuid.New()
 	storagePath := "uploads/guides/abc/steps/def/123"
 	fileSize := 1024
 	mimeType := "image/png"
@@ -273,20 +184,12 @@ func TestUploadsService_CompleteUpload(t *testing.T) {
 			thumbnail:   &thumbnailVal,
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, sid string) {
 				parsedStepID := uuid.MustParse(sid)
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
+				mockStepsRepo.On("GetByID", mock.Anything, sid).
 					Return(&models.Step{
 						ID:        parsedStepID,
 						GuideID:   uuid.New(),
 						SortOrder: "a0",
 						Action:    &stepAction,
-					}, nil).
-					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", mock.Anything).
-					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: "test-user",
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
 					}, nil).
 					Once()
 				mockMediaAssetsRepo.On("Create", mock.Anything, mock.MatchedBy(func(dto *types.CreateMediaAssetDTO) bool {
@@ -315,28 +218,7 @@ func TestUploadsService_CompleteUpload(t *testing.T) {
 			stepID:      notFoundStepID.String(),
 			storagePath: storagePath,
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, sid string) {
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
-					Return(nil, nil).
-					Once()
-			},
-			wantErr: true,
-		},
-		{
-			name:        "returns error when step not in user's guide",
-			stepID:      mismatchStepID.String(),
-			storagePath: storagePath,
-			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, sid string) {
-				parsedStepID := uuid.MustParse(sid)
-				guideID := uuid.New()
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
-					Return(&models.Step{
-						ID:        parsedStepID,
-						GuideID:   guideID,
-						SortOrder: "a0",
-						Action:    &stepAction,
-					}, nil).
-					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", guideID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, sid).
 					Return(nil, nil).
 					Once()
 			},
@@ -347,7 +229,7 @@ func TestUploadsService_CompleteUpload(t *testing.T) {
 			stepID:      errStepID.String(),
 			storagePath: storagePath,
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, sid string) {
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
+				mockStepsRepo.On("GetByID", mock.Anything, sid).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -361,20 +243,12 @@ func TestUploadsService_CompleteUpload(t *testing.T) {
 			mimeType:    &mimeType,
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, sid string) {
 				parsedStepID := uuid.MustParse(sid)
-				mockStepsRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", sid).
+				mockStepsRepo.On("GetByID", mock.Anything, sid).
 					Return(&models.Step{
 						ID:        parsedStepID,
 						GuideID:   uuid.New(),
 						SortOrder: "a0",
 						Action:    &stepAction,
-					}, nil).
-					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, "00000000-0000-0000-0000-000000000001", mock.Anything).
-					Return(&models.Guide{
-						ID:        uuid.New(),
-						CreatorID: "test-user",
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
 					}, nil).
 					Once()
 				mockMediaAssetsRepo.On("Create", mock.Anything, mock.Anything).
@@ -393,18 +267,15 @@ func TestUploadsService_CompleteUpload(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			mockPresignClient := new(tests.MockPresignService)
-			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			tt.setup(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, tt.stepID)
 			if !tt.wantErr {
 				mockPresignClient.On("GetURL", mock.Anything, bucket, tt.storagePath).
 					Return("https://test-bucket.s3.amazonaws.com/"+tt.storagePath, nil).
 					Once()
 			}
-			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, mockAuthz, bucket)
+			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, bucket)
 
-			testActor := &authulamodels.Actor{ID: "test-user"}
-			result, err := svc.CompleteUpload(context.Background(), testActor, "00000000-0000-0000-0000-000000000001", tt.stepID, tt.storagePath, tt.fileSize, tt.mimeType, tt.thumbnail, new(100), new(100))
+			result, err := svc.CompleteUpload(context.Background(), "00000000-0000-0000-0000-000000000001", tt.stepID, tt.storagePath, tt.fileSize, tt.mimeType, tt.thumbnail, new(100), new(100))
 
 			if tt.wantErr {
 				assert.Error(t, err)

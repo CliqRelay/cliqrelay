@@ -47,13 +47,12 @@ func (r *BunMediaAssetsRepository) Create(ctx context.Context, dto *types.Create
 	return mediaAsset, err
 }
 
-func (r *BunMediaAssetsRepository) GetByID(ctx context.Context, workspaceID string, id string) (*models.MediaAsset, error) {
+func (r *BunMediaAssetsRepository) GetByID(ctx context.Context, id string) (*models.MediaAsset, error) {
 	mediaAsset := &models.MediaAsset{}
 
 	err := r.db.NewSelect().
 		Model(mediaAsset).
 		Where("id = ?", id).
-		Where("workspace_id = ?", workspaceID).
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -65,13 +64,12 @@ func (r *BunMediaAssetsRepository) GetByID(ctx context.Context, workspaceID stri
 	return mediaAsset, nil
 }
 
-func (r *BunMediaAssetsRepository) GetByStepID(ctx context.Context, workspaceID string, stepID string) ([]*models.MediaAsset, error) {
+func (r *BunMediaAssetsRepository) GetByStepID(ctx context.Context, stepID string) ([]*models.MediaAsset, error) {
 	var mediaAssets = make([]*models.MediaAsset, 0)
 
 	err := r.db.NewSelect().
 		Model(&mediaAssets).
 		Where("step_id = ?", stepID).
-		Where("workspace_id = ?", workspaceID).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -86,7 +84,6 @@ func (r *BunMediaAssetsRepository) Update(ctx context.Context, dto *types.Update
 	err := r.db.NewSelect().
 		Model(mediaAsset).
 		Where("id = ?", dto.ID).
-		Where("workspace_id = ?", dto.WorkspaceID).
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -134,13 +131,12 @@ func (r *BunMediaAssetsRepository) Update(ctx context.Context, dto *types.Update
 	return mediaAsset, nil
 }
 
-func (r *BunMediaAssetsRepository) Delete(ctx context.Context, workspaceID string, id string) (*models.MediaAsset, error) {
+func (r *BunMediaAssetsRepository) Delete(ctx context.Context, id string) (*models.MediaAsset, error) {
 	mediaAsset := &models.MediaAsset{}
 
 	err := r.db.NewSelect().
 		Model(mediaAsset).
 		Where("id = ?", id).
-		Where("workspace_id = ?", workspaceID).
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

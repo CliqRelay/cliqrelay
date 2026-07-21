@@ -24,6 +24,6 @@ var (
 
 	ErrMediaAssetCopyFailed = errors.New("failed to copy media asset")
 
-	ErrWorkspaceNotFound      = errors.New("workspace not found")
-	ErrWorkspaceAccessDenied  = errors.New("workspace access denied")
+	ErrWorkspaceNotFound     = errors.New("workspace not found")
+	ErrWorkspaceAccessDenied = errors.New("workspace access denied")
 )

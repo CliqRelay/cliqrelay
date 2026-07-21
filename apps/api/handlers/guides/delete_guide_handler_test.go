@@ -14,6 +14,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/models"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	"github.com/CliqRelay/cliqrelay/tests"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestDeleteGuideHandler(t *testing.T) {
@@ -52,15 +53,15 @@ func TestDeleteGuideHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 
 			if tt.expectedStatus == http.StatusOK {
-				mockRepo.On("GetByID", mock.Anything, mock.Anything, guideID).
+				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
 						Title:     "Existing Guide",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
-				mockRepo.On("Delete", mock.Anything, mock.Anything, guideID).
+					Twice()
+				mockRepo.On("Delete", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -70,22 +71,23 @@ func TestDeleteGuideHandler(t *testing.T) {
 					Once()
 				mockAuthz.On("CanDeleteGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			} else {
-				mockRepo.On("GetByID", mock.Anything, mock.Anything, guideID).
+				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
 						Title:     "Existing Guide",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
-				mockRepo.On("Delete", mock.Anything, mock.Anything, guideID).
+					Twice()
+				mockRepo.On("Delete", mock.Anything, guideID).
 					Return(nil, assert.AnError).
 					Once()
 				mockAuthz.On("CanDeleteGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
-			handler := handlersguides.NewDeleteGuideHandler(appConfig, svc)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
+			handler := handlersguides.NewDeleteGuideHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodDelete, path, nil)
 			req.Req.SetPathValue("id", guideID)

@@ -3,7 +3,7 @@ package guides
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -12,23 +12,22 @@ import (
 
 type RecalculateDurationHandler struct {
 	appConfig     *config.AppConfig
-	guidesService interfaces.GuidesService
+	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewRecalculateDurationHandler(appConfig *config.AppConfig, guidesService interfaces.GuidesService) *RecalculateDurationHandler {
-	return &RecalculateDurationHandler{appConfig: appConfig, guidesService: guidesService}
+func NewRecalculateDurationHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *RecalculateDurationHandler {
+	return &RecalculateDurationHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
 }
 
 func (h *RecalculateDurationHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.PathValue("workspaceId")
 		guideID := r.PathValue("id")
 
-		guide, err := h.guidesService.RecalculateDuration(ctx, actor, workspaceID, guideID)
+		guide, err := h.guidesUseCase.RecalculateDuration(ctx, actor, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

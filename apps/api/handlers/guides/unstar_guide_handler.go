@@ -3,7 +3,7 @@ package guides
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -11,24 +11,23 @@ import (
 )
 
 type UnstarGuideHandler struct {
-	appConfig            *config.AppConfig
-	starredGuidesService interfaces.StarredGuidesService
+	appConfig     *config.AppConfig
+	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewUnstarGuideHandler(appConfig *config.AppConfig, starredGuidesService interfaces.StarredGuidesService) *UnstarGuideHandler {
-	return &UnstarGuideHandler{appConfig: appConfig, starredGuidesService: starredGuidesService}
+func NewUnstarGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *UnstarGuideHandler {
+	return &UnstarGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
 }
 
 func (h *UnstarGuideHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.PathValue("workspaceId")
 		guideID := r.PathValue("id")
 
-		err := h.starredGuidesService.Unstar(ctx, actor, workspaceID, guideID)
+		err := h.guidesUseCase.Unstar(ctx, actor, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -14,49 +14,47 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func MediaAssetsRoutes(appConfig *config.AppConfig, mediaSvc interfaces.MediaAssetsService) []authulamodels.Route {
-	mediaAssetsService := mediaSvc
-
-	createHandler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, mediaAssetsService)
-	getAllHandler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, mediaAssetsService)
-	getByIDHandler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, mediaAssetsService)
-	updateHandler := handlersmediaassets.NewUpdateMediaAssetHandler(appConfig, mediaAssetsService)
-	deleteHandler := handlersmediaassets.NewDeleteMediaAssetHandler(appConfig, mediaAssetsService)
+func MediaAssetsRoutes(appConfig *config.AppConfig, mediaUseCase interfaces.MediaAssetsUseCase) []authulamodels.Route {
+	createHandler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, mediaUseCase)
+	getAllHandler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, mediaUseCase)
+	getByIDHandler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, mediaUseCase)
+	updateHandler := handlersmediaassets.NewUpdateMediaAssetHandler(appConfig, mediaUseCase)
+	deleteHandler := handlersmediaassets.NewDeleteMediaAssetHandler(appConfig, mediaUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
-	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", appConfig.BasePath)
+	base := appConfig.BasePath
 
 	return []authulamodels.Route{
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/media-assets", ws),
+			Path:       fmt.Sprintf("%s/media-assets", base),
 			Middleware: authMiddleware,
 			Handler:    createHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/media-assets", ws),
+			Path:       fmt.Sprintf("%s/media-assets", base),
 			Middleware: authMiddleware,
 			Handler:    getAllHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/media-assets/{id}", ws),
+			Path:       fmt.Sprintf("%s/media-assets/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    getByIDHandler.Handle(),
 		},
 		{
 			Method:     "PATCH",
-			Path:       fmt.Sprintf("%s/media-assets/{id}", ws),
+			Path:       fmt.Sprintf("%s/media-assets/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    updateHandler.Handle(),
 		},
 		{
 			Method:     "DELETE",
-			Path:       fmt.Sprintf("%s/media-assets/{id}", ws),
+			Path:       fmt.Sprintf("%s/media-assets/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    deleteHandler.Handle(),
 		},
@@ -64,11 +62,9 @@ func MediaAssetsRoutes(appConfig *config.AppConfig, mediaSvc interfaces.MediaAss
 }
 
 func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", basePath)
-
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/media-assets", ws),
+		fmt.Sprintf("%s/media-assets", basePath),
 		openapi.WithOperationID("createMediaAsset"),
 		openapi.WithSummary("Create media asset"),
 		openapi.WithDescription("Creates a new media asset associated with a step"),
@@ -79,7 +75,7 @@ func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string)
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/media-assets", ws),
+		fmt.Sprintf("%s/media-assets", basePath),
 		openapi.WithOperationID("getAllMediaAssetsByStepId"),
 		openapi.WithSummary("Get all media assets by step ID"),
 		openapi.WithDescription("Retrieves all media assets for a given step"),
@@ -90,7 +86,7 @@ func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string)
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/media-assets/{id}", ws),
+		fmt.Sprintf("%s/media-assets/{id}", basePath),
 		openapi.WithOperationID("getMediaAssetById"),
 		openapi.WithSummary("Get media asset by ID"),
 		openapi.WithDescription("Retrieves a single media asset by its ID"),
@@ -101,7 +97,7 @@ func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string)
 
 	svc.AddOperation(
 		http.MethodPatch,
-		fmt.Sprintf("%s/media-assets/{id}", ws),
+		fmt.Sprintf("%s/media-assets/{id}", basePath),
 		openapi.WithOperationID("updateMediaAsset"),
 		openapi.WithSummary("Update media asset"),
 		openapi.WithDescription("Updates an existing media asset's metadata"),
@@ -113,7 +109,7 @@ func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string)
 
 	svc.AddOperation(
 		http.MethodDelete,
-		fmt.Sprintf("%s/media-assets/{id}", ws),
+		fmt.Sprintf("%s/media-assets/{id}", basePath),
 		openapi.WithOperationID("deleteMediaAsset"),
 		openapi.WithSummary("Delete media asset"),
 		openapi.WithDescription("Hard-deletes a media asset"),

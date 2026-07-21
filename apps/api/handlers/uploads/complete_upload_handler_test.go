@@ -10,10 +10,14 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersuploads "github.com/CliqRelay/cliqrelay/handlers/uploads"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
+	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestCompleteUploadHandler(t *testing.T) {
@@ -28,6 +32,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 	storagePath := "uploads/guides/abc/steps/def/123"
 	fileSize := 1024
 	mimeType := "image/png"
+	wsID := uuid.New().String()
 
 	cases := []struct {
 		name           string
@@ -39,21 +44,22 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.CompleteUploadRequest{
+				WorkspaceID: wsID,
 				StepID:      stepID.String(),
 				StoragePath: storagePath,
 				FileSize:    &fileSize,
 				MimeType:    &mimeType,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, stepID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
 						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    &stepAction,
 					}, nil).
-					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
+					Twice()
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: creatorUserID,
@@ -81,6 +87,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "missing stepId",
 			payload: types.CompleteUploadRequest{
+				WorkspaceID: wsID,
 				StepID:      "",
 				StoragePath: storagePath,
 			},
@@ -92,6 +99,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "missing storagePath",
 			payload: types.CompleteUploadRequest{
+				WorkspaceID: wsID,
 				StepID:      uuid.New().String(),
 				StoragePath: "",
 			},
@@ -103,6 +111,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "invalid stepId",
 			payload: types.CompleteUploadRequest{
+				WorkspaceID: wsID,
 				StepID:      "not-a-uuid",
 				StoragePath: storagePath,
 			},
@@ -114,11 +123,12 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "step not found",
 			payload: types.CompleteUploadRequest{
+				WorkspaceID: wsID,
 				StepID:      uuid.New().String(),
 				StoragePath: storagePath,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
 			},
@@ -128,11 +138,12 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "step not in user's guide",
 			payload: types.CompleteUploadRequest{
+				WorkspaceID: wsID,
 				StepID:      stepID.String(),
 				StoragePath: storagePath,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, stepID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
 						GuideID:   otherGuideID,
@@ -140,7 +151,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 						Action:    &stepAction,
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, otherGuideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, otherGuideID.String()).
 					Return(nil, nil).
 					Once()
 			},
@@ -150,11 +161,12 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "service error",
 			payload: types.CompleteUploadRequest{
+				WorkspaceID: wsID,
 				StepID:      uuid.New().String(),
 				StoragePath: storagePath,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -177,12 +189,14 @@ func TestCompleteUploadHandler(t *testing.T) {
 			}
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, mockAuthz, "test-bucket")
-			handler := handlersuploads.NewCompleteUploadHandler(appConfig, svc)
+			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, "test-bucket")
+			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewUploadsUseCase(mockAuthz, svc, guidesSvc, stepsSvc)
+			handler := handlersuploads.NewCompleteUploadHandler(appConfig, uc)
 
 			path := "/api/v1/uploads/complete"
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, tt.payload)
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
 
 			handler.Handle()(req.W, req.Req)
 

@@ -14,8 +14,10 @@ import (
 	handlerssteps "github.com/CliqRelay/cliqrelay/handlers/steps"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestDeleteStepHandler(t *testing.T) {
@@ -35,15 +37,15 @@ func TestDeleteStepHandler(t *testing.T) {
 			stepID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
 				guideID := uuid.New()
-				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    new(models.StepActionClick),
 					}, nil).
-					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
+					Twice()
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -51,10 +53,10 @@ func TestDeleteStepHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.Anything, mock.Anything).
+				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.Anything).
 					Return([]*models.MediaAsset{}, nil).
 					Once()
-				mockStepsRepo.On("Delete", mock.Anything, mock.Anything, mock.Anything).
+				mockStepsRepo.On("Delete", mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
 			},
@@ -66,15 +68,15 @@ func TestDeleteStepHandler(t *testing.T) {
 			stepID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
 				guideID := uuid.New()
-				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   guideID,
 						SortOrder: "a0",
 						Action:    new(models.StepActionClick),
 					}, nil).
-					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
+					Twice()
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -82,10 +84,10 @@ func TestDeleteStepHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.Anything, mock.Anything).
+				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.Anything).
 					Return([]*models.MediaAsset{}, nil).
 					Once()
-				mockStepsRepo.On("Delete", mock.Anything, mock.Anything, mock.Anything).
+				mockStepsRepo.On("Delete", mock.Anything, mock.Anything).
 					Return(assert.AnError).
 					Once()
 			},
@@ -108,8 +110,10 @@ func TestDeleteStepHandler(t *testing.T) {
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockMediaAssetsRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), mockMediaAssetsRepo, "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
-			handler := handlerssteps.NewDeleteStepHandler(appConfig, svc)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
+			handler := handlerssteps.NewDeleteStepHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodDelete, path, nil)
 			req.Req.SetPathValue("id", stepID)

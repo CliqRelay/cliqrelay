@@ -12,9 +12,12 @@ import (
 	handlersmediaassets "github.com/CliqRelay/cliqrelay/handlers/media_assets"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	media_assetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
+	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestCreateMediaAssetHandler(t *testing.T) {
@@ -37,14 +40,14 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				StoragePath: "uploads/test.png",
 			},
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
 						SortOrder: "a0",
 					}, nil).
-					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
+					Twice()
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -78,14 +81,14 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				StoragePath: "uploads/test.png",
 			},
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
 						SortOrder: "a0",
 					}, nil).
-					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
+					Twice()
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -112,8 +115,11 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
-			handler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, svc)
+			maSvc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewMediaAssetsUseCase(mockAuthz, maSvc, stepsSvc, guidesSvc)
+			handler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, uc)
 
 			var req tests.HandlerTestRequest
 			if tt.rawBody != nil {

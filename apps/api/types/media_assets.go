@@ -16,6 +16,7 @@ func (r *MediaAssetID) Validate() error {
 }
 
 type CreateMediaAssetRequest struct {
+	WorkspaceID uuid.UUID `json:"workspace_id" validate:"required,uuid" required:"true"`
 	StepID      uuid.UUID `json:"step_id" validate:"required,uuid" required:"true"`
 	StoragePath string    `json:"storage_path" validate:"required" required:"true"`
 	MimeType    *string   `json:"mime_type,omitempty" nullable:"true"`

@@ -368,10 +368,10 @@ func TestBunGuidesRepository_GetByID(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID, wsID := tt.setup(db)
+			_, targetID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			found, err := repo.GetByID(ctx, wsID, targetID)
+			found, err := repo.GetByID(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -407,9 +407,9 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			},
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
-					ID:    guide.ID,
+					ID:          guide.ID,
 					WorkspaceID: guide.WorkspaceID,
-					Title: new("Updated Title"),
+					Title:       new("Updated Title"),
 				}
 			},
 			check: func(t *testing.T, guide *models.Guide) {
@@ -461,9 +461,9 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			},
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
-					ID:    uuid.New(),
+					ID:          uuid.New(),
 					WorkspaceID: uuid.Nil,
-					Title: new("Nope"),
+					Title:       new("Nope"),
 				}
 			},
 			wantNil: true,
@@ -563,10 +563,10 @@ func TestBunGuidesRepository_Delete(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID, wsID := tt.setup(db)
+			_, targetID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			deleted, err := repo.Delete(ctx, wsID, targetID)
+			deleted, err := repo.Delete(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -633,10 +633,10 @@ func TestBunGuidesRepository_RestoreGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID, wsID := tt.setup(db)
+			_, targetID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			restored, err := repo.Restore(ctx, wsID, targetID)
+			restored, err := repo.Restore(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -702,10 +702,10 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID, wsID := tt.setup(db)
+			_, targetID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			published, err := repo.Publish(ctx, wsID, targetID)
+			published, err := repo.Publish(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -774,10 +774,10 @@ func TestBunGuidesRepository_UnpublishGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID, wsID := tt.setup(db)
+			_, targetID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			guide, err := repo.Unpublish(ctx, wsID, targetID)
+			guide, err := repo.Unpublish(ctx, targetID)
 
 			if tt.wantNil {
 				require.NoError(t, err)
@@ -841,10 +841,10 @@ func TestBunGuidesRepository_ArchiveGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID, wsID := tt.setup(db)
+			_, targetID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			archived, err := repo.Archive(ctx, wsID, targetID)
+			archived, err := repo.Archive(ctx, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -910,10 +910,10 @@ func TestBunGuidesRepository_UnarchiveGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID, wsID := tt.setup(db)
+			_, targetID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			guide, err := repo.Unarchive(ctx, wsID, targetID)
+			guide, err := repo.Unarchive(ctx, targetID)
 
 			if tt.wantNil {
 				require.NoError(t, err)

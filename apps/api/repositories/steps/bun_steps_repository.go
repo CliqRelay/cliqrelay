@@ -176,14 +176,13 @@ func (r *BunStepsRepository) Create(ctx context.Context, dto *types.CreateStepDT
 	return step, err
 }
 
-func (r *BunStepsRepository) GetByID(ctx context.Context, workspaceID string, id string) (*models.Step, error) {
+func (r *BunStepsRepository) GetByID(ctx context.Context, id string) (*models.Step, error) {
 	step := &models.Step{}
 
 	err := r.db.NewSelect().
 		Model(step).
 		Relation("MediaAssets").
 		Where("id = ?", id).
-		Where("workspace_id = ?", workspaceID).
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -195,14 +194,13 @@ func (r *BunStepsRepository) GetByID(ctx context.Context, workspaceID string, id
 	return step, nil
 }
 
-func (r *BunStepsRepository) GetByGuideID(ctx context.Context, workspaceID string, guideID string) ([]*models.Step, error) {
+func (r *BunStepsRepository) GetByGuideID(ctx context.Context, guideID string) ([]*models.Step, error) {
 	var steps = make([]*models.Step, 0)
 
 	err := r.db.NewSelect().
 		Model(&steps).
 		Relation("MediaAssets").
 		Where("guide_id = ?", guideID).
-		Where("workspace_id = ?", workspaceID).
 		Order("sort_order ASC").
 		Scan(ctx)
 	if err != nil {
@@ -218,7 +216,6 @@ func (r *BunStepsRepository) Update(ctx context.Context, dto *types.UpdateStepDT
 	query := r.db.NewUpdate().
 		Model(step).
 		Where("id = ?", dto.ID).
-		Where("workspace_id = ?", dto.WorkspaceID).
 		Returning("*")
 
 	hasUpdates := false
@@ -309,11 +306,10 @@ func (r *BunStepsRepository) Update(ctx context.Context, dto *types.UpdateStepDT
 	return step, nil
 }
 
-func (r *BunStepsRepository) Delete(ctx context.Context, workspaceID string, id string) error {
+func (r *BunStepsRepository) Delete(ctx context.Context, id string) error {
 	res, err := r.db.NewDelete().
 		Model((*models.Step)(nil)).
 		Where("id = ?", id).
-		Where("workspace_id = ?", workspaceID).
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -326,7 +322,7 @@ func (r *BunStepsRepository) Delete(ctx context.Context, workspaceID string, id 
 	return nil
 }
 
-func (r *BunStepsRepository) Reorder(ctx context.Context, workspaceID string, guideID string, targetStepID string, prevStepID *string, nextStepID *string) ([]*models.Step, error) {
+func (r *BunStepsRepository) Reorder(ctx context.Context, guideID string, targetStepID string, prevStepID *string, nextStepID *string) ([]*models.Step, error) {
 	steps := make([]*models.Step, 0)
 
 	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

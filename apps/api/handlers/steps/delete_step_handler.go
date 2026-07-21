@@ -3,7 +3,7 @@ package steps
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -12,23 +12,22 @@ import (
 
 type DeleteStepHandler struct {
 	appConfig    *config.AppConfig
-	stepsService interfaces.StepsService
+	stepsUseCase interfaces.StepsUseCase
 }
 
-func NewDeleteStepHandler(appConfig *config.AppConfig, stepsService interfaces.StepsService) *DeleteStepHandler {
-	return &DeleteStepHandler{appConfig: appConfig, stepsService: stepsService}
+func NewDeleteStepHandler(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) *DeleteStepHandler {
+	return &DeleteStepHandler{appConfig: appConfig, stepsUseCase: stepsUseCase}
 }
 
 func (h *DeleteStepHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.PathValue("workspaceId")
 		stepID := r.PathValue("id")
 
-		err := h.stepsService.Delete(ctx, actor, workspaceID, stepID)
+		err := h.stepsUseCase.Delete(ctx, actor, stepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

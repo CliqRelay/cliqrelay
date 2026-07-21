@@ -3,7 +3,7 @@ package media_assets
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -12,23 +12,22 @@ import (
 
 type DeleteMediaAssetHandler struct {
 	appConfig          *config.AppConfig
-	mediaAssetsService interfaces.MediaAssetsService
+	mediaAssetsUseCase interfaces.MediaAssetsUseCase
 }
 
-func NewDeleteMediaAssetHandler(appConfig *config.AppConfig, mediaAssetsService interfaces.MediaAssetsService) *DeleteMediaAssetHandler {
-	return &DeleteMediaAssetHandler{appConfig: appConfig, mediaAssetsService: mediaAssetsService}
+func NewDeleteMediaAssetHandler(appConfig *config.AppConfig, mediaAssetsUseCase interfaces.MediaAssetsUseCase) *DeleteMediaAssetHandler {
+	return &DeleteMediaAssetHandler{appConfig: appConfig, mediaAssetsUseCase: mediaAssetsUseCase}
 }
 
 func (h *DeleteMediaAssetHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.PathValue("workspaceId")
 		mediaAssetID := r.PathValue("id")
 
-		_, err := h.mediaAssetsService.Delete(ctx, actor, workspaceID, mediaAssetID)
+		_, err := h.mediaAssetsUseCase.Delete(ctx, actor, mediaAssetID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -3,7 +3,7 @@ package uploads
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -14,20 +14,18 @@ import (
 
 type CompleteUploadHandler struct {
 	appConfig      *config.AppConfig
-	uploadsService interfaces.UploadsService
+	uploadsUseCase interfaces.UploadsUseCase
 }
 
-func NewCompleteUploadHandler(appConfig *config.AppConfig, uploadsService interfaces.UploadsService) *CompleteUploadHandler {
-	return &CompleteUploadHandler{appConfig: appConfig, uploadsService: uploadsService}
+func NewCompleteUploadHandler(appConfig *config.AppConfig, uploadsUseCase interfaces.UploadsUseCase) *CompleteUploadHandler {
+	return &CompleteUploadHandler{appConfig: appConfig, uploadsUseCase: uploadsUseCase}
 }
 
 func (h *CompleteUploadHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
-
-		workspaceID := r.PathValue("workspaceId")
 
 		var request types.CompleteUploadRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
@@ -41,7 +39,7 @@ func (h *CompleteUploadHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.uploadsService.CompleteUpload(ctx, actor, workspaceID, request.StepID, request.StoragePath, request.FileSize, request.MimeType, request.Thumbnail, request.Width, request.Height)
+		result, err := h.uploadsUseCase.CompleteUpload(ctx, actor, &request)
 		if err != nil {
 			status := http.StatusInternalServerError
 			switch err {

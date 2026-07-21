@@ -23,7 +23,7 @@ func NewGetAllWorkspacesHandler(appConfig *config.AppConfig, workspaceService in
 func (h *GetAllWorkspacesHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := 	authulamodels.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
 		var filter *types.WorkspaceFilter

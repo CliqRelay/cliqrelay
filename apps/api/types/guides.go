@@ -64,8 +64,9 @@ type GuideFilter struct {
 }
 
 type CreateGuideRequest struct {
-	Title       string  `json:"title" validate:"required,lte=255" required:"true"`
-	Description *string `json:"description,omitempty" nullable:"true"`
+	WorkspaceID uuid.UUID `json:"workspace_id" validate:"required,uuid" required:"true"`
+	Title       string    `json:"title" validate:"required,lte=255" required:"true"`
+	Description *string   `json:"description,omitempty" nullable:"true"`
 }
 
 func (r *CreateGuideRequest) Validate() error {
