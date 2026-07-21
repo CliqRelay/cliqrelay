@@ -15,6 +15,9 @@ export const saveSessionState = async (
 	guideId: string | undefined,
 	pendingJobs: OffscreenJob[],
 ): Promise<void> => {
+	if (!browser.storage?.session) {
+		return;
+	}
 	try {
 		await browser.storage.session.set({
 			[SESSION_STORAGE_KEY]: { sessionId, guideId, pendingJobs },

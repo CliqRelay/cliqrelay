@@ -221,7 +221,6 @@ describe("capture service", () => {
 	});
 
 	test("typing buffer flushes on click event", () => {
-		vi.useFakeTimers();
 		const sink = vi.fn();
 		const captureService = createCaptureService(sink);
 		const stop = captureService.start(document);
@@ -239,7 +238,7 @@ describe("capture service", () => {
 		document.dispatchEvent(keyB);
 
 		// Click should flush the buffer first, then send the click
-		const click = new MouseEvent("click", { bubbles: true });
+		const click = new MouseEvent("click", { bubbles: true, detail: 1 });
 		Object.defineProperty(click, "target", { value: target });
 		document.dispatchEvent(click);
 
@@ -252,7 +251,6 @@ describe("capture service", () => {
 		expect(second.payload.action).toBe("click");
 
 		stop();
-		vi.useRealTimers();
 	});
 
 	test("extracts selectors from ids and names", () => {
@@ -320,6 +318,7 @@ describe("capture service", () => {
 				bubbles: true,
 				clientX: 1,
 				clientY: 2,
+				detail: 1,
 			}),
 		);
 

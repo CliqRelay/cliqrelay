@@ -21,6 +21,7 @@ export const createCaptureHandler = (
 	portManager: PortManager,
 	captureMetadataMap: Map<string, CaptureMetadataEntry>,
 	createStepWithoutScreenshot: CreateStepWithoutScreenshot,
+	clearPendingFreeTyping: () => void,
 ) => {
 	const handleCapture = (
 		message: unknown,
@@ -80,6 +81,8 @@ export const createCaptureHandler = (
 			})();
 			return true;
 		}
+
+		clearPendingFreeTyping();
 
 		recording.ingestCapture({
 			tabId,

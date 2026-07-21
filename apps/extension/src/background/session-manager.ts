@@ -201,35 +201,77 @@ export const createSessionManager = (
 		updateSettings,
 	);
 
-	const handleFreeTypingCapture = async (
+	let pendingFreeTypingStepId: string | null = null;
+	let pendingFreeTypingCaptureId: string | null = null;
+	let pendingFreeTypingGuideId: string | null = null;
+	let pendingFreeTypingOp: Promise<void> = Promise.resolve();
+
+	const clearPendingFreeTyping = () => {
+		pendingFreeTypingStepId = null;
+		pendingFreeTypingCaptureId = null;
+		pendingFreeTypingGuideId = null;
+	};
+
+	const executeFreeTypingCapture = async (
 		captureId: string,
 		message: CaptureBridgeMessage,
 	) => {
 		const payload = message.payload;
-		const { guideId } = await getOrCreateGuideId();
+		const guideId = pendingFreeTypingGuideId ?? (await getOrCreateGuideId()).guideId;
 		const actionText = buildActionText("input", undefined, payload.typedText);
 
-		const stepResponse = await api.steps.createStep(
-			{
+		if (pendingFreeTypingStepId) {
+			await api.steps.updateStep(
+				pendingFreeTypingStepId,
+				{ actionText },
+				await withCsrf(),
+			);
+
+			const existing =
+				pendingFreeTypingCaptureId &&
+				jobProgressMap.get(pendingFreeTypingCaptureId);
+			if (existing) {
+				existing.actionText = actionText;
+			}
+		} else {
+			const stepResponse = await api.steps.createStep(
+				{
+					guideId,
+					type: "interaction",
+					action: "input",
+					url: payload.url,
+					actionText,
+				},
+				await withCsrf(),
+			);
+
+			pendingFreeTypingStepId = stepResponse.step.id;
+			pendingFreeTypingCaptureId = captureId;
+			pendingFreeTypingGuideId = guideId;
+
+			jobProgressMap.set(captureId, {
+				jobId: captureId,
+				stepId: stepResponse.step.id,
 				guideId,
-				type: "interaction" as const,
-				action: "input" as const,
-				url: payload.url,
+				action: "input",
 				actionText,
-			},
-			await withCsrf(),
+				url: payload.url ?? "",
+				capturedAt: payload.capturedAt,
+				phase: "completed",
+			});
+		}
+	};
+
+	const handleFreeTypingCapture = async (
+		captureId: string,
+		message: CaptureBridgeMessage,
+	) => {
+		const currentOp = pendingFreeTypingOp.then(() =>
+			executeFreeTypingCapture(captureId, message),
 		);
 
-		jobProgressMap.set(captureId, {
-			jobId: captureId,
-			stepId: stepResponse.step.id,
-			guideId,
-			action: "input",
-			actionText,
-			url: payload.url ?? "",
-			capturedAt: payload.capturedAt,
-			phase: "completed",
-		});
+		pendingFreeTypingOp = currentOp.catch(() => { });
+		await currentOp;
 	};
 
 	const handleSidePanelCommand = async (message: SidePanelCommand) => {
@@ -237,6 +279,7 @@ export const createSessionManager = (
 			isDraining = false;
 			jobProgressMap.clear();
 			captureMetadataMap.clear();
+			clearPendingFreeTyping();
 			clearDedup?.();
 			clearPendingActivations?.();
 			void offscreenManager.closeDocument().then(() => offscreenManager.startSession(generateCaptureId()));
@@ -274,6 +317,7 @@ export const createSessionManager = (
 		handleSidePanelCommand,
 		handleOffscreenEvent,
 		handleFreeTypingCapture,
+		clearPendingFreeTyping,
 	};
 };
 
