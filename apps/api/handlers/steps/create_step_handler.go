@@ -26,6 +26,8 @@ func (h *CreateStepHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
+
 		var request types.CreateStepRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
 			reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{"message": err.Error()})
@@ -38,7 +40,7 @@ func (h *CreateStepHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		step, err := h.stepsService.Create(ctx, actor, &request)
+		step, err := h.stepsService.Create(ctx, actor, workspaceID, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

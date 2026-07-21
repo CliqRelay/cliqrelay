@@ -78,7 +78,7 @@ func TestUpdateGuideHandler(t *testing.T) {
 
 			switch tt.name {
 			case "success":
-				mockRepo.On("GetByID", mock.Anything, guideID).
+				mockRepo.On("GetByID", mock.Anything, mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -86,7 +86,7 @@ func TestUpdateGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateGuideDTO")).
+				mockRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -94,9 +94,9 @@ func TestUpdateGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockAuthz.On("CanEditGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			case "service error":
-				mockRepo.On("GetByID", mock.Anything, guideID).
+				mockRepo.On("GetByID", mock.Anything, mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -104,10 +104,10 @@ func TestUpdateGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateGuideDTO")).
+				mockRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
-				mockAuthz.On("CanEditGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
 
 			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
@@ -120,6 +120,7 @@ func TestUpdateGuideHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPut, path, tt.payload)
 			}
 			req.Req.SetPathValue("id", guideID)
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 
 			handler.Handle()(req.W, req.Req)
 

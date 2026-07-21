@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -23,6 +25,7 @@ func TestMain(m *testing.M) {
 
 	dsn, cleanupContainer, err := tests.StartPostgresContainer(ctx)
 	if err != nil {
+		println("ERROR: StartPostgresContainer:", err.Error())
 		cleanupContainer()
 		os.Exit(1)
 	}
@@ -73,4 +76,15 @@ func runCleanups(cleanups []func()) {
 	for i := len(cleanups) - 1; i >= 0; i-- {
 		cleanups[i]()
 	}
+}
+
+func createTestOrgWorkspace(ctx context.Context, db *bun.DB, t *testing.T) uuid.UUID {
+	t.Helper()
+	orgID := uuid.New().String()
+	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(ctx)
+	require.NoError(t, err)
+	wsID := uuid.New()
+	_, err = db.NewRaw("INSERT INTO workspaces (id, organization_id, name, type) VALUES (?, ?, ?, ?)", wsID, orgID, "test-workspace", "PERSONAL").Exec(ctx)
+	require.NoError(t, err)
+	return wsID
 }

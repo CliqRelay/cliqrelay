@@ -17,6 +17,7 @@ func starredGuidesPostgresInitial() authulamigrations.Migration {
 				`CREATE TABLE starred_guides (
 					user_id UUID NOT NULL,
 					guide_id UUID NOT NULL,
+					workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
 					created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 					PRIMARY KEY (user_id, guide_id),
 					CONSTRAINT starred_guides_guide_id_fk FOREIGN KEY (guide_id) REFERENCES guides(id) ON DELETE CASCADE,

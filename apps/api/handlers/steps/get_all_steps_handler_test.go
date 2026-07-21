@@ -36,7 +36,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 			name:    "success",
 			guideID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -44,7 +44,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.Anything, mock.Anything).
 					Return([]*models.Step{
 						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "a0", Action: new(models.StepActionClick)},
 						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "b0", Action: new(models.StepActionInput)},
@@ -58,7 +58,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 			name:    "empty list",
 			guideID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -66,7 +66,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.Anything, mock.Anything).
 					Return([]*models.Step{}, nil).
 					Once()
 			},
@@ -77,7 +77,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 			name:    "returns steps with media assets",
 			guideID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockPresignClient *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -85,7 +85,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.Anything, mock.Anything).
 					Return([]*models.Step{
 						{
 							ID:        uuid.New(),
@@ -109,7 +109,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 			name:    "service error from guidesRepo.GetByID",
 			guideID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -119,7 +119,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 			name:    "service error from stepsRepo.GetByGuideID",
 			guideID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, _ *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -127,7 +127,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByGuideID", mock.Anything, mock.Anything, mock.Anything).
 					Return([]*models.Step{}, assert.AnError).
 					Once()
 			},
@@ -145,12 +145,13 @@ func TestGetAllStepsHandler(t *testing.T) {
 			mockPresignClient := new(tests.MockPresignService)
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockPresignClient)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewGetAllStepsHandler(appConfig, svc)
 
-			path := "/api/v1/steps?guideId=" + tt.guideID
+			path := "/api/v1/steps?guide_id=" + tt.guideID
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 
 			handler.Handle()(req.W, req.Req)
 

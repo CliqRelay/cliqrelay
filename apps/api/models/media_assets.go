@@ -12,6 +12,7 @@ type MediaAsset struct {
 
 	ID          uuid.UUID `json:"id" bun:"column:id,pk" required:"true"`
 	StepID      uuid.UUID `json:"step_id" bun:"column:step_id" required:"true"`
+	WorkspaceID uuid.UUID `json:"workspace_id" bun:"column:workspace_id,type:uuid,notnull" required:"true"`
 	StoragePath string    `json:"storage_path" bun:"column:storage_path" required:"true"`
 	Thumbnail   *string   `json:"thumbnail,omitempty" bun:"column:thumbnail" nullable:"true"`
 	URL         *string   `json:"url,omitempty" bun:"-" nullable:"true"`

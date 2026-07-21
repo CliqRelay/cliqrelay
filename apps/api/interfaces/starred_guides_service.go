@@ -9,7 +9,7 @@ import (
 )
 
 type StarredGuidesService interface {
-	Star(ctx context.Context, actor *authulamodels.Actor, guideID string) error
-	Unstar(ctx context.Context, actor *authulamodels.Actor, guideID string) error
-	GetStarredGuides(ctx context.Context, actor *authulamodels.Actor) ([]*models.Guide, error)
+	Star(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) error
+	Unstar(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) error
+	GetStarredGuides(ctx context.Context, actor *authulamodels.Actor, workspaceID string) ([]*models.Guide, error)
 }

@@ -155,7 +155,7 @@ func TestBunMediaAssetsRepository_GetByID(t *testing.T) {
 			targetID := tt.setup(db)
 			ctx := context.Background()
 
-			found, err := repo.GetByID(ctx, targetID)
+			found, err := repo.GetByID(ctx, "00000000-0000-0000-0000-000000000001", targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -220,7 +220,7 @@ func TestBunMediaAssetsRepository_GetByStepID(t *testing.T) {
 			stepID := tt.setup(db)
 			ctx := context.Background()
 
-			assets, err := repo.GetByStepID(ctx, stepID)
+			assets, err := repo.GetByStepID(ctx, "00000000-0000-0000-0000-000000000001", stepID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -373,7 +373,7 @@ func TestBunMediaAssetsRepository_Delete(t *testing.T) {
 			targetID := tt.setup(db)
 			ctx := context.Background()
 
-			deleted, err := repo.Delete(ctx, targetID)
+			deleted, err := repo.Delete(ctx, "00000000-0000-0000-0000-000000000001", targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -385,7 +385,7 @@ func TestBunMediaAssetsRepository_Delete(t *testing.T) {
 				require.NotNil(t, deleted)
 				assert.Equal(t, targetID, deleted.ID.String())
 
-				found, err := repo.GetByID(ctx, targetID)
+				found, err := repo.GetByID(ctx, "00000000-0000-0000-0000-000000000001", targetID)
 				require.NoError(t, err)
 				assert.Nil(t, found)
 			}

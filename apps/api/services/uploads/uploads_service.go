@@ -41,7 +41,7 @@ func NewUploadsService(
 	}
 }
 
-func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, actor *authulamodels.Actor, guideID, stepID string) (*types.PresignedURLResult, error) {
+func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, actor *authulamodels.Actor, workspaceID, guideID, stepID string) (*types.PresignedURLResult, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -49,7 +49,7 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, actor *aut
 		return nil, constants.ErrInvalidStepID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,11 +57,11 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, actor *aut
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
-	step, err := s.stepsRepo.GetByID(ctx, stepID)
+	step, err := s.stepsRepo.GetByID(ctx, workspaceID, stepID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,12 +85,12 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, actor *aut
 	}, nil
 }
 
-func (s *UploadsService) CompleteUpload(ctx context.Context, actor *authulamodels.Actor, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
+func (s *UploadsService) CompleteUpload(ctx context.Context, actor *authulamodels.Actor, workspaceID, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
 
-	step, err := s.stepsRepo.GetByID(ctx, stepID)
+	step, err := s.stepsRepo.GetByID(ctx, workspaceID, stepID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (s *UploadsService) CompleteUpload(ctx context.Context, actor *authulamodel
 		return nil, constants.ErrStepNotFound
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, step.GuideID.String())
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, step.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (s *UploadsService) CompleteUpload(ctx context.Context, actor *authulamodel
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -115,8 +115,14 @@ func (s *UploadsService) CompleteUpload(ctx context.Context, actor *authulamodel
 		return nil, fmt.Errorf("invalid step ID: %w", err)
 	}
 
+	parsedWSID, err := uuid.Parse(workspaceID)
+	if err != nil {
+		return nil, constants.ErrWorkspaceNotFound
+	}
+
 	mediaAsset, err := s.mediaAssetsRepo.Create(ctx, &types.CreateMediaAssetDTO{
 		StepID:      parsedStepID,
+		WorkspaceID: parsedWSID,
 		StoragePath: storagePath,
 		MimeType:    mimeType,
 		Thumbnail:   thumbnail,

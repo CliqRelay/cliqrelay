@@ -32,6 +32,7 @@ func (r *CreateMediaAssetRequest) Validate() error {
 
 type CreateMediaAssetDTO struct {
 	StepID      uuid.UUID
+	WorkspaceID uuid.UUID
 	StoragePath string
 	MimeType    *string
 	AltText     *string
@@ -75,13 +76,14 @@ func (r *UpdateMediaAssetRequest) Validate() error {
 }
 
 type UpdateMediaAssetDTO struct {
-	ID        uuid.UUID
-	AltText   *string
-	Thumbnail *string
-	MimeType  *string
-	Height    *int
-	Width     *int
-	ByteSize  *int
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+	AltText     *string
+	Thumbnail   *string
+	MimeType    *string
+	Height      *int
+	Width       *int
+	ByteSize    *int
 }
 
 type UpdateMediaAssetResponse struct {

@@ -53,7 +53,7 @@ func TestGetGuideHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 
 			if tt.expectedStatus == http.StatusOK {
-				mockRepo.On("GetByID", mock.Anything, guideID).
+				mockRepo.On("GetByID", mock.Anything, mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -61,9 +61,9 @@ func TestGetGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockAuthz.On("CanReadGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			} else {
-				mockRepo.On("GetByID", mock.Anything, guideID).
+				mockRepo.On("GetByID", mock.Anything, mock.Anything, guideID).
 					Return(nil, assert.AnError).
 					Once()
 			}
@@ -73,6 +73,7 @@ func TestGetGuideHandler(t *testing.T) {
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)
 			req.Req.SetPathValue("id", guideID)
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 
 			handler.Handle()(req.W, req.Req)
 

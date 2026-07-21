@@ -42,7 +42,7 @@ func TestReorderStepsHandler(t *testing.T) {
 				NextStepID:   new(uuid.New().String()),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -50,7 +50,7 @@ func TestReorderStepsHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("Reorder", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
+				mockStepsRepo.On("Reorder", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return([]*models.Step{
 						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "a0", Action: new(models.StepActionClick)},
 						{ID: uuid.New(), GuideID: uuid.New(), SortOrder: "b0", Action: new(models.StepActionInput)},
@@ -84,7 +84,7 @@ func TestReorderStepsHandler(t *testing.T) {
 				TargetStepID: uuid.New().String(),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -99,7 +99,7 @@ func TestReorderStepsHandler(t *testing.T) {
 				PrevStepID:   new(uuid.New().String()),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -107,7 +107,7 @@ func TestReorderStepsHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("Reorder", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("*string"), mock.AnythingOfType("*string")).
+				mockStepsRepo.On("Reorder", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return([]*models.Step{}, assert.AnError).
 					Once()
 			},
@@ -125,7 +125,7 @@ func TestReorderStepsHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewReorderStepsHandler(appConfig, svc)
 
@@ -136,6 +136,7 @@ func TestReorderStepsHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPost, "/api/v1/steps/reorder", tt.payload)
 			}
 
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

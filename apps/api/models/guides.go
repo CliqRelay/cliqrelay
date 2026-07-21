@@ -66,6 +66,7 @@ type Guide struct {
 	bun.BaseModel `bun:"table:guides"`
 
 	ID               uuid.UUID   `json:"id" bun:"column:id,pk" required:"true"`
+	WorkspaceID      uuid.UUID   `json:"workspace_id" bun:"column:workspace_id,type:uuid,notnull" required:"true"`
 	CreatorID        string      `json:"creator_id" bun:"column:creator_id" required:"true"`
 	Title            string      `json:"title" bun:"column:title" required:"true"`
 	Description      *string     `json:"description,omitempty" bun:"column:description" nullable:"true"`
@@ -84,9 +85,10 @@ type Guide struct {
 type StarredGuide struct {
 	bun.BaseModel `bun:"table:starred_guides"`
 
-	UserID    string    `json:"user_id" bun:"column:user_id,pk" required:"true"`
-	GuideID   uuid.UUID `json:"guide_id" bun:"column:guide_id,pk" required:"true"`
-	CreatedAt time.Time `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true"`
+	UserID      string    `json:"user_id" bun:"column:user_id,pk" required:"true"`
+	GuideID     uuid.UUID `json:"guide_id" bun:"column:guide_id,pk" required:"true"`
+	WorkspaceID uuid.UUID `json:"workspace_id" bun:"column:workspace_id,type:uuid,notnull" required:"true"`
+	CreatedAt   time.Time `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true"`
 
 	Guide *Guide `json:"guide,omitempty" bun:"rel:belongs-to,join:guide_id=id"`
 }

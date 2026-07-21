@@ -10,6 +10,6 @@ import (
 
 type StarredGuidesRepository interface {
 	GetAll(ctx context.Context, filter *types.GuideFilter) ([]*types.GuideWithStarred, error)
-	Star(ctx context.Context, userID string, guideID uuid.UUID) error
-	Unstar(ctx context.Context, userID string, guideID uuid.UUID) error
+	Star(ctx context.Context, workspaceID string, userID string, guideID uuid.UUID) error
+	Unstar(ctx context.Context, workspaceID string, userID string, guideID uuid.UUID) error
 }

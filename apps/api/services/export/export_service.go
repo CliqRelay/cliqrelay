@@ -45,7 +45,7 @@ func NewExportService(
 	}
 }
 
-func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, guideID string, format cliqmodels.ExportGuideFormat) (*uuid.UUID, error) {
+func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, workspaceID string, guideID string, format cliqmodels.ExportGuideFormat) (*uuid.UUID, error) {
 	ctx := reqCtx.Request.Context()
 
 	parsedGuideID, err := uuid.Parse(guideID)
@@ -53,7 +53,7 @@ func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, guid
 		return nil, fmt.Errorf("invalid guide ID: %w", err)
 	}
 
-	export, err := s.guideExportsRepo.Create(ctx, parsedGuideID, reqCtx.Actor.ID, format)
+	export, err := s.guideExportsRepo.Create(ctx, workspaceID, parsedGuideID, reqCtx.Actor.ID, format)
 	if err != nil {
 		return nil, fmt.Errorf("create export: %w", err)
 	}
@@ -70,7 +70,7 @@ func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, guid
 	return &export.ID, nil
 }
 
-func (s *ExportService) GetExportStatus(reqCtx *authulamodels.RequestContext, exportID string) (*cliqmodels.GuideExport, error) {
+func (s *ExportService) GetExportStatus(reqCtx *authulamodels.RequestContext, workspaceID string, exportID string) (*cliqmodels.GuideExport, error) {
 	ctx := reqCtx.Request.Context()
 
 	parsedID, err := uuid.Parse(exportID)
@@ -78,7 +78,7 @@ func (s *ExportService) GetExportStatus(reqCtx *authulamodels.RequestContext, ex
 		return nil, fmt.Errorf("invalid export ID: %w", err)
 	}
 
-	export, err := s.guideExportsRepo.GetByID(ctx, parsedID, reqCtx.Actor.ID)
+	export, err := s.guideExportsRepo.GetByID(ctx, workspaceID, parsedID, reqCtx.Actor.ID)
 	if err != nil {
 		return nil, fmt.Errorf("get export: %w", err)
 	}
@@ -114,7 +114,7 @@ func (s *ExportService) GeneratePDF(ctx context.Context, exportID uuid.UUID, gui
 		return fmt.Errorf("update status to processing: %w", err)
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID.String())
+	guide, err := s.guidesRepo.GetByID(ctx, "", guideID.String()) // workspaceID not needed for background export worker
 	if err != nil {
 		s.markFailed(ctx, exportID, fmt.Sprintf("fetch guide: %v", err))
 		return fmt.Errorf("fetch guide: %w", err)
@@ -124,7 +124,7 @@ func (s *ExportService) GeneratePDF(ctx context.Context, exportID uuid.UUID, gui
 		return fmt.Errorf("guide not found")
 	}
 
-	steps, err := s.stepsRepo.GetByGuideID(ctx, guideID.String())
+	steps, err := s.stepsRepo.GetByGuideID(ctx, "", guideID.String()) // workspaceID not needed for background export worker
 	if err != nil {
 		s.markFailed(ctx, exportID, fmt.Sprintf("fetch steps: %v", err))
 		return fmt.Errorf("fetch steps: %w", err)

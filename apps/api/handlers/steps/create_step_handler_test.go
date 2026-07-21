@@ -46,7 +46,7 @@ func TestCreateStepHandler(t *testing.T) {
 				Action:  new(models.StepActionClick),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -54,7 +54,7 @@ func TestCreateStepHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
@@ -76,7 +76,7 @@ func TestCreateStepHandler(t *testing.T) {
 				},
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -84,7 +84,7 @@ func TestCreateStepHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
@@ -109,7 +109,7 @@ func TestCreateStepHandler(t *testing.T) {
 				InsertBeforeStepID: new(uuid.New().String()),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -117,7 +117,7 @@ func TestCreateStepHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
@@ -187,7 +187,7 @@ func TestCreateStepHandler(t *testing.T) {
 				Type:    models.StepTypeInteraction,
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
 			},
@@ -201,7 +201,7 @@ func TestCreateStepHandler(t *testing.T) {
 				Type:    models.StepTypeInteraction,
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -209,7 +209,7 @@ func TestCreateStepHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -227,7 +227,7 @@ func TestCreateStepHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewCreateStepHandler(appConfig, svc)
 
@@ -238,6 +238,7 @@ func TestCreateStepHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPost, "/api/v1/steps", tt.payload)
 			}
 
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

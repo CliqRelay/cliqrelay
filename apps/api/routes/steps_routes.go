@@ -29,46 +29,48 @@ func StepsRoutes(appConfig *config.AppConfig, stepsSvc interfaces.StepsService) 
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
+	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", appConfig.BasePath)
+
 	return []authulamodels.Route{
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/steps", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{guideId}/steps", ws),
 			Middleware: authMiddleware,
 			Handler:    createHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/steps", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{guideId}/steps", ws),
 			Middleware: authMiddleware,
 			Handler:    getAllHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/steps/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{guideId}/steps/{id}", ws),
 			Middleware: authMiddleware,
 			Handler:    getByIDHandler.Handle(),
 		},
 		{
 			Method:     "PATCH",
-			Path:       fmt.Sprintf("%s/steps/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{guideId}/steps/{id}", ws),
 			Middleware: authMiddleware,
 			Handler:    updateHandler.Handle(),
 		},
 		{
 			Method:     "DELETE",
-			Path:       fmt.Sprintf("%s/steps/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{guideId}/steps/{id}", ws),
 			Middleware: authMiddleware,
 			Handler:    deleteHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/steps/{id}/duplicate", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{guideId}/steps/{id}/duplicate", ws),
 			Middleware: authMiddleware,
 			Handler:    duplicateHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/steps/reorder", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{guideId}/steps/reorder", ws),
 			Middleware: authMiddleware,
 			Handler:    reorderHandler.Handle(),
 		},
@@ -76,9 +78,11 @@ func StepsRoutes(appConfig *config.AppConfig, stepsSvc interfaces.StepsService) 
 }
 
 func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
+	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", basePath)
+
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/steps", basePath),
+		fmt.Sprintf("%s/guides/{guideId}/steps", ws),
 		openapi.WithOperationID("createStep"),
 		openapi.WithSummary("Create step"),
 		openapi.WithDescription("Creates a new step within a guide"),
@@ -89,7 +93,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/steps", basePath),
+		fmt.Sprintf("%s/guides/{guideId}/steps", ws),
 		openapi.WithOperationID("getAllStepsByGuideId"),
 		openapi.WithSummary("Get all steps by guide ID"),
 		openapi.WithDescription("Retrieves all steps for a given guide, ordered by sort_order"),
@@ -100,7 +104,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodGet,
-		fmt.Sprintf("%s/steps/{id}", basePath),
+		fmt.Sprintf("%s/guides/{guideId}/steps/{id}", ws),
 		openapi.WithOperationID("getStepById"),
 		openapi.WithSummary("Get step by ID"),
 		openapi.WithDescription("Retrieves a single step by its ID"),
@@ -111,7 +115,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPatch,
-		fmt.Sprintf("%s/steps/{id}", basePath),
+		fmt.Sprintf("%s/guides/{guideId}/steps/{id}", ws),
 		openapi.WithOperationID("updateStep"),
 		openapi.WithSummary("Update step"),
 		openapi.WithDescription("Updates an existing step"),
@@ -123,7 +127,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodDelete,
-		fmt.Sprintf("%s/steps/{id}", basePath),
+		fmt.Sprintf("%s/guides/{guideId}/steps/{id}", ws),
 		openapi.WithOperationID("deleteStep"),
 		openapi.WithSummary("Delete step"),
 		openapi.WithDescription("Hard-deletes a step"),
@@ -134,7 +138,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/steps/{id}/duplicate", basePath),
+		fmt.Sprintf("%s/guides/{guideId}/steps/{id}/duplicate", ws),
 		openapi.WithOperationID("duplicateStep"),
 		openapi.WithSummary("Duplicate step"),
 		openapi.WithDescription("Duplicates a step including its media assets"),
@@ -146,7 +150,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/steps/reorder", basePath),
+		fmt.Sprintf("%s/guides/{guideId}/steps/reorder", ws),
 		openapi.WithOperationID("reorderSteps"),
 		openapi.WithSummary("Reorder steps"),
 		openapi.WithDescription("Reorders steps within a guide"),

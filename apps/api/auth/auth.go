@@ -9,17 +9,20 @@ import (
 	authulaevents "github.com/Authula/authula/events"
 	authulamodels "github.com/Authula/authula/models"
 
+	accesscontrolplugin "github.com/Authula/authula/plugins/access-control"
+	accesscontrolplugintypes "github.com/Authula/authula/plugins/access-control/types"
 	csrfplugin "github.com/Authula/authula/plugins/csrf"
 	emailplugin "github.com/Authula/authula/plugins/email"
 	emailpasswordplugin "github.com/Authula/authula/plugins/email-password"
 	emailpasswordplugintypes "github.com/Authula/authula/plugins/email-password/types"
 	emailplugintypes "github.com/Authula/authula/plugins/email/types"
+	organizationsplugin "github.com/Authula/authula/plugins/organizations"
+	organizationsplugintypes "github.com/Authula/authula/plugins/organizations/types"
 
 	ratelimitplugin "github.com/Authula/authula/plugins/rate-limit"
 	ratelimitplugintypes "github.com/Authula/authula/plugins/rate-limit/types"
 	secondarystorageplugin "github.com/Authula/authula/plugins/secondary-storage"
 	sessionplugin "github.com/Authula/authula/plugins/session"
-
 	"github.com/CliqRelay/cliqrelay/constants"
 )
 
@@ -119,14 +122,12 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 			{
 				Paths: []string{fmt.Sprintf("GET:%s/health", apiBasePath)},
 			},
-			// Guides
+			// Workspaces
 			{
 				Paths: []string{
-					fmt.Sprintf("GET:%s/guides", apiBasePath),
-					fmt.Sprintf("GET:%s/guides/{id}", apiBasePath),
-					fmt.Sprintf("GET:%s/guide-exports/{exportID}", apiBasePath),
-					fmt.Sprintf("DELETE:%s/guides/{id}", apiBasePath),
-					fmt.Sprintf("DELETE:%s/guides/{id}/star", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}", apiBasePath),
+					fmt.Sprintf("DELETE:%s/workspaces/{workspaceId}", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -134,17 +135,42 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 			},
 			{
 				Paths: []string{
-					fmt.Sprintf("POST:%s/guides", apiBasePath),
-					fmt.Sprintf("PATCH:%s/guides/{id}", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/publish", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/unpublish", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/archive", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/unarchive", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/restore", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/permanently-delete", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/star", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/recalculate-duration", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/export", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces", apiBasePath),
+					fmt.Sprintf("PATCH:%s/workspaces/{workspaceId}", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+					csrfplugin.HookIDCSRFProtect.String(),
+				},
+			},
+			// Guides
+			{
+				Paths: []string{
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/guides", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/guides/{id}", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/guides/count", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/guides/starred", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/guide-exports/{exportID}", apiBasePath),
+					fmt.Sprintf("DELETE:%s/workspaces/{workspaceId}/guides/{id}", apiBasePath),
+					fmt.Sprintf("DELETE:%s/workspaces/{workspaceId}/guides/{id}/star", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			{
+				Paths: []string{
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides", apiBasePath),
+					fmt.Sprintf("PATCH:%s/workspaces/{workspaceId}/guides/{id}", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/publish", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/unpublish", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/archive", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/unarchive", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/restore", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/permanently-delete", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/star", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/recalculate-duration", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{id}/export", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -154,9 +180,9 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 			// Steps
 			{
 				Paths: []string{
-					fmt.Sprintf("GET:%s/steps", apiBasePath),
-					fmt.Sprintf("GET:%s/steps/{id}", apiBasePath),
-					fmt.Sprintf("DELETE:%s/steps/{id}", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/guides/{guideId}/steps", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/guides/{guideId}/steps/{id}", apiBasePath),
+					fmt.Sprintf("DELETE:%s/workspaces/{workspaceId}/guides/{guideId}/steps/{id}", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -164,10 +190,10 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 			},
 			{
 				Paths: []string{
-					fmt.Sprintf("POST:%s/steps", apiBasePath),
-					fmt.Sprintf("PATCH:%s/steps/{id}", apiBasePath),
-					fmt.Sprintf("POST:%s/steps/{id}/duplicate", apiBasePath),
-					fmt.Sprintf("POST:%s/steps/reorder", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{guideId}/steps", apiBasePath),
+					fmt.Sprintf("PATCH:%s/workspaces/{workspaceId}/guides/{guideId}/steps/{id}", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{guideId}/steps/{id}/duplicate", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/guides/{guideId}/steps/reorder", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -177,8 +203,29 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 			// Uploads
 			{
 				Paths: []string{
-					fmt.Sprintf("POST:%s/uploads/presign", apiBasePath),
-					fmt.Sprintf("POST:%s/uploads/complete", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/uploads/presign", apiBasePath),
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/uploads/complete", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+					csrfplugin.HookIDCSRFProtect.String(),
+				},
+			},
+			// Media Assets
+			{
+				Paths: []string{
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/media-assets", apiBasePath),
+					fmt.Sprintf("GET:%s/workspaces/{workspaceId}/media-assets/{id}", apiBasePath),
+					fmt.Sprintf("DELETE:%s/workspaces/{workspaceId}/media-assets/{id}", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			{
+				Paths: []string{
+					fmt.Sprintf("POST:%s/workspaces/{workspaceId}/media-assets", apiBasePath),
+					fmt.Sprintf("PATCH:%s/workspaces/{workspaceId}/media-assets/{id}", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -226,6 +273,15 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 		}),
 		sessionplugin.New(sessionplugin.SessionPluginConfig{
 			Enabled: true,
+		}),
+		accesscontrolplugin.New(accesscontrolplugintypes.AccessControlPluginConfig{Enabled: true}),
+		organizationsplugin.New(organizationsplugintypes.OrganizationsPluginConfig{
+			Enabled:                          true,
+			OrganizationsLimit:               new(1),
+			MembersLimit:                     nil,
+			InvitationsLimit:                 new(100),
+			InvitationExpiresIn:              7 * 24 * time.Hour,
+			RequireEmailVerifiedOnInvitation: false,
 		}),
 		ratelimitplugin.New(ratelimitplugintypes.RateLimitPluginConfig{
 			Enabled:     true,

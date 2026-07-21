@@ -21,6 +21,7 @@ import (
 	bunMediaAssets "github.com/CliqRelay/cliqrelay/repositories/media_assets"
 	bunStarredGuides "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
 	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
+	bunWorkspaces "github.com/CliqRelay/cliqrelay/repositories/workspaces"
 	"github.com/CliqRelay/cliqrelay/routes"
 	authservice "github.com/CliqRelay/cliqrelay/services/auth"
 	"github.com/CliqRelay/cliqrelay/services/export"
@@ -32,6 +33,7 @@ import (
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/services/storage"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
+	workspacesservice "github.com/CliqRelay/cliqrelay/services/workspaces"
 	"github.com/CliqRelay/cliqrelay/worker"
 )
 
@@ -75,6 +77,7 @@ func main() {
 		log.Fatal("Error initializing migrations: ", err)
 	}
 
+	bunWorkspacesRepo := bunWorkspaces.NewBunWorkspacesRepository(appConfig.DB)
 	bunGuidesRepo := bunGuides.NewBunGuidesRepository(appConfig.DB)
 	bunStarredGuidesRepo := bunStarredGuides.NewBunStarredGuidesRepository(appConfig.DB)
 	bunStepsRepo := bunSteps.NewBunStepsRepository(appConfig.DB)
@@ -85,6 +88,7 @@ func main() {
 	storageService := storage.NewS3StorageService(appConfig.S3Client)
 	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
 
+	workspaceService := workspacesservice.NewWorkspacesService(bunWorkspacesRepo)
 	authorizationService := authservice.NewDefaultAuthorizationService()
 
 	guideHooks := (*interfaces.GuideHooks)(nil)
@@ -100,6 +104,7 @@ func main() {
 	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, appConfig.S3Bucket)
 
 	svcs := &interfaces.DomainServices{
+		WorkspaceService:     workspaceService,
 		GuidesService:        guidesService,
 		StepsService:         stepsService,
 		StarredGuidesService: starredService,

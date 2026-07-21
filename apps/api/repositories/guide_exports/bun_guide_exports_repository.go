@@ -19,13 +19,14 @@ func NewBunGuideExportsRepository(db bun.IDB) *BunGuideExportsRepository {
 	return &BunGuideExportsRepository{db: db}
 }
 
-func (r *BunGuideExportsRepository) Create(ctx context.Context, guideID uuid.UUID, userID string, format models.ExportGuideFormat) (*models.GuideExport, error) {
+func (r *BunGuideExportsRepository) Create(ctx context.Context, workspaceID string, guideID uuid.UUID, userID string, format models.ExportGuideFormat) (*models.GuideExport, error) {
 	export := &models.GuideExport{
-		ID:      uuid.New(),
-		GuideID: guideID,
-		UserID:  userID,
-		Format:  format,
-		Status:  models.ExportStatusPending,
+		ID:          uuid.New(),
+		WorkspaceID: uuid.MustParse(workspaceID),
+		GuideID:     guideID,
+		UserID:      userID,
+		Format:      format,
+		Status:      models.ExportStatusPending,
 	}
 
 	_, err := r.db.NewInsert().
@@ -40,12 +41,13 @@ func (r *BunGuideExportsRepository) Create(ctx context.Context, guideID uuid.UUI
 	return export, nil
 }
 
-func (r *BunGuideExportsRepository) GetByID(ctx context.Context, id uuid.UUID, userID string) (*models.GuideExport, error) {
+func (r *BunGuideExportsRepository) GetByID(ctx context.Context, workspaceID string, id uuid.UUID, userID string) (*models.GuideExport, error) {
 	export := &models.GuideExport{}
 
 	err := r.db.NewSelect().
 		Model(export).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("user_id = ?", userID).
 		Scan(ctx)
 	if err != nil {

@@ -30,7 +30,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 		{
 			name: "success",
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
-				mockRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*types.GuideWithStarred{
 						{Guide: models.Guide{ID: uuid.New(), CreatorID: "test-user-123", Title: "Starred Guide 1", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
 						{Guide: models.Guide{ID: uuid.New(), CreatorID: "test-user-123", Title: "Starred Guide 2", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
@@ -43,7 +43,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 		{
 			name: "empty list",
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
-				mockRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*types.GuideWithStarred{}, nil).
 					Once()
 			},
@@ -53,7 +53,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 		{
 			name: "service error",
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
-				mockRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*types.GuideWithStarred{}, assert.AnError).
 					Once()
 			},
@@ -69,11 +69,12 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			tt.setup(mockRepo)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("GuideListFilter", mock.Anything, mock.AnythingOfType("*models.Actor")).Return(&types.GuideFilter{}, nil)
+			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
 			svc := starredguidesservice.NewStarredGuidesService(mockRepo, mockGuidesRepo, mockAuthz)
 			handler := handlersguides.NewGetStarredGuidesHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/starred", nil)
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 
 			handler.Handle()(req.W, req.Req)
 

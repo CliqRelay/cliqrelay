@@ -9,6 +9,6 @@ import (
 )
 
 type UploadsService interface {
-	GeneratePresignedPutURL(ctx context.Context, actor *authulamodels.Actor, guideID, stepID string) (*types.PresignedURLResult, error)
-	CompleteUpload(ctx context.Context, actor *authulamodels.Actor, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error)
+	GeneratePresignedPutURL(ctx context.Context, actor *authulamodels.Actor, workspaceID, guideID, stepID string) (*types.PresignedURLResult, error)
+	CompleteUpload(ctx context.Context, actor *authulamodels.Actor, workspaceID, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error)
 }

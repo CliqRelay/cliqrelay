@@ -26,7 +26,8 @@ func (h *UpdateMediaAssetHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		id := r.PathValue("id")
+		workspaceID := r.PathValue("workspaceId")
+		mediaAssetID := r.PathValue("id")
 
 		var request types.UpdateMediaAssetRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
@@ -40,7 +41,7 @@ func (h *UpdateMediaAssetHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		mediaAsset, err := h.mediaAssetsService.Update(ctx, actor, id, &request)
+		mediaAsset, err := h.mediaAssetsService.Update(ctx, actor, workspaceID, mediaAssetID, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

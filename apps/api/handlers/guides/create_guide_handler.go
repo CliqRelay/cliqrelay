@@ -26,6 +26,8 @@ func (h *CreateGuideHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
+
 		var request types.CreateGuideRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
 			reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{"message": err.Error()})
@@ -38,7 +40,7 @@ func (h *CreateGuideHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		guide, err := h.guidesService.Create(ctx, actor, &request)
+		guide, err := h.guidesService.Create(ctx, actor, workspaceID, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

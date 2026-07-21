@@ -40,21 +40,21 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				stepID := uuid.New()
 				guideID := uuid.New()
-				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      stepID,
 						StoragePath: "screenshots/test.png",
 					}, nil).
 					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
 						GuideID:   guideID,
 						SortOrder: "a0",
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -62,7 +62,7 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateMediaAssetDTO")).
+				mockMediaAssetsRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      uuid.New(),
@@ -92,21 +92,21 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				stepID := uuid.New()
 				guideID := uuid.New()
-				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      stepID,
 						StoragePath: "screenshots/test.png",
 					}, nil).
 					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
 						GuideID:   guideID,
 						SortOrder: "a0",
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -114,7 +114,7 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateMediaAssetDTO")).
+				mockMediaAssetsRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -135,7 +135,7 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
 			handler := handlersmediaassets.NewUpdateMediaAssetHandler(appConfig, svc)
 
@@ -146,6 +146,7 @@ func TestUpdateMediaAssetHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPatch, path, tt.payload)
 			}
 			req.Req.SetPathValue("id", assetID)
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 
 			handler.Handle()(req.W, req.Req)
 

@@ -35,7 +35,7 @@ func TestGetStepByIDHandler(t *testing.T) {
 			stepID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				guideID := uuid.New()
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   guideID,
@@ -43,7 +43,7 @@ func TestGetStepByIDHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -59,7 +59,7 @@ func TestGetStepByIDHandler(t *testing.T) {
 			name:   "service error",
 			stepID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -80,7 +80,7 @@ func TestGetStepByIDHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewGetStepByIDHandler(appConfig, svc)
 

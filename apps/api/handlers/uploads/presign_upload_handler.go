@@ -27,6 +27,8 @@ func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
+
 		var request types.PresignUploadRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
 			reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{"message": err.Error()})
@@ -39,7 +41,7 @@ func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.uploadsService.GeneratePresignedPutURL(ctx, actor, request.GuideID, request.StepID)
+		result, err := h.uploadsService.GeneratePresignedPutURL(ctx, actor, workspaceID, request.GuideID, request.StepID)
 		if err != nil {
 			status := http.StatusInternalServerError
 			switch err {

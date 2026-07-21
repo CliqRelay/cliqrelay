@@ -1,7 +1,6 @@
 package uploads
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/Authula/authula/models"
@@ -28,6 +27,8 @@ func (h *CompleteUploadHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
+
 		var request types.CompleteUploadRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
 			reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{"message": err.Error()})
@@ -40,13 +41,13 @@ func (h *CompleteUploadHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.uploadsService.CompleteUpload(ctx, actor, request.StepID, request.StoragePath, request.FileSize, request.MimeType, request.Thumbnail, request.Width, request.Height)
+		result, err := h.uploadsService.CompleteUpload(ctx, actor, workspaceID, request.StepID, request.StoragePath, request.FileSize, request.MimeType, request.Thumbnail, request.Width, request.Height)
 		if err != nil {
 			status := http.StatusInternalServerError
-			switch {
-			case errors.Is(err, constants.ErrStepNotFound), errors.Is(err, constants.ErrGuideNotFound):
+			switch err {
+			case constants.ErrGuideNotFound, constants.ErrStepNotFound, constants.ErrStepNotInGuide:
 				status = http.StatusNotFound
-			case errors.Is(err, constants.ErrInvalidUserID), errors.Is(err, constants.ErrInvalidStepID):
+			case constants.ErrInvalidUserID, constants.ErrInvalidGuideID, constants.ErrInvalidStepID:
 				status = http.StatusBadRequest
 			}
 			reqCtx.SetJSONResponse(status, map[string]any{"message": err.Error()})

@@ -34,21 +34,21 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				stepID := uuid.New()
 				guideID := uuid.New()
-				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      stepID,
 						StoragePath: "uploads/test.png",
 					}, nil).
 					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
 						GuideID:   guideID,
 						SortOrder: "a0",
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -64,7 +64,7 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 			name:    "service error",
 			assetID: uuid.New().String(),
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -85,7 +85,7 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
 			handler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, svc)
 

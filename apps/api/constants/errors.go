@@ -23,4 +23,7 @@ var (
 	ErrStepNotInGuide     = errors.New("step does not belong to the specified guide")
 
 	ErrMediaAssetCopyFailed = errors.New("failed to copy media asset")
+
+	ErrWorkspaceNotFound      = errors.New("workspace not found")
+	ErrWorkspaceAccessDenied  = errors.New("workspace access denied")
 )

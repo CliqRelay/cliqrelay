@@ -26,6 +26,8 @@ func (h *ReorderStepsHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
+
 		var request types.ReorderStepsRequest
 		if err := utils.ParseJSON(r, &request); err != nil {
 			reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{"message": err.Error()})
@@ -38,7 +40,7 @@ func (h *ReorderStepsHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		steps, err := h.stepsService.Reorder(ctx, actor, request.GuideID.String(), request.TargetStepID, request.PrevStepID, request.NextStepID)
+		steps, err := h.stepsService.Reorder(ctx, actor, workspaceID, request.GuideID.String(), request.TargetStepID, request.PrevStepID, request.NextStepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

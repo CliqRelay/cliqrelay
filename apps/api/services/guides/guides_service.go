@@ -48,8 +48,8 @@ func NewGuidesService(
 	}
 }
 
-func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateGuideRequest) (*models.Guide, error) {
-	if err := s.authzService.CanCreateGuide(ctx, actor); err != nil {
+func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, workspaceID string, req *types.CreateGuideRequest) (*models.Guide, error) {
+	if err := s.authzService.CanCreateGuide(ctx, actor, workspaceID); err != nil {
 		return nil, err
 	}
 
@@ -59,12 +59,18 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 	}
 
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, actor, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, actor, workspaceID, req); err != nil {
 			return nil, err
 		}
 	}
 
+	parsedWSID, err := uuid.Parse(workspaceID)
+	if err != nil {
+		return nil, constants.ErrWorkspaceNotFound
+	}
+
 	guideCreated, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
+		WorkspaceID: parsedWSID,
 		CreatorID:   userID,
 		Title:       req.Title,
 		Description: req.Description,
@@ -82,13 +88,19 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 	return guideCreated, nil
 }
 
-func (s *GuidesService) GetAll(ctx context.Context, actor *authulamodels.Actor, status *string) ([]*models.Guide, error) {
-	filter, err := s.authzService.GuideListFilter(ctx, actor)
+func (s *GuidesService) GetAll(ctx context.Context, actor *authulamodels.Actor, workspaceID string, status *string) ([]*models.Guide, error) {
+	filter, err := s.authzService.GuideListFilter(ctx, actor, workspaceID)
 	if err != nil {
 		return nil, err
 	}
 
 	filter.ViewerUserID = &actor.ID
+
+	parsedWSID, err := uuid.Parse(workspaceID)
+	if err != nil {
+		return nil, constants.ErrWorkspaceNotFound
+	}
+	filter.WorkspaceID = &parsedWSID
 
 	if status != nil {
 		if !slices.Contains([]string{
@@ -106,7 +118,7 @@ func (s *GuidesService) GetAll(ctx context.Context, actor *authulamodels.Actor, 
 	return s.guidesRepo.GetAll(ctx, filter)
 }
 
-func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -118,13 +130,13 @@ func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor,
 				return nil, constants.ErrGuideNotFound
 			}
 
-			if err := s.authzService.CanReadGuide(ctx, actor, cached); err == nil {
+			if err := s.authzService.CanReadGuide(ctx, actor, workspaceID, cached); err == nil {
 				return cached, nil
 			}
 		}
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +145,7 @@ func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanReadGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -144,7 +156,7 @@ func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor,
 	return guide, nil
 }
 
-func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
+func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -154,7 +166,7 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	existing, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +174,7 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, existing); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, existing); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -172,8 +184,14 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 		}
 	}
 
+	parsedWSID, err := uuid.Parse(workspaceID)
+	if err != nil {
+		return nil, constants.ErrWorkspaceNotFound
+	}
+
 	updated, err := s.guidesRepo.Update(ctx, &types.UpdateGuideDTO{
 		ID:          parsedID,
+		WorkspaceID: parsedWSID,
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -194,12 +212,12 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 	return updated, nil
 }
 
-func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	existing, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +225,7 @@ func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanDeleteGuide(ctx, actor, existing); err != nil {
+	if err := s.authzService.CanDeleteGuide(ctx, actor, workspaceID, existing); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -217,7 +235,7 @@ func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, 
 		}
 	}
 
-	deleted, err := s.guidesRepo.Delete(ctx, guideID)
+	deleted, err := s.guidesRepo.Delete(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -239,26 +257,26 @@ func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, 
 	return deleted, nil
 }
 
-func (s *GuidesService) recalculateDuration(ctx context.Context, guideID string) error {
+func (s *GuidesService) recalculateDuration(ctx context.Context, workspaceID string, guideID string) error {
 	if s.stepsRepo != nil {
-		steps, err := s.stepsRepo.GetByGuideID(ctx, guideID)
+		steps, err := s.stepsRepo.GetByGuideID(ctx, workspaceID, guideID)
 		if err != nil {
 			return err
 		}
 
 		duration := models.CalculateSyntheticDuration(steps)
-		_, err = s.guidesRepo.UpdateDuration(ctx, guideID, duration)
+		_, err = s.guidesRepo.UpdateDuration(ctx, workspaceID, guideID, duration)
 		return err
 	}
 	return nil
 }
 
-func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +284,7 @@ func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -280,11 +298,11 @@ func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor,
 		}
 	}
 
-	if err := s.recalculateDuration(ctx, guideID); err != nil {
+	if err := s.recalculateDuration(ctx, workspaceID, guideID); err != nil {
 		return nil, err
 	}
 
-	published, err := s.guidesRepo.Publish(ctx, guideID)
+	published, err := s.guidesRepo.Publish(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -306,12 +324,12 @@ func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor,
 	return published, nil
 }
 
-func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -319,7 +337,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Acto
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -333,7 +351,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Acto
 		}
 	}
 
-	unpublished, err := s.guidesRepo.Unpublish(ctx, guideID)
+	unpublished, err := s.guidesRepo.Unpublish(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -355,12 +373,12 @@ func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Acto
 	return unpublished, nil
 }
 
-func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +386,7 @@ func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -382,7 +400,7 @@ func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor,
 		}
 	}
 
-	archived, err := s.guidesRepo.Archive(ctx, guideID)
+	archived, err := s.guidesRepo.Archive(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -404,12 +422,12 @@ func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor,
 	return archived, nil
 }
 
-func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +435,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -431,7 +449,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 		}
 	}
 
-	unarchived, err := s.guidesRepo.Unarchive(ctx, guideID)
+	unarchived, err := s.guidesRepo.Unarchive(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -453,12 +471,12 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 	return unarchived, nil
 }
 
-func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	existing, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -466,11 +484,11 @@ func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, existing); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, existing); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
-	restored, err := s.guidesRepo.Restore(ctx, guideID)
+	restored, err := s.guidesRepo.Restore(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -486,11 +504,17 @@ func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor,
 	return restored, nil
 }
 
-func (s *GuidesService) GetCount(ctx context.Context, actor *authulamodels.Actor) (int, error) {
-	filter, err := s.authzService.GuideListFilter(ctx, actor)
+func (s *GuidesService) GetCount(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (int, error) {
+	filter, err := s.authzService.GuideListFilter(ctx, actor, workspaceID)
 	if err != nil {
 		return 0, err
 	}
+
+	parsedWSID, err := uuid.Parse(workspaceID)
+	if err != nil {
+		return 0, constants.ErrWorkspaceNotFound
+	}
+	filter.WorkspaceID = &parsedWSID
 
 	count, err := s.guidesRepo.GetCount(ctx, filter)
 	if err != nil {
@@ -500,12 +524,12 @@ func (s *GuidesService) GetCount(ctx context.Context, actor *authulamodels.Actor
 	return count, nil
 }
 
-func (s *GuidesService) PermanentlyDelete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) PermanentlyDelete(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	existing, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -513,11 +537,11 @@ func (s *GuidesService) PermanentlyDelete(ctx context.Context, actor *authulamod
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanDeleteGuide(ctx, actor, existing); err != nil {
+	if err := s.authzService.CanDeleteGuide(ctx, actor, workspaceID, existing); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
-	deleted, err := s.guidesRepo.PermanentlyDelete(ctx, guideID)
+	deleted, err := s.guidesRepo.PermanentlyDelete(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -543,12 +567,12 @@ func (s *GuidesService) publishPurgeEvent(ctx context.Context, guideID string) e
 	})
 }
 
-func (s *GuidesService) RecalculateDuration(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) RecalculateDuration(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -556,15 +580,15 @@ func (s *GuidesService) RecalculateDuration(ctx context.Context, actor *authulam
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.recalculateDuration(ctx, guideID); err != nil {
+	if err := s.recalculateDuration(ctx, workspaceID, guideID); err != nil {
 		return nil, err
 	}
 
-	updated, err := s.guidesRepo.GetByID(ctx, guideID)
+	updated, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return nil, err
 	}

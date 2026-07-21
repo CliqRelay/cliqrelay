@@ -25,12 +25,14 @@ func (h *GetAllGuidesHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
+
 		var status *string
 		if s := r.URL.Query().Get("status"); s != "" {
 			status = &s
 		}
 
-		guides, err := h.guidesService.GetAll(ctx, actor, status)
+		guides, err := h.guidesService.GetAll(ctx, actor, workspaceID, status)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

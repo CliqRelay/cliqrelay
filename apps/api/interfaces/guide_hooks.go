@@ -10,7 +10,7 @@ import (
 )
 
 type GuideHooks struct {
-	BeforeCreate    func(ctx context.Context, actor *authulamodels.Actor, req *types.CreateGuideRequest) error
+	BeforeCreate    func(ctx context.Context, actor *authulamodels.Actor, workspaceID string, req *types.CreateGuideRequest) error
 	AfterCreate     func(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error
 	BeforeUpdate    func(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error
 	AfterUpdate     func(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error

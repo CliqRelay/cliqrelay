@@ -25,9 +25,10 @@ func (h *ArchiveGuideHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
 		guideID := r.PathValue("id")
 
-		guide, err := h.guidesService.Archive(ctx, actor, guideID)
+		guide, err := h.guidesService.Archive(ctx, actor, workspaceID, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

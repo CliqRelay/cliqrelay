@@ -3,8 +3,9 @@ package types
 import "github.com/CliqRelay/cliqrelay/validator"
 
 type PresignUploadRequest struct {
-	GuideID string `json:"guide_id" validate:"required,uuid"`
-	StepID  string `json:"step_id"  validate:"required,uuid"`
+	WorkspaceID string `json:"workspace_id" validate:"required,uuid"`
+	GuideID     string `json:"guide_id" validate:"required,uuid"`
+	StepID      string `json:"step_id"  validate:"required,uuid"`
 }
 
 func (r *PresignUploadRequest) Validate() error {

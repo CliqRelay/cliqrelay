@@ -30,7 +30,7 @@ func NewStarredGuidesService(
 	}
 }
 
-func (s *StarredGuidesService) Star(ctx context.Context, actor *authulamodels.Actor, guideID string) error {
+func (s *StarredGuidesService) Star(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) error {
 	if actor == nil {
 		return constants.ErrForbidden
 	}
@@ -43,7 +43,7 @@ func (s *StarredGuidesService) Star(ctx context.Context, actor *authulamodels.Ac
 		return constants.ErrInvalidGuideID
 	}
 
-	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
 	if err != nil {
 		return err
 	}
@@ -51,14 +51,14 @@ func (s *StarredGuidesService) Star(ctx context.Context, actor *authulamodels.Ac
 		return constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanReadGuide(ctx, actor, guide); err != nil {
+	if err := s.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
 		return constants.ErrGuideNotFound
 	}
 
-	return s.starredGuidesRepo.Star(ctx, actor.ID, parsedID)
+	return s.starredGuidesRepo.Star(ctx, workspaceID, actor.ID, parsedID)
 }
 
-func (s *StarredGuidesService) Unstar(ctx context.Context, actor *authulamodels.Actor, guideID string) error {
+func (s *StarredGuidesService) Unstar(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guideID string) error {
 	if actor == nil {
 		return constants.ErrForbidden
 	}
@@ -70,20 +70,39 @@ func (s *StarredGuidesService) Unstar(ctx context.Context, actor *authulamodels.
 	if err != nil {
 		return constants.ErrInvalidGuideID
 	}
-	return s.starredGuidesRepo.Unstar(ctx, actor.ID, parsedID)
+
+	guide, err := s.guidesRepo.GetByID(ctx, workspaceID, guideID)
+	if err != nil {
+		return err
+	}
+	if guide == nil {
+		return constants.ErrGuideNotFound
+	}
+
+	if err := s.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
+		return constants.ErrGuideNotFound
+	}
+
+	return s.starredGuidesRepo.Unstar(ctx, workspaceID, actor.ID, parsedID)
 }
 
-func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, actor *authulamodels.Actor) ([]*models.Guide, error) {
+func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, actor *authulamodels.Actor, workspaceID string) ([]*models.Guide, error) {
 	if actor == nil {
 		return nil, constants.ErrForbidden
 	}
 
-	filter, err := s.authzService.GuideListFilter(ctx, actor)
+	filter, err := s.authzService.GuideListFilter(ctx, actor, workspaceID)
 	if err != nil {
 		return nil, err
 	}
 
 	filter.ViewerUserID = &actor.ID
+
+	parsedWSID, err := uuid.Parse(workspaceID)
+	if err != nil {
+		return nil, constants.ErrWorkspaceNotFound
+	}
+	filter.WorkspaceID = &parsedWSID
 
 	rows, err := s.starredGuidesRepo.GetAll(ctx, filter)
 	if err != nil {

@@ -34,7 +34,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			name: "success",
 			path: "/api/v1/guides",
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
 						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Guide 1", Status: models.StatusDraft},
 						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Guide 2", Status: models.StatusDraft},
@@ -48,7 +48,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			name: "empty list",
 			path: "/api/v1/guides",
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{}, nil).
 					Once()
 			},
@@ -59,7 +59,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			name: "service error",
 			path: "/api/v1/guides",
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{}, assert.AnError).
 					Once()
 			},
@@ -70,7 +70,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			name: "status archived",
 			path: "/api/v1/guides?status=archived",
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
 						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Archived Guide", Status: models.StatusArchived},
 					}, nil).
@@ -83,7 +83,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			name: "status deleted",
 			path: "/api/v1/guides?status=deleted",
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
 						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Deleted Guide", Status: models.StatusDeleted},
 					}, nil).
@@ -110,12 +110,13 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			mockStarredRepo := new(tests.MockStarredGuidesRepository)
 			tt.setup(mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("GuideListFilter", mock.Anything, mock.AnythingOfType("*models.Actor")).Return(&types.GuideFilter{}, nil)
+			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
 			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
 			handler := handlersguides.NewGetAllGuidesHandler(appConfig, svc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, tt.path, nil)
 
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

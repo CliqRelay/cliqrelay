@@ -27,8 +27,8 @@ func (m *MockGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFi
 	return args.Get(0).([]*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) GetByID(ctx context.Context, id string) (*models.Guide, error) {
-	args := m.Called(ctx, id)
+func (m *MockGuidesRepository) GetByID(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -43,56 +43,56 @@ func (m *MockGuidesRepository) Update(ctx context.Context, data *types.UpdateGui
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Delete(ctx context.Context, id string) (*models.Guide, error) {
-	args := m.Called(ctx, id)
+func (m *MockGuidesRepository) Delete(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Publish(ctx context.Context, id string) (*models.Guide, error) {
-	args := m.Called(ctx, id)
+func (m *MockGuidesRepository) Publish(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Unpublish(ctx context.Context, id string) (*models.Guide, error) {
-	args := m.Called(ctx, id)
+func (m *MockGuidesRepository) Unpublish(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Archive(ctx context.Context, id string) (*models.Guide, error) {
-	args := m.Called(ctx, id)
+func (m *MockGuidesRepository) Archive(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Unarchive(ctx context.Context, id string) (*models.Guide, error) {
-	args := m.Called(ctx, id)
+func (m *MockGuidesRepository) Unarchive(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) Restore(ctx context.Context, id string) (*models.Guide, error) {
-	args := m.Called(ctx, id)
+func (m *MockGuidesRepository) Restore(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) PermanentlyDelete(ctx context.Context, id string) (*models.Guide, error) {
-	args := m.Called(ctx, id)
+func (m *MockGuidesRepository) PermanentlyDelete(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -104,8 +104,8 @@ func (m *MockGuidesRepository) GetCount(ctx context.Context, filter *types.Guide
 	return args.Int(0), args.Error(1)
 }
 
-func (m *MockGuidesRepository) UpdateDuration(ctx context.Context, id string, durationSeconds int) (*models.Guide, error) {
-	args := m.Called(ctx, id, durationSeconds)
+func (m *MockGuidesRepository) UpdateDuration(ctx context.Context, workspaceID string, id string, durationSeconds int) (*models.Guide, error) {
+	args := m.Called(ctx, workspaceID, id, durationSeconds)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

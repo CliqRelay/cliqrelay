@@ -25,9 +25,10 @@ func (h *GetStepByIDHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
 		stepID := r.PathValue("id")
 
-		step, err := h.stepsService.GetByID(ctx, actor, stepID)
+		step, err := h.stepsService.GetByID(ctx, actor, workspaceID, stepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

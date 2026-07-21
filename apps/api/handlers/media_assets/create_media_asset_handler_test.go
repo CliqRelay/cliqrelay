@@ -37,14 +37,14 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				StoragePath: "uploads/test.png",
 			},
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
 						SortOrder: "a0",
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -52,7 +52,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateMediaAssetDTO")).
+				mockMediaAssetsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      uuid.New(),
@@ -78,14 +78,14 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				StoragePath: "uploads/test.png",
 			},
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
 						SortOrder: "a0",
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -93,7 +93,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateMediaAssetDTO")).
+				mockMediaAssetsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -111,7 +111,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
 			handler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, svc)
 
@@ -122,6 +122,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPost, "/api/v1/media-assets", tt.payload)
 			}
 
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

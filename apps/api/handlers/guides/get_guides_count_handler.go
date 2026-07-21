@@ -25,7 +25,9 @@ func (h *GetGuidesCountHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		count, err := h.guidesService.GetCount(ctx, actor)
+		workspaceID := r.PathValue("workspaceId")
+
+		count, err := h.guidesService.GetCount(ctx, actor, workspaceID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

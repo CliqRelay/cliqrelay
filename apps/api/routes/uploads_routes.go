@@ -24,16 +24,18 @@ func UploadRoutes(appConfig *config.AppConfig, uploadSvc interfaces.UploadsServi
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
+	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", appConfig.BasePath)
+
 	return []authulamodels.Route{
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/uploads/presign", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/uploads/presign", ws),
 			Middleware: authMiddleware,
 			Handler:    presignUploadHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/uploads/complete", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/uploads/complete", ws),
 			Middleware: authMiddleware,
 			Handler:    completeUploadHandler.Handle(),
 		},
@@ -41,9 +43,11 @@ func UploadRoutes(appConfig *config.AppConfig, uploadSvc interfaces.UploadsServi
 }
 
 func RegisterUploadsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
+	ws := fmt.Sprintf("%s/workspaces/{workspaceId}", basePath)
+
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/uploads/presign", basePath),
+		fmt.Sprintf("%s/uploads/presign", ws),
 		openapi.WithOperationID("presignUpload"),
 		openapi.WithSummary("Presign upload URL"),
 		openapi.WithDescription("Generates a presigned S3 URL for uploading a screenshot"),
@@ -53,7 +57,7 @@ func RegisterUploadsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 	)
 	svc.AddOperation(
 		http.MethodPost,
-		fmt.Sprintf("%s/uploads/complete", basePath),
+		fmt.Sprintf("%s/uploads/complete", ws),
 		openapi.WithOperationID("completeUpload"),
 		openapi.WithSummary("Complete upload"),
 		openapi.WithDescription("Creates a media asset record after the upload finishes"),

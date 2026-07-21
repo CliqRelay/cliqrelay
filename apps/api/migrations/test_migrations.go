@@ -19,7 +19,15 @@ func RunTestMigrations(ctx context.Context, db *bun.DB) error {
 	if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		return authulamigrations.ExecStatements(
 			ctx, tx,
+			`CREATE EXTENSION IF NOT EXISTS pgcrypto`,
+			`CREATE OR REPLACE FUNCTION set_updated_at_fn() RETURNS TRIGGER AS $$
+				BEGIN
+					NEW.updated_at = NOW();
+					RETURN NEW;
+				END;
+				$$ LANGUAGE plpgsql`,
 			`CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY)`,
+			`CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY)`,
 		)
 	}); err != nil {
 		return err
@@ -34,6 +42,7 @@ func RunTestMigrations(ctx context.Context, db *bun.DB) error {
 		{
 			PluginID: PluginCliqRelay,
 			Migrations: []authulamigrations.Migration{
+				workspacesInitial(),
 				guidesPostgresInitial(),
 				stepsPostgresInitial(),
 				mediaAssetsPostgresInitial(),

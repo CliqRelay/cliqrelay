@@ -57,6 +57,7 @@ func (r *CreateStepRequest) Validate() error {
 }
 
 type CreateStepDTO struct {
+	WorkspaceID        uuid.UUID                 `json:"workspace_id" validate:"required"`
 	GuideID            uuid.UUID                 `json:"guide_id" validate:"required"`
 	Type               models.StepType           `json:"type" validate:"required,oneof=interaction canvas"`
 	Action             *models.StepAction        `json:"action,omitempty"`
@@ -130,6 +131,7 @@ func (r *UpdateStepRequest) Validate() error {
 
 type UpdateStepDTO struct {
 	ID            uuid.UUID                 `json:"id" validate:"required"`
+	WorkspaceID   uuid.UUID                 `json:"workspace_id" validate:"required"`
 	Type          *models.StepType          `json:"type,omitempty"`
 	Action        *models.StepAction        `json:"action,omitempty" nullable:"true"`
 	ActionText    *string                   `json:"action_text,omitempty" nullable:"true"`

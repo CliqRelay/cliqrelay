@@ -24,14 +24,22 @@ func seedGuide(t *testing.T, db bun.IDB, userID, title string) *models.Guide {
 		require.NoError(t, err)
 	}
 
+	orgID := uuid.New().String()
+	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
+	require.NoError(t, err)
+	wsID := uuid.New()
+	_, err = db.NewRaw("INSERT INTO workspaces (id, organization_id, name, type) VALUES (?, ?, ?, ?)", wsID, orgID, "test-workspace", "PERSONAL").Exec(context.Background())
+	require.NoError(t, err)
+
 	guide := &models.Guide{
-		ID:        uuid.New(),
-		CreatorID: userID,
-		Title:     title,
-		Status:    models.StatusDraft,
+		ID:          uuid.New(),
+		WorkspaceID: wsID,
+		CreatorID:   userID,
+		Title:       title,
+		Status:      models.StatusDraft,
 	}
 
-	_, err := db.NewInsert().Model(guide).Exec(context.Background())
+	_, err = db.NewInsert().Model(guide).Exec(context.Background())
 	require.NoError(t, err)
 
 	return guide
@@ -121,7 +129,9 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 			_, userErr := db.NewRaw("INSERT INTO users (id) VALUES (?)", tt.userID).Exec(ctx)
 			require.NoError(t, userErr)
 
+			wsID := createTestOrgWorkspace(ctx, db, t)
 			guide, err := repo.Create(ctx, &types.CreateGuideDTO{
+				WorkspaceID: wsID,
 				CreatorID:   tt.userID,
 				Title:       tt.title,
 				Description: tt.desc,
@@ -314,39 +324,39 @@ func TestBunGuidesRepository_GetByID(t *testing.T) {
 
 	cases := []struct {
 		name    string
-		setup   func(*bun.DB) (userID string, targetID string)
+		setup   func(*bun.DB) (userID string, targetID string, wsID string)
 		wantErr bool
 		wantNil bool
 	}{
 		{
 			name: "returns guide by ID",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Find Me")
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: false,
 		},
 		{
 			name: "returns nil for non-existent guide",
-			setup: func(db *bun.DB) (string, string) {
-				return uuid.New().String(), uuid.New().String()
+			setup: func(db *bun.DB) (string, string, string) {
+				return uuid.New().String(), uuid.New().String(), uuid.New().String()
 			},
 			wantNil: true,
 		},
 		{
 			name: "returns guide even for different user",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Other Guide")
-				return uuid.New().String(), guide.ID.String()
+				return uuid.New().String(), guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: false,
 		},
 		{
 			name: "returns deleted guide (service layer filters status)",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "To Delete")
 				softDeleteGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: false,
 		},
@@ -358,10 +368,10 @@ func TestBunGuidesRepository_GetByID(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID := tt.setup(db)
+			_, targetID, wsID := tt.setup(db)
 			ctx := context.Background()
 
-			found, err := repo.GetByID(ctx, targetID)
+			found, err := repo.GetByID(ctx, wsID, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -398,6 +408,7 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
 					ID:    guide.ID,
+					WorkspaceID: guide.WorkspaceID,
 					Title: new("Updated Title"),
 				}
 			},
@@ -414,6 +425,7 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
 					ID:          guide.ID,
+					WorkspaceID: guide.WorkspaceID,
 					Description: new("Updated Description"),
 				}
 			},
@@ -431,6 +443,7 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
 					ID:          guide.ID,
+					WorkspaceID: guide.WorkspaceID,
 					Title:       new("New Title"),
 					Description: new("New Desc"),
 				}
@@ -449,6 +462,7 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
 					ID:    uuid.New(),
+					WorkspaceID: uuid.Nil,
 					Title: new("Nope"),
 				}
 			},
@@ -462,8 +476,9 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			},
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
-					ID:    guide.ID,
-					Title: new("Updated"),
+					ID:          guide.ID,
+					WorkspaceID: guide.WorkspaceID,
+					Title:       new("Updated"),
 				}
 			},
 			check: func(t *testing.T, guide *models.Guide) {
@@ -504,39 +519,39 @@ func TestBunGuidesRepository_Delete(t *testing.T) {
 
 	cases := []struct {
 		name    string
-		setup   func(*bun.DB) (userID string, targetID string)
+		setup   func(*bun.DB) (userID string, targetID string, wsID string)
 		wantErr bool
 		wantNil bool
 	}{
 		{
 			name: "soft deletes a guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "To Delete")
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: false,
 		},
 		{
 			name: "returns nil for non-existent guide",
-			setup: func(db *bun.DB) (string, string) {
-				return uuid.New().String(), uuid.New().String()
+			setup: func(db *bun.DB) (string, string, string) {
+				return uuid.New().String(), uuid.New().String(), uuid.New().String()
 			},
 			wantNil: true,
 		},
 		{
 			name: "deletes guide even for different user",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Other")
-				return uuid.New().String(), guide.ID.String()
+				return uuid.New().String(), guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: false,
 		},
 		{
 			name: "is idempotent on already deleted guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "To Delete Twice")
 				softDeleteGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: true,
 		},
@@ -548,10 +563,10 @@ func TestBunGuidesRepository_Delete(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID := tt.setup(db)
+			_, targetID, wsID := tt.setup(db)
 			ctx := context.Background()
 
-			deleted, err := repo.Delete(ctx, targetID)
+			deleted, err := repo.Delete(ctx, wsID, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -574,39 +589,39 @@ func TestBunGuidesRepository_RestoreGuide(t *testing.T) {
 
 	cases := []struct {
 		name    string
-		setup   func(*bun.DB) (userID string, targetID string)
+		setup   func(*bun.DB) (userID string, targetID string, wsID string)
 		wantErr bool
 		wantNil bool
 	}{
 		{
 			name: "restores a previously deleted guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "To Restore")
 				softDeleteGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for non-existent guide",
-			setup: func(db *bun.DB) (string, string) {
-				return uuid.New().String(), uuid.New().String()
+			setup: func(db *bun.DB) (string, string, string) {
+				return uuid.New().String(), uuid.New().String(), uuid.New().String()
 			},
 			wantNil: true,
 		},
 		{
 			name: "restores guide even for different user",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				userID := uuid.New().String()
 				guide := seedGuide(t, db, "", "Other")
 				softDeleteGuide(t, db, guide.ID)
-				return userID, guide.ID.String()
+				return userID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for non-deleted guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Not Deleted")
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: true,
 		},
@@ -618,10 +633,10 @@ func TestBunGuidesRepository_RestoreGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID := tt.setup(db)
+			_, targetID, wsID := tt.setup(db)
 			ctx := context.Background()
 
-			restored, err := repo.Restore(ctx, targetID)
+			restored, err := repo.Restore(ctx, wsID, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -645,37 +660,37 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 
 	cases := []struct {
 		name    string
-		setup   func(*bun.DB) (userID string, targetID string)
+		setup   func(*bun.DB) (userID string, targetID string, wsID string)
 		wantErr bool
 		wantNil bool
 	}{
 		{
 			name: "publishes a draft guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "To Publish")
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for non-existent guide",
-			setup: func(db *bun.DB) (string, string) {
-				return uuid.New().String(), uuid.New().String()
+			setup: func(db *bun.DB) (string, string, string) {
+				return uuid.New().String(), uuid.New().String(), uuid.New().String()
 			},
 			wantNil: true,
 		},
 		{
 			name: "publishes guide even for different user",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Other")
-				return uuid.New().String(), guide.ID.String()
+				return uuid.New().String(), guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for deleted guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Deleted")
 				softDeleteGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: true,
 		},
@@ -687,10 +702,10 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID := tt.setup(db)
+			_, targetID, wsID := tt.setup(db)
 			ctx := context.Background()
 
-			published, err := repo.Publish(ctx, targetID)
+			published, err := repo.Publish(ctx, wsID, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -715,39 +730,39 @@ func TestBunGuidesRepository_UnpublishGuide(t *testing.T) {
 
 	cases := []struct {
 		name    string
-		setup   func(*bun.DB) (userID string, targetID string)
+		setup   func(*bun.DB) (userID string, targetID string, wsID string)
 		wantNil bool
 	}{
 		{
 			name: "unpublishes a published guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "To Unpublish")
 				publishGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for non-existent guide",
-			setup: func(db *bun.DB) (string, string) {
-				return uuid.New().String(), uuid.New().String()
+			setup: func(db *bun.DB) (string, string, string) {
+				return uuid.New().String(), uuid.New().String(), uuid.New().String()
 			},
 			wantNil: true,
 		},
 		{
 			name: "unpublishes guide even for different user",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Other")
 				publishGuide(t, db, guide.ID)
-				return uuid.New().String(), guide.ID.String()
+				return uuid.New().String(), guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for deleted guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Deleted")
 				publishGuide(t, db, guide.ID)
 				softDeleteGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: true,
 		},
@@ -759,10 +774,10 @@ func TestBunGuidesRepository_UnpublishGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID := tt.setup(db)
+			_, targetID, wsID := tt.setup(db)
 			ctx := context.Background()
 
-			guide, err := repo.Unpublish(ctx, targetID)
+			guide, err := repo.Unpublish(ctx, wsID, targetID)
 
 			if tt.wantNil {
 				require.NoError(t, err)
@@ -784,37 +799,37 @@ func TestBunGuidesRepository_ArchiveGuide(t *testing.T) {
 
 	cases := []struct {
 		name    string
-		setup   func(*bun.DB) (userID string, targetID string)
+		setup   func(*bun.DB) (userID string, targetID string, wsID string)
 		wantErr bool
 		wantNil bool
 	}{
 		{
 			name: "archives a draft guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "To Archive")
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for non-existent guide",
-			setup: func(db *bun.DB) (string, string) {
-				return uuid.New().String(), uuid.New().String()
+			setup: func(db *bun.DB) (string, string, string) {
+				return uuid.New().String(), uuid.New().String(), uuid.New().String()
 			},
 			wantNil: true,
 		},
 		{
 			name: "archives guide even for different user",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Other")
-				return uuid.New().String(), guide.ID.String()
+				return uuid.New().String(), guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for deleted guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Deleted")
 				softDeleteGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: true,
 		},
@@ -826,10 +841,10 @@ func TestBunGuidesRepository_ArchiveGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID := tt.setup(db)
+			_, targetID, wsID := tt.setup(db)
 			ctx := context.Background()
 
-			archived, err := repo.Archive(ctx, targetID)
+			archived, err := repo.Archive(ctx, wsID, targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -852,38 +867,38 @@ func TestBunGuidesRepository_UnarchiveGuide(t *testing.T) {
 
 	cases := []struct {
 		name    string
-		setup   func(*bun.DB) (userID string, targetID string)
+		setup   func(*bun.DB) (userID string, targetID string, wsID string)
 		wantNil bool
 	}{
 		{
 			name: "unarchives an archived guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "To Unarchive")
 				archiveGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for non-existent guide",
-			setup: func(db *bun.DB) (string, string) {
-				return uuid.New().String(), uuid.New().String()
+			setup: func(db *bun.DB) (string, string, string) {
+				return uuid.New().String(), uuid.New().String(), uuid.New().String()
 			},
 			wantNil: true,
 		},
 		{
 			name: "unarchives guide even for different user",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Other")
 				archiveGuide(t, db, guide.ID)
-				return uuid.New().String(), guide.ID.String()
+				return uuid.New().String(), guide.ID.String(), guide.WorkspaceID.String()
 			},
 		},
 		{
 			name: "returns nil for deleted guide",
-			setup: func(db *bun.DB) (string, string) {
+			setup: func(db *bun.DB) (string, string, string) {
 				guide := seedGuide(t, db, "", "Deleted")
 				softDeleteGuide(t, db, guide.ID)
-				return guide.CreatorID, guide.ID.String()
+				return guide.CreatorID, guide.ID.String(), guide.WorkspaceID.String()
 			},
 			wantNil: true,
 		},
@@ -895,10 +910,10 @@ func TestBunGuidesRepository_UnarchiveGuide(t *testing.T) {
 
 			db := guidesDB
 			repo := guides.NewBunGuidesRepository(db)
-			_, targetID := tt.setup(db)
+			_, targetID, wsID := tt.setup(db)
 			ctx := context.Background()
 
-			guide, err := repo.Unarchive(ctx, targetID)
+			guide, err := repo.Unarchive(ctx, wsID, targetID)
 
 			if tt.wantNil {
 				require.NoError(t, err)

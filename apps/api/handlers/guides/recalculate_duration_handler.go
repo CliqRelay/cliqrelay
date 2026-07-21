@@ -24,15 +24,19 @@ func (h *RecalculateDurationHandler) Handle() http.HandlerFunc {
 		ctx := r.Context()
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
+
+		workspaceID := r.PathValue("workspaceId")
 		guideID := r.PathValue("id")
 
-		guide, err := h.guidesService.RecalculateDuration(ctx, actor, guideID)
+		guide, err := h.guidesService.RecalculateDuration(ctx, actor, workspaceID, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}
 
-		reqCtx.SetJSONResponse(http.StatusOK, &types.RecalculateDurationResponse{Guide: guide})
+		reqCtx.SetJSONResponse(http.StatusOK, &types.RecalculateDurationResponse{
+			Guide: guide,
+		})
 	}
 }

@@ -24,6 +24,7 @@ func NewBunGuidesRepository(db bun.IDB) *BunGuidesRepository {
 func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuideDTO) (*models.Guide, error) {
 	guide := &models.Guide{
 		ID:          uuid.New(),
+		WorkspaceID: dto.WorkspaceID,
 		CreatorID:   dto.CreatorID,
 		Title:       dto.Title,
 		Description: dto.Description,
@@ -64,6 +65,9 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 			query = query.ColumnExpr("false AS is_starred")
 		}
 
+		if filter.WorkspaceID != nil {
+			query = query.Where("g.workspace_id = ?", *filter.WorkspaceID)
+		}
 		if filter.CreatorID != nil {
 			query = query.Where("g.creator_id = ?", *filter.CreatorID)
 		}
@@ -117,12 +121,13 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 	return guides, nil
 }
 
-func (r *BunGuidesRepository) GetByID(ctx context.Context, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) GetByID(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -140,6 +145,7 @@ func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuid
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", data.ID).
+		Where("workspace_id = ?", data.WorkspaceID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -175,11 +181,12 @@ func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuid
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Delete(ctx context.Context, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Delete(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -207,12 +214,13 @@ func (r *BunGuidesRepository) Delete(ctx context.Context, id string) (*models.Gu
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Publish(ctx context.Context, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Publish(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -240,12 +248,13 @@ func (r *BunGuidesRepository) Publish(ctx context.Context, id string) (*models.G
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Unpublish(ctx context.Context, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Unpublish(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -272,12 +281,13 @@ func (r *BunGuidesRepository) Unpublish(ctx context.Context, id string) (*models
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Archive(ctx context.Context, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Archive(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -305,12 +315,13 @@ func (r *BunGuidesRepository) Archive(ctx context.Context, id string) (*models.G
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) Unarchive(ctx context.Context, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Unarchive(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -338,11 +349,12 @@ func (r *BunGuidesRepository) Unarchive(ctx context.Context, id string) (*models
 	return guide, nil
 }
 
-func (r *BunGuidesRepository) PermanentlyDelete(ctx context.Context, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) PermanentlyDelete(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("deleted_at IS NOT NULL").
 		Scan(ctx)
 	if err != nil {
@@ -373,6 +385,9 @@ func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideF
 	query := r.db.NewSelect().Model((*models.Guide)(nil))
 
 	if filter != nil {
+		if filter.WorkspaceID != nil {
+			query = query.Where("workspace_id = ?", *filter.WorkspaceID)
+		}
 		if filter.CreatorID != nil {
 			query = query.Where("creator_id = ?", *filter.CreatorID)
 		}
@@ -389,12 +404,13 @@ func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideF
 	return count, nil
 }
 
-func (r *BunGuidesRepository) UpdateDuration(ctx context.Context, id string, durationSeconds int) (*models.Guide, error) {
+func (r *BunGuidesRepository) UpdateDuration(ctx context.Context, workspaceID string, id string, durationSeconds int) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -445,12 +461,13 @@ func (r *BunGuidesRepository) HardDelete(ctx context.Context, id string) error {
 	return err
 }
 
-func (r *BunGuidesRepository) Restore(ctx context.Context, id string) (*models.Guide, error) {
+func (r *BunGuidesRepository) Restore(ctx context.Context, workspaceID string, id string) (*models.Guide, error) {
 	guide := &models.Guide{}
 
 	err := r.db.NewSelect().
 		Model(guide).
 		Where("id = ?", id).
+		Where("workspace_id = ?", workspaceID).
 		Where("deleted_at IS NOT NULL").
 		Scan(ctx)
 	if err != nil {

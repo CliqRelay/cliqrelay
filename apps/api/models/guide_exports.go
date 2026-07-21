@@ -25,6 +25,7 @@ type GuideExport struct {
 
 	ID           uuid.UUID         `json:"id" bun:"column:id,pk" required:"true"`
 	GuideID      uuid.UUID         `json:"guide_id" bun:"column:guide_id" required:"true"`
+	WorkspaceID  uuid.UUID         `json:"workspace_id" bun:"column:workspace_id,type:uuid,notnull" required:"true"`
 	UserID       string            `json:"user_id" bun:"column:user_id" required:"true"`
 	Format       ExportGuideFormat `json:"format" bun:"column:format" required:"true"`
 	Status       ExportStatus      `json:"status" bun:"column:status" required:"true"`

@@ -35,7 +35,7 @@ func TestDeleteStepHandler(t *testing.T) {
 			stepID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
 				guideID := uuid.New()
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   guideID,
@@ -43,7 +43,7 @@ func TestDeleteStepHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -51,10 +51,10 @@ func TestDeleteStepHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.Anything, mock.Anything).
 					Return([]*models.MediaAsset{}, nil).
 					Once()
-				mockStepsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("Delete", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
 			},
@@ -66,7 +66,7 @@ func TestDeleteStepHandler(t *testing.T) {
 			stepID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
 				guideID := uuid.New()
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   guideID,
@@ -74,7 +74,7 @@ func TestDeleteStepHandler(t *testing.T) {
 						Action:    new(models.StepActionClick),
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: "test-user-123",
@@ -82,10 +82,10 @@ func TestDeleteStepHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByStepID", mock.Anything, mock.Anything, mock.Anything).
 					Return([]*models.MediaAsset{}, nil).
 					Once()
-				mockStepsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("Delete", mock.Anything, mock.Anything, mock.Anything).
 					Return(assert.AnError).
 					Once()
 			},
@@ -107,7 +107,7 @@ func TestDeleteStepHandler(t *testing.T) {
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockMediaAssetsRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), mockMediaAssetsRepo, "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
 			handler := handlerssteps.NewDeleteStepHandler(appConfig, svc)
 

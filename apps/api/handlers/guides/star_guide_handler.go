@@ -25,9 +25,10 @@ func (h *StarGuideHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
 		guideID := r.PathValue("id")
 
-		err := h.starredGuidesService.Star(ctx, actor, guideID)
+		err := h.starredGuidesService.Star(ctx, actor, workspaceID, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

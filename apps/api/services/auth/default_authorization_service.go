@@ -16,24 +16,14 @@ func NewDefaultAuthorizationService() *DefaultAuthorizationService {
 	return &DefaultAuthorizationService{}
 }
 
-func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor) error {
+func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string) error {
 	if actor == nil {
 		return constants.ErrForbidden
 	}
 	return nil
 }
 
-func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error {
-	if actor == nil {
-		return constants.ErrForbidden
-	}
-	if actor.ID != guide.CreatorID {
-		return constants.ErrForbidden
-	}
-	return nil
-}
-
-func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error {
+func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guide *models.Guide) error {
 	if actor == nil {
 		return constants.ErrForbidden
 	}
@@ -43,7 +33,7 @@ func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *a
 	return nil
 }
 
-func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error {
+func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guide *models.Guide) error {
 	if actor == nil {
 		return constants.ErrForbidden
 	}
@@ -53,7 +43,17 @@ func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor 
 	return nil
 }
 
-func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor) (*types.GuideFilter, error) {
+func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guide *models.Guide) error {
+	if actor == nil {
+		return constants.ErrForbidden
+	}
+	if actor.ID != guide.CreatorID {
+		return constants.ErrForbidden
+	}
+	return nil
+}
+
+func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (*types.GuideFilter, error) {
 	if actor == nil {
 		return &types.GuideFilter{}, nil
 	}

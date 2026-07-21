@@ -47,6 +47,7 @@ type GuideWithStarred struct {
 
 type GuideFilter struct {
 	IDs             []uuid.UUID
+	WorkspaceID     *uuid.UUID
 	CreatorID       *string
 	ViewerUserID    *string
 	Status          *models.GuideStatus
@@ -75,9 +76,10 @@ func (r *CreateGuideRequest) Validate() error {
 }
 
 type CreateGuideDTO struct {
-	CreatorID   string  `json:"-"`
-	Title       string  `json:"title" required:"true" validate:"required,lte=255"`
-	Description *string `json:"description,omitempty"`
+	WorkspaceID uuid.UUID `json:"workspace_id" validate:"required"`
+	CreatorID   string    `json:"-"`
+	Title       string    `json:"title" required:"true" validate:"required,lte=255"`
+	Description *string   `json:"description,omitempty"`
 }
 
 func (r *CreateGuideDTO) Validate() error {
@@ -111,6 +113,7 @@ func (r *UpdateGuideRequest) Validate() error {
 
 type UpdateGuideDTO struct {
 	ID          uuid.UUID `json:"id" required:"true" validate:"required"`
+	WorkspaceID uuid.UUID `json:"workspace_id" validate:"required"`
 	Title       *string   `json:"title,omitempty" validate:"omitempty,lte=255" nullable:"true"`
 	Description *string   `json:"description,omitempty" nullable:"true"`
 }

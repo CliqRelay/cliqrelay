@@ -259,7 +259,7 @@ func TestBunStepsRepository_Create_Duplicate(t *testing.T) {
 	require.NotNil(t, duplicate.URL)
 	assert.Equal(t, url, *duplicate.URL)
 
-	steps, err := repo.GetByGuideID(ctx, guide.ID.String())
+	steps, err := repo.GetByGuideID(ctx, "00000000-0000-0000-0000-000000000001", guide.ID.String())
 	require.NoError(t, err)
 	require.Len(t, steps, 2)
 
@@ -317,7 +317,7 @@ func TestBunStepsRepository_GetByID(t *testing.T) {
 			targetID := tt.setup(db)
 			ctx := context.Background()
 
-			found, err := repo.GetByID(ctx, targetID)
+			found, err := repo.GetByID(ctx, "00000000-0000-0000-0000-000000000001", targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -398,7 +398,7 @@ func TestBunStepsRepository_GetByGuideID(t *testing.T) {
 			guideID := tt.setup(db)
 			ctx := context.Background()
 
-			steps, err := repo.GetByGuideID(ctx, guideID)
+			steps, err := repo.GetByGuideID(ctx, "00000000-0000-0000-0000-000000000001", guideID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -678,7 +678,7 @@ func TestBunStepsRepository_Delete(t *testing.T) {
 			targetID := tt.setup(db)
 			ctx := context.Background()
 
-			err := repo.Delete(ctx, targetID)
+			err := repo.Delete(ctx, "00000000-0000-0000-0000-000000000001", targetID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -687,7 +687,7 @@ func TestBunStepsRepository_Delete(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				found, err := repo.GetByID(ctx, targetID)
+			found, err := repo.GetByID(ctx, "00000000-0000-0000-0000-000000000001", targetID)
 				require.NoError(t, err)
 				assert.Nil(t, found)
 			}
@@ -772,7 +772,7 @@ func TestBunStepsRepository_Reorder(t *testing.T) {
 			guideID, targetStepID, prevStepID, nextStepID := tt.setup(db, repo)
 			ctx := context.Background()
 
-			steps, err := repo.Reorder(ctx, guideID, targetStepID, prevStepID, nextStepID)
+			steps, err := repo.Reorder(ctx, "00000000-0000-0000-0000-000000000001", guideID, targetStepID, prevStepID, nextStepID)
 
 			if tt.wantErr {
 				assert.Error(t, err)

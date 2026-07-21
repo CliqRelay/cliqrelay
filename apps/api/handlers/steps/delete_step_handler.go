@@ -25,9 +25,10 @@ func (h *DeleteStepHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := models.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
+		workspaceID := r.PathValue("workspaceId")
 		stepID := r.PathValue("id")
 
-		err := h.stepsService.Delete(ctx, actor, stepID)
+		err := h.stepsService.Delete(ctx, actor, workspaceID, stepID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

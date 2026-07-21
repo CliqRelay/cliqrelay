@@ -58,7 +58,7 @@ func TestStarGuideHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 
 			if tt.name == "success" || tt.name == "already starred (idempotent)" {
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -66,12 +66,12 @@ func TestStarGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStarredRepo.On("Star", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
+				mockStarredRepo.On("Star", mock.Anything, mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(nil).
 					Once()
-				mockAuthz.On("CanReadGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			} else {
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -79,10 +79,10 @@ func TestStarGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockStarredRepo.On("Star", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
+				mockStarredRepo.On("Star", mock.Anything, mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(assert.AnError).
 					Once()
-				mockAuthz.On("CanReadGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
 
 			svc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo, mockAuthz)
@@ -90,6 +90,7 @@ func TestStarGuideHandler(t *testing.T) {
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)
 			req.Req.SetPathValue("id", guideID)
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 
 			handler.Handle()(req.W, req.Req)
 

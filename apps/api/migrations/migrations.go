@@ -20,6 +20,7 @@ func RunMigrations(appConfig *config.AppConfig) error {
 		{
 			PluginID: PluginCliqRelay,
 			Migrations: []authulamigrations.Migration{
+				workspacesInitial(),
 				guidesPostgresInitial(),
 				stepsPostgresInitial(),
 				mediaAssetsPostgresInitial(),

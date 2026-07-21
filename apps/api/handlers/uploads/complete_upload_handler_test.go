@@ -45,7 +45,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 				MimeType:    &mimeType,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
 						GuideID:   guideID,
@@ -53,7 +53,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 						Action:    &stepAction,
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
 						CreatorID: creatorUserID,
@@ -61,7 +61,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateMediaAssetDTO")).
+				mockMediaAssetsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      stepID,
@@ -118,7 +118,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 				StoragePath: storagePath,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
 			},
@@ -132,7 +132,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 				StoragePath: storagePath,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
 						GuideID:   otherGuideID,
@@ -140,7 +140,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 						Action:    &stepAction,
 					}, nil).
 					Once()
-				mockGuidesRepo.On("GetByID", mock.Anything, otherGuideID.String()).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything, otherGuideID.String()).
 					Return(nil, nil).
 					Once()
 			},
@@ -154,7 +154,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 				StoragePath: storagePath,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -176,12 +176,13 @@ func TestCompleteUploadHandler(t *testing.T) {
 				tt.presignSetup(mockPresignClient)
 			}
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, mockAuthz, "test-bucket")
 			handler := handlersuploads.NewCompleteUploadHandler(appConfig, svc)
 
 			path := "/api/v1/uploads/complete"
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, tt.payload)
+			req.Req.SetPathValue("workspaceId", uuid.New().String())
 
 			handler.Handle()(req.W, req.Req)
 

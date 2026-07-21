@@ -14,28 +14,28 @@ type MockAuthorizationService struct {
 	mock.Mock
 }
 
-func (m *MockAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor) error {
-	args := m.Called(ctx, actor)
+func (m *MockAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string) error {
+	args := m.Called(ctx, actor, workspaceID)
 	return args.Error(0)
 }
 
-func (m *MockAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error {
-	args := m.Called(ctx, actor, guide)
+func (m *MockAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guide *models.Guide) error {
+	args := m.Called(ctx, actor, workspaceID, guide)
 	return args.Error(0)
 }
 
-func (m *MockAuthorizationService) CanEditGuide(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error {
-	args := m.Called(ctx, actor, guide)
+func (m *MockAuthorizationService) CanEditGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guide *models.Guide) error {
+	args := m.Called(ctx, actor, workspaceID, guide)
 	return args.Error(0)
 }
 
-func (m *MockAuthorizationService) CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error {
-	args := m.Called(ctx, actor, guide)
+func (m *MockAuthorizationService) CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string, guide *models.Guide) error {
+	args := m.Called(ctx, actor, workspaceID, guide)
 	return args.Error(0)
 }
 
-func (m *MockAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor) (*types.GuideFilter, error) {
-	args := m.Called(ctx, actor)
+func (m *MockAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (*types.GuideFilter, error) {
+	args := m.Called(ctx, actor, workspaceID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
