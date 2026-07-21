@@ -12,8 +12,11 @@ import (
 	handlersmediaassets "github.com/CliqRelay/cliqrelay/handlers/media_assets"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	media_assetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
+	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestGetMediaAssetByIDHandler(t *testing.T) {
@@ -34,7 +37,7 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				stepID := uuid.New()
 				guideID := uuid.New()
-				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      stepID,
@@ -64,7 +67,7 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 			name:    "service error",
 			assetID: uuid.New().String(),
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -85,9 +88,12 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
-			handler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, svc)
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			maSvc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewMediaAssetsUseCase(mockAuthz, maSvc, stepsSvc, guidesSvc)
+			handler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)
 			req.Req.SetPathValue("id", assetID)

@@ -3,7 +3,7 @@ package guides
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -12,25 +12,27 @@ import (
 
 type GetAllGuidesHandler struct {
 	appConfig     *config.AppConfig
-	guidesService interfaces.GuidesService
+	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewGetAllGuidesHandler(appConfig *config.AppConfig, guidesService interfaces.GuidesService) *GetAllGuidesHandler {
-	return &GetAllGuidesHandler{appConfig: appConfig, guidesService: guidesService}
+func NewGetAllGuidesHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *GetAllGuidesHandler {
+	return &GetAllGuidesHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
 }
 
 func (h *GetAllGuidesHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
+
+		teamID := r.URL.Query().Get("team_id")
 
 		var status *string
 		if s := r.URL.Query().Get("status"); s != "" {
 			status = &s
 		}
 
-		guides, err := h.guidesService.GetAll(ctx, actor, status)
+		guides, err := h.guidesUseCase.List(ctx, actor, teamID, status)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

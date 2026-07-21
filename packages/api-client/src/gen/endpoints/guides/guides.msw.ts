@@ -11,6 +11,7 @@ import { HttpResponse, http } from "msw";
 
 import type {
 	ArchiveGuideResponse,
+	CreateDemoGuideResponse,
 	CreateGuideResponse,
 	DeleteGuideResponse,
 	ExportGuideResponse,
@@ -28,7 +29,7 @@ import type {
 	UnstarGuideResponse,
 	UpdateGuideResponse,
 } from "../../models";
-import { ExportGuideFormat, GuideStatus } from "../../models";
+import { ExportGuideFormat, GuideStatus, Visibility } from "../../models";
 
 export const getGetExportStatusResponseMock = (
 	overrideResponse: Partial<Extract<GetExportStatusResponse, object>> = {},
@@ -124,8 +125,10 @@ export const getGetAllGuidesResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	})),
 	...overrideResponse,
 });
@@ -182,8 +185,10 @@ export const getCreateGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -192,6 +197,13 @@ export const getGetGuidesCountResponseMock = (
 	overrideResponse: Partial<Extract<GetGuidesCountResponse, object>> = {},
 ): GetGuidesCountResponse => ({
 	count: faker.number.int(),
+	...overrideResponse,
+});
+
+export const getCreateDemoGuideResponseMock = (
+	overrideResponse: Partial<Extract<CreateDemoGuideResponse, object>> = {},
+): CreateDemoGuideResponse => ({
+	guideId: faker.string.alpha({ length: { min: 10, max: 20 } }),
 	...overrideResponse,
 });
 
@@ -250,8 +262,10 @@ export const getGetStarredGuidesResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	})),
 	...overrideResponse,
 });
@@ -310,8 +324,10 @@ export const getGetGuideByIdResponseMock = (
 				undefined,
 			]),
 			status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+			teamId: faker.string.uuid(),
 			title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 			updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+			visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 		},
 	]),
 	...overrideResponse,
@@ -369,8 +385,10 @@ export const getDeleteGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -427,8 +445,10 @@ export const getUpdateGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -485,8 +505,10 @@ export const getArchiveGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -553,8 +575,10 @@ export const getPermanentlyDeleteGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -611,8 +635,10 @@ export const getPublishGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -669,8 +695,10 @@ export const getRecalculateGuideDurationResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -727,8 +755,10 @@ export const getRestoreGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -799,8 +829,10 @@ export const getUnarchiveGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -857,8 +889,10 @@ export const getUnpublishGuideResponseMock = (
 			undefined,
 		]),
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
+		teamId: faker.string.uuid(),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
 	...overrideResponse,
 });
@@ -953,6 +987,30 @@ export const getGetGuidesCountMockHandler = (
 						: overrideResponse
 					: getGetGuidesCountResponseMock(),
 				{ status: 200 },
+			);
+		},
+		options,
+	);
+};
+
+export const getCreateDemoGuideMockHandler = (
+	overrideResponse?:
+		| CreateDemoGuideResponse
+		| ((
+				info: Parameters<Parameters<typeof http.post>[1]>[0],
+		  ) => Promise<CreateDemoGuideResponse> | CreateDemoGuideResponse),
+	options?: RequestHandlerOptions,
+) => {
+	return http.post(
+		"*/api/v1/guides/demo",
+		async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+			return HttpResponse.json(
+				overrideResponse !== undefined
+					? typeof overrideResponse === "function"
+						? await overrideResponse(info)
+						: overrideResponse
+					: getCreateDemoGuideResponseMock(),
+				{ status: 201 },
 			);
 		},
 		options,
@@ -1301,6 +1359,7 @@ export const getGuidesMock = () => [
 	getGetAllGuidesMockHandler(),
 	getCreateGuideMockHandler(),
 	getGetGuidesCountMockHandler(),
+	getCreateDemoGuideMockHandler(),
 	getGetStarredGuidesMockHandler(),
 	getGetGuideByIdMockHandler(),
 	getDeleteGuideMockHandler(),

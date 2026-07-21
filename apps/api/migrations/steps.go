@@ -7,14 +7,13 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func stepsPostgresInitial() authulamigrations.Migration {
+func stepsInitial() authulamigrations.Migration {
 	return authulamigrations.Migration{
-		Version: "20260605000001_steps_initial",
+		Version: "20260603000000_steps_initial",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return authulamigrations.ExecStatements(
 				ctx,
 				tx,
-				`CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
 				`CREATE OR REPLACE FUNCTION set_updated_at_fn() RETURNS TRIGGER AS $$
 					BEGIN
 						NEW.updated_at = NOW();

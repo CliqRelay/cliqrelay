@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/Authula/authula"
+	organizationsplugintypes "github.com/Authula/authula/plugins/organizations/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/redis/go-redis/v9"
 	"github.com/uptrace/bun"
@@ -22,4 +23,8 @@ type AppConfig struct {
 	BasePath        string
 	S3Client        *s3.Client
 	S3Bucket        string
+}
+
+type AuthServiceHooks struct {
+	OrganizationsServiceHooksConfig organizationsplugintypes.OrganizationsServiceHooksConfig
 }

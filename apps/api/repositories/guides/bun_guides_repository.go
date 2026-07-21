@@ -24,10 +24,12 @@ func NewBunGuidesRepository(db bun.IDB) *BunGuidesRepository {
 func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuideDTO) (*models.Guide, error) {
 	guide := &models.Guide{
 		ID:          uuid.New(),
+		TeamID:      dto.TeamID,
 		CreatorID:   dto.CreatorID,
 		Title:       dto.Title,
 		Description: dto.Description,
 		Status:      models.StatusDraft,
+		Visibility:  models.VisibilityPrivate,
 	}
 
 	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -64,22 +66,25 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 			query = query.ColumnExpr("false AS is_starred")
 		}
 
+		if filter.TeamID != nil {
+			query = query.Where("g.team_id = ?", *filter.TeamID)
+		}
 		if filter.CreatorID != nil {
 			query = query.Where("g.creator_id = ?", *filter.CreatorID)
 		}
 		if filter.Status != nil {
 			query = query.Where("g.status = ?", *filter.Status)
-		} else if filter.IncludeDeleted {
+		} else if filter.DeletedOnly {
 			query = query.Where("g.deleted_at IS NOT NULL")
 			query = query.Where("g.status = ?", models.StatusDeleted)
 		} else {
 			query = query.Where("g.deleted_at IS NULL")
 			if filter.PublishedOnly {
 				query = query.Where("g.status = ?", models.StatusPublished)
-			} else if filter.IncludeArchived {
-				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
+			} else if filter.ArchivedOnly {
+				query = query.Where("g.status = ?", models.StatusArchived.ToString())
 			} else {
-				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()}))
+				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
 			}
 		}
 		if filter.Search != nil {
@@ -352,10 +357,6 @@ func (r *BunGuidesRepository) PermanentlyDelete(ctx context.Context, id string) 
 		return nil, err
 	}
 
-	guide.PublishedAt = nil
-	guide.ArchivedAt = nil
-	guide.RestoredAt = nil
-	guide.Status = models.StatusPendingPurge
 	guide.PurgeRequestedAt = new(time.Now().UTC())
 
 	_, err = r.db.NewUpdate().
@@ -373,6 +374,9 @@ func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideF
 	query := r.db.NewSelect().Model((*models.Guide)(nil))
 
 	if filter != nil {
+		if filter.TeamID != nil {
+			query = query.Where("team_id = ?", *filter.TeamID)
+		}
 		if filter.CreatorID != nil {
 			query = query.Where("creator_id = ?", *filter.CreatorID)
 		}

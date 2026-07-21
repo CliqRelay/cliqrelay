@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as indexRouteImport } from './routes/index'
 import { Route as authRouteRouteImport } from './routes/auth/route'
+import { Route as createOrganizationIndexRouteImport } from './routes/create-organization/index'
 import { Route as dashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as authChangePasswordIndexRouteImport } from './routes/auth/change-password/index'
 import { Route as authEmailVerificationIndexRouteImport } from './routes/auth/email-verification/index'
@@ -31,6 +32,11 @@ const indexRoute = indexRouteImport.update({
 const authRouteRoute = authRouteRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const createOrganizationIndexRoute = createOrganizationIndexRouteImport.update({
+  id: '/create-organization',
+  path: '/create-organization',
   getParentRoute: () => rootRouteImport,
 } as any)
 const dashboardRouteRoute = dashboardRouteRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/': typeof indexRoute
   '/auth': typeof authRouteRouteWithChildren
   '/dashboard': typeof dashboardRouteRouteWithChildren
+  '/create-organization': typeof createOrganizationIndexRoute
   '/dashboard/': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof indexRoute
   '/auth': typeof authRouteRouteWithChildren
+  '/create-organization': typeof createOrganizationIndexRoute
   '/dashboard': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof indexRoute
   '/auth': typeof authRouteRouteWithChildren
   '/dashboard': typeof dashboardRouteRouteWithChildren
+  '/create-organization': typeof createOrganizationIndexRoute
   '/dashboard/': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/create-organization'
     | '/dashboard/'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/create-organization'
     | '/dashboard'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/create-organization'
     | '/dashboard/'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -186,6 +198,7 @@ export interface RootRouteChildren {
   indexRoute: typeof indexRoute
   authRouteRoute: typeof authRouteRouteWithChildren
   dashboardRouteRoute: typeof dashboardRouteRouteWithChildren
+  createOrganizationIndexRoute: typeof createOrganizationIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -202,6 +215,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof authRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create-organization': {
+      id: '/create-organization'
+      path: '/create-organization'
+      fullPath: '/create-organization'
+      preLoaderRoute: typeof createOrganizationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -328,6 +348,7 @@ const rootRouteChildren: RootRouteChildren = {
   indexRoute: indexRoute,
   authRouteRoute: authRouteRouteWithChildren,
   dashboardRouteRoute: dashboardRouteRouteWithChildren,
+  createOrganizationIndexRoute: createOrganizationIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

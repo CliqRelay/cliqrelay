@@ -18,6 +18,7 @@ export async function buildVirtualRouteConfig(
 ): Promise<VirtualRootRoute> {
 	const routes = rootRoute("__root.tsx", [
 		index("index.tsx"),
+		route("/create-organization", "create-organization/index.tsx"),
 		route("/dashboard", "dashboard/route.tsx", [
 			index("dashboard/index.tsx"),
 			route("/guides", "dashboard/guides/index.tsx"),

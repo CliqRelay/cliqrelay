@@ -12,7 +12,7 @@ export function useStepEditor(guideId: string) {
 
 	const query = api.steps.useGetAllStepsByGuideId(
 		{
-			guideId,
+			guide_id: guideId,
 		},
 		{
 			query: {

@@ -7,9 +7,9 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func guideExportsPostgresInitial() authulamigrations.Migration {
+func guideExportsInitial() authulamigrations.Migration {
 	return authulamigrations.Migration{
-		Version: "20260621000000_guide_exports",
+		Version: "20260606000000_guide_exports",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return authulamigrations.ExecStatements(
 				ctx,

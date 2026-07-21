@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	authulamodels "github.com/Authula/authula/models"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
@@ -26,7 +25,6 @@ type StepsService struct {
 	presignClient   interfaces.PresignService
 	storageService  interfaces.StorageService
 	mediaAssetsRepo interfaces.MediaAssetsRepository
-	authzService    interfaces.AuthorizationService
 	logger          *slog.Logger
 	bucket          string
 	hooks           *interfaces.StepHooks
@@ -41,7 +39,6 @@ func NewStepsService(
 	mediaAssetsRepo interfaces.MediaAssetsRepository,
 	bucket string,
 	logger *slog.Logger,
-	authzService interfaces.AuthorizationService,
 	hooks *interfaces.StepHooks,
 ) *StepsService {
 	return &StepsService{
@@ -51,25 +48,20 @@ func NewStepsService(
 		presignClient:   presignClient,
 		storageService:  storageService,
 		mediaAssetsRepo: mediaAssetsRepo,
-		authzService:    authzService,
 		logger:          logger,
 		bucket:          bucket,
 		hooks:           hooks,
 	}
 }
 
-func (s *StepsService) Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateStepRequest) (*models.Step, error) {
-	guide, err := s.getGuideForStep(ctx, actor, req.GuideID.String())
+func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest) (*models.Step, error) {
+	guide, err := s.getGuideForStep(ctx, req.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, actor, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, req); err != nil {
 			return nil, err
 		}
 	}
@@ -91,7 +83,7 @@ func (s *StepsService) Create(ctx context.Context, actor *authulamodels.Actor, r
 	}
 
 	if s.hooks != nil && s.hooks.AfterCreate != nil {
-		if err := s.hooks.AfterCreate(ctx, actor, step); err != nil {
+		if err := s.hooks.AfterCreate(ctx, step); err != nil {
 			return nil, err
 		}
 	}
@@ -99,7 +91,7 @@ func (s *StepsService) Create(ctx context.Context, actor *authulamodels.Actor, r
 	return step, nil
 }
 
-func (s *StepsService) GetByID(ctx context.Context, actor *authulamodels.Actor, stepID string) (*models.Step, error) {
+func (s *StepsService) GetByID(ctx context.Context, stepID string) (*models.Step, error) {
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
@@ -112,32 +104,14 @@ func (s *StepsService) GetByID(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrStepNotFound
 	}
 
-	guide, err := s.getGuideForStep(ctx, actor, step.GuideID.String())
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.authzService.CanReadGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	s.enrichMediaAssets(ctx, step)
 
 	return step, nil
 }
 
-func (s *StepsService) GetByGuideID(ctx context.Context, actor *authulamodels.Actor, guideID string) ([]*models.Step, error) {
+func (s *StepsService) GetByGuideID(ctx context.Context, guideID string) ([]*models.Step, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
-	}
-
-	guide, err := s.getGuideForStep(ctx, actor, guideID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.authzService.CanReadGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
 	}
 
 	steps, err := s.stepsRepo.GetByGuideID(ctx, guideID)
@@ -150,7 +124,7 @@ func (s *StepsService) GetByGuideID(ctx context.Context, actor *authulamodels.Ac
 	return steps, nil
 }
 
-func (s *StepsService) Update(ctx context.Context, actor *authulamodels.Actor, stepID string, req *types.UpdateStepRequest) (*models.Step, error) {
+func (s *StepsService) Update(ctx context.Context, stepID string, req *types.UpdateStepRequest) (*models.Step, error) {
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
@@ -168,17 +142,8 @@ func (s *StepsService) Update(ctx context.Context, actor *authulamodels.Actor, s
 		return nil, constants.ErrStepNotFound
 	}
 
-	guide, err := s.getGuideForStep(ctx, actor, step.GuideID.String())
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, actor, req); err != nil {
+		if err := s.hooks.BeforeUpdate(ctx, req); err != nil {
 			return nil, err
 		}
 	}
@@ -203,7 +168,7 @@ func (s *StepsService) Update(ctx context.Context, actor *authulamodels.Actor, s
 	s.enrichMediaAssets(ctx, updated)
 
 	if s.hooks != nil && s.hooks.AfterUpdate != nil {
-		if err := s.hooks.AfterUpdate(ctx, actor, updated); err != nil {
+		if err := s.hooks.AfterUpdate(ctx, updated); err != nil {
 			return nil, err
 		}
 	}
@@ -211,7 +176,7 @@ func (s *StepsService) Update(ctx context.Context, actor *authulamodels.Actor, s
 	return updated, nil
 }
 
-func (s *StepsService) Delete(ctx context.Context, actor *authulamodels.Actor, stepID string) error {
+func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 	if strings.TrimSpace(stepID) == "" {
 		return constants.ErrInvalidStepID
 	}
@@ -224,17 +189,8 @@ func (s *StepsService) Delete(ctx context.Context, actor *authulamodels.Actor, s
 		return constants.ErrStepNotFound
 	}
 
-	guide, err := s.getGuideForStep(ctx, actor, step.GuideID.String())
-	if err != nil {
-		return err
-	}
-
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return constants.ErrGuideNotFound
-	}
-
 	if s.hooks != nil && s.hooks.BeforeDelete != nil {
-		if err := s.hooks.BeforeDelete(ctx, actor, step); err != nil {
+		if err := s.hooks.BeforeDelete(ctx, step); err != nil {
 			return err
 		}
 	}
@@ -249,7 +205,7 @@ func (s *StepsService) Delete(ctx context.Context, actor *authulamodels.Actor, s
 	}
 
 	if s.hooks != nil && s.hooks.AfterDelete != nil {
-		if err := s.hooks.AfterDelete(ctx, actor, stepID); err != nil {
+		if err := s.hooks.AfterDelete(ctx, stepID); err != nil {
 			return err
 		}
 	}
@@ -270,18 +226,9 @@ func (s *StepsService) Delete(ctx context.Context, actor *authulamodels.Actor, s
 	return nil
 }
 
-func (s *StepsService) Reorder(ctx context.Context, actor *authulamodels.Actor, guideID string, targetStepID string, prevStepID *string, nextStepID *string) ([]*models.Step, error) {
+func (s *StepsService) Reorder(ctx context.Context, guideID string, targetStepID string, prevStepID *string, nextStepID *string) ([]*models.Step, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
-	}
-
-	guide, err := s.getGuideForStep(ctx, actor, guideID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
 	}
 
 	steps, err := s.stepsRepo.Reorder(ctx, guideID, targetStepID, prevStepID, nextStepID)
@@ -292,7 +239,7 @@ func (s *StepsService) Reorder(ctx context.Context, actor *authulamodels.Actor, 
 	return steps, nil
 }
 
-func (s *StepsService) Duplicate(ctx context.Context, actor *authulamodels.Actor, stepID string, req *types.DuplicateStepRequest) (*models.Step, error) {
+func (s *StepsService) Duplicate(ctx context.Context, stepID string, req *types.DuplicateStepRequest) (*models.Step, error) {
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
@@ -303,15 +250,6 @@ func (s *StepsService) Duplicate(ctx context.Context, actor *authulamodels.Actor
 	}
 	if original == nil {
 		return nil, constants.ErrStepNotFound
-	}
-
-	guide, err := s.getGuideForStep(ctx, actor, original.GuideID.String())
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
 	}
 
 	insertBeforeStepID := req.InsertBeforeStepID
@@ -389,7 +327,7 @@ func (s *StepsService) Duplicate(ctx context.Context, actor *authulamodels.Actor
 	return result, nil
 }
 
-func (s *StepsService) getGuideForStep(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *StepsService) getGuideForStep(ctx context.Context, guideID string) (*models.Guide, error) {
 	guide, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err

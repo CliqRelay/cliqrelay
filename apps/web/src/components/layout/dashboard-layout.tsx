@@ -1,7 +1,8 @@
 import type { PropsWithChildren } from "react";
+import { useCallback } from "react";
 
-import { useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Library, Star, Trash } from "lucide-react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { LayoutDashboard, Library, Star, Trash, Users } from "lucide-react";
 
 import {
 	ExtensionSlot,
@@ -12,23 +13,27 @@ import {
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarGroup,
+	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
+	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarProvider,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { NavMain } from "./nav-main";
 import { SiteHeader } from "./site-header";
 import type { AppUser } from "@/models/auth";
+import { useTeamStore } from "@/stores/team-store";
+import { setActiveTeamCookie } from "@/lib/team-cookie";
 
 const baseNavData: NavItem[] = [
-	{ label: "Insights", isSection: true },
 	{
 		title: "Dashboard",
 		icon: LayoutDashboard,
 		href: "/dashboard",
 	},
-	{ label: "My Workspace", isSection: true },
 	{
 		title: "My Guides",
 		icon: Library,
@@ -54,8 +59,24 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 	const hideSiteHeader = useRouterState({
 		select: (state) => state.matches.some((m) => !!m.context?.hideSiteHeader),
 	});
+	const teams = useTeamStore((state) => state.teams);
+	const activeTeamId = useTeamStore((state) => state.activeTeamId);
+	const setActiveTeam = useTeamStore((state) => state.setActiveTeam);
+	const navigate = useNavigate();
 
-	const navData = [...baseNavData, ...(extensionRegistry.getNavItems() ?? [])];
+	const switchTeam = useCallback(
+		(teamId: string) => {
+			setActiveTeamCookie(teamId);
+			setActiveTeam(teamId);
+			navigate({ to: "/dashboard" });
+		},
+		[setActiveTeam, navigate],
+	);
+
+	const navData: NavItem[] = [
+		...baseNavData,
+		...(extensionRegistry.getNavItems() ?? []),
+	];
 
 	return (
 		<SidebarProvider>
@@ -84,6 +105,35 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 					<SidebarContent className="overflow-hidden gap-0 px-0 flex-1">
 						<div className="px-4">
 							<NavMain items={navData} />
+							{teams.length > 0 && (
+								<SidebarGroup className="p-0 pt-5">
+									<SidebarGroupLabel className="p-0 text-xs font-medium uppercase text-sidebar-foreground">
+										Teams
+									</SidebarGroupLabel>
+									<SidebarMenu className="mt-2">
+										{teams.map((team) => {
+											const isActive = team.id === activeTeamId;
+											return (
+												<SidebarMenuItem key={team.id}>
+													<SidebarMenuButton
+														tooltip={team.name}
+														className={cn(
+															"rounded-lg text-sm px-3 py-2 h-9 w-full justify-start",
+															isActive
+																? "bg-primary hover:bg-primary dark:bg-blue-500 text-white dark:hover:bg-blue-500 hover:text-white"
+																: "",
+														)}
+														onClick={() => switchTeam(team.id)}
+													>
+														<Users size={16} />
+														<span>{team.name}</span>
+													</SidebarMenuButton>
+												</SidebarMenuItem>
+											);
+										})}
+									</SidebarMenu>
+								</SidebarGroup>
+							)}
 						</div>
 					</SidebarContent>
 					<div className="mt-auto">

@@ -14,23 +14,24 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func GuidesRoutes(appConfig *config.AppConfig, guidesSvc interfaces.GuidesService, starredSvc interfaces.StarredGuidesService, exportSvc interfaces.ExportService) []authulamodels.Route {
-	createHandler := guides.NewCreateGuideHandler(appConfig, guidesSvc)
-	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesSvc)
-	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesSvc)
-	updateHandler := guides.NewUpdateGuideHandler(appConfig, guidesSvc)
-	deleteHandler := guides.NewDeleteGuideHandler(appConfig, guidesSvc)
-	publishHandler := guides.NewPublishGuideHandler(appConfig, guidesSvc)
-	unpublishHandler := guides.NewUnpublishGuideHandler(appConfig, guidesSvc)
-	archiveHandler := guides.NewArchiveGuideHandler(appConfig, guidesSvc)
-	unarchiveHandler := guides.NewUnarchiveGuideHandler(appConfig, guidesSvc)
-	restoreHandler := guides.NewRestoreGuideHandler(appConfig, guidesSvc)
-	permanentlyDeleteHandler := guides.NewPermanentlyDeleteGuideHandler(appConfig, guidesSvc)
-	getGuidesCountHandler := guides.NewGetGuidesCountHandler(appConfig, guidesSvc)
-	getStarredGuidesHandler := guides.NewGetStarredGuidesHandler(appConfig, starredSvc)
-	starGuideHandler := guides.NewStarGuideHandler(appConfig, starredSvc)
-	unstarGuideHandler := guides.NewUnstarGuideHandler(appConfig, starredSvc)
-	recalculateDurationHandler := guides.NewRecalculateDurationHandler(appConfig, guidesSvc)
+func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
+	createHandler := guides.NewCreateGuideHandler(appConfig, guidesUseCase)
+	createDemoGuideHandler := guides.NewCreateDemoGuideHandler(appConfig, guidesUseCase)
+	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesUseCase)
+	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesUseCase)
+	updateHandler := guides.NewUpdateGuideHandler(appConfig, guidesUseCase)
+	deleteHandler := guides.NewDeleteGuideHandler(appConfig, guidesUseCase)
+	publishHandler := guides.NewPublishGuideHandler(appConfig, guidesUseCase)
+	unpublishHandler := guides.NewUnpublishGuideHandler(appConfig, guidesUseCase)
+	archiveHandler := guides.NewArchiveGuideHandler(appConfig, guidesUseCase)
+	unarchiveHandler := guides.NewUnarchiveGuideHandler(appConfig, guidesUseCase)
+	restoreHandler := guides.NewRestoreGuideHandler(appConfig, guidesUseCase)
+	permanentlyDeleteHandler := guides.NewPermanentlyDeleteGuideHandler(appConfig, guidesUseCase)
+	getGuidesCountHandler := guides.NewGetGuidesCountHandler(appConfig, guidesUseCase)
+	getStarredGuidesHandler := guides.NewGetStarredGuidesHandler(appConfig, guidesUseCase)
+	starGuideHandler := guides.NewStarGuideHandler(appConfig, guidesUseCase)
+	unstarGuideHandler := guides.NewUnstarGuideHandler(appConfig, guidesUseCase)
+	recalculateDurationHandler := guides.NewRecalculateDurationHandler(appConfig, guidesUseCase)
 	exportGuideHandler := guides.NewExportGuideHandler(appConfig, exportSvc)
 	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportSvc)
 
@@ -38,112 +39,120 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesSvc interfaces.GuidesServic
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
+	base := appConfig.BasePath
+
 	return []authulamodels.Route{
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/demo", base),
+			Middleware: authMiddleware,
+			Handler:    createDemoGuideHandler.Handle(),
+		},
+		{
+			Method:     "POST",
+			Path:       fmt.Sprintf("%s/guides", base),
 			Middleware: authMiddleware,
 			Handler:    createHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guides", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides", base),
 			Middleware: authMiddleware,
 			Handler:    getAllHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guides/count", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/count", base),
 			Middleware: authMiddleware,
 			Handler:    getGuidesCountHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guides/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/starred", base),
+			Middleware: authMiddleware,
+			Handler:    getStarredGuidesHandler.Handle(),
+		},
+		{
+			Method:     "GET",
+			Path:       fmt.Sprintf("%s/guides/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    getByIDHandler.Handle(),
 		},
 		{
 			Method:     "PATCH",
-			Path:       fmt.Sprintf("%s/guides/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    updateHandler.Handle(),
 		},
 		{
 			Method:     "DELETE",
-			Path:       fmt.Sprintf("%s/guides/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    deleteHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/publish", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/publish", base),
 			Middleware: authMiddleware,
 			Handler:    publishHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/unpublish", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/unpublish", base),
 			Middleware: authMiddleware,
 			Handler:    unpublishHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/recalculate-duration", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/recalculate-duration", base),
 			Middleware: authMiddleware,
 			Handler:    recalculateDurationHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/archive", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/archive", base),
 			Middleware: authMiddleware,
 			Handler:    archiveHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/unarchive", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/unarchive", base),
 			Middleware: authMiddleware,
 			Handler:    unarchiveHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/restore", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/restore", base),
 			Middleware: authMiddleware,
 			Handler:    restoreHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/permanently-delete", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/permanently-delete", base),
 			Middleware: authMiddleware,
 			Handler:    permanentlyDeleteHandler.Handle(),
 		},
 		{
-			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guides/starred", appConfig.BasePath),
-			Middleware: authMiddleware,
-			Handler:    getStarredGuidesHandler.Handle(),
-		},
-		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/star", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/star", base),
 			Middleware: authMiddleware,
 			Handler:    starGuideHandler.Handle(),
 		},
 		{
 			Method:     "DELETE",
-			Path:       fmt.Sprintf("%s/guides/{id}/star", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/star", base),
 			Middleware: authMiddleware,
 			Handler:    unstarGuideHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/guides/{id}/export", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guides/{id}/export", base),
 			Middleware: authMiddleware,
 			Handler:    exportGuideHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/guide-exports/{exportID}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/guide-exports/{exportID}", base),
 			Middleware: authMiddleware,
 			Handler:    getExportStatusHandler.Handle(),
 		},
@@ -151,6 +160,17 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesSvc interfaces.GuidesServic
 }
 
 func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
+	svc.AddOperation(
+		http.MethodPost,
+		fmt.Sprintf("%s/guides/demo", basePath),
+		openapi.WithOperationID("createDemoGuide"),
+		openapi.WithSummary("Create demo guide"),
+		openapi.WithDescription("Creates a demo guide with predefined steps"),
+		openapi.WithTags("Guides"),
+		openapi.WithRequest(&types.CreateDemoGuideRequest{}),
+		openapi.WithResponseStatus(http.StatusCreated, &types.CreateDemoGuideResponse{}),
+	)
+
 	svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides", basePath),
@@ -169,7 +189,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get all guides"),
 		openapi.WithDescription("Get all guides for a user"),
 		openapi.WithTags("Guides"),
-		openapi.WithRequest(&types.GuideStatus{}),
+		openapi.WithRequest(&types.GuideQueryParams{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllGuidesResponse{}),
 	)
 
@@ -180,6 +200,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get guides count"),
 		openapi.WithDescription("Returns the total count of non-deleted guides for the authenticated user"),
 		openapi.WithTags("Guides"),
+		openapi.WithRequest(types.TeamIDQueryParam{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetGuidesCountResponse{}),
 	)
 
@@ -301,6 +322,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get starred guides"),
 		openapi.WithDescription("Get all guides starred by the current user"),
 		openapi.WithTags("Guides"),
+		openapi.WithRequest(types.TeamIDQueryParam{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllGuidesResponse{}),
 	)
 

@@ -3,7 +3,7 @@ package steps
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -13,17 +13,17 @@ import (
 
 type CreateStepHandler struct {
 	appConfig    *config.AppConfig
-	stepsService interfaces.StepsService
+	stepsUseCase interfaces.StepsUseCase
 }
 
-func NewCreateStepHandler(appConfig *config.AppConfig, stepsService interfaces.StepsService) *CreateStepHandler {
-	return &CreateStepHandler{appConfig: appConfig, stepsService: stepsService}
+func NewCreateStepHandler(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) *CreateStepHandler {
+	return &CreateStepHandler{appConfig: appConfig, stepsUseCase: stepsUseCase}
 }
 
 func (h *CreateStepHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
 		var request types.CreateStepRequest
@@ -38,7 +38,7 @@ func (h *CreateStepHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		step, err := h.stepsService.Create(ctx, actor, &request)
+		step, err := h.stepsUseCase.Create(ctx, actor, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

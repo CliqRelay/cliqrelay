@@ -1,5 +1,4 @@
 import { api } from "@repo/api-client";
-
 import { withCsrf } from "@/lib/csrf";
 import type { CaptureBridgeMessage } from "@/models";
 import { buildActionText } from "@/utils/action-text";

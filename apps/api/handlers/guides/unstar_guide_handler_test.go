@@ -10,8 +10,11 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
+	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
 	"github.com/CliqRelay/cliqrelay/tests"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestUnstarGuideHandler(t *testing.T) {
@@ -56,6 +59,16 @@ func TestUnstarGuideHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockAuthz := new(tests.MockAuthorizationService)
 
+			mockGuidesRepo.On("GetByID", mock.Anything, guideID).
+				Return(&models.Guide{
+					ID:        uuid.MustParse(guideID),
+					CreatorID: "test-user-123",
+					Title:     "Guide Title",
+					Status:    models.StatusDraft,
+				}, nil).
+				Twice()
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
 			if tt.name == "success" || tt.name == "not starred (safe)" {
 				mockStarredRepo.On("Unstar", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(nil).
@@ -66,12 +79,13 @@ func TestUnstarGuideHandler(t *testing.T) {
 					Once()
 			}
 
-			svc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo, mockAuthz)
-			handler := handlersguides.NewUnstarGuideHandler(appConfig, svc)
+			starredSvc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
+			handler := handlersguides.NewUnstarGuideHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodDelete, path, nil)
 			req.Req.SetPathValue("id", guideID)
-
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

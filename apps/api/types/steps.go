@@ -163,8 +163,8 @@ type ReorderStepsResponse struct {
 }
 
 type DuplicateStepRequest struct {
-	InsertBeforeStepID *string `json:"insert_before_step_id,omitempty"`
-	InsertAfterStepID  *string `json:"insert_after_step_id,omitempty"`
+	InsertBeforeStepID *string   `json:"insert_before_step_id,omitempty"`
+	InsertAfterStepID  *string   `json:"insert_after_step_id,omitempty"`
 }
 
 type DuplicateStepResponse struct {

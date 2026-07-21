@@ -1,5 +1,6 @@
 import { api } from "@repo/api-client";
 
+import { getActiveTeamId } from "@/lib/active-team";
 import { withCsrf } from "@/lib/csrf";
 
 export const createEnsureGuide = (
@@ -10,8 +11,9 @@ export const createEnsureGuide = (
 		let guideId = await getActiveGuideId();
 
 		if (!guideId) {
+			const teamId = await getActiveTeamId();
 			const response = await api.guides.createGuide(
-				{ title: "Untitled Guide" },
+				{ title: "Untitled Guide", teamId: teamId ?? "" },
 				await withCsrf(),
 			);
 			guideId = response.guide.id;

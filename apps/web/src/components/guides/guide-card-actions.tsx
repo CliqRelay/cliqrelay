@@ -41,15 +41,17 @@ export function GuideCardActions({
 	const actionLabel =
 		confirmAction === "publish"
 			? "Publish"
-			: confirmAction === "archive"
-				? "Archive"
-				: confirmAction === "unarchive"
-					? "Unarchive"
-					: confirmAction === "restore"
-						? "Restore"
-						: confirmAction === "permanently-delete"
-							? "Delete Forever"
-							: "Delete";
+			: confirmAction === "unpublish"
+				? "Unpublish"
+				: confirmAction === "archive"
+					? "Archive"
+					: confirmAction === "unarchive"
+						? "Unarchive"
+						: confirmAction === "restore"
+							? "Restore"
+							: confirmAction === "permanently-delete"
+								? "Delete Forever"
+								: "Delete";
 
 	return (
 		<>
@@ -133,7 +135,11 @@ export function GuideCardActions({
 									? `Are you sure you want to publish "${guide.title}"?`
 									: confirmAction === "archive"
 										? `Are you sure you want to archive "${guide.title}"? It can be unarchived later.`
-										: `Are you sure you want to unarchive "${guide.title}"? It will be returned to draft status.`
+										: status === "archived"
+											? `Are you sure you want to unarchive "${guide.title}"? It will be returned to draft status.`
+											: status === "published"
+												? `Are you sure you want to unpublish "${guide.title}"? It will be returned to draft status.`
+												: ""
 				}
 				confirmLabel={loading ? `${actionLabel}ing...` : actionLabel}
 				variant={

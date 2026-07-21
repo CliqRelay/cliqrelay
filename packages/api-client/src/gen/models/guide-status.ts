@@ -16,5 +16,4 @@ export const GuideStatus = {
 	published: "published",
 	archived: "archived",
 	deleted: "deleted",
-	pendingPurge: "pending_purge",
 } as const;

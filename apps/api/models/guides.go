@@ -13,11 +13,10 @@ import (
 type GuideStatus string
 
 const (
-	StatusDraft        GuideStatus = "draft"
-	StatusPublished    GuideStatus = "published"
-	StatusArchived     GuideStatus = "archived"
-	StatusDeleted      GuideStatus = "deleted"
-	StatusPendingPurge GuideStatus = "pending_purge"
+	StatusDraft     GuideStatus = "draft"
+	StatusPublished GuideStatus = "published"
+	StatusArchived  GuideStatus = "archived"
+	StatusDeleted   GuideStatus = "deleted"
 )
 
 func (s GuideStatus) ToString() string {
@@ -31,9 +30,31 @@ func (GuideStatus) PrepareJSONSchema(schema *jsonschema.Schema) error {
 		string(StatusPublished),
 		string(StatusArchived),
 		string(StatusDeleted),
-		string(StatusPendingPurge),
 	}
 	schema.WithDescription("The status of the guide")
+	return nil
+}
+
+type Visibility string
+
+const (
+	VisibilityPrivate Visibility = "private"
+	VisibilityTeam    Visibility = "team"
+	VisibilityPublic  Visibility = "public"
+)
+
+func (s Visibility) ToString() string {
+	return string(s)
+}
+
+func (Visibility) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithType(jsonschema.String.Type())
+	schema.Enum = []any{
+		string(VisibilityPrivate),
+		string(VisibilityTeam),
+		string(VisibilityPublic),
+	}
+	schema.WithDescription("The visibility of the guide")
 	return nil
 }
 
@@ -66,11 +87,13 @@ type Guide struct {
 	bun.BaseModel `bun:"table:guides"`
 
 	ID               uuid.UUID   `json:"id" bun:"column:id,pk" required:"true"`
+	TeamID           uuid.UUID   `json:"team_id" bun:"column:team_id,type:uuid,notnull" required:"true"`
 	CreatorID        string      `json:"creator_id" bun:"column:creator_id" required:"true"`
 	Title            string      `json:"title" bun:"column:title" required:"true"`
 	Description      *string     `json:"description,omitempty" bun:"column:description" nullable:"true"`
 	Status           GuideStatus `json:"status" bun:"column:status" required:"true"`
 	DurationSeconds  int         `json:"duration_seconds" bun:"column:duration_seconds" required:"true"`
+	Visibility       Visibility  `json:"visibility" bun:"column:visibility" required:"true"`
 	PublishedAt      *time.Time  `json:"published_at,omitempty" bun:"column:published_at" nullable:"true"`
 	ArchivedAt       *time.Time  `json:"archived_at,omitempty" bun:"column:archived_at" nullable:"true"`
 	DeletedAt        *time.Time  `json:"deleted_at,omitempty" bun:"column:deleted_at" nullable:"true"`

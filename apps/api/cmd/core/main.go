@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Authula/authula"
+	organizationsplugin "github.com/Authula/authula/plugins/organizations"
 	"github.com/CliqRelay/cliqrelay/auth"
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -32,6 +34,7 @@ import (
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/services/storage"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
+	"github.com/CliqRelay/cliqrelay/usecases"
 	"github.com/CliqRelay/cliqrelay/worker"
 )
 
@@ -55,8 +58,10 @@ func main() {
 		log.Fatal("Error initializing OpenAPI service: ", err)
 	}
 
-	authulaAuth := auth.InitAuth(
+	var authulaAuth *authula.Auth
+	authulaAuth = auth.InitAuth(
 		envConfig,
+		auth.InitAuthServiceHooks(func() *authula.Auth { return authulaAuth }),
 	)
 
 	appConfig := &config.AppConfig{
@@ -75,6 +80,10 @@ func main() {
 		log.Fatal("Error initializing migrations: ", err)
 	}
 
+	if err := auth.SeedOrganizationRoles(context.Background(), appConfig.AuthulaInstance); err != nil {
+		log.Fatal("Error seeding organization roles: ", err)
+	}
+
 	bunGuidesRepo := bunGuides.NewBunGuidesRepository(appConfig.DB)
 	bunStarredGuidesRepo := bunStarredGuides.NewBunStarredGuidesRepository(appConfig.DB)
 	bunStepsRepo := bunSteps.NewBunStepsRepository(appConfig.DB)
@@ -85,28 +94,33 @@ func main() {
 	storageService := storage.NewS3StorageService(appConfig.S3Client)
 	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
 
-	authorizationService := authservice.NewDefaultAuthorizationService()
+	orgPlugin := authulaAuth.PluginRegistry.GetPlugin("organizations").(*organizationsplugin.OrganizationsPlugin)
+	authorizationService := authservice.NewDefaultAuthorizationService(*orgPlugin.Api)
 
 	guideHooks := (*interfaces.GuideHooks)(nil)
 	stepHooks := (*interfaces.StepHooks)(nil)
 	mediaHooks := (*interfaces.MediaAssetHooks)(nil)
 
-	guidesService := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, guidesCache, bunStepsRepo, appConfig.RedisClient, authorizationService, guideHooks)
-	starredService := starredguidesservice.NewStarredGuidesService(bunStarredGuidesRepo, bunGuidesRepo, authorizationService)
-	stepsService := stepsservice.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignService, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger, authorizationService, stepHooks)
-	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, authorizationService, mediaHooks)
+	guidesService := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, guidesCache, bunStepsRepo, appConfig.RedisClient, guideHooks)
+	starredService := starredguidesservice.NewStarredGuidesService(bunStarredGuidesRepo, bunGuidesRepo)
+	stepsService := stepsservice.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignService, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger, stepHooks)
+	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, mediaHooks)
 	exportService := export.NewExportService(bunGuideExportsRepo, bunGuidesRepo, bunStepsRepo, storageService, presignService, appConfig.RedisClient, appConfig.S3Bucket)
-	uploadsService := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, authorizationService, appConfig.S3Bucket)
+	uploadsService := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, appConfig.S3Bucket)
 	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, appConfig.S3Bucket)
 
-	svcs := &interfaces.DomainServices{
-		GuidesService:        guidesService,
-		StepsService:         stepsService,
-		StarredGuidesService: starredService,
-		MediaAssetsService:   mediaAssetsService,
-		ExportService:        exportService,
-		UploadsService:       uploadsService,
-		PurgeService:         purgeService,
+	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, guidesService, starredService)
+	stepsUseCase := usecases.NewStepsUseCase(authorizationService, stepsService, guidesService)
+	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, mediaAssetsService, stepsService, guidesService)
+	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, uploadsService, guidesService, stepsService)
+
+	svcs := &interfaces.DomainUseCases{
+		GuidesUseCase:      guidesUseCase,
+		StepsUseCase:       stepsUseCase,
+		MediaAssetsUseCase: mediaAssetsUseCase,
+		ExportService:      exportService,
+		UploadsUseCase:     uploadsUseCase,
+		PurgeService:       purgeService,
 	}
 
 	routes.InitRoutes(appConfig, svcs)

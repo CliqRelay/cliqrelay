@@ -19,10 +19,10 @@ export function GuideFilterBar() {
 					key={option.value}
 					variant={filter === option.value ? "default" : "outline"}
 					size="sm"
-					onClick={() => setFilter(option.value)}
 					className={
 						filter !== option.value ? "text-muted-foreground" : undefined
 					}
+					onClick={() => setFilter(option.value)}
 				>
 					{option.label}
 				</Button>

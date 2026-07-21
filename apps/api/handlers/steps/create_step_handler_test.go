@@ -15,9 +15,11 @@ import (
 	handlerssteps "github.com/CliqRelay/cliqrelay/handlers/steps"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func testRedisClient() *redis.Client {
@@ -42,19 +44,19 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "success",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:    models.StepTypeInteraction,
-				Action:  new(models.StepActionClick),
+				Type:        models.StepTypeInteraction,
+				Action:      new(models.StepActionClick),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
-				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
+					Twice()
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
@@ -70,21 +72,21 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "success with canvas content",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:    models.StepTypeCanvas,
+				Type:        models.StepTypeCanvas,
 				CanvasContent: &models.StepCanvasContent{
 					Type: models.StepCanvasTypeCallout,
 				},
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
-				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
+					Twice()
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
@@ -109,15 +111,15 @@ func TestCreateStepHandler(t *testing.T) {
 				InsertBeforeStepID: new(uuid.New().String()),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
-				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
+					Twice()
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   uuid.New(),
@@ -139,7 +141,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "validation error",
 			payload: types.CreateStepRequest{
-				GuideID: uuid.Nil,
+				GuideID:     uuid.Nil,
 			},
 			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -149,8 +151,8 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "canvas step with action rejected",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:    models.StepTypeCanvas,
-				Action:  new(models.StepActionClick),
+				Type:        models.StepTypeCanvas,
+				Action:      new(models.StepActionClick),
 			},
 			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -160,8 +162,8 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "canvas step with url rejected",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:    models.StepTypeCanvas,
-				URL:     new("https://example.com"),
+				Type:        models.StepTypeCanvas,
+				URL:         new("https://example.com"),
 			},
 			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -171,7 +173,7 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "interaction step with canvas_content rejected",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:    models.StepTypeInteraction,
+				Type:        models.StepTypeInteraction,
 				CanvasContent: &models.StepCanvasContent{
 					Type: models.StepCanvasTypeCallout,
 				},
@@ -184,10 +186,10 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "guide not found",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:    models.StepTypeInteraction,
+				Type:        models.StepTypeInteraction,
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
 			},
@@ -198,18 +200,18 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "service error",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:    models.StepTypeInteraction,
+				Type:        models.StepTypeInteraction,
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockGuidesRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
-				mockStepsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateStepDTO")).
+					Twice()
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -227,9 +229,11 @@ func TestCreateStepHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
-			handler := handlerssteps.NewCreateStepHandler(appConfig, svc)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
+			handler := handlerssteps.NewCreateStepHandler(appConfig, uc)
 
 			var req tests.HandlerTestRequest
 			if tt.rawBody != nil {

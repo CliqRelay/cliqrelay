@@ -67,7 +67,7 @@ function SignupPage() {
 					name: value.name,
 					email: value.email,
 					password: value.password,
-					callbackUrl: `${envClient.baseUrl}/dashboard`,
+					callbackUrl: `${envClient.baseUrl}/create-organization`,
 				});
 
 				localStorage.setItem("email", value.email);

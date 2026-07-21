@@ -26,7 +26,7 @@ import {
  * @summary Get all steps by guide ID
  */
 export const GetAllStepsByGuideIdQueryParams = zod.object({
-	guideId: zod.string().optional(),
+	guide_id: zod.string().optional(),
 });
 
 export const GetAllStepsByGuideIdResponse = GetAllStepsResponse;
