@@ -217,6 +217,18 @@ export const createSessionManager = (
 		message: CaptureBridgeMessage,
 	) => {
 		const payload = message.payload;
+
+		if (payload.typedText === "") {
+			if (pendingFreeTypingStepId) {
+				await api.steps.deleteStep(pendingFreeTypingStepId, await withCsrf());
+				if (pendingFreeTypingCaptureId) {
+					jobProgressMap.delete(pendingFreeTypingCaptureId);
+				}
+				clearPendingFreeTyping();
+			}
+			return;
+		}
+
 		const guideId = pendingFreeTypingGuideId ?? (await getOrCreateGuideId()).guideId;
 		const actionText = buildActionText("input", undefined, payload.typedText);
 

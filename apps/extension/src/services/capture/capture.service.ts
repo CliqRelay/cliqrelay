@@ -110,7 +110,7 @@ export const createCaptureService = (sink: CaptureSink): CaptureService => {
 				payload,
 			});
 			if (result && typeof result === "object" && "catch" in result) {
-				(result as Promise<void>).catch(() => {});
+				(result as Promise<void>).catch(() => { });
 			}
 		} catch {
 			// sink failure is non-fatal
@@ -139,6 +139,17 @@ export const createCaptureService = (sink: CaptureSink): CaptureService => {
 	const handleKeydown = (event: KeyboardEvent) => {
 		if (event.key === "Backspace") {
 			typingBuffer.pop();
+			if (typingBuffer.length === 0 && lastSentText !== "") {
+				debouncedUpdate.cancel();
+				send({
+					action: "input",
+					url: window.location.href,
+					capturedAt: new Date().toISOString(),
+					typedText: "",
+				});
+				lastSentText = "";
+				return;
+			}
 		} else if (event.key === " ") {
 			const last = typingBuffer[typingBuffer.length - 1];
 			if (last?.kind === "char" && last.value === " ") return;
@@ -161,15 +172,19 @@ export const createCaptureService = (sink: CaptureSink): CaptureService => {
 
 				const isModifierCombo = event.ctrlKey || event.altKey || event.metaKey;
 
-				if (action === "keypress" && (isModifierCombo || typingBuffer.length === 0)) {
+				if (action === "keypress" && isModifierCombo) {
 					flushTypingSession();
 					const payload = buildCaptureEventPayload(event, window.location.href);
-					if (payload) send(payload);
+					if (payload) {
+						send(payload);
+					}
 					return;
 				}
 
 				if (action === "keypress" && CONTROL_KEYS.has(event.key)) {
-					handleKeydown(event);
+					if (typingBuffer.length > 0 || lastSentText !== "") {
+						handleKeydown(event);
+					}
 					return;
 				}
 

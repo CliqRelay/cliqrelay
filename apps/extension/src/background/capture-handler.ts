@@ -67,7 +67,7 @@ export const createCaptureHandler = (
 				: {}),
 		});
 
-		const isFreeTyping = payload.action === "input" && payload.typedText;
+		const isFreeTyping = payload.action === "input" && payload.typedText != null;
 
 		if (isFreeTyping) {
 			void (async () => {
