@@ -17,6 +17,7 @@ export const createSessionManager = (
 ) => {
 	const jobProgressMap = new Map<string, StepJobProgress>();
 	const captureMetadataMap = new Map<string, CaptureMetadataEntry>();
+	const dismissedJobIds = new Set<string>();
 	let isDraining = false;
 	let currentPortManager: PortManager | null = null;
 	let clearDedup: (() => void) | undefined;
@@ -55,6 +56,12 @@ export const createSessionManager = (
 		}
 	};
 
+	const removeJobProgress = (jobId: string) => {
+		jobProgressMap.delete(jobId);
+		captureMetadataMap.delete(jobId);
+		dismissedJobIds.add(jobId);
+	};
+
 	const getUploadQueueSnapshot = () => {
 		const entries = Array.from(jobProgressMap.values());
 		let pending = 0;
@@ -87,6 +94,7 @@ export const createSessionManager = (
 	const clearProgressMap = () => {
 		jobProgressMap.clear();
 		captureMetadataMap.clear();
+		dismissedJobIds.clear();
 	};
 
 	const stateUpdateBuilder = createStateUpdateBuilder(
@@ -110,6 +118,11 @@ export const createSessionManager = (
 				break;
 			}
 			case "job_completed": {
+				if (dismissedJobIds.has(event.jobId)) {
+					dismissedJobIds.delete(event.jobId);
+					captureMetadataMap.delete(event.jobId);
+					break;
+				}
 				const meta = captureMetadataMap.get(event.jobId);
 				jobProgressMap.set(event.jobId, {
 					jobId: event.jobId,
@@ -149,6 +162,11 @@ export const createSessionManager = (
 				break;
 			}
 			case "job_failed": {
+				if (dismissedJobIds.has(event.jobId)) {
+					dismissedJobIds.delete(event.jobId);
+					captureMetadataMap.delete(event.jobId);
+					break;
+				}
 				const existing = jobProgressMap.get(event.jobId);
 				if (existing) {
 					existing.phase = "failed";
@@ -305,6 +323,11 @@ export const createSessionManager = (
 			if (snapshot.status !== "recording" && !isDraining) {
 				await sessionService.setActiveGuideId(null);
 			}
+		}
+		if (message.command === "dismiss_job" && message.jobId) {
+			removeJobProgress(message.jobId);
+			await broadcastUpdate();
+			return;
 		}
 		const result = await commandHandler.handleCommand(message);
 		const mutationCommands = [

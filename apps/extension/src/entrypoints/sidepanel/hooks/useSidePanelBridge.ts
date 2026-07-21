@@ -63,6 +63,18 @@ export const useSidePanelBridge = () => {
 	const stopRecording = () => sendCommand("stop_recording");
 	const getStatus = () => sendCommand("get_status");
 
+	const dismissJob = async (jobId: string) => {
+		try {
+			await browser.runtime.sendMessage({
+				type: sidePanelCommandType,
+				command: "dismiss_job",
+				jobId,
+			});
+		} catch (error) {
+			console.error("Failed to dismiss job:", error);
+		}
+	};
+
 	const getSettings = async () => {
 		try {
 			const settings = (await browser.runtime.sendMessage({
@@ -112,6 +124,7 @@ export const useSidePanelBridge = () => {
 		pauseRecording,
 		resumeRecording,
 		stopRecording,
+		dismissJob,
 		getStatus,
 		getSettings,
 		updateSettings,

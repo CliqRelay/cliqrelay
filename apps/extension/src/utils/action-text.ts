@@ -54,7 +54,7 @@ export const buildActionText = (
 	keyCombo?: string | null,
 ): string | undefined => {
 	if (action === "keypress" && keyCombo) {
-		return `Pressed "${keyCombo}"`;
+		return `Press "${keyCombo}"`;
 	}
 
 	if (action === "input" && typedText) {
