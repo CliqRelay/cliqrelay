@@ -17,6 +17,7 @@ export const sidePanelCommandTypes = [
 	"get_settings",
 	"update_settings",
 	"retry_failed_uploads",
+	"dismiss_job",
 ] as const;
 
 export const sidePanelCommandTypeSchema = z.enum(sidePanelCommandTypes);
@@ -26,6 +27,7 @@ export const sidePanelCommandSchema = z.object({
 	type: z.literal(sidePanelCommandType),
 	command: sidePanelCommandTypeSchema,
 	payload: extensionSettingsSchema.partial().optional(),
+	jobId: z.string().optional(),
 });
 export type SidePanelCommand = z.infer<typeof sidePanelCommandSchema>;
 

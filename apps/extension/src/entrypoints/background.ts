@@ -39,6 +39,8 @@ export default defineBackground(() => {
 		stateUpdateBuilder,
 		portManager,
 		sessionManager.captureMetadataMap,
+		sessionManager.handleFreeTypingCapture,
+		sessionManager.clearPendingFreeTyping,
 	);
 
 	recording.setProcessBufferedCapture(async (captures) => {

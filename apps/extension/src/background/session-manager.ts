@@ -1,11 +1,12 @@
 import { api } from "@repo/api-client";
 
 import { withCsrf } from "@/lib/csrf";
-import type { CaptureMetadataEntry, OffscreenEvent, RecordingStateMachine, SessionService, SidePanelCommand, StepJobProgress } from "@/models";
+import type { CaptureBridgeMessage, CaptureMetadataEntry, OffscreenEvent, RecordingStateMachine, SessionService, SidePanelCommand, StepJobProgress } from "@/models";
 import type { PortManager } from "@/services/sidepanel/port-manager.service";
 import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
 import { createOffscreenManager } from "@/services/background/offscreen-manager.service";
 import type { GetSettings, UpdateSettings } from "@/services/settings";
+import { buildActionText } from "@/utils/action-text";
 import { generateCaptureId } from "@/utils/id";
 
 export const createSessionManager = (
@@ -16,6 +17,7 @@ export const createSessionManager = (
 ) => {
 	const jobProgressMap = new Map<string, StepJobProgress>();
 	const captureMetadataMap = new Map<string, CaptureMetadataEntry>();
+	const dismissedJobIds = new Set<string>();
 	let isDraining = false;
 	let currentPortManager: PortManager | null = null;
 	let clearDedup: (() => void) | undefined;
@@ -54,6 +56,12 @@ export const createSessionManager = (
 		}
 	};
 
+	const removeJobProgress = (jobId: string) => {
+		jobProgressMap.delete(jobId);
+		captureMetadataMap.delete(jobId);
+		dismissedJobIds.add(jobId);
+	};
+
 	const getUploadQueueSnapshot = () => {
 		const entries = Array.from(jobProgressMap.values());
 		let pending = 0;
@@ -86,6 +94,7 @@ export const createSessionManager = (
 	const clearProgressMap = () => {
 		jobProgressMap.clear();
 		captureMetadataMap.clear();
+		dismissedJobIds.clear();
 	};
 
 	const stateUpdateBuilder = createStateUpdateBuilder(
@@ -109,6 +118,11 @@ export const createSessionManager = (
 				break;
 			}
 			case "job_completed": {
+				if (dismissedJobIds.has(event.jobId)) {
+					dismissedJobIds.delete(event.jobId);
+					captureMetadataMap.delete(event.jobId);
+					break;
+				}
 				const meta = captureMetadataMap.get(event.jobId);
 				jobProgressMap.set(event.jobId, {
 					jobId: event.jobId,
@@ -148,6 +162,11 @@ export const createSessionManager = (
 				break;
 			}
 			case "job_failed": {
+				if (dismissedJobIds.has(event.jobId)) {
+					dismissedJobIds.delete(event.jobId);
+					captureMetadataMap.delete(event.jobId);
+					break;
+				}
 				const existing = jobProgressMap.get(event.jobId);
 				if (existing) {
 					existing.phase = "failed";
@@ -200,11 +219,97 @@ export const createSessionManager = (
 		updateSettings,
 	);
 
+	let pendingFreeTypingStepId: string | null = null;
+	let pendingFreeTypingCaptureId: string | null = null;
+	let pendingFreeTypingGuideId: string | null = null;
+	let pendingFreeTypingOp: Promise<void> = Promise.resolve();
+
+	const clearPendingFreeTyping = () => {
+		pendingFreeTypingStepId = null;
+		pendingFreeTypingCaptureId = null;
+		pendingFreeTypingGuideId = null;
+	};
+
+	const executeFreeTypingCapture = async (
+		captureId: string,
+		message: CaptureBridgeMessage,
+	) => {
+		const payload = message.payload;
+
+		if (payload.typedText === "") {
+			if (pendingFreeTypingStepId) {
+				await api.steps.deleteStep(pendingFreeTypingStepId, await withCsrf());
+				if (pendingFreeTypingCaptureId) {
+					jobProgressMap.delete(pendingFreeTypingCaptureId);
+				}
+				clearPendingFreeTyping();
+			}
+			return;
+		}
+
+		const guideId = pendingFreeTypingGuideId ?? (await getOrCreateGuideId()).guideId;
+		const actionText = buildActionText("input", undefined, payload.typedText);
+
+		if (pendingFreeTypingStepId) {
+			await api.steps.updateStep(
+				pendingFreeTypingStepId,
+				{ actionText },
+				await withCsrf(),
+			);
+
+			const existing =
+				pendingFreeTypingCaptureId &&
+				jobProgressMap.get(pendingFreeTypingCaptureId);
+			if (existing) {
+				existing.actionText = actionText;
+			}
+		} else {
+			const stepResponse = await api.steps.createStep(
+				{
+					guideId,
+					type: "interaction",
+					action: "input",
+					url: payload.url,
+					actionText,
+				},
+				await withCsrf(),
+			);
+
+			pendingFreeTypingStepId = stepResponse.step.id;
+			pendingFreeTypingCaptureId = captureId;
+			pendingFreeTypingGuideId = guideId;
+
+			jobProgressMap.set(captureId, {
+				jobId: captureId,
+				stepId: stepResponse.step.id,
+				guideId,
+				action: "input",
+				actionText,
+				url: payload.url ?? "",
+				capturedAt: payload.capturedAt,
+				phase: "completed",
+			});
+		}
+	};
+
+	const handleFreeTypingCapture = async (
+		captureId: string,
+		message: CaptureBridgeMessage,
+	) => {
+		const currentOp = pendingFreeTypingOp.then(() =>
+			executeFreeTypingCapture(captureId, message),
+		);
+
+		pendingFreeTypingOp = currentOp.catch(() => { });
+		await currentOp;
+	};
+
 	const handleSidePanelCommand = async (message: SidePanelCommand) => {
 		if (message.command === "start_recording") {
 			isDraining = false;
 			jobProgressMap.clear();
 			captureMetadataMap.clear();
+			clearPendingFreeTyping();
 			clearDedup?.();
 			clearPendingActivations?.();
 			void offscreenManager.closeDocument().then(() => offscreenManager.startSession(generateCaptureId()));
@@ -218,6 +323,11 @@ export const createSessionManager = (
 			if (snapshot.status !== "recording" && !isDraining) {
 				await sessionService.setActiveGuideId(null);
 			}
+		}
+		if (message.command === "dismiss_job" && message.jobId) {
+			removeJobProgress(message.jobId);
+			await broadcastUpdate();
+			return;
 		}
 		const result = await commandHandler.handleCommand(message);
 		const mutationCommands = [
@@ -241,6 +351,8 @@ export const createSessionManager = (
 		setClearPendingActivations,
 		handleSidePanelCommand,
 		handleOffscreenEvent,
+		handleFreeTypingCapture,
+		clearPendingFreeTyping,
 	};
 };
 

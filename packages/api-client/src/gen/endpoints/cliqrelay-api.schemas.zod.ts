@@ -132,7 +132,7 @@ export type CreateMediaAssetResponseOutput = zod.output<
 >;
 
 export const StepAction = zod
-	.enum(["click", "input", "navigation"])
+	.enum(["click", "input", "navigation", "keypress"])
 	.describe("The browser interaction type captured for the step");
 
 export type StepAction = zod.input<typeof StepAction>;

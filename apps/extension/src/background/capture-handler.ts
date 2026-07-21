@@ -1,5 +1,6 @@
-import { type Browser } from "wxt/browser";
+import type { Browser } from "wxt/browser";
 
+import type { CreateStepWithoutScreenshot } from "@/models";
 import type { PortManager } from "@/services/sidepanel/port-manager.service";
 import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
 import type {
@@ -19,6 +20,8 @@ export const createCaptureHandler = (
 	stateUpdateBuilder: () => Promise<SidePanelStateUpdate>,
 	portManager: PortManager,
 	captureMetadataMap: Map<string, CaptureMetadataEntry>,
+	createStepWithoutScreenshot: CreateStepWithoutScreenshot,
+	clearPendingFreeTyping: () => void,
 ) => {
 	const handleCapture = (
 		message: unknown,
@@ -38,33 +41,55 @@ export const createCaptureHandler = (
 		}
 
 		const captureId = generateCaptureId();
-		const targetElement = message.payload.targetElement;
+		const payload = message.payload;
+		const targetElement = payload.targetElement;
+		const actionText = buildActionText(
+			payload.action,
+			payload.targetElement,
+			payload.typedText,
+			payload.keyCombo,
+		);
+
 		captureMetadataMap.set(captureId, {
-			action: message.payload.action,
-			actionText: buildActionText(
-				message.payload.action,
-				message.payload.targetElement,
-			),
-			url: message.payload.url,
-			capturedAt: message.payload.capturedAt,
+			action: payload.action,
+			actionText,
+			url: payload.url,
+			capturedAt: payload.capturedAt,
 			...(targetElement
 				? {
-						targetElement: {
-							clickX: targetElement.clickX,
-							clickY: targetElement.clickY,
-							viewportWidth: targetElement.viewportWidth,
-							viewportHeight: targetElement.viewportHeight,
-						},
-					}
+					targetElement: {
+						clickX: targetElement.clickX,
+						clickY: targetElement.clickY,
+						viewportWidth: targetElement.viewportWidth,
+						viewportHeight: targetElement.viewportHeight,
+					},
+				}
 				: {}),
 		});
+
+		const isFreeTyping = payload.action === "input" && payload.typedText != null;
+
+		if (isFreeTyping) {
+			void (async () => {
+				try {
+					await createStepWithoutScreenshot(captureId, message);
+				} catch (error) {
+					console.warn("[background] Free typing step creation failed:", error);
+				}
+				const stateUpdate = await stateUpdateBuilder();
+				portManager.broadcast({ type: "state_update", state: stateUpdate });
+			})();
+			return true;
+		}
+
+		clearPendingFreeTyping();
 
 		recording.ingestCapture({
 			tabId,
 			message: {
 				source: "background",
 				type: message.type,
-				payload: { ...message.payload, captureId, tabId: tabId.toString() },
+				payload: { ...payload, captureId, tabId: tabId.toString() },
 			},
 		});
 

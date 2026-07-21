@@ -86,6 +86,7 @@ function Home() {
 				(jp) => jp.stepId === deletingStep.id || jp.jobId === deletingStep.id,
 			);
 			if (match) {
+				bridge.dismissJob(match.jobId);
 				removeJobProgress(match.jobId);
 			}
 		} catch (err) {
@@ -97,6 +98,7 @@ function Home() {
 	};
 
 	const handleDismiss = (jobId: string) => {
+		bridge.dismissJob(jobId);
 		removeJobProgress(jobId);
 	};
 

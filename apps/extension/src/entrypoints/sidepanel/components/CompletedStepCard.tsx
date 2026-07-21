@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { MoreHorizontalIcon, Trash2Icon } from "lucide-react";
 
-import { StepAction } from "@repo/api-client";
+import type { StepAction } from "@repo/api-client";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

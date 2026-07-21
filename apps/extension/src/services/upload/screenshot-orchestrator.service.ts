@@ -215,18 +215,22 @@ export const createScreenshotUploadOrchestrator = (
 				action: message.payload.action,
 				url: message.payload.url,
 				targetElement: message.payload.targetElement ?? undefined,
-				actionText: buildActionText(
-					message.payload.action,
-					message.payload.targetElement,
-				),
-			},
-			await withCsrf(),
-		);
-		const stepId = stepResponse.step.id;
-		const actionText = stepResponse.step.actionText ?? buildActionText(
-			message.payload.action,
-			message.payload.targetElement,
-		);
+			actionText: buildActionText(
+				message.payload.action,
+				message.payload.targetElement,
+				message.payload.typedText,
+				message.payload.keyCombo,
+			),
+		},
+		await withCsrf(),
+	);
+	const stepId = stepResponse.step.id;
+	const actionText = stepResponse.step.actionText ?? buildActionText(
+		message.payload.action,
+		message.payload.targetElement,
+		message.payload.typedText,
+		message.payload.keyCombo,
+	);
 		if (captureId) {
 			stepCache.set(captureId, { stepId, guideId, actionText, navStepId, navUrl, navCapturedAt });
 		}

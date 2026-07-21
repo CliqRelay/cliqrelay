@@ -32,7 +32,9 @@ export const customFetch = async <T>(
 ): Promise<T> => {
 	// Server-side (SSR in Docker): use internal API_URL to reach the api container
 	const resolvedUrl =
-		typeof window === "undefined" && process.env.API_URL
+		typeof window === "undefined" &&
+		typeof process !== "undefined" &&
+		process.env?.API_URL
 			? url.replace(
 					/^https?:\/\/[^/]+/,
 					process.env.API_URL.replace(/\/+$/, ""),

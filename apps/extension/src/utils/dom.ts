@@ -1,4 +1,6 @@
-import type { CaptureAction, TargetElement } from "@/models";
+import type { StepAction } from "@repo/api-client";
+
+import type { TargetElement } from "@/models";
 
 const escapeAttributeValue = (value: string) =>
 	value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
@@ -80,7 +82,7 @@ const getElementText = (element: Element): string => {
 export const getCaptureAction = (
 	event: Event,
 	targetElement: Element | null,
-): CaptureAction | null => {
+): StepAction | null => {
 	if (event.type === "click") {
 		return "click";
 	}
@@ -111,11 +113,34 @@ export const getCaptureAction = (
 		return "input";
 	}
 
-	const actionByEventType: Record<string, CaptureAction> = {
-		click: "click",
-	};
+	if (event.type === "keydown" && event instanceof KeyboardEvent) {
+		if (["Control", "Shift", "Alt", "Meta"].includes(event.key)) return null;
 
-	return actionByEventType[event.type] ?? null;
+		const el = event.target as Element | null;
+		const isInputField =
+			el instanceof HTMLInputElement ||
+			el instanceof HTMLTextAreaElement ||
+			(el instanceof HTMLElement && el.isContentEditable);
+		if (isInputField) return null;
+
+		if (event.ctrlKey || event.altKey || event.metaKey) return "keypress";
+
+		const controlKeys = new Set([
+			"Escape",
+			"Enter",
+			"Tab",
+			"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+			"ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+			"Home", "End", "PageUp", "PageDown", "Delete", "Backspace",
+		]);
+		if (controlKeys.has(event.key)) return "keypress";
+
+		if (event.key.length === 1) return "input";
+
+		return null;
+	}
+
+	return null;
 };
 
 export const getEventTargetElement = (
