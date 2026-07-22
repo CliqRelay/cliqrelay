@@ -9,6 +9,7 @@ import { faker } from "@faker-js/faker";
 
 import type {
 	ArchiveGuideResponse,
+	CreateDemoGuideResponse,
 	CreateGuideResponse,
 	DeleteGuideResponse,
 	ExportGuideResponse,
@@ -193,6 +194,13 @@ export const getGetGuidesCountResponseMock = (
 	overrideResponse: Partial<Extract<GetGuidesCountResponse, object>> = {},
 ): GetGuidesCountResponse => ({
 	count: faker.number.int(),
+	...overrideResponse,
+});
+
+export const getCreateDemoGuideResponseMock = (
+	overrideResponse: Partial<Extract<CreateDemoGuideResponse, object>> = {},
+): CreateDemoGuideResponse => ({
+	guideId: faker.string.alpha({ length: { min: 10, max: 20 } }),
 	...overrideResponse,
 });
 

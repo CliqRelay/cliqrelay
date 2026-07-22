@@ -1,6 +1,7 @@
 import { useForm, useStore } from "@tanstack/react-form";
 
 import { toast } from "@/hooks/use-toast";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 import { createGuide } from "@/server-fns/guides";
 
 type UseCreateGuideFormOptions = {
@@ -24,7 +25,8 @@ export function useCreateGuideForm({
 				return;
 			}
 			try {
-				const guide = await createGuide({ data: value });
+				const workspaceId = useWorkspaceStore.getState().activeWorkspaceId ?? "";
+				const guide = await createGuide({ data: { ...value, workspaceId } });
 				toast({ title: "Success", description: "Guide created" });
 				form.reset();
 				onOpenChange(false);

@@ -58,9 +58,80 @@ func main() {
 		log.Fatal("Error initializing OpenAPI service: ", err)
 	}
 
+	authServiceHooks := auth.InitAuthServiceHooks()
 	authulaAuth := auth.InitAuth(
 		envConfig,
+		authServiceHooks,
 	)
+
+	// organizationsPlugin := authulaAuth.PluginRegistry.GetPlugin("organizations").(*organizations.OrganizationsPlugin)
+	// accessControlPlugin := authulaAuth.PluginRegistry.GetPlugin("access_control").(*accesscontrol.AccessControlPlugin)
+
+	// authulaAuth.RegisterHook(authulamodels.Hook{
+	// 	Stage: authulamodels.HookAfter,
+	// 	Matcher: func(reqCtx *authulamodels.RequestContext) bool {
+	// 		return reqCtx.Route != nil &&
+	// 			reqCtx.Route.Method == "POST" &&
+	// 			strings.HasSuffix(reqCtx.Route.Pattern, "/email-password/sign-up") &&
+	// 			reqCtx.Actor != nil &&
+	// 			reqCtx.Actor.ID != ""
+	// 	},
+	// 	Handler: func(reqCtx *authulamodels.RequestContext) error {
+	// 		actor := reqCtx.Actor
+	// 		if actor == nil {
+	// 			return nil
+	// 		}
+
+	// 		ctx := reqCtx.Request.Context()
+	// 		orgName := "Personal"
+	// 		if email, ok := actor.Claims["email"].(string); ok && email != "" {
+	// 			orgName = email
+	// 		}
+
+	// 		org, err := orgPlugin.Api.CreateOrganization(ctx, actor, organizationstypes.CreateOrganizationRequest{
+	// 			Name: orgName,
+	// 			Role: "admin",
+	// 		})
+	// 		if err != nil {
+	// 			slog.Error("Failed to create organization after signup", "user_id", actor.ID, "err", err)
+	// 			return nil
+	// 		}
+
+	// 		adminRole, err := acPlugin.Api.GetRoleByName(ctx, actor, "admin")
+	// 		if err != nil || adminRole == nil {
+	// 			adminRole, err = acPlugin.Api.CreateRole(ctx, actor, accesscontroltypes.CreateRoleRequest{
+	// 				Name:        "admin",
+	// 				Description: new("Administrator with full access"),
+	// 				IsSystem:    true,
+	// 			})
+	// 			if err != nil {
+	// 				slog.Error("Failed to create admin role after signup", "err", err)
+	// 				return nil
+	// 			}
+	// 		}
+
+	// 		err = acPlugin.Api.AssignRoleToUser(ctx, actor, actor.ID, accesscontroltypes.AssignUserRoleRequest{
+	// 			RoleID: adminRole.ID,
+	// 		}, nil)
+	// 		if err != nil {
+	// 			slog.Error("Failed to assign admin role after signup", "user_id", actor.ID, "err", err)
+	// 		}
+
+	// 		_, err = bunWorkspaces.NewBunWorkspacesRepository(authulaAuth.DB()).Create(ctx, &types.CreateWorkspaceDTO{
+	// 			OrganizationID: org.ID,
+	// 			OwnerID:        actor.ID,
+	// 			Name:           "My Workspace",
+	// 			Type:           models.WorkspaceTypePersonal,
+	// 		})
+	// 		if err != nil {
+	// 			slog.Error("Failed to create workspace after signup", "user_id", actor.ID, "err", err)
+	// 		}
+
+	// 		return nil
+	// 	},
+	// 	Async: true,
+	// 	Order: 0,
+	// })
 
 	appConfig := &config.AppConfig{
 		EnvConfig:       envConfig,

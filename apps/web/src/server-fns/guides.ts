@@ -1,17 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 
-import {
-	api,
-	type CreateStepRequest,
-	type Step,
-	StepType,
-	type UpdateGuideRequest,
-} from "@repo/api-client";
+import { api } from "@repo/api-client";
 
+import { WORKSPACE_COOKIE_NAME } from "@/constants/workspace";
 import { authMiddleware } from "@/middleware/auth.middleware";
 
 export const createGuide = createServerFn({ method: "POST" })
-	.validator((input: { title: string; description?: string }) => input)
+	.validator((input: { title: string; description?: string; workspaceId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
@@ -19,6 +15,7 @@ export const createGuide = createServerFn({ method: "POST" })
 				{
 					title: data.title,
 					description: data.description ?? null,
+					workspaceId: data.workspaceId,
 				},
 				{
 					headers: {
@@ -37,11 +34,13 @@ export const createGuide = createServerFn({ method: "POST" })
 export const getAllGuides = createServerFn({
 	method: "GET",
 })
+	.validator((input?: { workspaceId?: string }) => input)
 	.middleware([authMiddleware])
-	.handler(async ({ context }) => {
+	.handler(async ({ data, context }) => {
 		try {
+			const workspaceId = data?.workspaceId ?? getCookie(WORKSPACE_COOKIE_NAME) ?? "";
 			const guidesResponse = await api.guides.getAllGuides(
-				{},
+				{ workspaceId },
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
@@ -75,13 +74,13 @@ export const getGuideById = createServerFn({
 	});
 
 export const updateGuide = createServerFn({ method: "POST" })
-	.validator((input: { guideId: string; input: UpdateGuideRequest }) => input)
+	.validator((input: { guideId: string; input: Record<string, unknown> }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
 			const updatedGuideResponse = await api.guides.updateGuide(
 				data.guideId,
-				data.input,
+				data.input as any,
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
@@ -246,14 +245,19 @@ export const getStepsByGuideId = createServerFn({ method: "GET" })
 	});
 
 export const getStarredGuides = createServerFn({ method: "GET" })
+	.validator((input?: { workspaceId?: string }) => input)
 	.middleware([authMiddleware])
-	.handler(async ({ context }) => {
+	.handler(async ({ data, context }) => {
 		try {
-			const guidesResponse = await api.guides.getStarredGuides({
-				headers: {
-					Cookie: context.headers.get("Cookie") ?? "",
+			const workspaceId = data?.workspaceId ?? getCookie(WORKSPACE_COOKIE_NAME) ?? "";
+			const guidesResponse = await api.guides.getStarredGuides(
+				{ workspaceId },
+				{
+					headers: {
+						Cookie: context.headers.get("Cookie") ?? "",
+					},
 				},
-			});
+			);
 			return guidesResponse.guides;
 		} catch (error) {
 			console.error("Failed to fetch starred guides:", error);
@@ -262,13 +266,13 @@ export const getStarredGuides = createServerFn({ method: "GET" })
 	});
 
 export const getTrashGuides = createServerFn({ method: "GET" })
+	.validator((input?: { workspaceId?: string }) => input)
 	.middleware([authMiddleware])
-	.handler(async ({ context }) => {
+	.handler(async ({ data, context }) => {
 		try {
+			const workspaceId = data?.workspaceId ?? getCookie(WORKSPACE_COOKIE_NAME) ?? "";
 			const guidesResponse = await api.guides.getAllGuides(
-				{
-					status: "deleted",
-				},
+				{ status: "deleted", workspaceId },
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
@@ -283,16 +287,15 @@ export const getTrashGuides = createServerFn({ method: "GET" })
 	});
 
 export const createDemoGuide = createServerFn({ method: "POST" })
+	.validator((input?: { workspaceId?: string }) => input)
 	.middleware([authMiddleware])
-	.handler(async ({ context }) => {
+	.handler(async ({ data, context }) => {
 		try {
 			const cookieHeader = context.headers.get("Cookie") ?? "";
+			const workspaceId = data?.workspaceId ?? getCookie(WORKSPACE_COOKIE_NAME) ?? "";
 
-			const guideResponse = await api.guides.createGuide(
-				{
-					title: "Getting Started with CliqRelay",
-					description: "A sample guide to show you how CliqRelay works",
-				},
+			const response = await api.guides.createDemoGuide(
+				{ workspaceId },
 				{
 					headers: {
 						Cookie: cookieHeader,
@@ -300,68 +303,7 @@ export const createDemoGuide = createServerFn({ method: "POST" })
 				},
 			);
 
-			const guideId = guideResponse.guide.id;
-
-			const steps: CreateStepRequest[] = [
-				{
-					guideId,
-					type: StepType.canvas,
-					canvasContent: {
-						type: "header",
-						headingText: "Overview of CliqRelay",
-						bodyText:
-							"You can use this step to provide an overview or introduction to your guide.",
-					},
-				},
-				{
-					guideId,
-					type: StepType.interaction,
-					action: "click",
-					actionText: `Click "Some Button"`,
-					notes:
-						"This step demonstrates a click step which will be accompanied by a screenshot of the action.",
-				},
-				{
-					guideId,
-					type: StepType.canvas,
-					canvasContent: {
-						type: "tip",
-						headingText: "This is a note",
-						bodyText:
-							"You can use this step to provide additional information or tips related to the guide.",
-					},
-				},
-				{
-					guideId,
-					type: StepType.canvas,
-					canvasContent: {
-						type: "callout",
-						headingText: "Callout",
-						bodyText:
-							"This is a callout step, which can be used to draw attention to important information or warnings.",
-					},
-				},
-				{
-					guideId,
-					type: StepType.canvas,
-					canvasContent: {
-						type: "alert",
-						headingText: "Alert",
-						bodyText:
-							"This is an alert step, which can be used to highlight critical information or errors that users should be aware of.",
-					},
-				},
-			];
-
-			for (const step of steps) {
-				await api.steps.createStep(step, {
-					headers: {
-						Cookie: cookieHeader,
-					},
-				});
-			}
-
-			return guideId;
+			return response.guideId;
 		} catch (error) {
 			console.error("Failed to create demo guide:", error);
 			return null;

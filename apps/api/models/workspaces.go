@@ -30,7 +30,7 @@ type Workspace struct {
 
 	ID             uuid.UUID     `json:"id" bun:"column:id,pk" required:"true" nullable:"false"`
 	OrganizationID string        `json:"organization_id" bun:"column:organization_id" required:"true" nullable:"false"`
-	OwnerID        *string       `json:"owner_id,omitempty" bun:"column:owner_id" nullable:"true"`
+	OwnerID        string        `json:"owner_id" bun:"column:owner_id" required:"true" nullable:"false"`
 	Name           string        `json:"name" bun:"column:name" required:"true" nullable:"false"`
 	Type           WorkspaceType `json:"type" bun:"column:type" required:"true" nullable:"false"`
 	CreatedAt      time.Time     `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true" nullable:"false"`

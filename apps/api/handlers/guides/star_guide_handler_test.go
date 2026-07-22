@@ -94,8 +94,6 @@ func TestStarGuideHandler(t *testing.T) {
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)
 			req.Req.SetPathValue("id", guideID)
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
-
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

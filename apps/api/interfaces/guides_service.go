@@ -9,6 +9,7 @@ import (
 
 type GuidesService interface {
 	Create(ctx context.Context, workspaceID string, req *types.CreateGuideRequest) (*models.Guide, error)
+	CreateDemoGuide(ctx context.Context, workspaceID string) (string, error)
 	GetAll(ctx context.Context, workspaceID string, status *string) ([]*models.Guide, error)
 	GetByID(ctx context.Context, guideID string) (*models.Guide, error)
 	Update(ctx context.Context, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error)

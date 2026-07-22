@@ -11,6 +11,7 @@ import { HttpResponse, http } from "msw";
 
 import type {
 	ArchiveGuideResponse,
+	CreateDemoGuideResponse,
 	CreateGuideResponse,
 	DeleteGuideResponse,
 	ExportGuideResponse,
@@ -195,6 +196,13 @@ export const getGetGuidesCountResponseMock = (
 	overrideResponse: Partial<Extract<GetGuidesCountResponse, object>> = {},
 ): GetGuidesCountResponse => ({
 	count: faker.number.int(),
+	...overrideResponse,
+});
+
+export const getCreateDemoGuideResponseMock = (
+	overrideResponse: Partial<Extract<CreateDemoGuideResponse, object>> = {},
+): CreateDemoGuideResponse => ({
+	guideId: faker.string.alpha({ length: { min: 10, max: 20 } }),
 	...overrideResponse,
 });
 
@@ -973,6 +981,30 @@ export const getGetGuidesCountMockHandler = (
 	);
 };
 
+export const getCreateDemoGuideMockHandler = (
+	overrideResponse?:
+		| CreateDemoGuideResponse
+		| ((
+				info: Parameters<Parameters<typeof http.post>[1]>[0],
+		  ) => Promise<CreateDemoGuideResponse> | CreateDemoGuideResponse),
+	options?: RequestHandlerOptions,
+) => {
+	return http.post(
+		"*/api/v1/guides/demo",
+		async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+			return HttpResponse.json(
+				overrideResponse !== undefined
+					? typeof overrideResponse === "function"
+						? await overrideResponse(info)
+						: overrideResponse
+					: getCreateDemoGuideResponseMock(),
+				{ status: 201 },
+			);
+		},
+		options,
+	);
+};
+
 export const getGetStarredGuidesMockHandler = (
 	overrideResponse?:
 		| GetAllGuidesResponse
@@ -1315,6 +1347,7 @@ export const getGuidesMock = () => [
 	getGetAllGuidesMockHandler(),
 	getCreateGuideMockHandler(),
 	getGetGuidesCountMockHandler(),
+	getCreateDemoGuideMockHandler(),
 	getGetStarredGuidesMockHandler(),
 	getGetGuideByIdMockHandler(),
 	getDeleteGuideMockHandler(),

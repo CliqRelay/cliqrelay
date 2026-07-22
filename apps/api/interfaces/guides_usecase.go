@@ -11,6 +11,7 @@ import (
 
 type GuidesUseCase interface {
 	Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateGuideRequest) (*models.Guide, error)
+	CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (string, error)
 	List(ctx context.Context, actor *authulamodels.Actor, workspaceID string, status *string) ([]*models.Guide, error)
 	Get(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	Update(ctx context.Context, actor *authulamodels.Actor, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error)

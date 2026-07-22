@@ -25,7 +25,7 @@ func seedSimpleStep(t *testing.T, db bun.IDB) (uuid.UUID, uuid.UUID) {
 	_, err = db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
 	require.NoError(t, err)
 	wsID := uuid.New()
-	_, err = db.NewRaw("INSERT INTO workspaces (id, organization_id, name, type) VALUES (?, ?, ?, ?)", wsID, orgID, "test-workspace", "PERSONAL").Exec(context.Background())
+	_, err = db.NewRaw("INSERT INTO workspaces (id, organization_id, owner_id, name, type) VALUES (?, ?, ?, ?, ?)", wsID, orgID, userID, "test-workspace", "PERSONAL").Exec(context.Background())
 	require.NoError(t, err)
 
 	guide := &models.Guide{

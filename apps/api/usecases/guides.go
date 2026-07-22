@@ -42,6 +42,14 @@ func (uc *GuidesUseCase) Create(ctx context.Context, actor *authulamodels.Actor,
 	return uc.guidesService.Create(ctx, workspaceID, req)
 }
 
+func (uc *GuidesUseCase) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (string, error) {
+	if err := uc.authzService.CanCreateGuide(ctx, actor, workspaceID); err != nil {
+		return "", err
+	}
+
+	return uc.guidesService.CreateDemoGuide(ctx, workspaceID)
+}
+
 func (uc *GuidesUseCase) List(ctx context.Context, actor *authulamodels.Actor, workspaceID string, status *string) ([]*models.Guide, error) {
 	filter, err := uc.authzService.GuideListFilter(ctx, actor, workspaceID)
 	if err != nil {

@@ -29,6 +29,11 @@ type GuideStatus struct {
 	Status models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
 }
 
+type GuideQueryParams struct {
+	Status      *models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
+	WorkspaceID string              `query:"workspace_id" validate:"omitempty,uuid" nullable:"true"`
+}
+
 func (r *GuideStatus) Validate() error {
 	return validator.Validate.Struct(r)
 }
@@ -186,4 +191,16 @@ type ExportGuideResponse struct {
 
 type GetExportStatusResponse struct {
 	Export *models.GuideExport `json:"export" required:"true" nullable:"true"`
+}
+
+type CreateDemoGuideRequest struct {
+	WorkspaceID uuid.UUID `json:"workspace_id" validate:"required,uuid" required:"true"`
+}
+
+func (r *CreateDemoGuideRequest) Validate() error {
+	return validator.Validate.Struct(r)
+}
+
+type CreateDemoGuideResponse struct {
+	GuideID string `json:"guide_id" required:"true"`
 }

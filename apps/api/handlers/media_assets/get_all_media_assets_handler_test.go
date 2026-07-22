@@ -118,8 +118,6 @@ func TestGetAllMediaAssetsHandler(t *testing.T) {
 
 			path := "/api/v1/media-assets?step_id=" + tt.stepID
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
-
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

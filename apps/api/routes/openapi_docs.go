@@ -8,6 +8,7 @@ type OpenAPIDocFunc func(svc openapi.OpenAPIService, basePath string)
 
 func RegisterAllOpenAPIDocs(svc openapi.OpenAPIService, basePath string, extra ...OpenAPIDocFunc) {
 	RegisterHealthOpenAPIDocs(svc, basePath)
+	RegisterWorkspacesOpenAPIDocs(svc, basePath)
 	RegisterGuidesOpenAPIDocs(svc, basePath)
 	RegisterStepsOpenAPIDocs(svc, basePath)
 	RegisterMediaAssetsOpenAPIDocs(svc, basePath)

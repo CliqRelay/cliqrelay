@@ -7,9 +7,9 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func mediaAssetsPostgresInitial() authulamigrations.Migration {
+func mediaAssetsInitial() authulamigrations.Migration {
 	return authulamigrations.Migration{
-		Version: "20260605000002_media_assets_initial",
+		Version: "20260604000000_media_assets_initial",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return authulamigrations.ExecStatements(
 				ctx,

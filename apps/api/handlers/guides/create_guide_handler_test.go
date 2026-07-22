@@ -34,6 +34,7 @@ func TestCreateGuideHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.CreateGuideRequest{
+				WorkspaceID: uuid.New(),
 				Title:       "Test Guide",
 				Description: new("A description"),
 			},
@@ -60,7 +61,8 @@ func TestCreateGuideHandler(t *testing.T) {
 		{
 			name: "validation error",
 			payload: types.CreateGuideRequest{
-				Title: "",
+				WorkspaceID: uuid.New(),
+				Title:       "",
 			},
 			setup:          func(mockRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -69,7 +71,8 @@ func TestCreateGuideHandler(t *testing.T) {
 		{
 			name: "service error",
 			payload: types.CreateGuideRequest{
-				Title: "Test",
+				WorkspaceID: uuid.New(),
+				Title:       "Test",
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("Create", mock.Anything, mock.Anything).
@@ -100,7 +103,6 @@ func TestCreateGuideHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPost, "/api/v1/guides", tt.payload)
 			}
 
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

@@ -33,7 +33,7 @@ func (s *workspacesService) Create(ctx context.Context, actor *authulamodels.Act
 		OrganizationID: "", // Set by the caller or auto-created via AfterCreate hook
 		Name:           req.Name,
 		Type:           wsType,
-		OwnerID:        &actor.ID,
+		OwnerID:        actor.ID,
 	}
 
 	return s.workspaceRepo.Create(ctx, dto)

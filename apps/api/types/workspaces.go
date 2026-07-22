@@ -9,6 +9,10 @@ type WorkspaceID struct {
 	ID string `path:"workspaceId" validate:"required,uuid"`
 }
 
+type WorkspaceIDQueryParam struct {
+	ID string `query:"workspace_id" validate:"required,uuid"`
+}
+
 func (r *WorkspaceID) Validate() error {
 	return validator.Validate.Struct(r)
 }
@@ -30,7 +34,7 @@ type CreateWorkspaceDTO struct {
 	OrganizationID string
 	Name           string
 	Type           models.WorkspaceType
-	OwnerID        *string
+	OwnerID        string
 }
 
 type CreateWorkspaceResponse struct {

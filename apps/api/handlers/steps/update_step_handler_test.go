@@ -215,8 +215,6 @@ func TestUpdateStepHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPatch, path, tt.payload)
 			}
 			req.Req.SetPathValue("id", stepID)
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
-
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

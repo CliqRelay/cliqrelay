@@ -16,6 +16,7 @@ import (
 
 func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
 	createHandler := guides.NewCreateGuideHandler(appConfig, guidesUseCase)
+	createDemoGuideHandler := guides.NewCreateDemoGuideHandler(appConfig, guidesUseCase)
 	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesUseCase)
 	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesUseCase)
 	updateHandler := guides.NewUpdateGuideHandler(appConfig, guidesUseCase)
@@ -41,6 +42,12 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 	base := appConfig.BasePath
 
 	return []authulamodels.Route{
+		{
+			Method:     "POST",
+			Path:       fmt.Sprintf("%s/guides/demo", base),
+			Middleware: authMiddleware,
+			Handler:    createDemoGuideHandler.Handle(),
+		},
 		{
 			Method:     "POST",
 			Path:       fmt.Sprintf("%s/guides", base),
@@ -155,6 +162,17 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 	svc.AddOperation(
 		http.MethodPost,
+		fmt.Sprintf("%s/guides/demo", basePath),
+		openapi.WithOperationID("createDemoGuide"),
+		openapi.WithSummary("Create demo guide"),
+		openapi.WithDescription("Creates a demo guide with predefined steps"),
+		openapi.WithTags("Guides"),
+		openapi.WithRequest(&types.CreateDemoGuideRequest{}),
+		openapi.WithResponseStatus(http.StatusCreated, &types.CreateDemoGuideResponse{}),
+	)
+
+	svc.AddOperation(
+		http.MethodPost,
 		fmt.Sprintf("%s/guides", basePath),
 		openapi.WithOperationID("createGuide"),
 		openapi.WithSummary("Create guide"),
@@ -171,7 +189,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get all guides"),
 		openapi.WithDescription("Get all guides for a user"),
 		openapi.WithTags("Guides"),
-		openapi.WithRequest(&types.GuideStatus{}),
+		openapi.WithRequest(&types.GuideQueryParams{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllGuidesResponse{}),
 	)
 
@@ -182,6 +200,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get guides count"),
 		openapi.WithDescription("Returns the total count of non-deleted guides for the authenticated user"),
 		openapi.WithTags("Guides"),
+		openapi.WithRequest(types.WorkspaceIDQueryParam{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetGuidesCountResponse{}),
 	)
 
@@ -303,6 +322,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get starred guides"),
 		openapi.WithDescription("Get all guides starred by the current user"),
 		openapi.WithTags("Guides"),
+		openapi.WithRequest(types.WorkspaceIDQueryParam{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllGuidesResponse{}),
 	)
 

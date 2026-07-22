@@ -155,8 +155,6 @@ func TestGetAllStepsHandler(t *testing.T) {
 
 			path := "/api/v1/steps?guide_id=" + tt.guideID
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
-
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

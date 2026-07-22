@@ -21,11 +21,11 @@ func RunMigrations(appConfig *config.AppConfig) error {
 			PluginID: PluginCliqRelay,
 			Migrations: []authulamigrations.Migration{
 				workspacesInitial(),
-				guidesPostgresInitial(),
-				stepsPostgresInitial(),
-				mediaAssetsPostgresInitial(),
-				starredGuidesPostgresInitial(),
-				guideExportsPostgresInitial(),
+				guidesInitial(),
+				stepsInitial(),
+				mediaAssetsInitial(),
+				starredGuidesInitial(),
+				guideExportsInitial(),
 			},
 		},
 	}

@@ -28,7 +28,7 @@ func seedGuide(t *testing.T, db bun.IDB, userID, title string) *models.Guide {
 	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
 	require.NoError(t, err)
 	wsID := uuid.New()
-	_, err = db.NewRaw("INSERT INTO workspaces (id, organization_id, name, type) VALUES (?, ?, ?, ?)", wsID, orgID, "test-workspace", "PERSONAL").Exec(context.Background())
+	_, err = db.NewRaw("INSERT INTO workspaces (id, organization_id, owner_id, name, type) VALUES (?, ?, ?, ?, ?)", wsID, orgID, userID, "test-workspace", "PERSONAL").Exec(context.Background())
 	require.NoError(t, err)
 
 	guide := &models.Guide{
@@ -129,7 +129,7 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 			_, userErr := db.NewRaw("INSERT INTO users (id) VALUES (?)", tt.userID).Exec(ctx)
 			require.NoError(t, userErr)
 
-			wsID := createTestOrgWorkspace(ctx, db, t)
+			wsID, _ := createTestOrgWorkspace(ctx, db, t)
 			guide, err := repo.Create(ctx, &types.CreateGuideDTO{
 				WorkspaceID: wsID,
 				CreatorID:   tt.userID,

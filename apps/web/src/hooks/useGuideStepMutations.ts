@@ -10,6 +10,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import type { StepTypeOption } from "@/models";
 import { STEP_TYPE_CONFIG } from "@/models";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 
 export function useGuideStepMutations(guideId: string) {
 	const queryClient = useQueryClient();
@@ -169,8 +170,10 @@ export function useGuideStepMutations(guideId: string) {
 		insertBeforeStepId?: string,
 	) => {
 		const config = STEP_TYPE_CONFIG[type];
+		const workspaceId = useWorkspaceStore.getState().activeWorkspaceId ?? "";
 		const data: CreateStepRequest = {
 			guideId,
+			workspaceId,
 			type: config.type,
 			...(config.canvasType
 				? {
@@ -216,9 +219,11 @@ export function useGuideStepMutations(guideId: string) {
 	};
 
 	const handleDuplicate = async (stepId: string) => {
+		const workspaceId = useWorkspaceStore.getState().activeWorkspaceId ?? "";
 		duplicateStep.mutate({
 			id: stepId,
 			data: {
+				workspaceId,
 				insertAfterStepId: null,
 				insertBeforeStepId: null,
 			},
@@ -230,9 +235,11 @@ export function useGuideStepMutations(guideId: string) {
 		prevStepId: string | null,
 		nextStepId: string | null,
 	) => {
+		const workspaceId = useWorkspaceStore.getState().activeWorkspaceId ?? "";
 		reorderSteps.mutate({
 			data: {
 				guideId,
+				workspaceId,
 				targetStepId,
 				prevStepId,
 				nextStepId,

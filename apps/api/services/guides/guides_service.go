@@ -75,6 +75,68 @@ func (s *GuidesService) Create(ctx context.Context, workspaceID string, req *typ
 	return guideCreated, nil
 }
 
+func (s *GuidesService) CreateDemoGuide(ctx context.Context, workspaceID string) (string, error) {
+	parsedWSID, err := uuid.Parse(workspaceID)
+	if err != nil {
+		return "", constants.ErrWorkspaceNotFound
+	}
+
+	guide, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
+		WorkspaceID: parsedWSID,
+		Title:       "Getting Started with CliqRelay",
+		Description: new("A sample guide to show you how CliqRelay works"),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	guideID := guide.ID.String()
+	clickAction := models.StepActionClick
+
+	demoSteps := []*types.CreateStepDTO{
+		{
+			WorkspaceID:   parsedWSID,
+			GuideID:       guide.ID,
+			Type:          models.StepTypeCanvas,
+			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader, HeadingText: new("Overview of CliqRelay"), BodyText: new("You can use this step to provide an overview or introduction to your guide.")},
+		},
+		{
+			WorkspaceID: parsedWSID,
+			GuideID:     guide.ID,
+			Type:        models.StepTypeInteraction,
+			Action:      &clickAction,
+			ActionText:  new("Click \"Some Button\""),
+			Notes:       new("This step demonstrates a click step which will be accompanied by a screenshot of the action."),
+		},
+		{
+			WorkspaceID:   parsedWSID,
+			GuideID:       guide.ID,
+			Type:          models.StepTypeCanvas,
+			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeTip, HeadingText: new("This is a note"), BodyText: new("You can use this step to provide additional information or tips related to the guide.")},
+		},
+		{
+			WorkspaceID:   parsedWSID,
+			GuideID:       guide.ID,
+			Type:          models.StepTypeCanvas,
+			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeCallout, HeadingText: new("Callout"), BodyText: new("This is a callout step, which can be used to draw attention to important information or warnings.")},
+		},
+		{
+			WorkspaceID:   parsedWSID,
+			GuideID:       guide.ID,
+			Type:          models.StepTypeCanvas,
+			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeAlert, HeadingText: new("Alert"), BodyText: new("This is an alert step, which can be used to highlight critical information or errors that users should be aware of.")},
+		},
+	}
+
+	for _, stepDTO := range demoSteps {
+		if _, err := s.stepsRepo.Create(ctx, stepDTO); err != nil {
+			return "", err
+		}
+	}
+
+	return guideID, nil
+}
+
 func (s *GuidesService) GetAll(ctx context.Context, workspaceID string, status *string) ([]*models.Guide, error) {
 	filter := &types.GuideFilter{}
 

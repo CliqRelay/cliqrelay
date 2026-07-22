@@ -36,6 +36,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.CreateMediaAssetRequest{
+				WorkspaceID: uuid.New(),
 				StepID:      uuid.New(),
 				StoragePath: "uploads/test.png",
 			},
@@ -77,6 +78,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 		{
 			name: "service error",
 			payload: types.CreateMediaAssetRequest{
+				WorkspaceID: uuid.New(),
 				StepID:      uuid.New(),
 				StoragePath: "uploads/test.png",
 			},
@@ -128,7 +130,6 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPost, "/api/v1/media-assets", tt.payload)
 			}
 
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

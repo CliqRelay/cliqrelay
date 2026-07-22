@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	authulamodels "github.com/Authula/authula/models"
-	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -33,7 +32,6 @@ func (h *ReorderStepsHandler) Handle() http.HandlerFunc {
 			reqCtx.Handled = true
 			return
 		}
-		request.WorkspaceID = uuid.MustParse(r.PathValue("workspaceId"))
 		if err := request.Validate(); err != nil {
 			reqCtx.SetJSONResponse(http.StatusUnprocessableEntity, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

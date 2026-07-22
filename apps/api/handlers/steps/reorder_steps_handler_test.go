@@ -38,6 +38,7 @@ func TestReorderStepsHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.ReorderStepsRequest{
+				WorkspaceID:  uuid.New(),
 				GuideID:      uuid.New(),
 				TargetStepID: uuid.New().String(),
 				PrevStepID:   new(uuid.New().String()),
@@ -72,6 +73,7 @@ func TestReorderStepsHandler(t *testing.T) {
 		{
 			name: "validation error",
 			payload: types.ReorderStepsRequest{
+				WorkspaceID:  uuid.New(),
 				GuideID:      uuid.Nil,
 				TargetStepID: "",
 			},
@@ -82,6 +84,7 @@ func TestReorderStepsHandler(t *testing.T) {
 		{
 			name: "service error from guidesRepo.GetByID",
 			payload: types.ReorderStepsRequest{
+				WorkspaceID:  uuid.New(),
 				GuideID:      uuid.New(),
 				TargetStepID: uuid.New().String(),
 			},
@@ -96,6 +99,7 @@ func TestReorderStepsHandler(t *testing.T) {
 		{
 			name: "service error from stepsRepo.Reorder",
 			payload: types.ReorderStepsRequest{
+				WorkspaceID:  uuid.New(),
 				GuideID:      uuid.New(),
 				TargetStepID: uuid.New().String(),
 				PrevStepID:   new(uuid.New().String()),
@@ -140,7 +144,6 @@ func TestReorderStepsHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPost, "/api/v1/steps/reorder", tt.payload)
 			}
 
-			req.Req.SetPathValue("workspaceId", uuid.New().String())
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)
