@@ -22,4 +22,5 @@ export type CreateMediaAssetRequest = {
 	thumbnail?: string | null;
 	/** @nullable */
 	width?: number | null;
+	workspaceId: Uuid;
 };

@@ -29,4 +29,5 @@ export type Guide = {
 	status: GuideStatus;
 	title: string;
 	updatedAt: string;
+	workspaceId: Uuid;
 };

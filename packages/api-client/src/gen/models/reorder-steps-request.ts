@@ -14,4 +14,5 @@ export type ReorderStepsRequest = {
 	/** @nullable */
 	prevStepId?: string | null;
 	targetStepId: string;
+	workspaceId: Uuid;
 };

@@ -32,6 +32,7 @@ export const Guide = zod.object({
 	status: GuideStatus,
 	title: zod.string(),
 	updatedAt: zod.iso.datetime({ offset: true }),
+	workspaceId: Uuid,
 });
 
 export type Guide = zod.input<typeof Guide>;
@@ -54,6 +55,7 @@ export const CompleteUploadRequest = zod.object({
 	storagePath: zod.string().optional(),
 	thumbnail: zod.string().nullish(),
 	width: zod.number().nullish(),
+	workspaceId: zod.string().optional(),
 });
 
 export type CompleteUploadRequest = zod.input<typeof CompleteUploadRequest>;
@@ -74,6 +76,7 @@ export type CompleteUploadResponseOutput = zod.output<
 export const CreateGuideRequest = zod.object({
 	description: zod.string().nullish(),
 	title: zod.string(),
+	workspaceId: Uuid,
 });
 
 export type CreateGuideRequest = zod.input<typeof CreateGuideRequest>;
@@ -95,6 +98,7 @@ export const CreateMediaAssetRequest = zod.object({
 	storagePath: zod.string(),
 	thumbnail: zod.string().nullish(),
 	width: zod.number().nullish(),
+	workspaceId: Uuid,
 });
 
 export type CreateMediaAssetRequest = zod.input<typeof CreateMediaAssetRequest>;
@@ -115,6 +119,7 @@ export const MediaAsset = zod.object({
 	updatedAt: zod.iso.datetime({ offset: true }),
 	url: zod.string().nullish(),
 	width: zod.number().nullish(),
+	workspaceId: Uuid,
 });
 
 export type MediaAsset = zod.input<typeof MediaAsset>;
@@ -172,6 +177,7 @@ export const CreateStepRequest = zod.object({
 	targetElement: zod.record(zod.string(), zod.unknown()).nullish(),
 	type: StepType,
 	url: zod.string().nullish(),
+	workspaceId: Uuid,
 });
 
 export type CreateStepRequest = zod.input<typeof CreateStepRequest>;
@@ -191,6 +197,7 @@ export const Step = zod.object({
 	type: StepType,
 	updatedAt: zod.iso.datetime({ offset: true }),
 	url: zod.string().nullish(),
+	workspaceId: Uuid,
 });
 
 export type Step = zod.input<typeof Step>;
@@ -231,6 +238,7 @@ export type DeleteStepResponseOutput = zod.output<typeof DeleteStepResponse>;
 export const DuplicateStepRequest = zod.object({
 	insertAfterStepId: zod.string().nullish(),
 	insertBeforeStepId: zod.string().nullish(),
+	workspaceId: Uuid,
 });
 
 export type DuplicateStepRequest = zod.input<typeof DuplicateStepRequest>;
@@ -307,6 +315,7 @@ export const GuideExport = zod.object({
 	storagePath: zod.string().nullish(),
 	updatedAt: zod.iso.datetime({ offset: true }),
 	userId: zod.string(),
+	workspaceId: Uuid,
 });
 
 export type GuideExport = zod.input<typeof GuideExport>;
@@ -378,6 +387,7 @@ export type PermanentlyDeleteGuideResponseOutput = zod.output<
 export const PresignUploadRequest = zod.object({
 	guideId: zod.string().optional(),
 	stepId: zod.string().optional(),
+	workspaceId: zod.string().optional(),
 });
 
 export type PresignUploadRequest = zod.input<typeof PresignUploadRequest>;
@@ -420,6 +430,7 @@ export const ReorderStepsRequest = zod.object({
 	nextStepId: zod.string().nullish(),
 	prevStepId: zod.string().nullish(),
 	targetStepId: zod.string(),
+	workspaceId: Uuid,
 });
 
 export type ReorderStepsRequest = zod.input<typeof ReorderStepsRequest>;

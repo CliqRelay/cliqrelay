@@ -28,4 +28,5 @@ export type CreateStepRequest = {
 	type: StepType;
 	/** @nullable */
 	url?: string | null;
+	workspaceId: Uuid;
 };

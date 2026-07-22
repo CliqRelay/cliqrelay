@@ -19,4 +19,5 @@ export type CompleteUploadRequest = {
 	thumbnail?: string | null;
 	/** @nullable */
 	width?: number | null;
+	workspaceId?: string;
 };

@@ -30,4 +30,5 @@ export type Step = {
 	updatedAt: string;
 	/** @nullable */
 	url?: string | null;
+	workspaceId: Uuid;
 };

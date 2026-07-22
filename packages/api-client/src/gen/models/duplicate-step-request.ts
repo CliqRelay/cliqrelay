@@ -5,10 +5,12 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import type { Uuid } from "./uuid";
 
 export type DuplicateStepRequest = {
 	/** @nullable */
 	insertAfterStepId?: string | null;
 	/** @nullable */
 	insertBeforeStepId?: string | null;
+	workspaceId: Uuid;
 };

@@ -64,6 +64,7 @@ export const getGetExportStatusResponseMock = (
 			]),
 			updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
 			userId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+			workspaceId: faker.string.uuid(),
 		},
 	]),
 	...overrideResponse,
@@ -126,6 +127,7 @@ export const getGetAllGuidesResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	})),
 	...overrideResponse,
 });
@@ -184,6 +186,7 @@ export const getCreateGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -252,6 +255,7 @@ export const getGetStarredGuidesResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	})),
 	...overrideResponse,
 });
@@ -312,6 +316,7 @@ export const getGetGuideByIdResponseMock = (
 			status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 			title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 			updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+			workspaceId: faker.string.uuid(),
 		},
 	]),
 	...overrideResponse,
@@ -371,6 +376,7 @@ export const getDeleteGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -429,6 +435,7 @@ export const getUpdateGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -487,6 +494,7 @@ export const getArchiveGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -555,6 +563,7 @@ export const getPermanentlyDeleteGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -613,6 +622,7 @@ export const getPublishGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -671,6 +681,7 @@ export const getRecalculateGuideDurationResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -729,6 +740,7 @@ export const getRestoreGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -801,6 +813,7 @@ export const getUnarchiveGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -859,6 +872,7 @@ export const getUnpublishGuideResponseMock = (
 		status: faker.helpers.arrayElement(Object.values(GuideStatus)),
 		title: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
