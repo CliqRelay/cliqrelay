@@ -15,6 +15,7 @@ import (
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestUpdateGuideHandler(t *testing.T) {
@@ -85,8 +86,8 @@ func TestUpdateGuideHandler(t *testing.T) {
 						Title:     "Draft Title",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
-				mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateGuideDTO")).
+					Twice()
+				mockRepo.On("Update", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: "test-user-123",
@@ -94,7 +95,7 @@ func TestUpdateGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockAuthz.On("CanEditGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			case "service error":
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
@@ -103,15 +104,16 @@ func TestUpdateGuideHandler(t *testing.T) {
 						Title:     "Draft Title",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
-				mockRepo.On("Update", mock.Anything, mock.AnythingOfType("*types.UpdateGuideDTO")).
+					Twice()
+				mockRepo.On("Update", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
-				mockAuthz.On("CanEditGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
-			handler := handlersguides.NewUpdateGuideHandler(appConfig, svc)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
+			handler := handlersguides.NewUpdateGuideHandler(appConfig, uc)
 
 			var req tests.HandlerTestRequest
 			if tt.rawBody != nil {
@@ -120,7 +122,6 @@ func TestUpdateGuideHandler(t *testing.T) {
 				req = tests.NewHandlerRequest(t, http.MethodPut, path, tt.payload)
 			}
 			req.Req.SetPathValue("id", guideID)
-
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

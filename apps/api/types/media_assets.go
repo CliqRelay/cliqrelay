@@ -75,13 +75,13 @@ func (r *UpdateMediaAssetRequest) Validate() error {
 }
 
 type UpdateMediaAssetDTO struct {
-	ID        uuid.UUID
-	AltText   *string
-	Thumbnail *string
-	MimeType  *string
-	Height    *int
-	Width     *int
-	ByteSize  *int
+	ID          uuid.UUID
+	AltText     *string
+	Thumbnail   *string
+	MimeType    *string
+	Height      *int
+	Width       *int
+	ByteSize    *int
 }
 
 type UpdateMediaAssetResponse struct {

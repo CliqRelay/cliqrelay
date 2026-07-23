@@ -9,21 +9,25 @@ import (
 	authulaevents "github.com/Authula/authula/events"
 	authulamodels "github.com/Authula/authula/models"
 
+	accesscontrolplugin "github.com/Authula/authula/plugins/access-control"
+	accesscontrolplugintypes "github.com/Authula/authula/plugins/access-control/types"
 	csrfplugin "github.com/Authula/authula/plugins/csrf"
 	emailplugin "github.com/Authula/authula/plugins/email"
 	emailpasswordplugin "github.com/Authula/authula/plugins/email-password"
 	emailpasswordplugintypes "github.com/Authula/authula/plugins/email-password/types"
 	emailplugintypes "github.com/Authula/authula/plugins/email/types"
+	organizationsplugin "github.com/Authula/authula/plugins/organizations"
+	organizationsplugintypes "github.com/Authula/authula/plugins/organizations/types"
 
 	ratelimitplugin "github.com/Authula/authula/plugins/rate-limit"
 	ratelimitplugintypes "github.com/Authula/authula/plugins/rate-limit/types"
 	secondarystorageplugin "github.com/Authula/authula/plugins/secondary-storage"
 	sessionplugin "github.com/Authula/authula/plugins/session"
-
+	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
 )
 
-func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
+func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServiceHooks) *authula.Auth {
 	apiBasePath := "/api/v1"
 
 	// Init Authula Config
@@ -85,7 +89,7 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 					csrfplugin.HookIDCSRFProtect.String(),
 				},
 			},
-			// Email-Password Routes
+			// Email & Password Routes
 			{
 				Paths: []string{
 					"POST:/email-password/sign-in",
@@ -112,6 +116,26 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 					csrfplugin.HookIDCSRFProtect.String(),
 				},
 			},
+			// Organizations Routes
+			{
+				Paths: []string{
+					"GET:/organizations/*",
+					"DELETE:/organizations/*",
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			{
+				Paths: []string{
+					"POST:/organizations/*",
+					"PATCH:/organizations/*",
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+					csrfplugin.HookIDCSRFProtect.String(),
+				},
+			},
 			// ----------------------
 			// Custom Routes
 			// ----------------------
@@ -119,11 +143,20 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 			{
 				Paths: []string{fmt.Sprintf("GET:%s/health", apiBasePath)},
 			},
+			// Teams
+			{
+				Paths: []string{fmt.Sprintf("GET:%s/teams", apiBasePath)},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
 			// Guides
 			{
 				Paths: []string{
 					fmt.Sprintf("GET:%s/guides", apiBasePath),
 					fmt.Sprintf("GET:%s/guides/{id}", apiBasePath),
+					fmt.Sprintf("GET:%s/guides/count", apiBasePath),
+					fmt.Sprintf("GET:%s/guides/starred", apiBasePath),
 					fmt.Sprintf("GET:%s/guide-exports/{exportID}", apiBasePath),
 					fmt.Sprintf("DELETE:%s/guides/{id}", apiBasePath),
 					fmt.Sprintf("DELETE:%s/guides/{id}/star", apiBasePath),
@@ -135,6 +168,7 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 			{
 				Paths: []string{
 					fmt.Sprintf("POST:%s/guides", apiBasePath),
+					fmt.Sprintf("POST:%s/guides/demo", apiBasePath),
 					fmt.Sprintf("PATCH:%s/guides/{id}", apiBasePath),
 					fmt.Sprintf("POST:%s/guides/{id}/publish", apiBasePath),
 					fmt.Sprintf("POST:%s/guides/{id}/unpublish", apiBasePath),
@@ -185,6 +219,27 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 					csrfplugin.HookIDCSRFProtect.String(),
 				},
 			},
+			// Media Assets
+			{
+				Paths: []string{
+					fmt.Sprintf("GET:%s/media-assets", apiBasePath),
+					fmt.Sprintf("GET:%s/media-assets/{id}", apiBasePath),
+					fmt.Sprintf("DELETE:%s/media-assets/{id}", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			{
+				Paths: []string{
+					fmt.Sprintf("POST:%s/media-assets", apiBasePath),
+					fmt.Sprintf("PATCH:%s/media-assets/{id}", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+					csrfplugin.HookIDCSRFProtect.String(),
+				},
+			},
 		}),
 	)
 
@@ -201,7 +256,7 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 			},
 		}),
 		csrfplugin.New(csrfplugin.CSRFPluginConfig{
-			Enabled:    false,
+			Enabled:    true,
 			CookieName: "authula_csrf_token",
 			HeaderName: "X-AUTHULA-CSRF-TOKEN",
 		}),
@@ -227,11 +282,23 @@ func InitAuth(envConfig *constants.EnvConfig) *authula.Auth {
 		sessionplugin.New(sessionplugin.SessionPluginConfig{
 			Enabled: true,
 		}),
+		accesscontrolplugin.New(accesscontrolplugintypes.AccessControlPluginConfig{
+			Enabled: true,
+		}),
+		organizationsplugin.New(organizationsplugintypes.OrganizationsPluginConfig{
+			Enabled:                          true,
+			OrganizationsLimit:               nil,
+			MembersLimit:                     nil,
+			InvitationsLimit:                 new(100),
+			InvitationExpiresIn:              7 * 24 * time.Hour,
+			RequireEmailVerifiedOnInvitation: true,
+			ServiceHooks:                     &authServiceHooks.OrganizationsServiceHooksConfig,
+		}),
 		ratelimitplugin.New(ratelimitplugintypes.RateLimitPluginConfig{
 			Enabled:     true,
 			Provider:    ratelimitplugintypes.RateLimitProviderRedis,
 			Window:      time.Minute,
-			Max:         100,
+			Max:         60,
 			CustomRules: map[string]ratelimitplugintypes.RateLimitRule{},
 		}),
 	}

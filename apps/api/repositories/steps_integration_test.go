@@ -61,8 +61,9 @@ func TestBunStepsRepository_Create(t *testing.T) {
 			setup: func(db *bun.DB) *types.CreateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
 				return &types.CreateStepDTO{
-					GuideID: guide.ID,
-					Action:  new(models.StepActionClick),
+					GuideID:     guide.ID,
+	
+					Action:      new(models.StepActionClick),
 				}
 			},
 			check: func(t *testing.T, step *models.Step) {
@@ -78,8 +79,9 @@ func TestBunStepsRepository_Create(t *testing.T) {
 				guide := seedGuide(t, db, "", "Test Guide")
 				seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				return &types.CreateStepDTO{
-					GuideID: guide.ID,
-					Action:  new(models.StepActionInput),
+					GuideID:     guide.ID,
+	
+					Action:      new(models.StepActionInput),
 				}
 			},
 			check: func(t *testing.T, step *models.Step) {
@@ -134,8 +136,9 @@ func TestBunStepsRepository_Create(t *testing.T) {
 				heading := "Welcome"
 				body := "This is a canvas step"
 				return &types.CreateStepDTO{
-					GuideID: guide.ID,
-					Type:    models.StepTypeCanvas,
+					GuideID:     guide.ID,
+	
+					Type:        models.StepTypeCanvas,
 					CanvasContent: &models.StepCanvasContent{
 						Type:        models.StepCanvasTypeCallout,
 						HeadingText: &heading,

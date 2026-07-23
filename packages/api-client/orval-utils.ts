@@ -26,9 +26,9 @@ export const walkAndTransformSpec = (obj: any): any => {
       newObj[key] = value.map((reqKey) => 
         typeof reqKey === 'string' && reqKey.includes('_') ? toCamelCase(reqKey) : reqKey
       );
-    } else if (obj.in && key === 'name' && typeof value === 'string') {
-      // Handle the URL query/path parameter naming
-      newObj[key] = value.includes('_') ? toCamelCase(value) : value;
+	} else if (obj.in === 'query' && key === 'name' && typeof value === 'string') {
+			// Keep query param names as snake_case to match Go backend
+			newObj[key] = value;
     } else {
       newObj[key] = walkAndTransformSpec(value);
     }

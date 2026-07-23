@@ -7,9 +7,10 @@ import (
 	"slices"
 	"strings"
 
-	authulamodels "github.com/Authula/authula/models"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/events"
@@ -24,7 +25,6 @@ type GuidesService struct {
 	guidesCache       interfaces.GuidesCacheService
 	stepsRepo         interfaces.StepsRepository
 	redisClient       *redis.Client
-	authzService      interfaces.AuthorizationService
 	hooks             *interfaces.GuideHooks
 }
 
@@ -34,7 +34,6 @@ func NewGuidesService(
 	guidesCache interfaces.GuidesCacheService,
 	stepsRepo interfaces.StepsRepository,
 	redisClient *redis.Client,
-	authzService interfaces.AuthorizationService,
 	hooks *interfaces.GuideHooks,
 ) *GuidesService {
 	return &GuidesService{
@@ -43,29 +42,25 @@ func NewGuidesService(
 		guidesCache:       guidesCache,
 		stepsRepo:         stepsRepo,
 		redisClient:       redisClient,
-		authzService:      authzService,
 		hooks:             hooks,
 	}
 }
 
-func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateGuideRequest) (*models.Guide, error) {
-	if err := s.authzService.CanCreateGuide(ctx, actor); err != nil {
-		return nil, err
-	}
-
-	userID := actor.ID
-	if strings.TrimSpace(userID) == "" {
-		return nil, constants.ErrInvalidUserID
-	}
-
+func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, teamID string, req *types.CreateGuideRequest) (*models.Guide, error) {
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, actor, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, teamID, req); err != nil {
 			return nil, err
 		}
 	}
 
+	parsedTeamID, err := uuid.Parse(teamID)
+	if err != nil {
+		return nil, constants.ErrTeamNotFound
+	}
+
 	guideCreated, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
-		CreatorID:   userID,
+		TeamID:      parsedTeamID,
+		CreatorID:   actor.ID,
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -74,7 +69,7 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 	}
 
 	if s.hooks != nil && s.hooks.AfterCreate != nil {
-		if err := s.hooks.AfterCreate(ctx, actor, guideCreated); err != nil {
+		if err := s.hooks.AfterCreate(ctx, guideCreated); err != nil {
 			return nil, err
 		}
 	}
@@ -82,13 +77,72 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 	return guideCreated, nil
 }
 
-func (s *GuidesService) GetAll(ctx context.Context, actor *authulamodels.Actor, status *string) ([]*models.Guide, error) {
-	filter, err := s.authzService.GuideListFilter(ctx, actor)
+func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error) {
+	parsedTeamID, err := uuid.Parse(teamID)
 	if err != nil {
-		return nil, err
+		return "", constants.ErrTeamNotFound
 	}
 
-	filter.ViewerUserID = &actor.ID
+	guide, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
+		TeamID:      parsedTeamID,
+		CreatorID:   actor.ID,
+		Title:       "Getting Started with CliqRelay",
+		Description: new("A sample guide to show you how CliqRelay works"),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	guideID := guide.ID.String()
+	clickAction := models.StepActionClick
+
+	demoSteps := []*types.CreateStepDTO{
+		{
+			GuideID:       guide.ID,
+			Type:          models.StepTypeCanvas,
+			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader, HeadingText: new("Overview of CliqRelay"), BodyText: new("You can use this step to provide an overview or introduction to your guide.")},
+		},
+		{
+			GuideID:     guide.ID,
+			Type:        models.StepTypeInteraction,
+			Action:      &clickAction,
+			ActionText:  new("Click \"Some Button\""),
+			Notes:       new("This step demonstrates a click step which will be accompanied by a screenshot of the action."),
+		},
+		{
+			GuideID:       guide.ID,
+			Type:          models.StepTypeCanvas,
+			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeTip, HeadingText: new("This is a note"), BodyText: new("You can use this step to provide additional information or tips related to the guide.")},
+		},
+		{
+			GuideID:       guide.ID,
+			Type:          models.StepTypeCanvas,
+			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeCallout, HeadingText: new("Callout"), BodyText: new("This is a callout step, which can be used to draw attention to important information or warnings.")},
+		},
+		{
+			GuideID:       guide.ID,
+			Type:          models.StepTypeCanvas,
+			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeAlert, HeadingText: new("Alert"), BodyText: new("This is an alert step, which can be used to highlight critical information or errors that users should be aware of.")},
+		},
+	}
+
+	for _, stepDTO := range demoSteps {
+		if _, err := s.stepsRepo.Create(ctx, stepDTO); err != nil {
+			return "", err
+		}
+	}
+
+	return guideID, nil
+}
+
+func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *string) ([]*models.Guide, error) {
+	filter := &types.GuideFilter{}
+
+	parsedTeamID, err := uuid.Parse(teamID)
+	if err != nil {
+		return nil, constants.ErrTeamNotFound
+	}
+	filter.TeamID = &parsedTeamID
 
 	if status != nil {
 		if !slices.Contains([]string{
@@ -106,7 +160,7 @@ func (s *GuidesService) GetAll(ctx context.Context, actor *authulamodels.Actor, 
 	return s.guidesRepo.GetAll(ctx, filter)
 }
 
-func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) GetByID(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -117,10 +171,7 @@ func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor,
 			if cached.Status == models.StatusDeleted {
 				return nil, constants.ErrGuideNotFound
 			}
-
-			if err := s.authzService.CanReadGuide(ctx, actor, cached); err == nil {
-				return cached, nil
-			}
+			return cached, nil
 		}
 	}
 
@@ -133,10 +184,6 @@ func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanReadGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if s.guidesCache != nil {
 		_ = s.guidesCache.Set(ctx, guide)
 	}
@@ -144,7 +191,7 @@ func (s *GuidesService) GetByID(ctx context.Context, actor *authulamodels.Actor,
 	return guide, nil
 }
 
-func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
+func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -162,18 +209,15 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, existing); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, actor, existing); err != nil {
+		if err := s.hooks.BeforeUpdate(ctx, existing); err != nil {
 			return nil, err
 		}
 	}
 
 	updated, err := s.guidesRepo.Update(ctx, &types.UpdateGuideDTO{
 		ID:          parsedID,
+		TeamID:      existing.TeamID,
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -186,7 +230,7 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 	}
 
 	if s.hooks != nil && s.hooks.AfterUpdate != nil {
-		if err := s.hooks.AfterUpdate(ctx, actor, updated); err != nil {
+		if err := s.hooks.AfterUpdate(ctx, updated); err != nil {
 			return nil, err
 		}
 	}
@@ -194,7 +238,7 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 	return updated, nil
 }
 
-func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Delete(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -207,12 +251,8 @@ func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanDeleteGuide(ctx, actor, existing); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if s.hooks != nil && s.hooks.BeforeDelete != nil {
-		if err := s.hooks.BeforeDelete(ctx, actor, guideID); err != nil {
+		if err := s.hooks.BeforeDelete(ctx, guideID); err != nil {
 			return nil, err
 		}
 	}
@@ -231,7 +271,7 @@ func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, 
 	}
 
 	if s.hooks != nil && s.hooks.AfterDelete != nil {
-		if err := s.hooks.AfterDelete(ctx, actor, guideID); err != nil {
+		if err := s.hooks.AfterDelete(ctx, guideID); err != nil {
 			return nil, err
 		}
 	}
@@ -253,7 +293,7 @@ func (s *GuidesService) recalculateDuration(ctx context.Context, guideID string)
 	return nil
 }
 
-func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Publish(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -266,16 +306,12 @@ func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if guide.Status != models.StatusDraft {
 		return nil, fmt.Errorf("only guides in draft status can be published")
 	}
 
 	if s.hooks != nil && s.hooks.BeforePublish != nil {
-		if err := s.hooks.BeforePublish(ctx, actor, guide); err != nil {
+		if err := s.hooks.BeforePublish(ctx, guide); err != nil {
 			return nil, err
 		}
 	}
@@ -298,7 +334,7 @@ func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor,
 	}
 
 	if s.hooks != nil && s.hooks.AfterPublish != nil {
-		if err := s.hooks.AfterPublish(ctx, actor, published); err != nil {
+		if err := s.hooks.AfterPublish(ctx, published); err != nil {
 			return nil, err
 		}
 	}
@@ -306,7 +342,7 @@ func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor,
 	return published, nil
 }
 
-func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Unpublish(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -319,16 +355,12 @@ func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Acto
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if guide.Status != models.StatusPublished {
 		return nil, fmt.Errorf("only guides in published status can be unpublished")
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUnpublish != nil {
-		if err := s.hooks.BeforeUnpublish(ctx, actor, guide); err != nil {
+		if err := s.hooks.BeforeUnpublish(ctx, guide); err != nil {
 			return nil, err
 		}
 	}
@@ -347,7 +379,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Acto
 	}
 
 	if s.hooks != nil && s.hooks.AfterUnpublish != nil {
-		if err := s.hooks.AfterUnpublish(ctx, actor, unpublished); err != nil {
+		if err := s.hooks.AfterUnpublish(ctx, unpublished); err != nil {
 			return nil, err
 		}
 	}
@@ -355,7 +387,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Acto
 	return unpublished, nil
 }
 
-func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Archive(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -368,16 +400,12 @@ func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if guide.Status != models.StatusDraft && guide.Status != models.StatusPublished {
 		return nil, fmt.Errorf("only guides in draft or published status can be archived")
 	}
 
 	if s.hooks != nil && s.hooks.BeforeArchive != nil {
-		if err := s.hooks.BeforeArchive(ctx, actor, guide); err != nil {
+		if err := s.hooks.BeforeArchive(ctx, guide); err != nil {
 			return nil, err
 		}
 	}
@@ -396,7 +424,7 @@ func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor,
 	}
 
 	if s.hooks != nil && s.hooks.AfterArchive != nil {
-		if err := s.hooks.AfterArchive(ctx, actor, archived); err != nil {
+		if err := s.hooks.AfterArchive(ctx, archived); err != nil {
 			return nil, err
 		}
 	}
@@ -404,7 +432,7 @@ func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor,
 	return archived, nil
 }
 
-func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Unarchive(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -417,16 +445,12 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
 	if guide.Status != models.StatusArchived {
 		return nil, fmt.Errorf("only guides in archived status can be unarchived")
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUnarchive != nil {
-		if err := s.hooks.BeforeUnarchive(ctx, actor, guide); err != nil {
+		if err := s.hooks.BeforeUnarchive(ctx, guide); err != nil {
 			return nil, err
 		}
 	}
@@ -445,7 +469,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 	}
 
 	if s.hooks != nil && s.hooks.AfterUnarchive != nil {
-		if err := s.hooks.AfterUnarchive(ctx, actor, unarchived); err != nil {
+		if err := s.hooks.AfterUnarchive(ctx, unarchived); err != nil {
 			return nil, err
 		}
 	}
@@ -453,7 +477,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 	return unarchived, nil
 }
 
-func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Restore(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -463,10 +487,6 @@ func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor,
 		return nil, err
 	}
 	if existing == nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
-	if err := s.authzService.CanEditGuide(ctx, actor, existing); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -486,11 +506,14 @@ func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor,
 	return restored, nil
 }
 
-func (s *GuidesService) GetCount(ctx context.Context, actor *authulamodels.Actor) (int, error) {
-	filter, err := s.authzService.GuideListFilter(ctx, actor)
+func (s *GuidesService) GetCount(ctx context.Context, teamID string) (int, error) {
+	filter := &types.GuideFilter{}
+
+	parsedTeamID, err := uuid.Parse(teamID)
 	if err != nil {
-		return 0, err
+		return 0, constants.ErrTeamNotFound
 	}
+	filter.TeamID = &parsedTeamID
 
 	count, err := s.guidesRepo.GetCount(ctx, filter)
 	if err != nil {
@@ -500,7 +523,7 @@ func (s *GuidesService) GetCount(ctx context.Context, actor *authulamodels.Actor
 	return count, nil
 }
 
-func (s *GuidesService) PermanentlyDelete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) PermanentlyDelete(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -510,10 +533,6 @@ func (s *GuidesService) PermanentlyDelete(ctx context.Context, actor *authulamod
 		return nil, err
 	}
 	if existing == nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
-	if err := s.authzService.CanDeleteGuide(ctx, actor, existing); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 
@@ -543,7 +562,7 @@ func (s *GuidesService) publishPurgeEvent(ctx context.Context, guideID string) e
 	})
 }
 
-func (s *GuidesService) RecalculateDuration(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
+func (s *GuidesService) RecalculateDuration(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -553,10 +572,6 @@ func (s *GuidesService) RecalculateDuration(ctx context.Context, actor *authulam
 		return nil, err
 	}
 	if guide == nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
-	if err := s.authzService.CanEditGuide(ctx, actor, guide); err != nil {
 		return nil, constants.ErrGuideNotFound
 	}
 

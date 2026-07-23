@@ -17,6 +17,8 @@ extensionRegistry.freeze();
 export interface MyRouterContext {
 	queryClient: QueryClient;
 	user: User | null;
+	activeTeamId: string | null;
+	teams: Array<{ id: string; name: string }>;
 	hideSiteHeader?: boolean;
 }
 

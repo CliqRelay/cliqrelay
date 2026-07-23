@@ -316,7 +316,6 @@ func (r *BunStepsRepository) Delete(ctx context.Context, id string) error {
 
 	rowsAffected, _ := res.RowsAffected()
 	if rowsAffected == 0 {
-		// Log a warning or handle the fact that the ID didn't exist, if desired
 	}
 
 	return nil
@@ -328,7 +327,6 @@ func (r *BunStepsRepository) Reorder(ctx context.Context, guideID string, target
 	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := r.reorderInTx(ctx, tx, guideID, targetStepID, prevStepID, nextStepID)
 		if err != nil {
-			// Sort keys may be corrupted. Re-key all steps and retry.
 			if err := r.rekeyGuideSteps(ctx, tx, guideID); err != nil {
 				return fmt.Errorf("rekeying guide steps: %w", err)
 			}

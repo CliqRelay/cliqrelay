@@ -25,21 +25,10 @@ func (h *GetExportStatusHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 
 		exportID := r.PathValue("exportID")
-		if exportID == "" {
-			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{"message": "export ID is required"})
-			reqCtx.Handled = true
-			return
-		}
 
 		export, err := h.exportService.GetExportStatus(reqCtx, exportID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
-			reqCtx.Handled = true
-			return
-		}
-
-		if export == nil {
-			reqCtx.SetJSONResponse(http.StatusNotFound, map[string]any{"message": "export not found"})
 			reqCtx.Handled = true
 			return
 		}

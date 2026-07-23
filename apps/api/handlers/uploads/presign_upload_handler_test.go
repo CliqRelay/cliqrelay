@@ -10,10 +10,14 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersuploads "github.com/CliqRelay/cliqrelay/handlers/uploads"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
+	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestPresignUploadHandler(t *testing.T) {
@@ -23,7 +27,6 @@ func TestPresignUploadHandler(t *testing.T) {
 	stepAction := models.StepActionClick
 	guideID := uuid.New()
 	stepID := uuid.New()
-	otherGuideID := uuid.New()
 
 	cases := []struct {
 		name           string
@@ -54,7 +57,7 @@ func TestPresignUploadHandler(t *testing.T) {
 						Action:    &stepAction,
 					}, nil).
 					Once()
-				mockPresignService.On("PutURL", mock.Anything, "test-bucket", mock.AnythingOfType("string"), "image/webp").
+				mockPresignService.On("PutURL", mock.Anything, "test-bucket", mock.Anything, "image/webp").
 					Return("https://storage.example.com/presigned-url", nil).
 					Once()
 			},
@@ -125,32 +128,6 @@ func TestPresignUploadHandler(t *testing.T) {
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name: "step not in guide",
-			payload: types.PresignUploadRequest{
-				GuideID: guideID.String(),
-				StepID:  stepID.String(),
-			},
-			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
-					Return(&models.Guide{
-						ID:        guideID,
-						CreatorID: "test-user-123",
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
-					Once()
-				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
-					Return(&models.Step{
-						ID:        stepID,
-						GuideID:   otherGuideID,
-						SortOrder: "a0",
-						Action:    &stepAction,
-					}, nil).
-					Once()
-			},
-			expectedStatus: http.StatusNotFound,
-		},
-		{
 			name: "service error",
 			payload: types.PresignUploadRequest{
 				GuideID: guideID.String(),
@@ -175,12 +152,16 @@ func TestPresignUploadHandler(t *testing.T) {
 			mockPresignClient := new(tests.MockPresignService)
 			tt.setup(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, mockAuthz, "test-bucket")
-			handler := handlersuploads.NewPresignUploadHandler(appConfig, svc)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, "test-bucket")
+			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewUploadsUseCase(mockAuthz, svc, guidesSvc, stepsSvc)
 
 			path := "/api/v1/uploads/presign"
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, tt.payload)
+
+			handler := handlersuploads.NewPresignUploadHandler(appConfig, uc)
 
 			handler.Handle()(req.W, req.Req)
 

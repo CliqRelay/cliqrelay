@@ -7,5 +7,5 @@
  */
 
 export type GetAllStepsByGuideIdParams = {
-	guideId?: string;
+	guide_id?: string;
 };

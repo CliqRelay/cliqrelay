@@ -9,6 +9,8 @@ import * as zod from "zod";
 
 import {
 	ArchiveGuideResponse,
+	CreateDemoGuideRequest,
+	CreateDemoGuideResponse,
 	CreateGuideRequest,
 	CreateGuideResponse,
 	DeleteGuideResponse,
@@ -47,6 +49,7 @@ export const GetExportStatusResponseSchema = GetExportStatusResponse;
  */
 export const GetAllGuidesQueryParams = zod.object({
 	status: zod.union([zod.null(), GuideStatus]).optional(),
+	team_id: zod.string().optional(),
 });
 
 export const GetAllGuidesResponseSchema = GetAllGuidesResponse;
@@ -63,12 +66,28 @@ export const CreateGuideResponseSchema = CreateGuideResponse;
  * Returns the total count of non-deleted guides for the authenticated user
  * @summary Get guides count
  */
+export const GetGuidesCountQueryParams = zod.object({
+	team_id: zod.string().optional(),
+});
+
 export const GetGuidesCountResponseSchema = GetGuidesCountResponse;
+
+/**
+ * Creates a demo guide with predefined steps
+ * @summary Create demo guide
+ */
+export const CreateDemoGuideBody = CreateDemoGuideRequest;
+
+export const CreateDemoGuideResponseSchema = CreateDemoGuideResponse;
 
 /**
  * Get all guides starred by the current user
  * @summary Get starred guides
  */
+export const GetStarredGuidesQueryParams = zod.object({
+	team_id: zod.string().optional(),
+});
+
 export const GetStarredGuidesResponse = GetAllGuidesResponse;
 
 /**

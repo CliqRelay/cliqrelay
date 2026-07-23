@@ -25,6 +25,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { customFetch } from "../../../mutators/custom-fetch";
 import type {
 	ArchiveGuideResponse,
+	CreateDemoGuideRequest,
+	CreateDemoGuideResponse,
 	CreateGuideRequest,
 	CreateGuideResponse,
 	DeleteGuideResponse,
@@ -34,7 +36,9 @@ import type {
 	GetAllGuidesResponse,
 	GetExportStatusResponse,
 	GetGuideByIDResponse,
+	GetGuidesCountParams,
 	GetGuidesCountResponse,
+	GetStarredGuidesParams,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
@@ -484,8 +488,20 @@ export const useCreateGuide = <TError = unknown, TContext = unknown>(
 > => {
 	return useMutation(getCreateGuideMutationOptions(options), queryClient);
 };
-export const getGetGuidesCountUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/count`;
+export const getGetGuidesCountUrl = (params?: GetGuidesCountParams) => {
+	const normalizedParams = new URLSearchParams();
+
+	Object.entries(params || {}).forEach(([key, value]) => {
+		if (value !== undefined) {
+			normalizedParams.append(key, value === null ? "null" : String(value));
+		}
+	});
+
+	const stringifiedParams = normalizedParams.toString();
+
+	return stringifiedParams.length > 0
+		? `${import.meta.env.VITE_API_URL}/api/v1/guides/count?${stringifiedParams}`
+		: `${import.meta.env.VITE_API_URL}/api/v1/guides/count`;
 };
 
 /**
@@ -493,34 +509,41 @@ export const getGetGuidesCountUrl = () => {
  * @summary Get guides count
  */
 export const getGuidesCount = async (
+	params?: GetGuidesCountParams,
 	options?: RequestInit,
 ): Promise<GetGuidesCountResponse> => {
-	return customFetch<GetGuidesCountResponse>(getGetGuidesCountUrl(), {
+	return customFetch<GetGuidesCountResponse>(getGetGuidesCountUrl(params), {
 		...options,
 		method: "GET",
 	});
 };
 
-export const getGetGuidesCountQueryKey = () => {
-	return [`${import.meta.env.VITE_API_URL}/api/v1/guides/count`] as const;
+export const getGetGuidesCountQueryKey = (params?: GetGuidesCountParams) => {
+	return [
+		`${import.meta.env.VITE_API_URL}/api/v1/guides/count`,
+		...(params ? [params] : []),
+	] as const;
 };
 
 export const getGetGuidesCountQueryOptions = <
 	TData = Awaited<ReturnType<typeof getGuidesCount>>,
 	TError = unknown,
->(options?: {
-	query?: Partial<
-		UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
-	>;
-	request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+	params?: GetGuidesCountParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+) => {
 	const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetGuidesCountQueryKey();
+	const queryKey = queryOptions?.queryKey ?? getGetGuidesCountQueryKey(params);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuidesCount>>> = ({
 		signal,
-	}) => getGuidesCount({ signal, ...requestOptions });
+	}) => getGuidesCount(params, { signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getGuidesCount>>,
@@ -538,6 +561,7 @@ export function useGetGuidesCount<
 	TData = Awaited<ReturnType<typeof getGuidesCount>>,
 	TError = unknown,
 >(
+	params: undefined | GetGuidesCountParams,
 	options: {
 		query: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
@@ -560,6 +584,7 @@ export function useGetGuidesCount<
 	TData = Awaited<ReturnType<typeof getGuidesCount>>,
 	TError = unknown,
 >(
+	params?: GetGuidesCountParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
@@ -582,6 +607,7 @@ export function useGetGuidesCount<
 	TData = Awaited<ReturnType<typeof getGuidesCount>>,
 	TError = unknown,
 >(
+	params?: GetGuidesCountParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
@@ -600,6 +626,7 @@ export function useGetGuidesCount<
 	TData = Awaited<ReturnType<typeof getGuidesCount>>,
 	TError = unknown,
 >(
+	params?: GetGuidesCountParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
@@ -610,7 +637,7 @@ export function useGetGuidesCount<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetGuidesCountQueryOptions(options);
+	const queryOptions = getGetGuidesCountQueryOptions(params, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -620,8 +647,106 @@ export function useGetGuidesCount<
 	return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const getGetStarredGuidesUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/starred`;
+export const getCreateDemoGuideUrl = () => {
+	return `${import.meta.env.VITE_API_URL}/api/v1/guides/demo`;
+};
+
+/**
+ * Creates a demo guide with predefined steps
+ * @summary Create demo guide
+ */
+export const createDemoGuide = async (
+	createDemoGuideRequest?: CreateDemoGuideRequest,
+	options?: RequestInit,
+): Promise<CreateDemoGuideResponse> => {
+	return customFetch<CreateDemoGuideResponse>(getCreateDemoGuideUrl(), {
+		...options,
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(createDemoGuideRequest),
+	});
+};
+
+export const getCreateDemoGuideMutationOptions = <
+	TError = unknown,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createDemoGuide>>,
+		TError,
+		{ data?: CreateDemoGuideRequest },
+		TContext
+	>;
+	request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createDemoGuide>>,
+	TError,
+	{ data?: CreateDemoGuideRequest },
+	TContext
+> => {
+	const mutationKey = ["createDemoGuide"];
+	const { mutation: mutationOptions, request: requestOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, request: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createDemoGuide>>,
+		{ data?: CreateDemoGuideRequest }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createDemoGuide(data, requestOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateDemoGuideMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createDemoGuide>>
+>;
+export type CreateDemoGuideMutationBody = CreateDemoGuideRequest | undefined;
+export type CreateDemoGuideMutationError = unknown;
+
+/**
+ * @summary Create demo guide
+ */
+export const useCreateDemoGuide = <TError = unknown, TContext = unknown>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof createDemoGuide>>,
+			TError,
+			{ data?: CreateDemoGuideRequest },
+			TContext
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof createDemoGuide>>,
+	TError,
+	{ data?: CreateDemoGuideRequest },
+	TContext
+> => {
+	return useMutation(getCreateDemoGuideMutationOptions(options), queryClient);
+};
+export const getGetStarredGuidesUrl = (params?: GetStarredGuidesParams) => {
+	const normalizedParams = new URLSearchParams();
+
+	Object.entries(params || {}).forEach(([key, value]) => {
+		if (value !== undefined) {
+			normalizedParams.append(key, value === null ? "null" : String(value));
+		}
+	});
+
+	const stringifiedParams = normalizedParams.toString();
+
+	return stringifiedParams.length > 0
+		? `${import.meta.env.VITE_API_URL}/api/v1/guides/starred?${stringifiedParams}`
+		: `${import.meta.env.VITE_API_URL}/api/v1/guides/starred`;
 };
 
 /**
@@ -629,34 +754,48 @@ export const getGetStarredGuidesUrl = () => {
  * @summary Get starred guides
  */
 export const getStarredGuides = async (
+	params?: GetStarredGuidesParams,
 	options?: RequestInit,
 ): Promise<GetAllGuidesResponse> => {
-	return customFetch<GetAllGuidesResponse>(getGetStarredGuidesUrl(), {
+	return customFetch<GetAllGuidesResponse>(getGetStarredGuidesUrl(params), {
 		...options,
 		method: "GET",
 	});
 };
 
-export const getGetStarredGuidesQueryKey = () => {
-	return [`${import.meta.env.VITE_API_URL}/api/v1/guides/starred`] as const;
+export const getGetStarredGuidesQueryKey = (
+	params?: GetStarredGuidesParams,
+) => {
+	return [
+		`${import.meta.env.VITE_API_URL}/api/v1/guides/starred`,
+		...(params ? [params] : []),
+	] as const;
 };
 
 export const getGetStarredGuidesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getStarredGuides>>,
 	TError = unknown,
->(options?: {
-	query?: Partial<
-		UseQueryOptions<Awaited<ReturnType<typeof getStarredGuides>>, TError, TData>
-	>;
-	request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+	params?: GetStarredGuidesParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getStarredGuides>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+) => {
 	const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetStarredGuidesQueryKey();
+	const queryKey =
+		queryOptions?.queryKey ?? getGetStarredGuidesQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getStarredGuides>>
-	> = ({ signal }) => getStarredGuides({ signal, ...requestOptions });
+	> = ({ signal }) => getStarredGuides(params, { signal, ...requestOptions });
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof getStarredGuides>>,
@@ -674,6 +813,7 @@ export function useGetStarredGuides<
 	TData = Awaited<ReturnType<typeof getStarredGuides>>,
 	TError = unknown,
 >(
+	params: undefined | GetStarredGuidesParams,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -700,6 +840,7 @@ export function useGetStarredGuides<
 	TData = Awaited<ReturnType<typeof getStarredGuides>>,
 	TError = unknown,
 >(
+	params?: GetStarredGuidesParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -726,6 +867,7 @@ export function useGetStarredGuides<
 	TData = Awaited<ReturnType<typeof getStarredGuides>>,
 	TError = unknown,
 >(
+	params?: GetStarredGuidesParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -748,6 +890,7 @@ export function useGetStarredGuides<
 	TData = Awaited<ReturnType<typeof getStarredGuides>>,
 	TError = unknown,
 >(
+	params?: GetStarredGuidesParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -762,7 +905,7 @@ export function useGetStarredGuides<
 ): UseQueryResult<TData, TError> & {
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
-	const queryOptions = getGetStarredGuidesQueryOptions(options);
+	const queryOptions = getGetStarredGuidesQueryOptions(params, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,

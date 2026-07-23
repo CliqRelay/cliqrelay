@@ -23,4 +23,7 @@ var (
 	ErrStepNotInGuide     = errors.New("step does not belong to the specified guide")
 
 	ErrMediaAssetCopyFailed = errors.New("failed to copy media asset")
+
+	ErrTeamNotFound     = errors.New("team not found")
+	ErrTeamAccessDenied = errors.New("team access denied")
 )

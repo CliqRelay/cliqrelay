@@ -22,7 +22,7 @@ import {
  * @summary Get all media assets by step ID
  */
 export const GetAllMediaAssetsByStepIdQueryParams = zod.object({
-	stepId: zod.string().optional(),
+	step_id: zod.string().optional(),
 });
 
 export const GetAllMediaAssetsByStepIdResponse = GetAllMediaAssetsResponse;

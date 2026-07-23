@@ -133,6 +133,9 @@ $ make openapi-export ARGS="--output ../../packages/api-client/openapi.json --fo
 
 # Export YAML
 $ make openapi-export ARGS="--format yaml"
+
+# Run this command to get consistent formatting for the openapi.json file
+$ jq "." openapi.json > temp.json && mv temp.json openapi.json
 ```
 
 The exported spec is also served live at `GET /api/v1/openapi.json` when the server is running.

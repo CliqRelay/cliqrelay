@@ -29,6 +29,19 @@ type GuideStatus struct {
 	Status models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
 }
 
+type TeamIDQueryParam struct {
+	ID string `query:"team_id" validate:"required,uuid"`
+}
+
+func (r *TeamIDQueryParam) Validate() error {
+	return validator.Validate.Struct(r)
+}
+
+type GuideQueryParams struct {
+	Status  *models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
+	TeamID  string              `query:"team_id" validate:"omitempty,uuid" nullable:"true"`
+}
+
 func (r *GuideStatus) Validate() error {
 	return validator.Validate.Struct(r)
 }
@@ -47,6 +60,7 @@ type GuideWithStarred struct {
 
 type GuideFilter struct {
 	IDs             []uuid.UUID
+	TeamID          *uuid.UUID
 	CreatorID       *string
 	ViewerUserID    *string
 	Status          *models.GuideStatus
@@ -63,8 +77,9 @@ type GuideFilter struct {
 }
 
 type CreateGuideRequest struct {
-	Title       string  `json:"title" validate:"required,lte=255" required:"true"`
-	Description *string `json:"description,omitempty" nullable:"true"`
+	TeamID      uuid.UUID `json:"team_id" validate:"required,uuid" required:"true"`
+	Title       string    `json:"title" validate:"required,lte=255" required:"true"`
+	Description *string   `json:"description,omitempty" nullable:"true"`
 }
 
 func (r *CreateGuideRequest) Validate() error {
@@ -75,9 +90,10 @@ func (r *CreateGuideRequest) Validate() error {
 }
 
 type CreateGuideDTO struct {
-	CreatorID   string  `json:"-"`
-	Title       string  `json:"title" required:"true" validate:"required,lte=255"`
-	Description *string `json:"description,omitempty"`
+	TeamID      uuid.UUID `json:"team_id" validate:"required"`
+	CreatorID   string    `json:"-"`
+	Title       string    `json:"title" required:"true" validate:"required,lte=255"`
+	Description *string   `json:"description,omitempty"`
 }
 
 func (r *CreateGuideDTO) Validate() error {
@@ -111,6 +127,7 @@ func (r *UpdateGuideRequest) Validate() error {
 
 type UpdateGuideDTO struct {
 	ID          uuid.UUID `json:"id" required:"true" validate:"required"`
+	TeamID      uuid.UUID `json:"team_id" validate:"required"`
 	Title       *string   `json:"title,omitempty" validate:"omitempty,lte=255" nullable:"true"`
 	Description *string   `json:"description,omitempty" nullable:"true"`
 }
@@ -182,4 +199,16 @@ type ExportGuideResponse struct {
 
 type GetExportStatusResponse struct {
 	Export *models.GuideExport `json:"export" required:"true" nullable:"true"`
+}
+
+type CreateDemoGuideRequest struct {
+	TeamID uuid.UUID `json:"team_id" validate:"required,uuid" required:"true" nullable:"false"`
+}
+
+func (r *CreateDemoGuideRequest) Validate() error {
+	return validator.Validate.Struct(r)
+}
+
+type CreateDemoGuideResponse struct {
+	GuideID string `json:"guide_id" required:"true"`
 }

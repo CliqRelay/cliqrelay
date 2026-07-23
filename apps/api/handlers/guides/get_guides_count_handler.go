@@ -3,7 +3,7 @@ package guides
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -12,20 +12,22 @@ import (
 
 type GetGuidesCountHandler struct {
 	appConfig     *config.AppConfig
-	guidesService interfaces.GuidesService
+	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewGetGuidesCountHandler(appConfig *config.AppConfig, guidesService interfaces.GuidesService) *GetGuidesCountHandler {
-	return &GetGuidesCountHandler{appConfig: appConfig, guidesService: guidesService}
+func NewGetGuidesCountHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *GetGuidesCountHandler {
+	return &GetGuidesCountHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
 }
 
 func (h *GetGuidesCountHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		count, err := h.guidesService.GetCount(ctx, actor)
+		teamID := r.URL.Query().Get("team_id")
+
+		count, err := h.guidesUseCase.GetCount(ctx, actor, teamID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -3,7 +3,7 @@ package guides
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -12,22 +12,22 @@ import (
 
 type RestoreGuideHandler struct {
 	appConfig     *config.AppConfig
-	guidesService interfaces.GuidesService
+	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewRestoreGuideHandler(appConfig *config.AppConfig, guidesService interfaces.GuidesService) *RestoreGuideHandler {
-	return &RestoreGuideHandler{appConfig: appConfig, guidesService: guidesService}
+func NewRestoreGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *RestoreGuideHandler {
+	return &RestoreGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
 }
 
 func (h *RestoreGuideHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
 		guideID := r.PathValue("id")
 
-		guide, err := h.guidesService.Restore(ctx, actor, guideID)
+		guide, err := h.guidesUseCase.Restore(ctx, actor, guideID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

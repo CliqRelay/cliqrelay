@@ -16,6 +16,7 @@ import {
 import ProBadge from "@/components/shared/ProBadge";
 import SoonBadge from "@/components/shared/ComingSoonBadge";
 import { toast } from "@/hooks/use-toast";
+import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 const POLL_INTERVAL = 2000;
 const MAX_POLL_TIME = 60_000;
@@ -80,6 +81,9 @@ export function ExportDialog({
 		},
 		request: {
 			credentials: "include",
+			headers: {
+				...getCsrfTokenHeader(),
+			},
 		},
 	});
 

@@ -30,6 +30,7 @@ export const Guide = zod.object({
 	purgeRequestedAt: zod.iso.datetime({ offset: true }).nullish(),
 	restoredAt: zod.iso.datetime({ offset: true }).nullish(),
 	status: GuideStatus,
+	teamId: Uuid,
 	title: zod.string(),
 	updatedAt: zod.iso.datetime({ offset: true }),
 });
@@ -71,8 +72,27 @@ export type CompleteUploadResponseOutput = zod.output<
 	typeof CompleteUploadResponse
 >;
 
+export const CreateDemoGuideRequest = zod.object({
+	teamId: Uuid,
+});
+
+export type CreateDemoGuideRequest = zod.input<typeof CreateDemoGuideRequest>;
+export type CreateDemoGuideRequestOutput = zod.output<
+	typeof CreateDemoGuideRequest
+>;
+
+export const CreateDemoGuideResponse = zod.object({
+	guideId: zod.string(),
+});
+
+export type CreateDemoGuideResponse = zod.input<typeof CreateDemoGuideResponse>;
+export type CreateDemoGuideResponseOutput = zod.output<
+	typeof CreateDemoGuideResponse
+>;
+
 export const CreateGuideRequest = zod.object({
 	description: zod.string().nullish(),
+	teamId: Uuid,
 	title: zod.string(),
 });
 
@@ -295,6 +315,29 @@ export const GetAllStepsResponse = zod.object({
 
 export type GetAllStepsResponse = zod.input<typeof GetAllStepsResponse>;
 export type GetAllStepsResponseOutput = zod.output<typeof GetAllStepsResponse>;
+
+export const Team = zod
+	.object({
+		createdAt: zod.string(),
+		id: zod.string(),
+		name: zod.string(),
+		organizationId: zod.string(),
+		ownerId: zod.string(),
+		updatedAt: zod.string(),
+	})
+	.describe("A team within an organization");
+
+export type Team = zod.input<typeof Team>;
+export type TeamOutput = zod.output<typeof Team>;
+
+export const GetAllTeamsResponse = zod
+	.object({
+		teams: zod.array(Team),
+	})
+	.describe("Response containing all teams");
+
+export type GetAllTeamsResponse = zod.input<typeof GetAllTeamsResponse>;
+export type GetAllTeamsResponseOutput = zod.output<typeof GetAllTeamsResponse>;
 
 export const GuideExport = zod.object({
 	createdAt: zod.iso.datetime({ offset: true }),

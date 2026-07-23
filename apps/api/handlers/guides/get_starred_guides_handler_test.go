@@ -11,9 +11,11 @@ import (
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestGetStarredGuidesHandler(t *testing.T) {
@@ -30,7 +32,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 		{
 			name: "success",
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
-				mockRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*types.GuideWithStarred{
 						{Guide: models.Guide{ID: uuid.New(), CreatorID: "test-user-123", Title: "Starred Guide 1", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
 						{Guide: models.Guide{ID: uuid.New(), CreatorID: "test-user-123", Title: "Starred Guide 2", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
@@ -43,7 +45,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 		{
 			name: "empty list",
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
-				mockRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*types.GuideWithStarred{}, nil).
 					Once()
 			},
@@ -53,7 +55,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 		{
 			name: "service error",
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
-				mockRepo.On("GetAll", mock.Anything, mock.AnythingOfType("*types.GuideFilter")).
+				mockRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*types.GuideWithStarred{}, assert.AnError).
 					Once()
 			},
@@ -69,11 +71,16 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			tt.setup(mockRepo)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("GuideListFilter", mock.Anything, mock.AnythingOfType("*models.Actor")).Return(&types.GuideFilter{}, nil)
-			svc := starredguidesservice.NewStarredGuidesService(mockRepo, mockGuidesRepo, mockAuthz)
-			handler := handlersguides.NewGetStarredGuidesHandler(appConfig, svc)
+			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
+			starredSvc := starredguidesservice.NewStarredGuidesService(mockRepo, mockGuidesRepo)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockRepo, nil, nil, nil, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
+			handler := handlersguides.NewGetStarredGuidesHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/starred", nil)
+			q := req.Req.URL.Query()
+			q.Set("team_id", uuid.New().String())
+			req.Req.URL.RawQuery = q.Encode()
 
 			handler.Handle()(req.W, req.Req)
 

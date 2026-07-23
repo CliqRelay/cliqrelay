@@ -11,13 +11,13 @@ import { authulaClient } from "@/lib/authula-client";
 
 export const Route = createFileRoute("/dashboard")({
 	beforeLoad: async () => {
+		let userResponse: { user: UserWithModifiedMetadata };
 		try {
 			const response = await authulaClient.core.getMe();
 			if (!response.user.emailVerified) {
 				throw redirect({ to: "/auth/email-verification" });
 			}
-
-			return {
+			userResponse = {
 				user: response.user as UserWithModifiedMetadata,
 			};
 		} catch (error: unknown) {
@@ -26,6 +26,22 @@ export const Route = createFileRoute("/dashboard")({
 			}
 			throw redirect({ to: "/auth/sign-up" });
 		}
+
+		try {
+			const organizations =
+				await authulaClient.organizations.listOrganizations();
+
+			if (!organizations || organizations.length === 0) {
+				throw redirect({ to: "/create-organization" });
+			}
+		} catch (error: unknown) {
+			if (isRedirect(error)) {
+				throw error;
+			}
+			throw redirect({ to: "/create-organization" });
+		}
+
+		return userResponse;
 	},
 	component: DashboardRoute,
 });
