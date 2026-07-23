@@ -41,7 +41,7 @@ func (h *CreateDemoGuideHandler) Handle() http.HandlerFunc {
 
 		slog.Debug("CreateDemoGuideHandler", "request", request)
 
-		guideID, err := h.guidesUseCase.CreateDemoGuide(ctx, actor, request.WorkspaceID.String())
+		guideID, err := h.guidesUseCase.CreateDemoGuide(ctx, actor, request.TeamID.String())
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

@@ -5,8 +5,11 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import type { Team } from "./team";
 
-export type UpdateWorkspaceRequest = {
-	/** @nullable */
-	name?: string | null;
+/**
+ * Response containing all teams
+ */
+export type GetAllTeamsResponse = {
+	teams: Team[];
 };

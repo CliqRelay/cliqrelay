@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Authula/authula"
+	organizationsplugin "github.com/Authula/authula/plugins/organizations"
 	"github.com/CliqRelay/cliqrelay/auth"
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -21,7 +23,6 @@ import (
 	bunMediaAssets "github.com/CliqRelay/cliqrelay/repositories/media_assets"
 	bunStarredGuides "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
 	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
-	bunWorkspaces "github.com/CliqRelay/cliqrelay/repositories/workspaces"
 	"github.com/CliqRelay/cliqrelay/routes"
 	authservice "github.com/CliqRelay/cliqrelay/services/auth"
 	"github.com/CliqRelay/cliqrelay/services/export"
@@ -33,7 +34,6 @@ import (
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/services/storage"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
-	workspacesservice "github.com/CliqRelay/cliqrelay/services/workspaces"
 	"github.com/CliqRelay/cliqrelay/usecases"
 	"github.com/CliqRelay/cliqrelay/worker"
 )
@@ -58,84 +58,11 @@ func main() {
 		log.Fatal("Error initializing OpenAPI service: ", err)
 	}
 
-	var workspaceService interfaces.WorkspaceService
-
-	authServiceHooks := auth.InitAuthServiceHooks(func() interfaces.WorkspaceService {
-		return workspaceService
-	})
-	authulaAuth := auth.InitAuth(
+	var authulaAuth *authula.Auth
+	authulaAuth = auth.InitAuth(
 		envConfig,
-		authServiceHooks,
+		auth.InitAuthServiceHooks(func() *authula.Auth { return authulaAuth }),
 	)
-
-	// organizationsPlugin := authulaAuth.PluginRegistry.GetPlugin("organizations").(*organizations.OrganizationsPlugin)
-	// accessControlPlugin := authulaAuth.PluginRegistry.GetPlugin("access_control").(*accesscontrol.AccessControlPlugin)
-
-	// authulaAuth.RegisterHook(authulamodels.Hook{
-	// 	Stage: authulamodels.HookAfter,
-	// 	Matcher: func(reqCtx *authulamodels.RequestContext) bool {
-	// 		return reqCtx.Route != nil &&
-	// 			reqCtx.Route.Method == "POST" &&
-	// 			strings.HasSuffix(reqCtx.Route.Pattern, "/email-password/sign-up") &&
-	// 			reqCtx.Actor != nil &&
-	// 			reqCtx.Actor.ID != ""
-	// 	},
-	// 	Handler: func(reqCtx *authulamodels.RequestContext) error {
-	// 		actor := reqCtx.Actor
-	// 		if actor == nil {
-	// 			return nil
-	// 		}
-
-	// 		ctx := reqCtx.Request.Context()
-	// 		orgName := "Personal"
-	// 		if email, ok := actor.Claims["email"].(string); ok && email != "" {
-	// 			orgName = email
-	// 		}
-
-	// 		org, err := orgPlugin.Api.CreateOrganization(ctx, actor, organizationstypes.CreateOrganizationRequest{
-	// 			Name: orgName,
-	// 			Role: "admin",
-	// 		})
-	// 		if err != nil {
-	// 			slog.Error("Failed to create organization after signup", "user_id", actor.ID, "err", err)
-	// 			return nil
-	// 		}
-
-	// 		adminRole, err := acPlugin.Api.GetRoleByName(ctx, actor, "admin")
-	// 		if err != nil || adminRole == nil {
-	// 			adminRole, err = acPlugin.Api.CreateRole(ctx, actor, accesscontroltypes.CreateRoleRequest{
-	// 				Name:        "admin",
-	// 				Description: new("Administrator with full access"),
-	// 				IsSystem:    true,
-	// 			})
-	// 			if err != nil {
-	// 				slog.Error("Failed to create admin role after signup", "err", err)
-	// 				return nil
-	// 			}
-	// 		}
-
-	// 		err = acPlugin.Api.AssignRoleToUser(ctx, actor, actor.ID, accesscontroltypes.AssignUserRoleRequest{
-	// 			RoleID: adminRole.ID,
-	// 		}, nil)
-	// 		if err != nil {
-	// 			slog.Error("Failed to assign admin role after signup", "user_id", actor.ID, "err", err)
-	// 		}
-
-	// 		_, err = bunWorkspaces.NewBunWorkspacesRepository(authulaAuth.DB()).Create(ctx, &types.CreateWorkspaceDTO{
-	// 			OrganizationID: org.ID,
-	// 			OwnerID:        actor.ID,
-	// 			Name:           "My Workspace",
-	// 			Type:           models.WorkspaceTypePersonal,
-	// 		})
-	// 		if err != nil {
-	// 			slog.Error("Failed to create workspace after signup", "user_id", actor.ID, "err", err)
-	// 		}
-
-	// 		return nil
-	// 	},
-	// 	Async: true,
-	// 	Order: 0,
-	// })
 
 	appConfig := &config.AppConfig{
 		EnvConfig:       envConfig,
@@ -157,7 +84,6 @@ func main() {
 		log.Fatal("Error seeding organization roles: ", err)
 	}
 
-	bunWorkspacesRepo := bunWorkspaces.NewBunWorkspacesRepository(appConfig.DB)
 	bunGuidesRepo := bunGuides.NewBunGuidesRepository(appConfig.DB)
 	bunStarredGuidesRepo := bunStarredGuides.NewBunStarredGuidesRepository(appConfig.DB)
 	bunStepsRepo := bunSteps.NewBunStepsRepository(appConfig.DB)
@@ -168,8 +94,8 @@ func main() {
 	storageService := storage.NewS3StorageService(appConfig.S3Client)
 	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
 
-	workspaceService = workspacesservice.NewWorkspacesService(bunWorkspacesRepo)
-	authorizationService := authservice.NewDefaultAuthorizationService()
+	orgPlugin := authulaAuth.PluginRegistry.GetPlugin("organizations").(*organizationsplugin.OrganizationsPlugin)
+	authorizationService := authservice.NewDefaultAuthorizationService(*orgPlugin.Api)
 
 	guideHooks := (*interfaces.GuideHooks)(nil)
 	stepHooks := (*interfaces.StepHooks)(nil)
@@ -189,7 +115,6 @@ func main() {
 	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, uploadsService, guidesService, stepsService)
 
 	svcs := &interfaces.DomainUseCases{
-		WorkspaceService:   workspaceService,
 		GuidesUseCase:      guidesUseCase,
 		StepsUseCase:       stepsUseCase,
 		MediaAssetsUseCase: mediaAssetsUseCase,

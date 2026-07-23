@@ -9,8 +9,8 @@ export const COOKIE_CONSTANTS = {
 	csrf: {
 		name: "authula_csrf_token"
 	},
-	activeWorkspaceId: {
-		name: "cliqrelay_active_workspace_id",
+	activeTeamId: {
+		name: "cliqrelay_active_team_id",
 		maxAge: 60 * 60 * 24 * 7, // 7 days
 		path: "/"
 	}

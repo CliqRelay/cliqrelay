@@ -78,7 +78,7 @@ func runCleanups(cleanups []func()) {
 	}
 }
 
-func createTestOrgWorkspace(ctx context.Context, db *bun.DB, t *testing.T) (uuid.UUID, string) {
+func createTestOrgTeam(ctx context.Context, db *bun.DB, t *testing.T) (uuid.UUID, string) {
 	t.Helper()
 	orgID := uuid.New().String()
 	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(ctx)
@@ -86,8 +86,8 @@ func createTestOrgWorkspace(ctx context.Context, db *bun.DB, t *testing.T) (uuid
 	userID := uuid.New().String()
 	_, err = db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(ctx)
 	require.NoError(t, err)
-	wsID := uuid.New()
-	_, err = db.NewRaw("INSERT INTO workspaces (id, organization_id, owner_id, name, type) VALUES (?, ?, ?, ?, ?)", wsID, orgID, userID, "test-workspace", "PERSONAL").Exec(ctx)
+	teamID := uuid.New()
+	_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Test Team", "test-team").Exec(ctx)
 	require.NoError(t, err)
-	return wsID, userID
+	return teamID, userID
 }

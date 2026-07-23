@@ -68,7 +68,7 @@ func TestStarGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Twice()
-				mockStarredRepo.On("Star", mock.Anything, mock.Anything, "test-user-123", uuid.MustParse(guideID)).
+				mockStarredRepo.On("Star", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(nil).
 					Once()
 				mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -81,7 +81,7 @@ func TestStarGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Twice()
-				mockStarredRepo.On("Star", mock.Anything, mock.Anything, "test-user-123", uuid.MustParse(guideID)).
+				mockStarredRepo.On("Star", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(assert.AnError).
 					Once()
 				mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)

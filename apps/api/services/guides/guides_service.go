@@ -46,20 +46,20 @@ func NewGuidesService(
 	}
 }
 
-func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, workspaceID string, req *types.CreateGuideRequest) (*models.Guide, error) {
+func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, teamID string, req *types.CreateGuideRequest) (*models.Guide, error) {
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, workspaceID, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, teamID, req); err != nil {
 			return nil, err
 		}
 	}
 
-	parsedWSID, err := uuid.Parse(workspaceID)
+	parsedTeamID, err := uuid.Parse(teamID)
 	if err != nil {
-		return nil, constants.ErrWorkspaceNotFound
+		return nil, constants.ErrTeamNotFound
 	}
 
 	guideCreated, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
-		WorkspaceID: parsedWSID,
+		TeamID:      parsedTeamID,
 		CreatorID:   actor.ID,
 		Title:       req.Title,
 		Description: req.Description,
@@ -77,14 +77,14 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 	return guideCreated, nil
 }
 
-func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (string, error) {
-	parsedWorkspaceID, err := uuid.Parse(workspaceID)
+func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error) {
+	parsedTeamID, err := uuid.Parse(teamID)
 	if err != nil {
-		return "", constants.ErrWorkspaceNotFound
+		return "", constants.ErrTeamNotFound
 	}
 
 	guide, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
-		WorkspaceID: parsedWorkspaceID,
+		TeamID:      parsedTeamID,
 		CreatorID:   actor.ID,
 		Title:       "Getting Started with CliqRelay",
 		Description: new("A sample guide to show you how CliqRelay works"),
@@ -98,13 +98,11 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 
 	demoSteps := []*types.CreateStepDTO{
 		{
-			WorkspaceID:   parsedWorkspaceID,
 			GuideID:       guide.ID,
 			Type:          models.StepTypeCanvas,
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader, HeadingText: new("Overview of CliqRelay"), BodyText: new("You can use this step to provide an overview or introduction to your guide.")},
 		},
 		{
-			WorkspaceID: parsedWorkspaceID,
 			GuideID:     guide.ID,
 			Type:        models.StepTypeInteraction,
 			Action:      &clickAction,
@@ -112,19 +110,16 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 			Notes:       new("This step demonstrates a click step which will be accompanied by a screenshot of the action."),
 		},
 		{
-			WorkspaceID:   parsedWorkspaceID,
 			GuideID:       guide.ID,
 			Type:          models.StepTypeCanvas,
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeTip, HeadingText: new("This is a note"), BodyText: new("You can use this step to provide additional information or tips related to the guide.")},
 		},
 		{
-			WorkspaceID:   parsedWorkspaceID,
 			GuideID:       guide.ID,
 			Type:          models.StepTypeCanvas,
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeCallout, HeadingText: new("Callout"), BodyText: new("This is a callout step, which can be used to draw attention to important information or warnings.")},
 		},
 		{
-			WorkspaceID:   parsedWorkspaceID,
 			GuideID:       guide.ID,
 			Type:          models.StepTypeCanvas,
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeAlert, HeadingText: new("Alert"), BodyText: new("This is an alert step, which can be used to highlight critical information or errors that users should be aware of.")},
@@ -140,14 +135,14 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 	return guideID, nil
 }
 
-func (s *GuidesService) GetAll(ctx context.Context, workspaceID string, status *string) ([]*models.Guide, error) {
+func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *string) ([]*models.Guide, error) {
 	filter := &types.GuideFilter{}
 
-	parsedWSID, err := uuid.Parse(workspaceID)
+	parsedTeamID, err := uuid.Parse(teamID)
 	if err != nil {
-		return nil, constants.ErrWorkspaceNotFound
+		return nil, constants.ErrTeamNotFound
 	}
-	filter.WorkspaceID = &parsedWSID
+	filter.TeamID = &parsedTeamID
 
 	if status != nil {
 		if !slices.Contains([]string{
@@ -222,7 +217,7 @@ func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.U
 
 	updated, err := s.guidesRepo.Update(ctx, &types.UpdateGuideDTO{
 		ID:          parsedID,
-		WorkspaceID: existing.WorkspaceID,
+		TeamID:      existing.TeamID,
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -511,14 +506,14 @@ func (s *GuidesService) Restore(ctx context.Context, guideID string) (*models.Gu
 	return restored, nil
 }
 
-func (s *GuidesService) GetCount(ctx context.Context, workspaceID string) (int, error) {
+func (s *GuidesService) GetCount(ctx context.Context, teamID string) (int, error) {
 	filter := &types.GuideFilter{}
 
-	parsedWSID, err := uuid.Parse(workspaceID)
+	parsedTeamID, err := uuid.Parse(teamID)
 	if err != nil {
-		return 0, constants.ErrWorkspaceNotFound
+		return 0, constants.ErrTeamNotFound
 	}
-	filter.WorkspaceID = &parsedWSID
+	filter.TeamID = &parsedTeamID
 
 	count, err := s.guidesRepo.GetCount(ctx, filter)
 	if err != nil {

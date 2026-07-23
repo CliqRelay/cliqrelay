@@ -1,6 +1,6 @@
 import { api } from "@repo/api-client";
 
-import { getActiveWorkspaceId } from "@/lib/active-workspace";
+import { getActiveTeamId } from "@/lib/active-team";
 import { withCsrf } from "@/lib/csrf";
 import type { CaptureBridgeMessage, CaptureMetadataEntry, OffscreenEvent, RecordingStateMachine, SessionService, SidePanelCommand, StepJobProgress } from "@/models";
 import type { PortManager } from "@/services/sidepanel/port-manager.service";
@@ -38,9 +38,9 @@ export const createSessionManager = (
 			if (activeGuideId) {
 				return { guideId: activeGuideId, isNew: false };
 			}
-			const workspaceId = await getActiveWorkspaceId();
+			const teamId = await getActiveTeamId();
 			const guideResponse = await api.guides.createGuide(
-				{ title: "Untitled Guide", workspaceId: workspaceId ?? "" },
+				{ title: "Untitled Guide", teamId: teamId ?? "" },
 				await withCsrf(),
 			);
 			await sessionService.setActiveGuideId(guideResponse.guide.id);
@@ -266,11 +266,10 @@ export const createSessionManager = (
 				existing.actionText = actionText;
 			}
 		} else {
-			const workspaceId = await getActiveWorkspaceId();
+			const teamId = await getActiveTeamId();
 			const stepResponse = await api.steps.createStep(
 				{
 					guideId,
-					workspaceId: workspaceId ?? "",
 					type: "interaction",
 					action: "input",
 					url: payload.url,

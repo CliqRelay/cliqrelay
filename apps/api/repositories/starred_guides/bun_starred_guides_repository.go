@@ -32,10 +32,6 @@ func (r *BunStarredGuidesRepository) GetAll(ctx context.Context, filter *types.G
 		Join("INNER JOIN guides g ON g.id = sg.guide_id").
 		Where("sg.user_id = ?", *filter.ViewerUserID)
 
-	if filter.WorkspaceID != nil {
-		query = query.Where("sg.workspace_id = ?", *filter.WorkspaceID)
-	}
-
 	if filter.Status != nil {
 		query = query.Where("g.status = ?", *filter.Status)
 	} else if filter.IncludeDeleted {
@@ -64,20 +60,19 @@ func (r *BunStarredGuidesRepository) GetAll(ctx context.Context, filter *types.G
 	return rows, nil
 }
 
-func (r *BunStarredGuidesRepository) Star(ctx context.Context, workspaceID string, userID string, guideID uuid.UUID) error {
+func (r *BunStarredGuidesRepository) Star(ctx context.Context, userID string, guideID uuid.UUID) error {
 	_, err := r.db.NewInsert().
-		Model(&models.StarredGuide{UserID: userID, GuideID: guideID, WorkspaceID: uuid.MustParse(workspaceID)}).
+		Model(&models.StarredGuide{UserID: userID, GuideID: guideID}).
 		On("CONFLICT (user_id, guide_id) DO NOTHING").
 		Exec(ctx)
 	return err
 }
 
-func (r *BunStarredGuidesRepository) Unstar(ctx context.Context, workspaceID string, userID string, guideID uuid.UUID) error {
+func (r *BunStarredGuidesRepository) Unstar(ctx context.Context, userID string, guideID uuid.UUID) error {
 	_, err := r.db.NewDelete().
 		Model(&models.StarredGuide{}).
 		Where("user_id = ?", userID).
 		Where("guide_id = ?", guideID).
-		Where("workspace_id = ?", workspaceID).
 		Exec(ctx)
 	return err
 }

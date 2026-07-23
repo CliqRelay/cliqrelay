@@ -45,7 +45,7 @@ func NewExportService(
 	}
 }
 
-func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, workspaceID string, guideID string, format cliqmodels.ExportGuideFormat) (*uuid.UUID, error) {
+func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, guideID string, format cliqmodels.ExportGuideFormat) (*uuid.UUID, error) {
 	ctx := reqCtx.Request.Context()
 
 	parsedGuideID, err := uuid.Parse(guideID)
@@ -53,7 +53,7 @@ func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, work
 		return nil, fmt.Errorf("invalid guide ID: %w", err)
 	}
 
-	export, err := s.guideExportsRepo.Create(ctx, workspaceID, parsedGuideID, reqCtx.Actor.ID, format)
+	export, err := s.guideExportsRepo.Create(ctx, parsedGuideID, reqCtx.Actor.ID, format)
 	if err != nil {
 		return nil, fmt.Errorf("create export: %w", err)
 	}
@@ -70,7 +70,7 @@ func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, work
 	return &export.ID, nil
 }
 
-func (s *ExportService) GetExportStatus(reqCtx *authulamodels.RequestContext, workspaceID string, exportID string) (*cliqmodels.GuideExport, error) {
+func (s *ExportService) GetExportStatus(reqCtx *authulamodels.RequestContext, exportID string) (*cliqmodels.GuideExport, error) {
 	ctx := reqCtx.Request.Context()
 
 	parsedID, err := uuid.Parse(exportID)
@@ -78,7 +78,7 @@ func (s *ExportService) GetExportStatus(reqCtx *authulamodels.RequestContext, wo
 		return nil, fmt.Errorf("invalid export ID: %w", err)
 	}
 
-	export, err := s.guideExportsRepo.GetByID(ctx, workspaceID, parsedID, reqCtx.Actor.ID)
+	export, err := s.guideExportsRepo.GetByID(ctx, parsedID, reqCtx.Actor.ID)
 	if err != nil {
 		return nil, fmt.Errorf("get export: %w", err)
 	}

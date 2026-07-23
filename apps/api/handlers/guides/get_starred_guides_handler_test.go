@@ -79,7 +79,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/starred", nil)
 			q := req.Req.URL.Query()
-			q.Set("workspace_id", uuid.New().String())
+			q.Set("team_id", uuid.New().String())
 			req.Req.URL.RawQuery = q.Encode()
 
 			handler.Handle()(req.W, req.Req)

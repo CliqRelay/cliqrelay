@@ -54,25 +54,19 @@ func NewStepsService(
 	}
 }
 
-func (s *StepsService) Create(ctx context.Context, workspaceID string, req *types.CreateStepRequest) (*models.Step, error) {
+func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest) (*models.Step, error) {
 	guide, err := s.getGuideForStep(ctx, req.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
 
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, workspaceID, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, req); err != nil {
 			return nil, err
 		}
 	}
 
-	parsedWSID, err := uuid.Parse(workspaceID)
-	if err != nil {
-		return nil, constants.ErrWorkspaceNotFound
-	}
-
 	step, err := s.stepsRepo.Create(ctx, &types.CreateStepDTO{
-		WorkspaceID:        parsedWSID,
 		GuideID:            guide.ID,
 		Type:               req.Type,
 		Action:             req.Action,
@@ -149,14 +143,13 @@ func (s *StepsService) Update(ctx context.Context, stepID string, req *types.Upd
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, step.WorkspaceID.String(), req); err != nil {
+		if err := s.hooks.BeforeUpdate(ctx, req); err != nil {
 			return nil, err
 		}
 	}
 
 	updated, err := s.stepsRepo.Update(ctx, &types.UpdateStepDTO{
 		ID:            parsedID,
-		WorkspaceID:   step.WorkspaceID,
 		Type:          req.Type,
 		Action:        req.Action,
 		ActionText:    req.ActionText,
@@ -266,7 +259,6 @@ func (s *StepsService) Duplicate(ctx context.Context, stepID string, req *types.
 	}
 
 	dto := &types.CreateStepDTO{
-		WorkspaceID:        original.WorkspaceID,
 		GuideID:            original.GuideID,
 		Type:               original.Type,
 		Action:             original.Action,
@@ -309,7 +301,6 @@ func (s *StepsService) Duplicate(ctx context.Context, stepID string, req *types.
 
 		if _, err := s.mediaAssetsRepo.Create(ctx, &types.CreateMediaAssetDTO{
 			StepID:      newStep.ID,
-			WorkspaceID: original.WorkspaceID,
 			StoragePath: newStoragePath,
 			MimeType:    asset.MimeType,
 			AltText:     asset.AltText,

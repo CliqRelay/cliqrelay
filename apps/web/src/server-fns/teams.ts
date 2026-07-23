@@ -4,10 +4,10 @@ import { api } from "@repo/api-client";
 
 import { authMiddleware } from "@/middleware/auth.middleware";
 
-export const getWorkspaces = createServerFn({ method: "GET" })
+export const getTeams = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ context }) => {
-		const response = await api.workspaces.getWorkspaces({
+		const response = await api.teams.getTeams({
 			headers: {
 				Cookie: context?.headers?.get("Cookie") ?? "",
 			},

@@ -1,7 +1,6 @@
 package interfaces
 
 type DomainUseCases struct {
-	WorkspaceService     WorkspaceService
 	GuidesUseCase        GuidesUseCase
 	StepsUseCase         StepsUseCase
 	StarredGuidesService StarredGuidesService

@@ -23,7 +23,6 @@ func stepsInitial() authulamigrations.Migration {
 					$$ LANGUAGE plpgsql;`,
 				`CREATE TABLE steps (
 					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-					workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
 					guide_id UUID NOT NULL,
 					type VARCHAR(255) NOT NULL,
 					sort_order TEXT NOT NULL COLLATE "C",

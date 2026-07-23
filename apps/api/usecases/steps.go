@@ -4,8 +4,6 @@ import (
 	"context"
 
 	authulamodels "github.com/Authula/authula/models"
-	"github.com/google/uuid"
-
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -30,18 +28,16 @@ func NewStepsUseCase(
 }
 
 func (uc *StepsUseCase) Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateStepRequest) (*models.Step, error) {
-	workspaceID := req.WorkspaceID.String()
 	guide, err := uc.guidesService.GetByID(ctx, req.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	parsedWSID, _ := uuid.Parse(workspaceID)
-	if err := uc.authzService.CanEditGuide(ctx, actor, parsedWSID.String(), guide); err != nil {
+	if err := uc.authzService.CanEditGuide(ctx, actor, guide.TeamID.String(), guide); err != nil {
 		return nil, err
 	}
 
-	return uc.stepsService.Create(ctx, workspaceID, req)
+	return uc.stepsService.Create(ctx, req)
 }
 
 func (uc *StepsUseCase) ListByGuide(ctx context.Context, actor *authulamodels.Actor, guideID string) ([]*models.Step, error) {
@@ -50,8 +46,8 @@ func (uc *StepsUseCase) ListByGuide(ctx context.Context, actor *authulamodels.Ac
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -69,8 +65,8 @@ func (uc *StepsUseCase) Get(ctx context.Context, actor *authulamodels.Actor, ste
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -88,8 +84,8 @@ func (uc *StepsUseCase) Update(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -107,8 +103,8 @@ func (uc *StepsUseCase) Delete(ctx context.Context, actor *authulamodels.Actor, 
 		return err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return err
 	}
 
@@ -116,13 +112,12 @@ func (uc *StepsUseCase) Delete(ctx context.Context, actor *authulamodels.Actor, 
 }
 
 func (uc *StepsUseCase) Reorder(ctx context.Context, actor *authulamodels.Actor, req *types.ReorderStepsRequest) ([]*models.Step, error) {
-	workspaceID := req.WorkspaceID.String()
 	guide, err := uc.guidesService.GetByID(ctx, req.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	if err := uc.authzService.CanEditGuide(ctx, actor, guide.TeamID.String(), guide); err != nil {
 		return nil, err
 	}
 
@@ -140,8 +135,8 @@ func (uc *StepsUseCase) Duplicate(ctx context.Context, actor *authulamodels.Acto
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 

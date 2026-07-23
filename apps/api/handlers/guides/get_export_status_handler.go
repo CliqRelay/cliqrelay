@@ -24,10 +24,9 @@ func (h *GetExportStatusHandler) Handle() http.HandlerFunc {
 		ctx := r.Context()
 		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 
-		workspaceID := r.URL.Query().Get("workspace_id")
 		exportID := r.PathValue("exportID")
 
-		export, err := h.exportService.GetExportStatus(reqCtx, workspaceID, exportID)
+		export, err := h.exportService.GetExportStatus(reqCtx, exportID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

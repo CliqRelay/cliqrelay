@@ -27,5 +27,4 @@ export type MediaAsset = {
 	url?: string | null;
 	/** @nullable */
 	width?: number | null;
-	workspaceId: Uuid;
 };

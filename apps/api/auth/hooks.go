@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"github.com/Authula/authula"
 	"github.com/CliqRelay/cliqrelay/config"
-	"github.com/CliqRelay/cliqrelay/interfaces"
 )
 
-func InitAuthServiceHooks(provider func() interfaces.WorkspaceService) config.AuthServiceHooks {
+type authulaProvider func() *authula.Auth
+
+func InitAuthServiceHooks(provider authulaProvider) config.AuthServiceHooks {
 	return config.AuthServiceHooks{
 		OrganizationsServiceHooksConfig: ConstructOrganizationsServiceHooks(provider),
 	}

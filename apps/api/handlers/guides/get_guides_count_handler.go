@@ -25,9 +25,9 @@ func (h *GetGuidesCountHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.URL.Query().Get("workspace_id")
+		teamID := r.URL.Query().Get("team_id")
 
-		count, err := h.guidesUseCase.GetCount(ctx, actor, workspaceID)
+		count, err := h.guidesUseCase.GetCount(ctx, actor, teamID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

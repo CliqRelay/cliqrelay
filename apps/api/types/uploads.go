@@ -3,7 +3,6 @@ package types
 import "github.com/CliqRelay/cliqrelay/validator"
 
 type PresignUploadRequest struct {
-	WorkspaceID string `json:"workspace_id" validate:"required,uuid"`
 	GuideID     string `json:"guide_id" validate:"required,uuid"`
 	StepID      string `json:"step_id"  validate:"required,uuid"`
 }
@@ -18,7 +17,6 @@ type PresignUploadResponse struct {
 }
 
 type CompleteUploadRequest struct {
-	WorkspaceID string  `json:"workspace_id" validate:"required,uuid"`
 	StepID      string  `json:"step_id"       validate:"required,uuid"`
 	StoragePath string  `json:"storage_path"  validate:"required"`
 	FileSize    *int    `json:"file_size,omitempty"`

@@ -7,11 +7,13 @@
  */
 
 /**
- * The workspace type
+ * A team within an organization
  */
-export type WorkspaceType = (typeof WorkspaceType)[keyof typeof WorkspaceType];
-
-export const WorkspaceType = {
-	personal: "personal",
-	team: "team",
-} as const;
+export type Team = {
+	createdAt: string;
+	id: string;
+	name: string;
+	organizationId: string;
+	ownerId: string;
+	updatedAt: string;
+};

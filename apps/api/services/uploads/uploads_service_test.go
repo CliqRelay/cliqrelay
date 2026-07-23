@@ -123,7 +123,7 @@ func TestUploadsService_GeneratePresignedPutURL(t *testing.T) {
 			tt.setup(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, tt.guideID, tt.stepID)
 			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, bucket)
 
-			result, err := svc.GeneratePresignedPutURL(context.Background(), "00000000-0000-0000-0000-000000000001", tt.guideID, tt.stepID)
+			result, err := svc.GeneratePresignedPutURL(context.Background(), tt.guideID, tt.stepID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -275,7 +275,7 @@ func TestUploadsService_CompleteUpload(t *testing.T) {
 			}
 			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, bucket)
 
-			result, err := svc.CompleteUpload(context.Background(), "00000000-0000-0000-0000-000000000001", tt.stepID, tt.storagePath, tt.fileSize, tt.mimeType, tt.thumbnail, new(100), new(100))
+			result, err := svc.CompleteUpload(context.Background(), tt.stepID, tt.storagePath, tt.fileSize, tt.mimeType, tt.thumbnail, new(100), new(100))
 
 			if tt.wantErr {
 				assert.Error(t, err)

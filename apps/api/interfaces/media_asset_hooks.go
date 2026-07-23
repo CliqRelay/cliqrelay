@@ -8,9 +8,9 @@ import (
 )
 
 type MediaAssetHooks struct {
-	BeforeCreate func(ctx context.Context, workspaceID string, req *types.CreateMediaAssetRequest) error
+	BeforeCreate func(ctx context.Context, req *types.CreateMediaAssetRequest) error
 	AfterCreate  func(ctx context.Context, asset *models.MediaAsset) error
-	BeforeUpdate func(ctx context.Context, workspaceID string, req *types.UpdateMediaAssetRequest) error
+	BeforeUpdate func(ctx context.Context, req *types.UpdateMediaAssetRequest) error
 	AfterUpdate  func(ctx context.Context, asset *models.MediaAsset) error
 	BeforeDelete func(ctx context.Context, assetID string) error
 	AfterDelete  func(ctx context.Context, assetID string) error

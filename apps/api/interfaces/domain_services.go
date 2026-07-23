@@ -1,7 +1,6 @@
 package interfaces
 
 type DomainServices struct {
-	WorkspaceService     WorkspaceService
 	GuidesService        GuidesService
 	StepsService         StepsService
 	StarredGuidesService StarredGuidesService

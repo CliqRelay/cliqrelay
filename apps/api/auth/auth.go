@@ -143,25 +143,11 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			{
 				Paths: []string{fmt.Sprintf("GET:%s/health", apiBasePath)},
 			},
-			// Workspaces
+			// Teams
 			{
-				Paths: []string{
-					fmt.Sprintf("GET:%s/workspaces", apiBasePath),
-					fmt.Sprintf("GET:%s/workspaces/{workspaceId}", apiBasePath),
-					fmt.Sprintf("DELETE:%s/workspaces/{workspaceId}", apiBasePath),
-				},
+				Paths: []string{fmt.Sprintf("GET:%s/teams", apiBasePath)},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
-				},
-			},
-			{
-				Paths: []string{
-					fmt.Sprintf("POST:%s/workspaces", apiBasePath),
-					fmt.Sprintf("PATCH:%s/workspaces/{workspaceId}", apiBasePath),
-				},
-				Plugins: []string{
-					sessionplugin.HookIDSessionAuth.String(),
-					csrfplugin.HookIDCSRFProtect.String(),
 				},
 			},
 			// Guides

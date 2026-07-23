@@ -48,12 +48,12 @@ func (uc *UploadsUseCase) PresignUpload(ctx context.Context, actor *authulamodel
 		return nil, constants.ErrGuideNotFound
 	}
 
-	workspaceID := req.WorkspaceID
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
-	result, err := uc.uploadsService.GeneratePresignedPutURL(ctx, workspaceID, req.GuideID, req.StepID)
+	result, err := uc.uploadsService.GeneratePresignedPutURL(ctx, req.GuideID, req.StepID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,10 +85,10 @@ func (uc *UploadsUseCase) CompleteUpload(ctx context.Context, actor *authulamode
 		return nil, constants.ErrGuideNotFound
 	}
 
-	workspaceID := req.WorkspaceID
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
-	return uc.uploadsService.CompleteUpload(ctx, workspaceID, req.StepID, req.StoragePath, req.FileSize, req.MimeType, req.Thumbnail, req.Width, req.Height)
+	return uc.uploadsService.CompleteUpload(ctx, req.StepID, req.StoragePath, req.FileSize, req.MimeType, req.Thumbnail, req.Width, req.Height)
 }

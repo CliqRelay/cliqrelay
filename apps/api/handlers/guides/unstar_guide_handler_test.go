@@ -70,11 +70,11 @@ func TestUnstarGuideHandler(t *testing.T) {
 			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 			if tt.name == "success" || tt.name == "not starred (safe)" {
-				mockStarredRepo.On("Unstar", mock.Anything, mock.Anything, "test-user-123", uuid.MustParse(guideID)).
+				mockStarredRepo.On("Unstar", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(nil).
 					Once()
 			} else {
-				mockStarredRepo.On("Unstar", mock.Anything, mock.Anything, "test-user-123", uuid.MustParse(guideID)).
+				mockStarredRepo.On("Unstar", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(assert.AnError).
 					Once()
 			}

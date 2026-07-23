@@ -26,7 +26,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import type { OnboardingChecklistItemType } from "@/models";
 import useExtensionRuntime from "@/hooks/use-extension-runtime";
-import { useWorkspaceStore } from "@/stores/workspace-store";
 
 function InstallExtensionCard() {
 	return (

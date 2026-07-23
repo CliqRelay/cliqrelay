@@ -27,7 +27,7 @@ export type Guide = {
 	/** @nullable */
 	restoredAt?: string | null;
 	status: GuideStatus;
+	teamId: Uuid;
 	title: string;
 	updatedAt: string;
-	workspaceId: Uuid;
 };

@@ -8,7 +8,7 @@ import (
 )
 
 type GuideHooks struct {
-	BeforeCreate    func(ctx context.Context, workspaceID string, req *types.CreateGuideRequest) error
+	BeforeCreate    func(ctx context.Context, teamID string, req *types.CreateGuideRequest) error
 	AfterCreate     func(ctx context.Context, guide *models.Guide) error
 	BeforeUpdate    func(ctx context.Context, guide *models.Guide) error
 	AfterUpdate     func(ctx context.Context, guide *models.Guide) error

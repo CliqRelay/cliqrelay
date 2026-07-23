@@ -8,23 +8,23 @@ import { ExtensionSlot } from "@repo/extensions-sdk";
 import { Kpi, OnboardingChecklist } from "@/components/dashboard";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useTeamStore } from "@/stores/team-store";
 
 export const Route = createFileRoute("/dashboard/")({
 	component: DashboardPage,
 });
 
 function DashboardPage() {
-	const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
-	const workspaces = useWorkspaceStore((s) => s.workspaces);
-	const activeWorkspace =
-		workspaces.find((workspace) => workspace.id === activeWorkspaceId) ?? null;
+	const activeTeamId = useTeamStore((s) => s.activeTeamId);
+	const teams = useTeamStore((s) => s.teams);
+	const activeTeam =
+		teams.find((team) => team.id === activeTeamId) ?? null;
 
 	const guidesCountQuery = api.guides.useGetGuidesCount(
-		activeWorkspaceId ? { workspace_id: activeWorkspaceId } : undefined,
+		activeTeamId ? { team_id: activeTeamId } : undefined,
 		{
 			query: {
-				enabled: !!activeWorkspaceId,
+				enabled: !!activeTeamId,
 			},
 			request: {
 				credentials: "include",
@@ -41,17 +41,17 @@ function DashboardPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-					{activeWorkspace ? (
+					{activeTeam ? (
 						<div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
 							<Building2 className="h-3.5 w-3.5" />
-							<span>{activeWorkspace.name}</span>
+							<span>{activeTeam.name}</span>
 							<Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-								{activeWorkspace.type === "personal" ? "Personal" : "Team"}
+								Team
 							</Badge>
 						</div>
-					) : activeWorkspaceId === null ? (
+					) : activeTeamId === null ? (
 						<p className="mt-1 text-sm text-muted-foreground">
-							No workspace found
+							No team found
 						</p>
 					) : (
 						<div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">

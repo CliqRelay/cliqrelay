@@ -25,14 +25,14 @@ func (h *GetAllGuidesHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.URL.Query().Get("workspace_id")
+		teamID := r.URL.Query().Get("team_id")
 
 		var status *string
 		if s := r.URL.Query().Get("status"); s != "" {
 			status = &s
 		}
 
-		guides, err := h.guidesUseCase.List(ctx, actor, workspaceID, status)
+		guides, err := h.guidesUseCase.List(ctx, actor, teamID, status)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

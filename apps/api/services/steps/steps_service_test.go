@@ -142,7 +142,7 @@ func TestStepsService_Create(t *testing.T) {
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, mockStorageService, mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
 
-			step, err := svc.Create(context.Background(), "00000000-0000-0000-0000-000000000001", tt.req)
+			step, err := svc.Create(context.Background(), tt.req)
 
 			if tt.wantErr {
 				assert.Error(t, err)

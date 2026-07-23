@@ -43,8 +43,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.CreateStepRequest{
-				WorkspaceID: uuid.New(),
-				GuideID:     uuid.New(),
+				GuideID: uuid.New(),
 				Type:        models.StepTypeInteraction,
 				Action:      new(models.StepActionClick),
 			},
@@ -72,8 +71,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "success with canvas content",
 			payload: types.CreateStepRequest{
-				WorkspaceID: uuid.New(),
-				GuideID:     uuid.New(),
+				GuideID: uuid.New(),
 				Type:        models.StepTypeCanvas,
 				CanvasContent: &models.StepCanvasContent{
 					Type: models.StepCanvasTypeCallout,
@@ -107,7 +105,6 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "success with insert_before_step_id",
 			payload: types.CreateStepRequest{
-				WorkspaceID:        uuid.New(),
 				GuideID:            uuid.New(),
 				Type:               models.StepTypeInteraction,
 				Action:             new(models.StepActionClick),
@@ -144,7 +141,6 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "validation error",
 			payload: types.CreateStepRequest{
-				WorkspaceID: uuid.New(),
 				GuideID:     uuid.Nil,
 			},
 			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
@@ -154,8 +150,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "canvas step with action rejected",
 			payload: types.CreateStepRequest{
-				WorkspaceID: uuid.New(),
-				GuideID:     uuid.New(),
+				GuideID: uuid.New(),
 				Type:        models.StepTypeCanvas,
 				Action:      new(models.StepActionClick),
 			},
@@ -166,8 +161,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "canvas step with url rejected",
 			payload: types.CreateStepRequest{
-				WorkspaceID: uuid.New(),
-				GuideID:     uuid.New(),
+				GuideID: uuid.New(),
 				Type:        models.StepTypeCanvas,
 				URL:         new("https://example.com"),
 			},
@@ -178,8 +172,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "interaction step with canvas_content rejected",
 			payload: types.CreateStepRequest{
-				WorkspaceID: uuid.New(),
-				GuideID:     uuid.New(),
+				GuideID: uuid.New(),
 				Type:        models.StepTypeInteraction,
 				CanvasContent: &models.StepCanvasContent{
 					Type: models.StepCanvasTypeCallout,
@@ -192,8 +185,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "guide not found",
 			payload: types.CreateStepRequest{
-				WorkspaceID: uuid.New(),
-				GuideID:     uuid.New(),
+				GuideID: uuid.New(),
 				Type:        models.StepTypeInteraction,
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
@@ -207,8 +199,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "service error",
 			payload: types.CreateStepRequest{
-				WorkspaceID: uuid.New(),
-				GuideID:     uuid.New(),
+				GuideID: uuid.New(),
 				Type:        models.StepTypeInteraction,
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {

@@ -16,7 +16,6 @@ func guideExportsInitial() authulamigrations.Migration {
 				tx,
 				`CREATE TABLE guide_exports (
 					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-					workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
 					guide_id UUID NOT NULL,
 					user_id UUID NOT NULL,
 					format VARCHAR(255) NOT NULL,

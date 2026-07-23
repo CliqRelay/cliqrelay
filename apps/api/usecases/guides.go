@@ -16,9 +16,9 @@ func uuidParse(s string) (uuid.UUID, error) {
 }
 
 type GuidesUseCase struct {
-	authzService  interfaces.AuthorizationService
-	guidesService interfaces.GuidesService
-	starredSvc    interfaces.StarredGuidesService
+	authzService   interfaces.AuthorizationService
+	guidesService  interfaces.GuidesService
+	starredService interfaces.StarredGuidesService
 }
 
 func NewGuidesUseCase(
@@ -27,48 +27,48 @@ func NewGuidesUseCase(
 	starredSvc interfaces.StarredGuidesService,
 ) *GuidesUseCase {
 	return &GuidesUseCase{
-		authzService:  authzService,
-		guidesService: guidesService,
-		starredSvc:    starredSvc,
+		authzService:   authzService,
+		guidesService:  guidesService,
+		starredService: starredSvc,
 	}
 }
 
 func (uc *GuidesUseCase) Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateGuideRequest) (*models.Guide, error) {
-	workspaceID := req.WorkspaceID.String()
-	if err := uc.authzService.CanCreateGuide(ctx, actor, workspaceID); err != nil {
+	teamID := req.TeamID.String()
+	if err := uc.authzService.CanCreateGuide(ctx, actor, teamID); err != nil {
 		return nil, err
 	}
 
-	return uc.guidesService.Create(ctx, actor, workspaceID, req)
+	return uc.guidesService.Create(ctx, actor, teamID, req)
 }
 
-func (uc *GuidesUseCase) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (string, error) {
-	if err := uc.authzService.CanCreateGuide(ctx, actor, workspaceID); err != nil {
+func (uc *GuidesUseCase) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error) {
+	if err := uc.authzService.CanCreateGuide(ctx, actor, teamID); err != nil {
 		return "", err
 	}
 
-	return uc.guidesService.CreateDemoGuide(ctx, actor, workspaceID)
+	return uc.guidesService.CreateDemoGuide(ctx, actor, teamID)
 }
 
-func (uc *GuidesUseCase) List(ctx context.Context, actor *authulamodels.Actor, workspaceID string, status *string) ([]*models.Guide, error) {
-	filter, err := uc.authzService.GuideListFilter(ctx, actor, workspaceID)
+func (uc *GuidesUseCase) List(ctx context.Context, actor *authulamodels.Actor, teamID string, status *string) ([]*models.Guide, error) {
+	filter, err := uc.authzService.GuideListFilter(ctx, actor, teamID)
 	if err != nil {
 		return nil, err
 	}
 
 	filter.ViewerUserID = &actor.ID
-	parsedWSID, err := uuidParse(workspaceID)
+	parsedTeamID, err := uuidParse(teamID)
 	if err != nil {
 		return nil, err
 	}
-	filter.WorkspaceID = &parsedWSID
+	filter.TeamID = &parsedTeamID
 
 	if status != nil {
 		statusVal := models.GuideStatus(*status)
 		filter.Status = &statusVal
 	}
 
-	return uc.guidesService.GetAll(ctx, workspaceID, status)
+	return uc.guidesService.GetAll(ctx, teamID, status)
 }
 
 func (uc *GuidesUseCase) Get(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
@@ -77,8 +77,8 @@ func (uc *GuidesUseCase) Get(ctx context.Context, actor *authulamodels.Actor, gu
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -91,8 +91,8 @@ func (uc *GuidesUseCase) Update(ctx context.Context, actor *authulamodels.Actor,
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -105,27 +105,27 @@ func (uc *GuidesUseCase) Delete(ctx context.Context, actor *authulamodels.Actor,
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanDeleteGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanDeleteGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
 	return uc.guidesService.Delete(ctx, guideID)
 }
 
-func (uc *GuidesUseCase) GetCount(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (int, error) {
-	filter, err := uc.authzService.GuideListFilter(ctx, actor, workspaceID)
+func (uc *GuidesUseCase) GetCount(ctx context.Context, actor *authulamodels.Actor, teamID string) (int, error) {
+	filter, err := uc.authzService.GuideListFilter(ctx, actor, teamID)
 	if err != nil {
 		return 0, err
 	}
 
-	parsedWSID, err := uuidParse(workspaceID)
+	parsedTeamID, err := uuidParse(teamID)
 	if err != nil {
 		return 0, err
 	}
-	filter.WorkspaceID = &parsedWSID
+	filter.TeamID = &parsedTeamID
 
-	count, err := uc.guidesService.GetCount(ctx, workspaceID)
+	count, err := uc.guidesService.GetCount(ctx, teamID)
 	if err != nil {
 		return 0, err
 	}
@@ -139,8 +139,8 @@ func (uc *GuidesUseCase) Publish(ctx context.Context, actor *authulamodels.Actor
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -153,8 +153,8 @@ func (uc *GuidesUseCase) Unpublish(ctx context.Context, actor *authulamodels.Act
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -167,8 +167,8 @@ func (uc *GuidesUseCase) Archive(ctx context.Context, actor *authulamodels.Actor
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -181,8 +181,8 @@ func (uc *GuidesUseCase) Unarchive(ctx context.Context, actor *authulamodels.Act
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -195,8 +195,8 @@ func (uc *GuidesUseCase) Restore(ctx context.Context, actor *authulamodels.Actor
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -209,8 +209,8 @@ func (uc *GuidesUseCase) PermanentlyDelete(ctx context.Context, actor *authulamo
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanDeleteGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanDeleteGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -223,8 +223,8 @@ func (uc *GuidesUseCase) RecalculateDuration(ctx context.Context, actor *authula
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -237,12 +237,12 @@ func (uc *GuidesUseCase) Star(ctx context.Context, actor *authulamodels.Actor, g
 		return err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
 		return err
 	}
 
-	return uc.starredSvc.Star(ctx, guideID)
+	return uc.starredService.Star(ctx, guideID)
 }
 
 func (uc *GuidesUseCase) Unstar(ctx context.Context, actor *authulamodels.Actor, guideID string) error {
@@ -251,26 +251,26 @@ func (uc *GuidesUseCase) Unstar(ctx context.Context, actor *authulamodels.Actor,
 		return err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
 		return err
 	}
 
-	return uc.starredSvc.Unstar(ctx, guideID)
+	return uc.starredService.Unstar(ctx, guideID)
 }
 
-func (uc *GuidesUseCase) GetStarred(ctx context.Context, actor *authulamodels.Actor, workspaceID string) ([]*models.Guide, error) {
-	filter, err := uc.authzService.GuideListFilter(ctx, actor, workspaceID)
+func (uc *GuidesUseCase) GetStarred(ctx context.Context, actor *authulamodels.Actor, teamID string) ([]*models.Guide, error) {
+	filter, err := uc.authzService.GuideListFilter(ctx, actor, teamID)
 	if err != nil {
 		return nil, err
 	}
 
 	filter.ViewerUserID = &actor.ID
-	parsedWSID, err := uuidParse(workspaceID)
+	parsedTeamID, err := uuidParse(teamID)
 	if err != nil {
 		return nil, err
 	}
-	filter.WorkspaceID = &parsedWSID
+	filter.TeamID = &parsedTeamID
 
-	return uc.starredSvc.GetStarredGuides(ctx, workspaceID)
+	return uc.starredService.GetStarredGuides(ctx)
 }

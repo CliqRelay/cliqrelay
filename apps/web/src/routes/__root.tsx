@@ -13,12 +13,12 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { queryClient } from "@/constants/query-client";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useWorkspaceStore } from "@/stores/workspace-store";
+import { useTeamStore } from "@/stores/team-store";
 import {
-	getActiveWorkspaceCookie,
-	setActiveWorkspaceCookie,
-} from "@/lib/workspace-cookie";
-import { getWorkspaces } from "@/server-fns/workspaces";
+	getActiveTeamCookie,
+	setActiveTeamCookie,
+} from "@/lib/team-cookie";
+import { getTeams } from "@/server-fns/teams";
 import TanStackQueryDevtools from "../integrations/tanstack-query/Devtools";
 import type { MyRouterContext } from "@/router";
 import appCss from "../styles.css?url";
@@ -26,31 +26,29 @@ import appCss from "../styles.css?url";
 export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async () => {
 		try {
-			const response = await getWorkspaces();
-			const workspaces = response.workspaces;
+			const response = await getTeams();
+			const teams = response.teams;
 
-			const cookieWorkspaceId = getActiveWorkspaceCookie();
-			const isValid = workspaces.some(
-				(workspace) => workspace.id === cookieWorkspaceId,
+			const cookieTeamId = getActiveTeamCookie();
+			const isValid = teams.some(
+				(team) => team.id === cookieTeamId,
 			);
-			const activeWorkspaceId = isValid
-				? cookieWorkspaceId!
-				: (workspaces.find((workspace) => workspace.type === "personal")?.id ??
-					workspaces[0]?.id ??
-					null);
+			const activeTeamId = isValid
+				? cookieTeamId!
+				: (teams[0]?.id ?? null);
 
-			if (!isValid && activeWorkspaceId) {
-				setActiveWorkspaceCookie(activeWorkspaceId);
+			if (!isValid && activeTeamId) {
+				setActiveTeamCookie(activeTeamId);
 			}
 
-			useWorkspaceStore.getState().setWorkspaces(workspaces);
-			if (activeWorkspaceId) {
-				useWorkspaceStore.getState().setActiveWorkspace(activeWorkspaceId);
+			useTeamStore.getState().setTeams(teams);
+			if (activeTeamId) {
+				useTeamStore.getState().setActiveTeam(activeTeamId);
 			}
 
-			return { workspaces, activeWorkspaceId };
+			return { teams, activeTeamId };
 		} catch {
-			return { workspaces: [], activeWorkspaceId: null };
+			return { teams: [], activeTeamId: null };
 		}
 	},
 	head: () => ({
@@ -85,20 +83,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			const root = state.matches.find((m) => m.routeId === "__root__");
 			return root?.context as
 				| {
-						workspaces?: Array<{ id: string; name: string; type: string }>;
-						activeWorkspaceId?: string | null;
+						teams?: Array<{ id: string; name: string }>;
+						activeTeamId?: string | null;
 				  }
 				| undefined;
 		},
 	});
 
 	useEffect(() => {
-		if (rootContext?.workspaces) {
-			useWorkspaceStore.getState().setWorkspaces(rootContext.workspaces as any);
-			if (rootContext.activeWorkspaceId) {
-				useWorkspaceStore
+		if (rootContext?.teams) {
+			useTeamStore.getState().setTeams(rootContext.teams as any);
+			if (rootContext.activeTeamId) {
+				useTeamStore
 					.getState()
-					.setActiveWorkspace(rootContext.activeWorkspaceId);
+					.setActiveTeam(rootContext.activeTeamId);
 			}
 		}
 	}, [rootContext]);

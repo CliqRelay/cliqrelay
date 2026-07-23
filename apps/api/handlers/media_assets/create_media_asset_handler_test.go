@@ -36,7 +36,6 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.CreateMediaAssetRequest{
-				WorkspaceID: uuid.New(),
 				StepID:      uuid.New(),
 				StoragePath: "uploads/test.png",
 			},
@@ -78,7 +77,6 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 		{
 			name: "service error",
 			payload: types.CreateMediaAssetRequest{
-				WorkspaceID: uuid.New(),
 				StepID:      uuid.New(),
 				StoragePath: "uploads/test.png",
 			},

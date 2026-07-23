@@ -22,5 +22,4 @@ export type GuideExport = {
 	storagePath?: string | null;
 	updatedAt: string;
 	userId: string;
-	workspaceId: Uuid;
 };

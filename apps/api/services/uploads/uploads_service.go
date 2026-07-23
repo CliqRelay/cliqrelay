@@ -37,7 +37,7 @@ func NewUploadsService(
 	}
 }
 
-func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, workspaceID, guideID, stepID string) (*types.PresignedURLResult, error) {
+func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, guideID, stepID string) (*types.PresignedURLResult, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -66,7 +66,7 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, workspaceI
 	}, nil
 }
 
-func (s *UploadsService) CompleteUpload(ctx context.Context, workspaceID, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
+func (s *UploadsService) CompleteUpload(ctx context.Context, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID
 	}
@@ -84,14 +84,8 @@ func (s *UploadsService) CompleteUpload(ctx context.Context, workspaceID, stepID
 		return nil, fmt.Errorf("invalid step ID: %w", err)
 	}
 
-	parsedWSID, err := uuid.Parse(workspaceID)
-	if err != nil {
-		return nil, constants.ErrWorkspaceNotFound
-	}
-
 	mediaAsset, err := s.mediaAssetsRepo.Create(ctx, &types.CreateMediaAssetDTO{
 		StepID:      parsedStepID,
-		WorkspaceID: parsedWSID,
 		StoragePath: storagePath,
 		MimeType:    mimeType,
 		Thumbnail:   thumbnail,

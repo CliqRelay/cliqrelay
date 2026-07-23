@@ -6,16 +6,13 @@ import (
 	"log/slog"
 
 	authulamodels "github.com/Authula/authula/models"
+	accesscontrol "github.com/Authula/authula/plugins/access-control"
+	accesscontroltypes "github.com/Authula/authula/plugins/access-control/types"
+	organizations "github.com/Authula/authula/plugins/organizations"
 	organizationsplugintypes "github.com/Authula/authula/plugins/organizations/types"
-
-	"github.com/CliqRelay/cliqrelay/interfaces"
-	"github.com/CliqRelay/cliqrelay/models"
-	"github.com/CliqRelay/cliqrelay/types"
 )
 
-type workspaceServiceProviderFactory func() interfaces.WorkspaceService
-
-func ConstructOrganizationsServiceHooks(workspaceServiceProviderFactory workspaceServiceProviderFactory) organizationsplugintypes.OrganizationsServiceHooksConfig {
+func ConstructOrganizationsServiceHooks(provider authulaProvider) organizationsplugintypes.OrganizationsServiceHooksConfig {
 	return organizationsplugintypes.OrganizationsServiceHooksConfig{
 		Organizations: &organizationsplugintypes.OrganizationServiceHooksConfig{
 			AfterCreate: func(ctx context.Context, actor *authulamodels.Actor, organization *organizationsplugintypes.Organization) error {
@@ -23,34 +20,48 @@ func ConstructOrganizationsServiceHooks(workspaceServiceProviderFactory workspac
 					return nil
 				}
 
-				workspaceService := workspaceServiceProviderFactory()
-				if workspaceService == nil {
-					return fmt.Errorf("workspace service not initialized")
+				authulaInstance := provider()
+				if authulaInstance == nil {
+					return fmt.Errorf("authula instance not initialized")
 				}
 
-				personalType := models.WorkspaceTypePersonal
-				existing, err := workspaceService.GetAll(ctx, actor, &types.WorkspaceFilter{Type: &personalType})
-				if err != nil {
-					return fmt.Errorf("failed to check existing workspaces: %w", err)
-				}
-				for _, workspace := range existing {
-					if workspace.OrganizationID == organization.ID {
-						slog.Debug("Personal workspace already exists for organization",
-							"org_id", organization.ID,
-							"workspace_id", workspace.ID,
-						)
-						return nil
-					}
+				orgPlugin, ok := authulaInstance.PluginRegistry.GetPlugin("organizations").(*organizations.OrganizationsPlugin)
+				if !ok {
+					return fmt.Errorf("organizations plugin not found")
 				}
 
-				_, err = workspaceService.Create(ctx, actor, &types.CreateWorkspaceRequest{
-					Name:           "Personal",
-					Type:           personalType,
-					OrganizationID: organization.ID,
+				acPlugin, ok := authulaInstance.PluginRegistry.GetPlugin("access_control").(*accesscontrol.AccessControlPlugin)
+				if !ok {
+					return fmt.Errorf("access control plugin not found")
+				}
+
+			systemActor := &authulamodels.Actor{
+					ID:     actor.ID,
+					Type:   authulamodels.ActorMachine,
+					Scopes: []string{"*"},
+				}
+
+				team, err := orgPlugin.Api.CreateTeam(ctx, systemActor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
+					Name: "My Team",
 				})
 				if err != nil {
-					return fmt.Errorf("failed to create personal workspace: %w", err)
+					return fmt.Errorf("failed to create team: %w", err)
 				}
+
+				slog.Debug("Created team for organization", "org_id", organization.ID, "team_id", team.ID)
+
+				adminRole, err := acPlugin.Api.GetRoleByName(ctx, systemActor, "admin")
+				if err != nil {
+					return fmt.Errorf("failed to get admin role: %w", err)
+				}
+
+				if err := acPlugin.Api.AssignRoleToUser(ctx, systemActor, actor.ID, accesscontroltypes.AssignUserRoleRequest{
+					RoleID: adminRole.ID,
+				}, nil); err != nil {
+					return fmt.Errorf("failed to assign admin role to user: %w", err)
+				}
+
+				slog.Debug("Assigned admin role to user", "user_id", actor.ID, "role_id", adminRole.ID)
 
 				return nil
 			},

@@ -32,7 +32,6 @@ func TestCompleteUploadHandler(t *testing.T) {
 	storagePath := "uploads/guides/abc/steps/def/123"
 	fileSize := 1024
 	mimeType := "image/png"
-	wsID := uuid.New().String()
 
 	cases := []struct {
 		name           string
@@ -44,7 +43,6 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.CompleteUploadRequest{
-				WorkspaceID: wsID,
 				StepID:      stepID.String(),
 				StoragePath: storagePath,
 				FileSize:    &fileSize,
@@ -87,7 +85,6 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "missing stepId",
 			payload: types.CompleteUploadRequest{
-				WorkspaceID: wsID,
 				StepID:      "",
 				StoragePath: storagePath,
 			},
@@ -99,7 +96,6 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "missing storagePath",
 			payload: types.CompleteUploadRequest{
-				WorkspaceID: wsID,
 				StepID:      uuid.New().String(),
 				StoragePath: "",
 			},
@@ -111,7 +107,6 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "invalid stepId",
 			payload: types.CompleteUploadRequest{
-				WorkspaceID: wsID,
 				StepID:      "not-a-uuid",
 				StoragePath: storagePath,
 			},
@@ -123,7 +118,6 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "step not found",
 			payload: types.CompleteUploadRequest{
-				WorkspaceID: wsID,
 				StepID:      uuid.New().String(),
 				StoragePath: storagePath,
 			},
@@ -138,7 +132,6 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "step not in user's guide",
 			payload: types.CompleteUploadRequest{
-				WorkspaceID: wsID,
 				StepID:      stepID.String(),
 				StoragePath: storagePath,
 			},
@@ -161,7 +154,6 @@ func TestCompleteUploadHandler(t *testing.T) {
 		{
 			name: "service error",
 			payload: types.CompleteUploadRequest{
-				WorkspaceID: wsID,
 				StepID:      uuid.New().String(),
 				StoragePath: storagePath,
 			},

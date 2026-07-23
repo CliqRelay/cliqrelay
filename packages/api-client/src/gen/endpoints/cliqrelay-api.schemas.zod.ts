@@ -30,9 +30,9 @@ export const Guide = zod.object({
 	purgeRequestedAt: zod.iso.datetime({ offset: true }).nullish(),
 	restoredAt: zod.iso.datetime({ offset: true }).nullish(),
 	status: GuideStatus,
+	teamId: Uuid,
 	title: zod.string(),
 	updatedAt: zod.iso.datetime({ offset: true }),
-	workspaceId: Uuid,
 });
 
 export type Guide = zod.input<typeof Guide>;
@@ -55,7 +55,6 @@ export const CompleteUploadRequest = zod.object({
 	storagePath: zod.string().optional(),
 	thumbnail: zod.string().nullish(),
 	width: zod.number().nullish(),
-	workspaceId: zod.string().optional(),
 });
 
 export type CompleteUploadRequest = zod.input<typeof CompleteUploadRequest>;
@@ -74,7 +73,7 @@ export type CompleteUploadResponseOutput = zod.output<
 >;
 
 export const CreateDemoGuideRequest = zod.object({
-	workspaceId: Uuid,
+	teamId: Uuid,
 });
 
 export type CreateDemoGuideRequest = zod.input<typeof CreateDemoGuideRequest>;
@@ -93,8 +92,8 @@ export type CreateDemoGuideResponseOutput = zod.output<
 
 export const CreateGuideRequest = zod.object({
 	description: zod.string().nullish(),
+	teamId: Uuid,
 	title: zod.string(),
-	workspaceId: Uuid,
 });
 
 export type CreateGuideRequest = zod.input<typeof CreateGuideRequest>;
@@ -116,7 +115,6 @@ export const CreateMediaAssetRequest = zod.object({
 	storagePath: zod.string(),
 	thumbnail: zod.string().nullish(),
 	width: zod.number().nullish(),
-	workspaceId: Uuid,
 });
 
 export type CreateMediaAssetRequest = zod.input<typeof CreateMediaAssetRequest>;
@@ -137,7 +135,6 @@ export const MediaAsset = zod.object({
 	updatedAt: zod.iso.datetime({ offset: true }),
 	url: zod.string().nullish(),
 	width: zod.number().nullish(),
-	workspaceId: Uuid,
 });
 
 export type MediaAsset = zod.input<typeof MediaAsset>;
@@ -195,7 +192,6 @@ export const CreateStepRequest = zod.object({
 	targetElement: zod.record(zod.string(), zod.unknown()).nullish(),
 	type: StepType,
 	url: zod.string().nullish(),
-	workspaceId: Uuid,
 });
 
 export type CreateStepRequest = zod.input<typeof CreateStepRequest>;
@@ -215,7 +211,6 @@ export const Step = zod.object({
 	type: StepType,
 	updatedAt: zod.iso.datetime({ offset: true }),
 	url: zod.string().nullish(),
-	workspaceId: Uuid,
 });
 
 export type Step = zod.input<typeof Step>;
@@ -227,46 +222,6 @@ export const CreateStepResponse = zod.object({
 
 export type CreateStepResponse = zod.input<typeof CreateStepResponse>;
 export type CreateStepResponseOutput = zod.output<typeof CreateStepResponse>;
-
-export const WorkspaceType = zod
-	.enum(["personal", "team"])
-	.describe("The workspace type");
-
-export type WorkspaceType = zod.input<typeof WorkspaceType>;
-export type WorkspaceTypeOutput = zod.output<typeof WorkspaceType>;
-
-export const CreateWorkspaceRequest = zod.object({
-	name: zod.string(),
-	organizationId: zod.string(),
-	type: WorkspaceType,
-});
-
-export type CreateWorkspaceRequest = zod.input<typeof CreateWorkspaceRequest>;
-export type CreateWorkspaceRequestOutput = zod.output<
-	typeof CreateWorkspaceRequest
->;
-
-export const Workspace = zod.object({
-	createdAt: zod.iso.datetime({ offset: true }),
-	id: Uuid,
-	name: zod.string(),
-	organizationId: zod.string(),
-	ownerId: zod.string(),
-	type: WorkspaceType,
-	updatedAt: zod.iso.datetime({ offset: true }),
-});
-
-export type Workspace = zod.input<typeof Workspace>;
-export type WorkspaceOutput = zod.output<typeof Workspace>;
-
-export const CreateWorkspaceResponse = zod.object({
-	workspace: Workspace,
-});
-
-export type CreateWorkspaceResponse = zod.input<typeof CreateWorkspaceResponse>;
-export type CreateWorkspaceResponseOutput = zod.output<
-	typeof CreateWorkspaceResponse
->;
 
 export const DeleteGuideResponse = zod.object({
 	guide: Guide,
@@ -296,7 +251,6 @@ export type DeleteStepResponseOutput = zod.output<typeof DeleteStepResponse>;
 export const DuplicateStepRequest = zod.object({
 	insertAfterStepId: zod.string().nullish(),
 	insertBeforeStepId: zod.string().nullish(),
-	workspaceId: Uuid,
 });
 
 export type DuplicateStepRequest = zod.input<typeof DuplicateStepRequest>;
@@ -362,16 +316,28 @@ export const GetAllStepsResponse = zod.object({
 export type GetAllStepsResponse = zod.input<typeof GetAllStepsResponse>;
 export type GetAllStepsResponseOutput = zod.output<typeof GetAllStepsResponse>;
 
-export const GetAllWorkspacesResponse = zod.object({
-	workspaces: zod.array(Workspace),
-});
+export const Team = zod
+	.object({
+		createdAt: zod.string(),
+		id: zod.string(),
+		name: zod.string(),
+		organizationId: zod.string(),
+		ownerId: zod.string(),
+		updatedAt: zod.string(),
+	})
+	.describe("A team within an organization");
 
-export type GetAllWorkspacesResponse = zod.input<
-	typeof GetAllWorkspacesResponse
->;
-export type GetAllWorkspacesResponseOutput = zod.output<
-	typeof GetAllWorkspacesResponse
->;
+export type Team = zod.input<typeof Team>;
+export type TeamOutput = zod.output<typeof Team>;
+
+export const GetAllTeamsResponse = zod
+	.object({
+		teams: zod.array(Team),
+	})
+	.describe("Response containing all teams");
+
+export type GetAllTeamsResponse = zod.input<typeof GetAllTeamsResponse>;
+export type GetAllTeamsResponseOutput = zod.output<typeof GetAllTeamsResponse>;
 
 export const GuideExport = zod.object({
 	createdAt: zod.iso.datetime({ offset: true }),
@@ -384,7 +350,6 @@ export const GuideExport = zod.object({
 	storagePath: zod.string().nullish(),
 	updatedAt: zod.iso.datetime({ offset: true }),
 	userId: zod.string(),
-	workspaceId: Uuid,
 });
 
 export type GuideExport = zod.input<typeof GuideExport>;
@@ -456,7 +421,6 @@ export type PermanentlyDeleteGuideResponseOutput = zod.output<
 export const PresignUploadRequest = zod.object({
 	guideId: zod.string().optional(),
 	stepId: zod.string().optional(),
-	workspaceId: zod.string().optional(),
 });
 
 export type PresignUploadRequest = zod.input<typeof PresignUploadRequest>;
@@ -499,7 +463,6 @@ export const ReorderStepsRequest = zod.object({
 	nextStepId: zod.string().nullish(),
 	prevStepId: zod.string().nullish(),
 	targetStepId: zod.string(),
-	workspaceId: Uuid,
 });
 
 export type ReorderStepsRequest = zod.input<typeof ReorderStepsRequest>;
@@ -614,12 +577,3 @@ export const UpdateStepResponse = zod.object({
 
 export type UpdateStepResponse = zod.input<typeof UpdateStepResponse>;
 export type UpdateStepResponseOutput = zod.output<typeof UpdateStepResponse>;
-
-export const UpdateWorkspaceRequest = zod.object({
-	name: zod.string().nullish(),
-});
-
-export type UpdateWorkspaceRequest = zod.input<typeof UpdateWorkspaceRequest>;
-export type UpdateWorkspaceRequestOutput = zod.output<
-	typeof UpdateWorkspaceRequest
->;

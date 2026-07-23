@@ -18,7 +18,6 @@ func (r *StepID) Validate() error {
 }
 
 type CreateStepRequest struct {
-	WorkspaceID        uuid.UUID                 `json:"workspace_id" validate:"required,uuid" required:"true"`
 	GuideID            uuid.UUID                 `json:"guide_id" validate:"required,uuid" required:"true"`
 	Type               models.StepType           `json:"type" validate:"required,oneof=interaction canvas" required:"true"`
 	Action             *models.StepAction        `json:"action,omitempty" validate:"omitempty,oneof=click input navigation keypress"`
@@ -58,7 +57,6 @@ func (r *CreateStepRequest) Validate() error {
 }
 
 type CreateStepDTO struct {
-	WorkspaceID        uuid.UUID                 `json:"workspace_id" validate:"required"`
 	GuideID            uuid.UUID                 `json:"guide_id" validate:"required"`
 	Type               models.StepType           `json:"type" validate:"required,oneof=interaction canvas"`
 	Action             *models.StepAction        `json:"action,omitempty"`
@@ -132,7 +130,6 @@ func (r *UpdateStepRequest) Validate() error {
 
 type UpdateStepDTO struct {
 	ID            uuid.UUID                 `json:"id" validate:"required"`
-	WorkspaceID   uuid.UUID                 `json:"workspace_id" validate:"required"`
 	Type          *models.StepType          `json:"type,omitempty"`
 	Action        *models.StepAction        `json:"action,omitempty" nullable:"true"`
 	ActionText    *string                   `json:"action_text,omitempty" nullable:"true"`
@@ -151,7 +148,6 @@ type DeleteStepResponse struct {
 }
 
 type ReorderStepsRequest struct {
-	WorkspaceID  uuid.UUID `json:"workspace_id" validate:"required,uuid" required:"true" nullable:"false"`
 	GuideID      uuid.UUID `json:"guide_id" validate:"required,uuid" required:"true" nullable:"false"`
 	TargetStepID string    `json:"target_step_id" validate:"required,uuid" required:"true" nullable:"false"`
 	PrevStepID   *string   `json:"prev_step_id,omitempty" nullable:"true"`
@@ -167,7 +163,6 @@ type ReorderStepsResponse struct {
 }
 
 type DuplicateStepRequest struct {
-	WorkspaceID        uuid.UUID `json:"workspace_id" validate:"required,uuid" required:"true"`
 	InsertBeforeStepID *string   `json:"insert_before_step_id,omitempty"`
 	InsertAfterStepID  *string   `json:"insert_after_step_id,omitempty"`
 }

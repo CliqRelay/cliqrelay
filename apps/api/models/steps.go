@@ -78,7 +78,6 @@ type Step struct {
 
 	ID            uuid.UUID          `json:"id" bun:"column:id,pk" required:"true"`
 	GuideID       uuid.UUID          `json:"guide_id" bun:"column:guide_id" required:"true"`
-	WorkspaceID   uuid.UUID          `json:"workspace_id" bun:"column:workspace_id,type:uuid,notnull" required:"true"`
 	Type          StepType           `json:"type" bun:"column:type" required:"true"`
 	SortOrder     string             `json:"sort_order" bun:"column:sort_order" required:"true"`
 	Notes         *string            `json:"notes,omitempty" bun:"column:notes" nullable:"true"`

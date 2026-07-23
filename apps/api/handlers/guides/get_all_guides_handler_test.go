@@ -119,7 +119,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			req := tests.NewHandlerRequest(t, http.MethodGet, tt.path, nil)
 
 			q := req.Req.URL.Query()
-			q.Set("workspace_id", uuid.New().String())
+			q.Set("team_id", uuid.New().String())
 			req.Req.URL.RawQuery = q.Encode()
 			handler.Handle()(req.W, req.Req)
 

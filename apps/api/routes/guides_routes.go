@@ -200,7 +200,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get guides count"),
 		openapi.WithDescription("Returns the total count of non-deleted guides for the authenticated user"),
 		openapi.WithTags("Guides"),
-		openapi.WithRequest(types.WorkspaceIDQueryParam{}),
+		openapi.WithRequest(types.TeamIDQueryParam{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetGuidesCountResponse{}),
 	)
 
@@ -322,7 +322,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get starred guides"),
 		openapi.WithDescription("Get all guides starred by the current user"),
 		openapi.WithTags("Guides"),
-		openapi.WithRequest(types.WorkspaceIDQueryParam{}),
+		openapi.WithRequest(types.TeamIDQueryParam{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllGuidesResponse{}),
 	)
 

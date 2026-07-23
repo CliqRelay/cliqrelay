@@ -36,7 +36,6 @@ func (r *BunStepsRepository) Create(ctx context.Context, dto *types.CreateStepDT
 	step := &models.Step{
 		ID:            uuid.New(),
 		GuideID:       dto.GuideID,
-		WorkspaceID:   dto.WorkspaceID,
 		Type:          dto.Type,
 		Action:        dto.Action,
 		ActionText:    dto.ActionText,

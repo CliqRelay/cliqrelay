@@ -27,7 +27,6 @@ func TestPresignUploadHandler(t *testing.T) {
 	stepAction := models.StepActionClick
 	guideID := uuid.New()
 	stepID := uuid.New()
-	wsID := uuid.New().String()
 
 	cases := []struct {
 		name           string
@@ -38,9 +37,8 @@ func TestPresignUploadHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.PresignUploadRequest{
-				WorkspaceID: wsID,
-				GuideID:     guideID.String(),
-				StepID:      stepID.String(),
+				GuideID: guideID.String(),
+				StepID:  stepID.String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignService *tests.MockPresignService) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
@@ -68,9 +66,8 @@ func TestPresignUploadHandler(t *testing.T) {
 		{
 			name: "missing guideId",
 			payload: types.PresignUploadRequest{
-				WorkspaceID: wsID,
-				GuideID:     "",
-				StepID:      uuid.New().String(),
+				GuideID: "",
+				StepID:  uuid.New().String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
 			},
@@ -79,9 +76,8 @@ func TestPresignUploadHandler(t *testing.T) {
 		{
 			name: "invalid guideId",
 			payload: types.PresignUploadRequest{
-				WorkspaceID: wsID,
-				GuideID:     "not-a-uuid",
-				StepID:      uuid.New().String(),
+				GuideID: "not-a-uuid",
+				StepID:  uuid.New().String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
 			},
@@ -90,9 +86,8 @@ func TestPresignUploadHandler(t *testing.T) {
 		{
 			name: "missing stepId",
 			payload: types.PresignUploadRequest{
-				WorkspaceID: wsID,
-				GuideID:     uuid.New().String(),
-				StepID:      "",
+				GuideID: uuid.New().String(),
+				StepID:  "",
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
 			},
@@ -101,9 +96,8 @@ func TestPresignUploadHandler(t *testing.T) {
 		{
 			name: "guide not found",
 			payload: types.PresignUploadRequest{
-				WorkspaceID: wsID,
-				GuideID:     guideID.String(),
-				StepID:      uuid.New().String(),
+				GuideID: guideID.String(),
+				StepID:  uuid.New().String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
@@ -115,9 +109,8 @@ func TestPresignUploadHandler(t *testing.T) {
 		{
 			name: "step not found",
 			payload: types.PresignUploadRequest{
-				WorkspaceID: wsID,
-				GuideID:     guideID.String(),
-				StepID:      stepID.String(),
+				GuideID: guideID.String(),
+				StepID:  stepID.String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
@@ -137,9 +130,8 @@ func TestPresignUploadHandler(t *testing.T) {
 		{
 			name: "service error",
 			payload: types.PresignUploadRequest{
-				WorkspaceID: wsID,
-				GuideID:     guideID.String(),
-				StepID:      uuid.New().String(),
+				GuideID: guideID.String(),
+				StepID:  uuid.New().String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).

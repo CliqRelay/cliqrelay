@@ -21,12 +21,12 @@ func (m *MockStarredGuidesRepository) GetAll(ctx context.Context, filter *types.
 	return args.Get(0).([]*types.GuideWithStarred), args.Error(1)
 }
 
-func (m *MockStarredGuidesRepository) Star(ctx context.Context, workspaceID string, userID string, guideID uuid.UUID) error {
-	args := m.Called(ctx, workspaceID, userID, guideID)
+func (m *MockStarredGuidesRepository) Star(ctx context.Context, userID string, guideID uuid.UUID) error {
+	args := m.Called(ctx, userID, guideID)
 	return args.Error(0)
 }
 
-func (m *MockStarredGuidesRepository) Unstar(ctx context.Context, workspaceID string, userID string, guideID uuid.UUID) error {
-	args := m.Called(ctx, workspaceID, userID, guideID)
+func (m *MockStarredGuidesRepository) Unstar(ctx context.Context, userID string, guideID uuid.UUID) error {
+	args := m.Called(ctx, userID, guideID)
 	return args.Error(0)
 }

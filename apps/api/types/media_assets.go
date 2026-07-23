@@ -16,7 +16,6 @@ func (r *MediaAssetID) Validate() error {
 }
 
 type CreateMediaAssetRequest struct {
-	WorkspaceID uuid.UUID `json:"workspace_id" validate:"required,uuid" required:"true"`
 	StepID      uuid.UUID `json:"step_id" validate:"required,uuid" required:"true"`
 	StoragePath string    `json:"storage_path" validate:"required" required:"true"`
 	MimeType    *string   `json:"mime_type,omitempty" nullable:"true"`
@@ -33,7 +32,6 @@ func (r *CreateMediaAssetRequest) Validate() error {
 
 type CreateMediaAssetDTO struct {
 	StepID      uuid.UUID
-	WorkspaceID uuid.UUID
 	StoragePath string
 	MimeType    *string
 	AltText     *string
@@ -78,7 +76,6 @@ func (r *UpdateMediaAssetRequest) Validate() error {
 
 type UpdateMediaAssetDTO struct {
 	ID          uuid.UUID
-	WorkspaceID uuid.UUID
 	AltText     *string
 	Thumbnail   *string
 	MimeType    *string

@@ -8,7 +8,7 @@ import { authMiddleware } from "@/middleware/auth.middleware";
 import { getCsrfTokenHeader } from "../utils/http.utils";
 
 export const createGuide = createServerFn({ method: "POST" })
-	.validator((input: { title: string; description?: string; workspaceId: string }) => input)
+	.validator((input: { title: string; description?: string; teamId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
@@ -16,7 +16,7 @@ export const createGuide = createServerFn({ method: "POST" })
 				{
 					title: data.title,
 					description: data.description ?? null,
-					workspaceId: data.workspaceId,
+					teamId: data.teamId,
 				},
 				{
 					headers: {
@@ -36,13 +36,13 @@ export const createGuide = createServerFn({ method: "POST" })
 export const getAllGuides = createServerFn({
 	method: "GET",
 })
-	.validator((input?: { workspaceId?: string }) => input)
+	.validator((input?: { teamId?: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
-			const workspaceId = data?.workspaceId ?? getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name) ?? "";
+			const teamId = data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name) ?? "";
 			const guidesResponse = await api.guides.getAllGuides(
-				{ workspace_id: workspaceId },
+				{ team_id: teamId },
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
@@ -255,13 +255,13 @@ export const getStepsByGuideId = createServerFn({ method: "GET" })
 	});
 
 export const getStarredGuides = createServerFn({ method: "GET" })
-	.validator((input?: { workspaceId?: string }) => input)
+	.validator((input?: { teamId?: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
-			const workspaceId = data?.workspaceId ?? getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name) ?? "";
+			const teamId = data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name) ?? "";
 			const guidesResponse = await api.guides.getStarredGuides(
-				{ workspace_id: workspaceId },
+				{ team_id: teamId },
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
@@ -276,13 +276,13 @@ export const getStarredGuides = createServerFn({ method: "GET" })
 	});
 
 export const getTrashGuides = createServerFn({ method: "GET" })
-	.validator((input?: { workspaceId?: string }) => input)
+	.validator((input?: { teamId?: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
-			const workspaceId = data?.workspaceId ?? getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name) ?? "";
+			const teamId = data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name) ?? "";
 			const guidesResponse = await api.guides.getAllGuides(
-				{ status: "deleted", workspace_id: workspaceId },
+				{ status: "deleted", team_id: teamId },
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
@@ -297,18 +297,18 @@ export const getTrashGuides = createServerFn({ method: "GET" })
 	});
 
 export const createDemoGuide = createServerFn({ method: "POST" })
-	.validator((input?: { workspaceId?: string }) => input)
+	.validator((input?: { teamId?: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
 			const cookieHeader = context.headers.get("Cookie") ?? "";
-			const workspaceId = data?.workspaceId ?? getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name);
-			if (!workspaceId) {
+			const teamId = data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name);
+			if (!teamId) {
 				return null;
 			}
 
 			const response = await api.guides.createDemoGuide(
-				{ workspaceId },
+				{ teamId },
 				{
 					headers: {
 						Cookie: cookieHeader,

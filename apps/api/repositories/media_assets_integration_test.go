@@ -24,31 +24,30 @@ func seedSimpleStep(t *testing.T, db bun.IDB) (uuid.UUID, uuid.UUID) {
 	orgID := uuid.New().String()
 	_, err = db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
 	require.NoError(t, err)
-	wsID := uuid.New()
-	_, err = db.NewRaw("INSERT INTO workspaces (id, organization_id, owner_id, name, type) VALUES (?, ?, ?, ?, ?)", wsID, orgID, userID, "test-workspace", "PERSONAL").Exec(context.Background())
+	teamID := uuid.New()
+	_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Test Team", "test-team").Exec(context.Background())
 	require.NoError(t, err)
 
 	guide := &models.Guide{
-		ID:          uuid.New(),
-		WorkspaceID: wsID,
-		CreatorID:   userID,
-		Title:       "test guide",
-		Status:      models.StatusDraft,
+		ID:        uuid.New(),
+		TeamID:    teamID,
+		CreatorID: userID,
+		Title:     "test guide",
+		Status:    models.StatusDraft,
 	}
 	_, err = db.NewInsert().Model(guide).Exec(context.Background())
 	require.NoError(t, err)
 
 	step := &models.Step{
-		ID:          uuid.New(),
-		GuideID:     guide.ID,
-		WorkspaceID: wsID,
-		Type:        models.StepTypeInteraction,
-		SortOrder:   "a0",
+		ID:        uuid.New(),
+		GuideID:   guide.ID,
+		Type:      models.StepTypeInteraction,
+		SortOrder: "a0",
 	}
 	_, err = db.NewInsert().Model(step).Exec(context.Background())
 	require.NoError(t, err)
 
-	return step.ID, wsID
+	return step.ID, teamID
 }
 
 func TestBunMediaAssetsRepository_Create(t *testing.T) {
@@ -63,10 +62,9 @@ func TestBunMediaAssetsRepository_Create(t *testing.T) {
 		{
 			name: "creates media asset with given fields",
 			setup: func(db *bun.DB) *types.CreateMediaAssetDTO {
-				stepID, wsID := seedSimpleStep(t, db)
+				stepID, _ := seedSimpleStep(t, db)
 				return &types.CreateMediaAssetDTO{
 					StepID:      stepID,
-					WorkspaceID: wsID,
 					StoragePath: "/uploads/test.png",
 					MimeType:    new("image/png"),
 					AltText:     new("Test image"),
@@ -93,11 +91,10 @@ func TestBunMediaAssetsRepository_Create(t *testing.T) {
 		{
 			name: "enforces storage_path uniqueness",
 			setup: func(db *bun.DB) *types.CreateMediaAssetDTO {
-				stepID, wsID := seedSimpleStep(t, db)
-				seedMediaAsset(t, db, stepID, wsID, "/uploads/unique.png")
+				stepID, _ := seedSimpleStep(t, db)
+				seedMediaAsset(t, db, stepID, "/uploads/unique.png")
 				return &types.CreateMediaAssetDTO{
 					StepID:      stepID,
-					WorkspaceID: wsID,
 					StoragePath: "/uploads/unique.png",
 				}
 			},
@@ -142,8 +139,8 @@ func TestBunMediaAssetsRepository_GetByID(t *testing.T) {
 		{
 			name: "returns media asset by ID",
 			setup: func(db *bun.DB) string {
-				stepID, wsID := seedSimpleStep(t, db)
-				asset := seedMediaAsset(t, db, stepID, wsID, "/uploads/get-by-id.png")
+				stepID, _ := seedSimpleStep(t, db)
+				asset := seedMediaAsset(t, db, stepID, "/uploads/get-by-id.png")
 				return asset.ID.String()
 			},
 			wantNil: false,
@@ -195,9 +192,9 @@ func TestBunMediaAssetsRepository_GetByStepID(t *testing.T) {
 		{
 			name: "returns all media assets for a step",
 			setup: func(db *bun.DB) string {
-				stepID, wsID := seedSimpleStep(t, db)
-				seedMediaAsset(t, db, stepID, wsID, "/uploads/first.png")
-				seedMediaAsset(t, db, stepID, wsID, "/uploads/second.png")
+				stepID, _ := seedSimpleStep(t, db)
+				seedMediaAsset(t, db, stepID, "/uploads/first.png")
+				seedMediaAsset(t, db, stepID, "/uploads/second.png")
 				return stepID.String()
 			},
 			wantLen: 2,
@@ -205,10 +202,10 @@ func TestBunMediaAssetsRepository_GetByStepID(t *testing.T) {
 		{
 			name: "only returns assets for the given step",
 			setup: func(db *bun.DB) string {
-				stepID1, wsID1 := seedSimpleStep(t, db)
-				stepID2, wsID2 := seedSimpleStep(t, db)
-				seedMediaAsset(t, db, stepID1, wsID1, "/uploads/step1.png")
-				seedMediaAsset(t, db, stepID2, wsID2, "/uploads/step2.png")
+				stepID1, _ := seedSimpleStep(t, db)
+				stepID2, _ := seedSimpleStep(t, db)
+				seedMediaAsset(t, db, stepID1, "/uploads/step1.png")
+				seedMediaAsset(t, db, stepID2, "/uploads/step2.png")
 				return stepID1.String()
 			},
 			wantLen: 1,
@@ -256,8 +253,8 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 		{
 			name: "updates alt_text",
 			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
-				stepID, wsID := seedSimpleStep(t, db)
-				asset := seedMediaAsset(t, db, stepID, wsID, "/uploads/alt-text.png")
+				stepID, _ := seedSimpleStep(t, db)
+				asset := seedMediaAsset(t, db, stepID, "/uploads/alt-text.png")
 				return &types.UpdateMediaAssetDTO{
 					ID:      asset.ID,
 					AltText: new("Updated alt text"),
@@ -271,8 +268,8 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 		{
 			name: "updates mime_type",
 			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
-				stepID, wsID := seedSimpleStep(t, db)
-				asset := seedMediaAsset(t, db, stepID, wsID, "/uploads/mime-type.png")
+				stepID, _ := seedSimpleStep(t, db)
+				asset := seedMediaAsset(t, db, stepID, "/uploads/mime-type.png")
 				return &types.UpdateMediaAssetDTO{
 					ID:       asset.ID,
 					MimeType: new("image/webp"),
@@ -286,8 +283,8 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 		{
 			name: "updates multiple fields",
 			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
-				stepID, wsID := seedSimpleStep(t, db)
-				asset := seedMediaAsset(t, db, stepID, wsID, "/uploads/multi.png")
+				stepID, _ := seedSimpleStep(t, db)
+				asset := seedMediaAsset(t, db, stepID, "/uploads/multi.png")
 				return &types.UpdateMediaAssetDTO{
 					ID:       asset.ID,
 					AltText:  new("Multi alt"),
@@ -360,8 +357,8 @@ func TestBunMediaAssetsRepository_Delete(t *testing.T) {
 		{
 			name: "hard deletes a media asset",
 			setup: func(db *bun.DB) string {
-				stepID, wsID := seedSimpleStep(t, db)
-				asset := seedMediaAsset(t, db, stepID, wsID, "/uploads/to-delete.png")
+				stepID, _ := seedSimpleStep(t, db)
+				asset := seedMediaAsset(t, db, stepID, "/uploads/to-delete.png")
 				return asset.ID.String()
 			},
 			wantNil: false,

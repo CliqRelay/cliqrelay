@@ -23,7 +23,6 @@ func mediaAssetsInitial() authulamigrations.Migration {
 					$$ LANGUAGE plpgsql;`,
 				`CREATE TABLE media_assets (
 					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-					workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
 					step_id UUID NOT NULL,
 					storage_path TEXT NOT NULL,
 					mime_type VARCHAR(100),

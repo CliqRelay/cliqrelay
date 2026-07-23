@@ -25,9 +25,9 @@ func (h *GetStarredGuidesHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		workspaceID := r.URL.Query().Get("workspace_id")
+		teamID := r.URL.Query().Get("team_id")
 
-		guides, err := h.guidesUseCase.GetStarred(ctx, actor, workspaceID)
+		guides, err := h.guidesUseCase.GetStarred(ctx, actor, teamID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

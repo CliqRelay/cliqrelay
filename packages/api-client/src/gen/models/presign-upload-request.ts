@@ -9,5 +9,4 @@
 export type PresignUploadRequest = {
 	guideId?: string;
 	stepId?: string;
-	workspaceId?: string;
 };

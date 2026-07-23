@@ -23,7 +23,7 @@ func guidesInitial() authulamigrations.Migration {
 					$$ LANGUAGE plpgsql;`,
 				`CREATE TABLE guides (
 					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-					workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+					team_id UUID NOT NULL REFERENCES organization_teams(id) ON DELETE RESTRICT,
 					creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
 					title VARCHAR(255) NOT NULL,
 					description TEXT,
@@ -41,7 +41,7 @@ func guidesInitial() authulamigrations.Migration {
 				`CREATE INDEX idx_guides_status ON guides (status);`,
 				`CREATE INDEX idx_guides_deleted_at ON guides (deleted_at);`,
 				`CREATE INDEX idx_guides_purge_requested_at ON guides (purge_requested_at);`,
-				`CREATE INDEX idx_guides_ws_status_deleted ON guides (workspace_id, status, deleted_at);`,
+				`CREATE INDEX idx_guides_team_status_deleted ON guides (team_id, status, deleted_at);`,
 				`DROP TRIGGER IF EXISTS update_guides_updated_at_trigger ON guides;`,
 				`CREATE TRIGGER update_guides_updated_at_trigger
 					BEFORE UPDATE ON guides

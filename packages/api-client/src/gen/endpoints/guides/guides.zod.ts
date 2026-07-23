@@ -49,7 +49,7 @@ export const GetExportStatusResponseSchema = GetExportStatusResponse;
  */
 export const GetAllGuidesQueryParams = zod.object({
 	status: zod.union([zod.null(), GuideStatus]).optional(),
-	workspace_id: zod.string().optional(),
+	team_id: zod.string().optional(),
 });
 
 export const GetAllGuidesResponseSchema = GetAllGuidesResponse;
@@ -67,7 +67,7 @@ export const CreateGuideResponseSchema = CreateGuideResponse;
  * @summary Get guides count
  */
 export const GetGuidesCountQueryParams = zod.object({
-	workspace_id: zod.string().optional(),
+	team_id: zod.string().optional(),
 });
 
 export const GetGuidesCountResponseSchema = GetGuidesCountResponse;
@@ -85,7 +85,7 @@ export const CreateDemoGuideResponseSchema = CreateDemoGuideResponse;
  * @summary Get starred guides
  */
 export const GetStarredGuidesQueryParams = zod.object({
-	workspace_id: zod.string().optional(),
+	team_id: zod.string().optional(),
 });
 
 export const GetStarredGuidesResponse = GetAllGuidesResponse;

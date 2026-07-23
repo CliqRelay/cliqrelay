@@ -69,7 +69,6 @@ export const getGetAllMediaAssetsByStepIdResponseMock = (
 			faker.helpers.arrayElement([faker.number.int(), null]),
 			undefined,
 		]),
-		workspaceId: faker.string.uuid(),
 	})),
 	...overrideResponse,
 });
@@ -123,7 +122,6 @@ export const getCreateMediaAssetResponseMock = (
 			faker.helpers.arrayElement([faker.number.int(), null]),
 			undefined,
 		]),
-		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });
@@ -179,7 +177,6 @@ export const getGetMediaAssetByIdResponseMock = (
 				faker.helpers.arrayElement([faker.number.int(), null]),
 				undefined,
 			]),
-			workspaceId: faker.string.uuid(),
 		},
 	]),
 	...overrideResponse,
@@ -241,7 +238,6 @@ export const getUpdateMediaAssetResponseMock = (
 			faker.helpers.arrayElement([faker.number.int(), null]),
 			undefined,
 		]),
-		workspaceId: faker.string.uuid(),
 	},
 	...overrideResponse,
 });

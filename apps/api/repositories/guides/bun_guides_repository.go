@@ -24,7 +24,7 @@ func NewBunGuidesRepository(db bun.IDB) *BunGuidesRepository {
 func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuideDTO) (*models.Guide, error) {
 	guide := &models.Guide{
 		ID:          uuid.New(),
-		WorkspaceID: dto.WorkspaceID,
+		TeamID:      dto.TeamID,
 		CreatorID:   dto.CreatorID,
 		Title:       dto.Title,
 		Description: dto.Description,
@@ -65,8 +65,8 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 			query = query.ColumnExpr("false AS is_starred")
 		}
 
-		if filter.WorkspaceID != nil {
-			query = query.Where("g.workspace_id = ?", *filter.WorkspaceID)
+		if filter.TeamID != nil {
+			query = query.Where("g.team_id = ?", *filter.TeamID)
 		}
 		if filter.CreatorID != nil {
 			query = query.Where("g.creator_id = ?", *filter.CreatorID)
@@ -377,8 +377,8 @@ func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideF
 	query := r.db.NewSelect().Model((*models.Guide)(nil))
 
 	if filter != nil {
-		if filter.WorkspaceID != nil {
-			query = query.Where("workspace_id = ?", *filter.WorkspaceID)
+		if filter.TeamID != nil {
+			query = query.Where("team_id = ?", *filter.TeamID)
 		}
 		if filter.CreatorID != nil {
 			query = query.Where("creator_id = ?", *filter.CreatorID)

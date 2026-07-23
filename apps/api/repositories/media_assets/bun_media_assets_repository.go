@@ -24,7 +24,6 @@ func (r *BunMediaAssetsRepository) Create(ctx context.Context, dto *types.Create
 	mediaAsset := &models.MediaAsset{
 		ID:          uuid.New(),
 		StepID:      dto.StepID,
-		WorkspaceID: dto.WorkspaceID,
 		StoragePath: dto.StoragePath,
 		MimeType:    dto.MimeType,
 		AltText:     dto.AltText,

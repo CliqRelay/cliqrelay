@@ -28,6 +28,7 @@ func RunTestMigrations(ctx context.Context, db *bun.DB) error {
 				$$ LANGUAGE plpgsql`,
 			`CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY)`,
 			`CREATE TABLE IF NOT EXISTS organizations (id UUID PRIMARY KEY)`,
+			`CREATE TABLE IF NOT EXISTS organization_teams (id UUID PRIMARY KEY, organization_id UUID, name TEXT, slug TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP)`,
 		)
 	}); err != nil {
 		return err
@@ -42,7 +43,6 @@ func RunTestMigrations(ctx context.Context, db *bun.DB) error {
 		{
 			PluginID: PluginCliqRelay,
 			Migrations: []authulamigrations.Migration{
-				workspacesInitial(),
 				guidesInitial(),
 				stepsInitial(),
 				mediaAssetsInitial(),

@@ -67,7 +67,7 @@
             }
           },
           {
-            "name": "workspace_id",
+            "name": "team_id",
             "in": "query",
             "schema": {
               "type": "string"
@@ -127,7 +127,7 @@
         "operationId": "getGuidesCount",
         "parameters": [
           {
-            "name": "workspace_id",
+            "name": "team_id",
             "in": "query",
             "schema": {
               "type": "string"
@@ -189,7 +189,7 @@
         "operationId": "getStarredGuides",
         "parameters": [
           {
-            "name": "workspace_id",
+            "name": "team_id",
             "in": "query",
             "schema": {
               "type": "string"
@@ -1054,6 +1054,28 @@
         }
       }
     },
+    "/api/v1/teams": {
+      "get": {
+        "tags": [
+          "Teams"
+        ],
+        "summary": "Get all teams",
+        "description": "Returns all teams for the authenticated user's organizations",
+        "operationId": "getTeams",
+        "responses": {
+          "200": {
+            "description": "Response containing all teams",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAllTeamsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/uploads/complete": {
       "post": {
         "tags": [
@@ -1115,57 +1137,6 @@
           }
         }
       }
-    },
-    "/api/v1/workspaces": {
-      "get": {
-        "tags": [
-          "Workspaces"
-        ],
-        "summary": "Get all workspaces",
-        "description": "Get all workspaces for the authenticated user",
-        "operationId": "getWorkspaces",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetAllWorkspacesResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Workspaces"
-        ],
-        "summary": "Create workspace",
-        "description": "Creates a new workspace",
-        "operationId": "createWorkspace",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateWorkspaceRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateWorkspaceResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -1218,9 +1189,6 @@
               "null",
               "integer"
             ]
-          },
-          "workspace_id": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -1242,12 +1210,12 @@
       },
       "CreateDemoGuideRequest": {
         "properties": {
-          "workspace_id": {
+          "team_id": {
             "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
-          "workspace_id"
+          "team_id"
         ],
         "type": "object"
       },
@@ -1270,15 +1238,15 @@
               "string"
             ]
           },
+          "team_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
           "title": {
             "type": "string"
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
-          "workspace_id",
+          "team_id",
           "title"
         ],
         "type": "object"
@@ -1337,13 +1305,9 @@
               "null",
               "integer"
             ]
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
-          "workspace_id",
           "step_id",
           "storage_path"
         ],
@@ -1417,13 +1381,9 @@
               "null",
               "string"
             ]
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
-          "workspace_id",
           "guide_id",
           "type"
         ],
@@ -1437,36 +1397,6 @@
         },
         "required": [
           "step"
-        ],
-        "type": "object"
-      },
-      "CreateWorkspaceRequest": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "organization_id": {
-            "type": "string"
-          },
-          "type": {
-            "$ref": "#/components/schemas/WorkspaceType"
-          }
-        },
-        "required": [
-          "organization_id",
-          "name",
-          "type"
-        ],
-        "type": "object"
-      },
-      "CreateWorkspaceResponse": {
-        "properties": {
-          "workspace": {
-            "$ref": "#/components/schemas/Workspace"
-          }
-        },
-        "required": [
-          "workspace"
         ],
         "type": "object"
       },
@@ -1516,14 +1446,8 @@
               "null",
               "string"
             ]
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
-        "required": [
-          "workspace_id"
-        ],
         "type": "object"
       },
       "DuplicateStepResponse": {
@@ -1615,17 +1539,18 @@
         ],
         "type": "object"
       },
-      "GetAllWorkspacesResponse": {
+      "GetAllTeamsResponse": {
+        "description": "Response containing all teams",
         "properties": {
-          "workspaces": {
+          "teams": {
             "items": {
-              "$ref": "#/components/schemas/Workspace"
+              "$ref": "#/components/schemas/Team"
             },
             "type": "array"
           }
         },
         "required": [
-          "workspaces"
+          "teams"
         ],
         "type": "object"
       },
@@ -1774,20 +1699,20 @@
           "status": {
             "$ref": "#/components/schemas/GuideStatus"
           },
+          "team_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
           "title": {
             "type": "string"
           },
           "updated_at": {
             "format": "date-time",
             "type": "string"
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
           "id",
-          "workspace_id",
+          "team_id",
           "creator_id",
           "title",
           "status",
@@ -1840,15 +1765,11 @@
           },
           "user_id": {
             "type": "string"
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
           "id",
           "guide_id",
-          "workspace_id",
           "user_id",
           "format",
           "status",
@@ -1939,15 +1860,11 @@
               "null",
               "integer"
             ]
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
           "id",
           "step_id",
-          "workspace_id",
           "storage_path",
           "created_at",
           "updated_at"
@@ -1971,9 +1888,6 @@
             "type": "string"
           },
           "step_id": {
-            "type": "string"
-          },
-          "workspace_id": {
             "type": "string"
           }
         },
@@ -2035,13 +1949,9 @@
           },
           "target_step_id": {
             "type": "string"
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
-          "workspace_id",
           "guide_id",
           "target_step_id"
         ],
@@ -2155,15 +2065,11 @@
               "null",
               "string"
             ]
-          },
-          "workspace_id": {
-            "$ref": "#/components/schemas/UUID"
           }
         },
         "required": [
           "id",
           "guide_id",
-          "workspace_id",
           "type",
           "sort_order",
           "created_at",
@@ -2221,6 +2127,38 @@
           "canvas"
         ],
         "type": "string"
+      },
+      "Team": {
+        "description": "A team within an organization",
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organization_id": {
+            "type": "string"
+          },
+          "owner_id": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "organization_id",
+          "owner_id",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
       },
       "UUID": {
         "examples": [
@@ -2398,62 +2336,6 @@
           "step"
         ],
         "type": "object"
-      },
-      "UpdateWorkspaceRequest": {
-        "properties": {
-          "name": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "Workspace": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "id": {
-            "$ref": "#/components/schemas/UUID"
-          },
-          "name": {
-            "type": "string"
-          },
-          "organization_id": {
-            "type": "string"
-          },
-          "owner_id": {
-            "type": "string"
-          },
-          "type": {
-            "$ref": "#/components/schemas/WorkspaceType"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "organization_id",
-          "owner_id",
-          "name",
-          "type",
-          "created_at",
-          "updated_at"
-        ],
-        "type": "object"
-      },
-      "WorkspaceType": {
-        "description": "The workspace type",
-        "enum": [
-          "personal",
-          "team"
-        ],
-        "type": "string"
       }
     }
   }

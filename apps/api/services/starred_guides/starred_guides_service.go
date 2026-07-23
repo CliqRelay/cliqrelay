@@ -44,7 +44,7 @@ func (s *StarredGuidesService) Star(ctx context.Context, guideID string) error {
 		return constants.ErrGuideNotFound
 	}
 
-	return s.starredGuidesRepo.Star(ctx, guide.WorkspaceID.String(), guide.CreatorID, parsedID)
+	return s.starredGuidesRepo.Star(ctx, guide.CreatorID, parsedID)
 }
 
 func (s *StarredGuidesService) Unstar(ctx context.Context, guideID string) error {
@@ -64,17 +64,11 @@ func (s *StarredGuidesService) Unstar(ctx context.Context, guideID string) error
 		return constants.ErrGuideNotFound
 	}
 
-	return s.starredGuidesRepo.Unstar(ctx, guide.WorkspaceID.String(), guide.CreatorID, parsedID)
+	return s.starredGuidesRepo.Unstar(ctx, guide.CreatorID, parsedID)
 }
 
-func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, workspaceID string) ([]*models.Guide, error) {
+func (s *StarredGuidesService) GetStarredGuides(ctx context.Context) ([]*models.Guide, error) {
 	filter := &types.GuideFilter{}
-
-	parsedWSID, err := uuid.Parse(workspaceID)
-	if err != nil {
-		return nil, constants.ErrWorkspaceNotFound
-	}
-	filter.WorkspaceID = &parsedWSID
 
 	rows, err := s.starredGuidesRepo.GetAll(ctx, filter)
 	if err != nil {

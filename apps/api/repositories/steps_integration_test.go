@@ -14,13 +14,12 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func seedStep(t *testing.T, db bun.IDB, guideID uuid.UUID, workspaceID uuid.UUID, stepType models.StepType, sortOrder string, action models.StepAction, canvasContent *models.StepCanvasContent) *models.Step {
+func seedStep(t *testing.T, db bun.IDB, guideID uuid.UUID, stepType models.StepType, sortOrder string, action models.StepAction, canvasContent *models.StepCanvasContent) *models.Step {
 	t.Helper()
 
 	step := &models.Step{
 		ID:            uuid.New(),
 		GuideID:       guideID,
-		WorkspaceID:   workspaceID,
 		Type:          stepType,
 		SortOrder:     sortOrder,
 		Action:        &action,
@@ -33,13 +32,12 @@ func seedStep(t *testing.T, db bun.IDB, guideID uuid.UUID, workspaceID uuid.UUID
 	return step
 }
 
-func seedMediaAsset(t *testing.T, db bun.IDB, stepID uuid.UUID, workspaceID uuid.UUID, storagePath string) *models.MediaAsset {
+func seedMediaAsset(t *testing.T, db bun.IDB, stepID uuid.UUID, storagePath string) *models.MediaAsset {
 	t.Helper()
 
 	mediaAsset := &models.MediaAsset{
 		ID:          uuid.New(),
 		StepID:      stepID,
-		WorkspaceID: workspaceID,
 		StoragePath: storagePath,
 	}
 
@@ -64,7 +62,7 @@ func TestBunStepsRepository_Create(t *testing.T) {
 				guide := seedGuide(t, db, "", "Test Guide")
 				return &types.CreateStepDTO{
 					GuideID:     guide.ID,
-					WorkspaceID: guide.WorkspaceID,
+	
 					Action:      new(models.StepActionClick),
 				}
 			},
@@ -79,10 +77,10 @@ func TestBunStepsRepository_Create(t *testing.T) {
 			name: "appends step at end",
 			setup: func(db *bun.DB) *types.CreateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				return &types.CreateStepDTO{
 					GuideID:     guide.ID,
-					WorkspaceID: guide.WorkspaceID,
+	
 					Action:      new(models.StepActionInput),
 				}
 			},
@@ -97,11 +95,10 @@ func TestBunStepsRepository_Create(t *testing.T) {
 			name: "inserts before a specific step",
 			setup: func(db *bun.DB) *types.CreateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step2 := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionInput, nil)
+				step2 := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionInput, nil)
 				sid := step2.ID.String()
 				return &types.CreateStepDTO{
 					GuideID:            guide.ID,
-					WorkspaceID:        guide.WorkspaceID,
 					Action:             new(models.StepActionClick),
 					InsertBeforeStepID: &sid,
 				}
@@ -117,11 +114,10 @@ func TestBunStepsRepository_Create(t *testing.T) {
 			name: "inserts after a specific step",
 			setup: func(db *bun.DB) *types.CreateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step1 := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step1 := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				sid := step1.ID.String()
 				return &types.CreateStepDTO{
 					GuideID:           guide.ID,
-					WorkspaceID:       guide.WorkspaceID,
 					Action:            new(models.StepActionInput),
 					InsertAfterStepID: &sid,
 				}
@@ -141,7 +137,7 @@ func TestBunStepsRepository_Create(t *testing.T) {
 				body := "This is a canvas step"
 				return &types.CreateStepDTO{
 					GuideID:     guide.ID,
-					WorkspaceID: guide.WorkspaceID,
+	
 					Type:        models.StepTypeCanvas,
 					CanvasContent: &models.StepCanvasContent{
 						Type:        models.StepCanvasTypeCallout,
@@ -166,11 +162,10 @@ func TestBunStepsRepository_Create(t *testing.T) {
 			name: "inserts before first step when no previous exists",
 			setup: func(db *bun.DB) *types.CreateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step1 := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step1 := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				sid := step1.ID.String()
 				return &types.CreateStepDTO{
 					GuideID:            guide.ID,
-					WorkspaceID:        guide.WorkspaceID,
 					Action:             new(models.StepActionInput),
 					InsertBeforeStepID: &sid,
 				}
@@ -184,11 +179,10 @@ func TestBunStepsRepository_Create(t *testing.T) {
 			name: "inserts after last step when no next exists",
 			setup: func(db *bun.DB) *types.CreateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step1 := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step1 := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				sid := step1.ID.String()
 				return &types.CreateStepDTO{
 					GuideID:           guide.ID,
-					WorkspaceID:       guide.WorkspaceID,
 					Action:            new(models.StepActionInput),
 					InsertAfterStepID: &sid,
 				}
@@ -237,21 +231,19 @@ func TestBunStepsRepository_Create_Duplicate(t *testing.T) {
 	url := "https://example.com"
 
 	original, err := repo.Create(ctx, &types.CreateStepDTO{
-		GuideID:     guide.ID,
-		WorkspaceID: guide.WorkspaceID,
-		Action:      &action,
-		ActionText:  &actionText,
-		URL:         &url,
+		GuideID:    guide.ID,
+		Action:     &action,
+		ActionText: &actionText,
+		URL:        &url,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, original)
 
 	duplicate, err := repo.Create(ctx, &types.CreateStepDTO{
-		GuideID:     guide.ID,
-		WorkspaceID: guide.WorkspaceID,
-		Action:      &action,
-		ActionText:  &actionText,
-		URL:         &url,
+		GuideID:    guide.ID,
+		Action:     &action,
+		ActionText: &actionText,
+		URL:        &url,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, duplicate)
@@ -295,7 +287,7 @@ func TestBunStepsRepository_GetByID(t *testing.T) {
 			name: "returns step",
 			setup: func(db *bun.DB) string {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				return step.ID.String()
 			},
 			wantNil: false,
@@ -311,8 +303,8 @@ func TestBunStepsRepository_GetByID(t *testing.T) {
 			name: "returns step with media assets eagerly loaded",
 			setup: func(db *bun.DB) string {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
-				seedMediaAsset(t, db, step.ID, guide.WorkspaceID, "/path/to/get-by-id.png")
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				seedMediaAsset(t, db, step.ID, "/path/to/get-by-id.png")
 				return step.ID.String()
 			},
 			wantNil: false,
@@ -362,9 +354,9 @@ func TestBunStepsRepository_GetByGuideID(t *testing.T) {
 			name: "returns steps ordered by sort_order",
 			setup: func(db *bun.DB) string {
 				guide := seedGuide(t, db, "", "Test Guide")
-				seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "b0", models.StepActionClick, nil)
-				seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
-				seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "c0", models.StepActionClick, nil)
+				seedStep(t, db, guide.ID, models.StepTypeInteraction, "b0", models.StepActionClick, nil)
+				seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				seedStep(t, db, guide.ID, models.StepTypeInteraction, "c0", models.StepActionClick, nil)
 				return guide.ID.String()
 			},
 			wantLen: 3,
@@ -381,9 +373,9 @@ func TestBunStepsRepository_GetByGuideID(t *testing.T) {
 			name: "only returns steps for the given guide",
 			setup: func(db *bun.DB) string {
 				guide1 := seedGuide(t, db, "", "Guide 1")
-				seedStep(t, db, guide1.ID, guide1.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				seedStep(t, db, guide1.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				guide2 := seedGuide(t, db, "", "Guide 2")
-				seedStep(t, db, guide2.ID, guide2.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				seedStep(t, db, guide2.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				return guide1.ID.String()
 			},
 			wantLen: 1,
@@ -392,8 +384,8 @@ func TestBunStepsRepository_GetByGuideID(t *testing.T) {
 			name: "returns steps with media assets eagerly loaded",
 			setup: func(db *bun.DB) string {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
-				seedMediaAsset(t, db, step.ID, guide.WorkspaceID, "/path/to/get-by-guide-id.png")
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				seedMediaAsset(t, db, step.ID, "/path/to/get-by-guide-id.png")
 				return guide.ID.String()
 			},
 			wantLen: 1,
@@ -446,7 +438,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 			name: "updates action",
 			setup: func(db *bun.DB) *types.UpdateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				return &types.UpdateStepDTO{
 					ID:     step.ID,
 					Action: new(models.StepActionNavigation),
@@ -461,7 +453,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 			name: "updates url",
 			setup: func(db *bun.DB) *types.UpdateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				return &types.UpdateStepDTO{
 					ID:  step.ID,
 					URL: new("https://example.com"),
@@ -476,7 +468,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 			name: "updates multiple fields",
 			setup: func(db *bun.DB) *types.UpdateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				return &types.UpdateStepDTO{
 					ID:     step.ID,
 					Action: new(models.StepActionInput),
@@ -494,7 +486,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 			name: "updates type and canvas content",
 			setup: func(db *bun.DB) *types.UpdateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				canvasType := models.StepCanvasTypeCallout
 				return &types.UpdateStepDTO{
 					ID:   step.ID,
@@ -514,7 +506,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 			name: "preserves interaction fields when updating only notes",
 			setup: func(db *bun.DB) *types.UpdateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				step.ActionText = new("Click me")
 				step.URL = new("https://example.com")
 				step.TargetElement = map[string]any{"selector": "#btn"}
@@ -543,7 +535,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 			name: "preserves interaction fields when updating only url",
 			setup: func(db *bun.DB) *types.UpdateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				step.ActionText = new("Click me")
 				step.TargetElement = map[string]any{"selector": "#btn"}
 				step.Notes = new("original notes")
@@ -573,7 +565,7 @@ func TestBunStepsRepository_Update(t *testing.T) {
 				guide := seedGuide(t, db, "", "Test Guide")
 				heading := "Welcome"
 				body := "Hello world"
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeCanvas, "a0", "", &models.StepCanvasContent{
+				step := seedStep(t, db, guide.ID, models.StepTypeCanvas, "a0", "", &models.StepCanvasContent{
 					Type:        models.StepCanvasTypeCallout,
 					HeadingText: &heading,
 					BodyText:    &body,
@@ -600,8 +592,8 @@ func TestBunStepsRepository_Update(t *testing.T) {
 			name: "preserves media assets when updating notes",
 			setup: func(db *bun.DB) *types.UpdateStepDTO {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
-				seedMediaAsset(t, db, step.ID, guide.WorkspaceID, "/path/to/screenshot.png")
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				seedMediaAsset(t, db, step.ID, "/path/to/screenshot.png")
 				notes := "updated notes"
 				return &types.UpdateStepDTO{
 					ID:    step.ID,
@@ -666,7 +658,7 @@ func TestBunStepsRepository_Delete(t *testing.T) {
 			name: "hard deletes a step",
 			setup: func(db *bun.DB) string {
 				guide := seedGuide(t, db, "", "Test Guide")
-				step := seedStep(t, db, guide.ID, guide.WorkspaceID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				step := seedStep(t, db, guide.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
 				return step.ID.String()
 			},
 			wantNil: false,
@@ -721,9 +713,9 @@ func TestBunStepsRepository_Reorder(t *testing.T) {
 				ctx := context.Background()
 				guide := seedGuide(t, db, "", "Test Guide")
 
-				step1, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, WorkspaceID: guide.WorkspaceID, Action: new(models.StepActionClick)})
-				step2, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, WorkspaceID: guide.WorkspaceID, Action: new(models.StepActionInput)})
-				step3, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, WorkspaceID: guide.WorkspaceID, Action: new(models.StepActionNavigation)})
+				step1, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionClick)})
+				step2, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionInput)})
+				step3, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionNavigation)})
 
 				sid1 := step1.ID.String()
 				sid2 := step2.ID.String()
@@ -742,8 +734,8 @@ func TestBunStepsRepository_Reorder(t *testing.T) {
 				ctx := context.Background()
 				guide := seedGuide(t, db, "", "Test Guide")
 
-				step1, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, WorkspaceID: guide.WorkspaceID, Action: new(models.StepActionClick)})
-				step2, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, WorkspaceID: guide.WorkspaceID, Action: new(models.StepActionInput)})
+				step1, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionClick)})
+				step2, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionInput)})
 
 				sid1 := step1.ID.String()
 				return guide.ID.String(), step2.ID.String(), nil, &sid1
@@ -760,8 +752,8 @@ func TestBunStepsRepository_Reorder(t *testing.T) {
 				ctx := context.Background()
 				guide := seedGuide(t, db, "", "Test Guide")
 
-				step1, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, WorkspaceID: guide.WorkspaceID, Action: new(models.StepActionClick)})
-				step2, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, WorkspaceID: guide.WorkspaceID, Action: new(models.StepActionInput)})
+				step1, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionClick)})
+				step2, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionInput)})
 
 				sid2 := step2.ID.String()
 				return guide.ID.String(), step1.ID.String(), &sid2, nil

@@ -33,8 +33,6 @@ func NewMediaAssetsUseCase(
 }
 
 func (uc *MediaAssetsUseCase) Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateMediaAssetRequest) (*models.MediaAsset, error) {
-	workspaceID := req.WorkspaceID.String()
-
 	step, err := uc.stepsService.GetByID(ctx, req.StepID.String())
 	if err != nil {
 		return nil, err
@@ -48,11 +46,11 @@ func (uc *MediaAssetsUseCase) Create(ctx context.Context, actor *authulamodels.A
 		return nil, err
 	}
 
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	if err := uc.authzService.CanEditGuide(ctx, actor, guide.TeamID.String(), guide); err != nil {
 		return nil, err
 	}
 
-	return uc.mediaAssetsService.Create(ctx, workspaceID, req)
+	return uc.mediaAssetsService.Create(ctx, req)
 }
 
 func (uc *MediaAssetsUseCase) ListByStep(ctx context.Context, actor *authulamodels.Actor, stepID string) ([]*models.MediaAsset, error) {
@@ -69,8 +67,8 @@ func (uc *MediaAssetsUseCase) ListByStep(ctx context.Context, actor *authulamode
 		return nil, err
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -99,8 +97,8 @@ func (uc *MediaAssetsUseCase) Get(ctx context.Context, actor *authulamodels.Acto
 		return nil, constants.ErrGuideNotFound
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanReadGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -129,8 +127,8 @@ func (uc *MediaAssetsUseCase) Update(ctx context.Context, actor *authulamodels.A
 		return nil, constants.ErrGuideNotFound
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 
@@ -159,8 +157,8 @@ func (uc *MediaAssetsUseCase) Delete(ctx context.Context, actor *authulamodels.A
 		return nil, constants.ErrGuideNotFound
 	}
 
-	workspaceID := guide.WorkspaceID.String()
-	if err := uc.authzService.CanEditGuide(ctx, actor, workspaceID, guide); err != nil {
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
 	}
 

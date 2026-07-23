@@ -113,7 +113,7 @@ func TestMediaAssetsService_Create(t *testing.T) {
 			ctx := context.Background()
 			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 
-			mediaAsset, err := svc.Create(ctx, "00000000-0000-0000-0000-000000000001", tt.req)
+			mediaAsset, err := svc.Create(ctx, tt.req)
 
 			if tt.wantErr {
 				assert.Error(t, err)

@@ -33,7 +33,7 @@ func NewMediaAssetsService(
 	}
 }
 
-func (s *MediaAssetsService) Create(ctx context.Context, workspaceID string, req *types.CreateMediaAssetRequest) (*models.MediaAsset, error) {
+func (s *MediaAssetsService) Create(ctx context.Context, req *types.CreateMediaAssetRequest) (*models.MediaAsset, error) {
 	step, err := s.stepsRepo.GetByID(ctx, req.StepID.String())
 	if err != nil {
 		return nil, err
@@ -43,19 +43,13 @@ func (s *MediaAssetsService) Create(ctx context.Context, workspaceID string, req
 	}
 
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, workspaceID, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, req); err != nil {
 			return nil, err
 		}
 	}
 
-	parsedWSID, err := uuid.Parse(workspaceID)
-	if err != nil {
-		return nil, constants.ErrWorkspaceNotFound
-	}
-
 	mediaAsset, err := s.mediaAssetsRepo.Create(ctx, &types.CreateMediaAssetDTO{
 		StepID:      req.StepID,
-		WorkspaceID: parsedWSID,
 		StoragePath: req.StoragePath,
 		MimeType:    req.MimeType,
 		AltText:     req.AltText,
@@ -124,19 +118,18 @@ func (s *MediaAssetsService) Update(ctx context.Context, mediaAssetID string, re
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, mediaAsset.WorkspaceID.String(), req); err != nil {
+		if err := s.hooks.BeforeUpdate(ctx, req); err != nil {
 			return nil, err
 		}
 	}
 
 	updated, err := s.mediaAssetsRepo.Update(ctx, &types.UpdateMediaAssetDTO{
-		ID:          parsedID,
-		WorkspaceID: mediaAsset.WorkspaceID,
-		AltText:     req.AltText,
-		MimeType:    req.MimeType,
-		Height:      req.Height,
-		Width:       req.Width,
-		ByteSize:    req.ByteSize,
+		ID:        parsedID,
+		AltText:   req.AltText,
+		MimeType:  req.MimeType,
+		Height:    req.Height,
+		Width:     req.Width,
+		ByteSize:  req.ByteSize,
 	})
 	if err != nil {
 		return nil, err
