@@ -9,5 +9,5 @@ import type { GuideStatus } from "./guide-status";
 
 export type GetAllGuidesParams = {
 	status?: null | GuideStatus;
-	workspaceId?: string;
+	workspace_id?: string;
 };

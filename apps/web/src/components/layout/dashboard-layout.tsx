@@ -20,15 +20,14 @@ import {
 import { NavMain } from "./nav-main";
 import { SiteHeader } from "./site-header";
 import type { AppUser } from "@/models/auth";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 
 const baseNavData: NavItem[] = [
-	{ label: "Insights", isSection: true },
 	{
 		title: "Dashboard",
 		icon: LayoutDashboard,
 		href: "/dashboard",
 	},
-	{ label: "My Workspace", isSection: true },
 	{
 		title: "My Guides",
 		icon: Library,
@@ -54,8 +53,25 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 	const hideSiteHeader = useRouterState({
 		select: (state) => state.matches.some((m) => !!m.context?.hideSiteHeader),
 	});
+	const workspaces = useWorkspaceStore((state) => state.workspaces);
 
-	const navData = [...baseNavData, ...(extensionRegistry.getNavItems() ?? [])];
+	const navData: NavItem[] = [
+		...baseNavData,
+		...[
+			{
+				label: "Workspaces",
+				isSection: true,
+			} as NavItem,
+			...workspaces.map(
+				(workspace) =>
+					({
+						title: workspace.name,
+						icon: Trash,
+					}) as NavItem,
+			),
+		],
+		...(extensionRegistry.getNavItems() ?? []),
+	];
 
 	return (
 		<SidebarProvider>

@@ -2,13 +2,13 @@ import {
 	HeadContent,
 	Scripts,
 	createRootRouteWithContext,
+	useRouterState,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-
-import { api } from "@repo/api-client";
 
 import { Toaster } from "@/components/ui/sonner";
 import { queryClient } from "@/constants/query-client";
@@ -18,29 +18,26 @@ import {
 	getActiveWorkspaceCookie,
 	setActiveWorkspaceCookie,
 } from "@/lib/workspace-cookie";
+import { getWorkspaces } from "@/server-fns/workspaces";
 import TanStackQueryDevtools from "../integrations/tanstack-query/Devtools";
 import type { MyRouterContext } from "@/router";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-	beforeLoad: async ({ context }) => {
-		if (!context.user) {
-			return { activeWorkspaceId: null, workspaces: [] };
-		}
-
+	beforeLoad: async () => {
 		try {
-			const response = await api.workspaces.getWorkspaces();
-			const workspaces = (response.workspaces ?? []).map((ws: any) => ({
-				id: ws.id,
-				name: ws.name,
-				type: ws.type,
-			}));
+			const response = await getWorkspaces();
+			const workspaces = response.workspaces;
 
 			const cookieWorkspaceId = getActiveWorkspaceCookie();
-			const isValid = workspaces.some((ws: any) => ws.id === cookieWorkspaceId);
+			const isValid = workspaces.some(
+				(workspace) => workspace.id === cookieWorkspaceId,
+			);
 			const activeWorkspaceId = isValid
 				? cookieWorkspaceId!
-				: (workspaces[0]?.id ?? null);
+				: (workspaces.find((workspace) => workspace.type === "personal")?.id ??
+					workspaces[0]?.id ??
+					null);
 
 			if (!isValid && activeWorkspaceId) {
 				setActiveWorkspaceCookie(activeWorkspaceId);
@@ -83,6 +80,29 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	const rootContext = useRouterState({
+		select: (state) => {
+			const root = state.matches.find((m) => m.routeId === "__root__");
+			return root?.context as
+				| {
+						workspaces?: Array<{ id: string; name: string; type: string }>;
+						activeWorkspaceId?: string | null;
+				  }
+				| undefined;
+		},
+	});
+
+	useEffect(() => {
+		if (rootContext?.workspaces) {
+			useWorkspaceStore.getState().setWorkspaces(rootContext.workspaces as any);
+			if (rootContext.activeWorkspaceId) {
+				useWorkspaceStore
+					.getState()
+					.setActiveWorkspace(rootContext.activeWorkspaceId);
+			}
+		}
+	}, [rootContext]);
+
 	return (
 		<html lang="en">
 			<head>

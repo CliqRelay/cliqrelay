@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { api, type ExportGuideFormat } from "@repo/api-client";
 
 import { authMiddleware } from "@/middleware/auth.middleware";
+import { getCsrfTokenHeader } from "../utils/http.utils";
 
 export const exportGuide = createServerFn({ method: "POST" })
 	.validator((input: { guideId: string; format: ExportGuideFormat }) => input)
@@ -15,6 +16,7 @@ export const exportGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);

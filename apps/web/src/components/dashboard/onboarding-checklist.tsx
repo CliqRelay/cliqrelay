@@ -26,6 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import type { OnboardingChecklistItemType } from "@/models";
 import useExtensionRuntime from "@/hooks/use-extension-runtime";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 
 function InstallExtensionCard() {
 	return (
@@ -251,12 +252,12 @@ export function OnboardingChecklist() {
 						return;
 					}
 
-					const response = await runtime.sendMessage<{ success: boolean; requiresToolbarClick?: boolean }>(
-						envClient.extensionId,
-						{
-							action: CliqRelayEvents.OPEN_SIDE_PANEL,
-						},
-					);
+					const response = await runtime.sendMessage<{
+						success: boolean;
+						requiresToolbarClick?: boolean;
+					}>(envClient.extensionId, {
+						action: CliqRelayEvents.OPEN_SIDE_PANEL,
+					});
 
 					if (response?.success) {
 						if (response.requiresToolbarClick) {

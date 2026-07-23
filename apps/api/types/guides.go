@@ -194,7 +194,7 @@ type GetExportStatusResponse struct {
 }
 
 type CreateDemoGuideRequest struct {
-	WorkspaceID uuid.UUID `json:"workspace_id" validate:"required,uuid" required:"true"`
+	WorkspaceID uuid.UUID `json:"workspace_id" validate:"required,uuid" required:"true" nullable:"false"`
 }
 
 func (r *CreateDemoGuideRequest) Validate() error {

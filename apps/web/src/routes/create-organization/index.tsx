@@ -38,6 +38,7 @@ export const Route = createFileRoute("/create-organization")({
 		try {
 			const organizations =
 				await authulaClient.organizations.listOrganizations();
+
 			if (organizations && organizations.length > 0) {
 				throw redirect({ to: "/dashboard" });
 			}

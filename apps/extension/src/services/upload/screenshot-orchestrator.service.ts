@@ -1,5 +1,6 @@
 import { api } from "@repo/api-client";
 
+import { getActiveWorkspaceId } from "@/lib/active-workspace";
 import { withCsrf } from "@/lib/csrf";
 import type { CaptureBridgeMessage } from "@/models";
 import { buildActionText } from "@/utils/action-text";
@@ -113,9 +114,11 @@ export const createScreenshotUploadOrchestrator = (
 				}
 			}
 			const url = message.payload.navigationUrl ?? message.payload.url;
+			const stepWorkspaceId = await getActiveWorkspaceId();
 			const stepResponse = await api.steps.createStep(
 				{
 					guideId,
+					workspaceId: stepWorkspaceId ?? "",
 					type: "interaction",
 					action: "navigation",
 					url,
@@ -192,12 +195,15 @@ export const createScreenshotUploadOrchestrator = (
 			}
 		}
 
+		const activeWorkspaceId = await getActiveWorkspaceId();
+
 		if (isNew) {
 			navUrl = message.payload.navigationUrl ?? message.payload.url;
 			navCapturedAt = message.payload.capturedAt;
 			const navStepResponse = await api.steps.createStep(
 				{
 					guideId,
+					workspaceId: activeWorkspaceId ?? "",
 					type: "interaction",
 					action: "navigation",
 					url: navUrl,
@@ -211,6 +217,7 @@ export const createScreenshotUploadOrchestrator = (
 		const stepResponse = await api.steps.createStep(
 			{
 				guideId,
+				workspaceId: activeWorkspaceId ?? "",
 				type: "interaction",
 				action: message.payload.action,
 				url: message.payload.url,

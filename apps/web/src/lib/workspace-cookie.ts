@@ -1,24 +1,28 @@
-import { getCookie, setCookie, deleteCookie } from "@tanstack/react-start/server";
+import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 
 import {
-	WORKSPACE_COOKIE_NAME,
-	WORKSPACE_COOKIE_MAX_AGE,
-	WORKSPACE_COOKIE_PATH,
-} from "@/constants/workspace";
+	COOKIE_CONSTANTS,
+} from "@repo/data-commons";
 
 export function getActiveWorkspaceCookie(): string | undefined {
-	return getCookie(WORKSPACE_COOKIE_NAME);
+	if (typeof document !== "undefined") {
+		const match = document.cookie.match(
+			new RegExp(`(?:^|;\\s*)${COOKIE_CONSTANTS.activeWorkspaceId.name}=([^;]*)`),
+		);
+		return match ? match[1] : undefined;
+	}
+	return getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name);
 }
 
 export function setActiveWorkspaceCookie(workspaceId: string) {
-	setCookie(WORKSPACE_COOKIE_NAME, workspaceId, {
-		path: WORKSPACE_COOKIE_PATH,
-		maxAge: WORKSPACE_COOKIE_MAX_AGE,
+	setCookie(COOKIE_CONSTANTS.activeWorkspaceId.name, workspaceId, {
+		path: COOKIE_CONSTANTS.activeWorkspaceId.path,
+		maxAge: COOKIE_CONSTANTS.activeWorkspaceId.maxAge,
 		sameSite: "lax",
 		httpOnly: false,
 	});
 }
 
 export function clearActiveWorkspaceCookie() {
-	deleteCookie(WORKSPACE_COOKIE_NAME, { path: WORKSPACE_COOKIE_PATH });
+	deleteCookie(COOKIE_CONSTANTS.activeWorkspaceId.name, { path: COOKIE_CONSTANTS.activeWorkspaceId.path });
 }

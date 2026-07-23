@@ -695,7 +695,7 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 			tt.setup(mockRepo, mockCache)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
-			guide, err := svc.Create(context.Background(), "00000000-0000-0000-0000-000000000001", tt.req)
+			guide, err := svc.Create(context.Background(), tt.actor, "00000000-0000-0000-0000-000000000001", tt.req)
 
 			if tt.wantErr {
 				assert.Error(t, err)

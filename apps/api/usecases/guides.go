@@ -39,7 +39,7 @@ func (uc *GuidesUseCase) Create(ctx context.Context, actor *authulamodels.Actor,
 		return nil, err
 	}
 
-	return uc.guidesService.Create(ctx, workspaceID, req)
+	return uc.guidesService.Create(ctx, actor, workspaceID, req)
 }
 
 func (uc *GuidesUseCase) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (string, error) {
@@ -47,7 +47,7 @@ func (uc *GuidesUseCase) CreateDemoGuide(ctx context.Context, actor *authulamode
 		return "", err
 	}
 
-	return uc.guidesService.CreateDemoGuide(ctx, workspaceID)
+	return uc.guidesService.CreateDemoGuide(ctx, actor, workspaceID)
 }
 
 func (uc *GuidesUseCase) List(ctx context.Context, actor *authulamodels.Actor, workspaceID string, status *string) ([]*models.Guide, error) {

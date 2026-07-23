@@ -2,9 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 
 import { api } from "@repo/api-client";
+import { COOKIE_CONSTANTS } from "@repo/data-commons";
 
-import { WORKSPACE_COOKIE_NAME } from "@/constants/workspace";
 import { authMiddleware } from "@/middleware/auth.middleware";
+import { getCsrfTokenHeader } from "../utils/http.utils";
 
 export const createGuide = createServerFn({ method: "POST" })
 	.validator((input: { title: string; description?: string; workspaceId: string }) => input)
@@ -20,6 +21,7 @@ export const createGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);
@@ -38,12 +40,13 @@ export const getAllGuides = createServerFn({
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
-			const workspaceId = data?.workspaceId ?? getCookie(WORKSPACE_COOKIE_NAME) ?? "";
+			const workspaceId = data?.workspaceId ?? getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name) ?? "";
 			const guidesResponse = await api.guides.getAllGuides(
-				{ workspaceId },
+				{ workspace_id: workspaceId },
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);
@@ -84,6 +87,7 @@ export const updateGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);
@@ -121,6 +125,7 @@ export const publishGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);
@@ -141,6 +146,7 @@ export const unpublishGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);
@@ -161,6 +167,7 @@ export const archiveGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);
@@ -181,6 +188,7 @@ export const unarchiveGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);
@@ -201,6 +209,7 @@ export const restoreGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader()
 					},
 				},
 			);
@@ -219,6 +228,7 @@ export const permanentlyDeleteGuide = createServerFn({ method: "POST" })
 			const response = await api.guides.permanentlyDeleteGuide(data.guideId, {
 				headers: {
 					Cookie: context.headers.get("Cookie") ?? "",
+					...getCsrfTokenHeader()
 				},
 			});
 			return response.guide;
@@ -234,7 +244,7 @@ export const getStepsByGuideId = createServerFn({ method: "GET" })
 	.handler(async ({ data: guideId, context }) => {
 		try {
 			const response = await api.steps.getAllStepsByGuideId(
-				{ guideId },
+				{ guide_id: guideId },
 				{ headers: { Cookie: context.headers.get("Cookie") ?? "" } },
 			);
 			return response.steps;
@@ -249,9 +259,9 @@ export const getStarredGuides = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
-			const workspaceId = data?.workspaceId ?? getCookie(WORKSPACE_COOKIE_NAME) ?? "";
+			const workspaceId = data?.workspaceId ?? getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name) ?? "";
 			const guidesResponse = await api.guides.getStarredGuides(
-				{ workspaceId },
+				{ workspace_id: workspaceId },
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
@@ -270,9 +280,9 @@ export const getTrashGuides = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
-			const workspaceId = data?.workspaceId ?? getCookie(WORKSPACE_COOKIE_NAME) ?? "";
+			const workspaceId = data?.workspaceId ?? getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name) ?? "";
 			const guidesResponse = await api.guides.getAllGuides(
-				{ status: "deleted", workspaceId },
+				{ status: "deleted", workspace_id: workspaceId },
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
@@ -292,13 +302,17 @@ export const createDemoGuide = createServerFn({ method: "POST" })
 	.handler(async ({ data, context }) => {
 		try {
 			const cookieHeader = context.headers.get("Cookie") ?? "";
-			const workspaceId = data?.workspaceId ?? getCookie(WORKSPACE_COOKIE_NAME) ?? "";
+			const workspaceId = data?.workspaceId ?? getCookie(COOKIE_CONSTANTS.activeWorkspaceId.name);
+			if (!workspaceId) {
+				return null;
+			}
 
 			const response = await api.guides.createDemoGuide(
 				{ workspaceId },
 				{
 					headers: {
 						Cookie: cookieHeader,
+						...getCsrfTokenHeader()
 					},
 				},
 			);

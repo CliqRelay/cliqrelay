@@ -1,6 +1,8 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
+import type { NavItem } from "@repo/extensions-sdk";
+
 import {
 	Collapsible,
 	CollapsibleTrigger,
@@ -16,7 +18,6 @@ import {
 	SidebarMenuSubItem,
 	SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
-import { type NavItem } from "./dashboard-layout";
 import { cn } from "@/lib/utils";
 
 export function NavMain({ items }: { items: NavItem[] }) {
@@ -40,18 +41,23 @@ export function NavMain({ items }: { items: NavItem[] }) {
 						<Collapsible>
 							<SidebarMenuItem>
 								<CollapsibleTrigger
-									render={
-										<SidebarMenuButton
-											tooltip={item.title}
-											className="rounded-xl text-sm px-3 py-2 h-9 cursor-pointer"
-										>
-											{item.icon && <item.icon size={16} />}
-											<span>{item.title}</span>
-											<ChevronRight className="ml-auto transition-transform duration-200 collapsible/button-[aria-expanded='true']:rotate-90" />
-										</SidebarMenuButton>
-									}
+									asChild
 									className="w-full collapsible/button"
-								/>
+								>
+									<SidebarMenuButton
+										tooltip={item.title}
+										className="rounded-xl text-sm px-3 py-2 h-9 cursor-pointer"
+									>
+										{item.icon &&
+											(typeof item.icon === "function" ? (
+												<item.icon size={16} />
+											) : (
+												item.icon
+											))}
+										<span>{item.title}</span>
+										<ChevronRight className="ml-auto transition-transform duration-200 collapsible/button-[aria-expanded='true']:rotate-90" />
+									</SidebarMenuButton>
+								</CollapsibleTrigger>
 								<CollapsibleContent>
 									<SidebarMenuSub className="me-0 pe-0">
 										{item.children!.map(renderItemSub)}
@@ -120,10 +126,9 @@ export function NavMain({ items }: { items: NavItem[] }) {
 		if (item.title) {
 			return (
 				<SidebarMenuSubItem key={item.title} className="w-full">
-					<SidebarMenuSubButton
-						className="w-full"
-						render={<Link to={item.href}>{item.title}</Link>}
-					/>
+					<SidebarMenuSubButton className="w-full" asChild>
+						<Link to={item.href}>{item.title}</Link>
+					</SidebarMenuSubButton>
 				</SidebarMenuSubItem>
 			);
 		}

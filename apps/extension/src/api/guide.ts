@@ -1,5 +1,6 @@
 import { api } from "@repo/api-client";
 
+import { getActiveWorkspaceId } from "@/lib/active-workspace";
 import { withCsrf } from "@/lib/csrf";
 
 export const createEnsureGuide = (
@@ -10,8 +11,9 @@ export const createEnsureGuide = (
 		let guideId = await getActiveGuideId();
 
 		if (!guideId) {
+			const workspaceId = await getActiveWorkspaceId();
 			const response = await api.guides.createGuide(
-				{ title: "Untitled Guide" },
+				{ title: "Untitled Guide", workspaceId: workspaceId ?? "" },
 				await withCsrf(),
 			);
 			guideId = response.guide.id;

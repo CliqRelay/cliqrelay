@@ -7,5 +7,5 @@
  */
 
 export type GetStarredGuidesParams = {
-	workspaceId?: string;
+	workspace_id?: string;
 };

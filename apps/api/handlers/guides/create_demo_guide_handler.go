@@ -1,6 +1,7 @@
 package guides
 
 import (
+	"log/slog"
 	"net/http"
 
 	authulamodels "github.com/Authula/authula/models"
@@ -37,6 +38,8 @@ func (h *CreateDemoGuideHandler) Handle() http.HandlerFunc {
 			reqCtx.Handled = true
 			return
 		}
+
+		slog.Debug("CreateDemoGuideHandler", "request", request)
 
 		guideID, err := h.guidesUseCase.CreateDemoGuide(ctx, actor, request.WorkspaceID.String())
 		if err != nil {

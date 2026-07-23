@@ -1,5 +1,6 @@
 import { api } from "@repo/api-client";
 
+import { getActiveWorkspaceId } from "@/lib/active-workspace";
 import { withCsrf } from "@/lib/csrf";
 import type { CaptureBridgeMessage, CaptureMetadataEntry, OffscreenEvent, RecordingStateMachine, SessionService, SidePanelCommand, StepJobProgress } from "@/models";
 import type { PortManager } from "@/services/sidepanel/port-manager.service";
@@ -37,8 +38,9 @@ export const createSessionManager = (
 			if (activeGuideId) {
 				return { guideId: activeGuideId, isNew: false };
 			}
+			const workspaceId = await getActiveWorkspaceId();
 			const guideResponse = await api.guides.createGuide(
-				{ title: "Untitled Guide" },
+				{ title: "Untitled Guide", workspaceId: workspaceId ?? "" },
 				await withCsrf(),
 			);
 			await sessionService.setActiveGuideId(guideResponse.guide.id);
@@ -264,9 +266,11 @@ export const createSessionManager = (
 				existing.actionText = actionText;
 			}
 		} else {
+			const workspaceId = await getActiveWorkspaceId();
 			const stepResponse = await api.steps.createStep(
 				{
 					guideId,
+					workspaceId: workspaceId ?? "",
 					type: "interaction",
 					action: "input",
 					url: payload.url,

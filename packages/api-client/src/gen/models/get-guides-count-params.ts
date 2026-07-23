@@ -7,5 +7,5 @@
  */
 
 export type GetGuidesCountParams = {
-	workspaceId?: string;
+	workspace_id?: string;
 };

@@ -7,6 +7,8 @@ import {
 	OrganizationsPlugin,
 } from "authula/plugins";
 
+import { COOKIE_CONSTANTS, HEADER_CONSTANTS } from "@repo/data-commons";
+
 import { envServer } from "@/constants/env-server";
 
 export const authulaServerClient = createClient({
@@ -43,8 +45,8 @@ export const authulaServerClient = createClient({
 	},
 	plugins: [
 		new CSRFPlugin({
-			cookieName: "authula_csrf_token",
-			headerName: "X-AUTHULA-CSRF-TOKEN",
+			cookieName: COOKIE_CONSTANTS.csrf.name,
+			headerName: HEADER_CONSTANTS.csrfToken
 		}),
 		new CorePlugin(),
 		new EmailPasswordPlugin(),

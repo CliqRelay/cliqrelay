@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
+	authulamodels "github.com/Authula/authula/models"
+
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -44,7 +46,7 @@ func NewGuidesService(
 	}
 }
 
-func (s *GuidesService) Create(ctx context.Context, workspaceID string, req *types.CreateGuideRequest) (*models.Guide, error) {
+func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, workspaceID string, req *types.CreateGuideRequest) (*models.Guide, error) {
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
 		if err := s.hooks.BeforeCreate(ctx, workspaceID, req); err != nil {
 			return nil, err
@@ -58,7 +60,7 @@ func (s *GuidesService) Create(ctx context.Context, workspaceID string, req *typ
 
 	guideCreated, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
 		WorkspaceID: parsedWSID,
-		CreatorID:   req.WorkspaceID.String(),
+		CreatorID:   actor.ID,
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -75,14 +77,15 @@ func (s *GuidesService) Create(ctx context.Context, workspaceID string, req *typ
 	return guideCreated, nil
 }
 
-func (s *GuidesService) CreateDemoGuide(ctx context.Context, workspaceID string) (string, error) {
-	parsedWSID, err := uuid.Parse(workspaceID)
+func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, workspaceID string) (string, error) {
+	parsedWorkspaceID, err := uuid.Parse(workspaceID)
 	if err != nil {
 		return "", constants.ErrWorkspaceNotFound
 	}
 
 	guide, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
-		WorkspaceID: parsedWSID,
+		WorkspaceID: parsedWorkspaceID,
+		CreatorID:   actor.ID,
 		Title:       "Getting Started with CliqRelay",
 		Description: new("A sample guide to show you how CliqRelay works"),
 	})
@@ -95,13 +98,13 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, workspaceID string)
 
 	demoSteps := []*types.CreateStepDTO{
 		{
-			WorkspaceID:   parsedWSID,
+			WorkspaceID:   parsedWorkspaceID,
 			GuideID:       guide.ID,
 			Type:          models.StepTypeCanvas,
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader, HeadingText: new("Overview of CliqRelay"), BodyText: new("You can use this step to provide an overview or introduction to your guide.")},
 		},
 		{
-			WorkspaceID: parsedWSID,
+			WorkspaceID: parsedWorkspaceID,
 			GuideID:     guide.ID,
 			Type:        models.StepTypeInteraction,
 			Action:      &clickAction,
@@ -109,19 +112,19 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, workspaceID string)
 			Notes:       new("This step demonstrates a click step which will be accompanied by a screenshot of the action."),
 		},
 		{
-			WorkspaceID:   parsedWSID,
+			WorkspaceID:   parsedWorkspaceID,
 			GuideID:       guide.ID,
 			Type:          models.StepTypeCanvas,
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeTip, HeadingText: new("This is a note"), BodyText: new("You can use this step to provide additional information or tips related to the guide.")},
 		},
 		{
-			WorkspaceID:   parsedWSID,
+			WorkspaceID:   parsedWorkspaceID,
 			GuideID:       guide.ID,
 			Type:          models.StepTypeCanvas,
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeCallout, HeadingText: new("Callout"), BodyText: new("This is a callout step, which can be used to draw attention to important information or warnings.")},
 		},
 		{
-			WorkspaceID:   parsedWSID,
+			WorkspaceID:   parsedWorkspaceID,
 			GuideID:       guide.ID,
 			Type:          models.StepTypeCanvas,
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeAlert, HeadingText: new("Alert"), BodyText: new("This is an alert step, which can be used to highlight critical information or errors that users should be aware of.")},

@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import type { StepTypeOption } from "@/models";
 import { STEP_TYPE_CONFIG } from "@/models";
 import { useWorkspaceStore } from "@/stores/workspace-store";
+import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 export function useGuideStepMutations(guideId: string) {
 	const queryClient = useQueryClient();
@@ -35,6 +36,7 @@ export function useGuideStepMutations(guideId: string) {
 		},
 		request: {
 			credentials: "include",
+			...getCsrfTokenHeader(),
 		},
 	});
 
@@ -52,6 +54,7 @@ export function useGuideStepMutations(guideId: string) {
 		},
 		request: {
 			credentials: "include",
+			...getCsrfTokenHeader(),
 		},
 	});
 
@@ -86,6 +89,7 @@ export function useGuideStepMutations(guideId: string) {
 		},
 		request: {
 			credentials: "include",
+			...getCsrfTokenHeader(),
 		},
 	});
 
@@ -161,10 +165,11 @@ export function useGuideStepMutations(guideId: string) {
 		},
 		request: {
 			credentials: "include",
+			...getCsrfTokenHeader(),
 		},
 	});
 
-	const handleAddStepWithType = (
+	const handleAddStepWithType = async (
 		type: StepTypeOption,
 		selectStep: (stepId: string | null) => void,
 		insertBeforeStepId?: string,
@@ -177,12 +182,12 @@ export function useGuideStepMutations(guideId: string) {
 			type: config.type,
 			...(config.canvasType
 				? {
-						canvasContent: {
-							type: config.canvasType,
-							headingText: "",
-							bodyText: "",
-						},
-					}
+					canvasContent: {
+						type: config.canvasType,
+						headingText: "",
+						bodyText: "",
+					},
+				}
 				: {}),
 			...(insertBeforeStepId ? { insertBeforeStepId } : {}),
 		};

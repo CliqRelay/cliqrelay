@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { api } from "@repo/api-client";
 
 import { authMiddleware } from "@/middleware/auth.middleware";
+import { getCsrfTokenHeader } from "../utils/http.utils";
 
 export const starGuide = createServerFn({ method: "POST" })
 	.validator((input: { guideId: string }) => input)
@@ -11,6 +12,7 @@ export const starGuide = createServerFn({ method: "POST" })
 		const starredGuideResponse = await api.guides.starGuide(data.guideId, {
 			headers: {
 				Cookie: context.headers.get("Cookie") ?? "",
+				...getCsrfTokenHeader()
 			},
 		});
 		return starredGuideResponse.message;
@@ -23,6 +25,7 @@ export const unstarGuide = createServerFn({ method: "POST" })
 		const unstarredGuideResponse = await api.guides.unstarGuide(data.guideId, {
 			headers: {
 				Cookie: context.headers.get("Cookie") ?? "",
+				...getCsrfTokenHeader()
 			},
 		});
 		return unstarredGuideResponse.message;
