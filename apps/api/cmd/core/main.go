@@ -58,7 +58,11 @@ func main() {
 		log.Fatal("Error initializing OpenAPI service: ", err)
 	}
 
-	authServiceHooks := auth.InitAuthServiceHooks()
+	var workspaceService interfaces.WorkspaceService
+
+	authServiceHooks := auth.InitAuthServiceHooks(func() interfaces.WorkspaceService {
+		return workspaceService
+	})
 	authulaAuth := auth.InitAuth(
 		envConfig,
 		authServiceHooks,
@@ -149,6 +153,10 @@ func main() {
 		log.Fatal("Error initializing migrations: ", err)
 	}
 
+	if err := auth.SeedOrganizationRoles(context.Background(), appConfig.AuthulaInstance); err != nil {
+		log.Fatal("Error seeding organization roles: ", err)
+	}
+
 	bunWorkspacesRepo := bunWorkspaces.NewBunWorkspacesRepository(appConfig.DB)
 	bunGuidesRepo := bunGuides.NewBunGuidesRepository(appConfig.DB)
 	bunStarredGuidesRepo := bunStarredGuides.NewBunStarredGuidesRepository(appConfig.DB)
@@ -160,7 +168,7 @@ func main() {
 	storageService := storage.NewS3StorageService(appConfig.S3Client)
 	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
 
-	workspaceService := workspacesservice.NewWorkspacesService(bunWorkspacesRepo)
+	workspaceService = workspacesservice.NewWorkspacesService(bunWorkspacesRepo)
 	authorizationService := authservice.NewDefaultAuthorizationService()
 
 	guideHooks := (*interfaces.GuideHooks)(nil)

@@ -24,16 +24,11 @@ func (s *workspacesService) Create(ctx context.Context, actor *authulamodels.Act
 		return nil, constants.ErrUnauthorized
 	}
 
-	wsType := models.WorkspaceTypePersonal
-	if req.Type != nil {
-		wsType = *req.Type
-	}
-
 	dto := &types.CreateWorkspaceDTO{
-		OrganizationID: "", // Set by the caller or auto-created via AfterCreate hook
-		Name:           req.Name,
-		Type:           wsType,
+		OrganizationID: req.OrganizationID,
 		OwnerID:        actor.ID,
+		Name:           req.Name,
+		Type:           req.Type,
 	}
 
 	return s.workspaceRepo.Create(ctx, dto)

@@ -5,16 +5,10 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
-import * as zod from "zod";
-
 import {
 	CreateWorkspaceRequest,
 	CreateWorkspaceResponse,
-	DeleteWorkspaceResponse,
 	GetAllWorkspacesResponse,
-	GetWorkspaceByIDResponse,
-	UpdateWorkspaceRequest,
-	UpdateWorkspaceResponse,
 } from "../cliqrelay-api.schemas.zod";
 
 /**
@@ -30,35 +24,3 @@ export const GetWorkspacesResponse = GetAllWorkspacesResponse;
 export const CreateWorkspaceBody = CreateWorkspaceRequest;
 
 export const CreateWorkspaceResponseSchema = CreateWorkspaceResponse;
-
-/**
- * Retrieves a single workspace by its ID
- * @summary Get workspace by ID
- */
-export const GetWorkspaceByIdParams = zod.object({
-	workspaceId: zod.string(),
-});
-
-export const GetWorkspaceByIdResponse = GetWorkspaceByIDResponse;
-
-/**
- * Deletes a workspace
- * @summary Delete workspace
- */
-export const DeleteWorkspaceParams = zod.object({
-	workspaceId: zod.string(),
-});
-
-export const DeleteWorkspaceResponseSchema = DeleteWorkspaceResponse;
-
-/**
- * Updates an existing workspace
- * @summary Update workspace
- */
-export const UpdateWorkspaceParams = zod.object({
-	workspaceId: zod.string(),
-});
-
-export const UpdateWorkspaceBody = UpdateWorkspaceRequest;
-
-export const UpdateWorkspaceResponseSchema = UpdateWorkspaceResponse;

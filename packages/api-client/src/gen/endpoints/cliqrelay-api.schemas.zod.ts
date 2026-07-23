@@ -237,7 +237,8 @@ export type WorkspaceTypeOutput = zod.output<typeof WorkspaceType>;
 
 export const CreateWorkspaceRequest = zod.object({
 	name: zod.string(),
-	type: zod.union([zod.null(), WorkspaceType]).optional(),
+	organizationId: zod.string(),
+	type: WorkspaceType,
 });
 
 export type CreateWorkspaceRequest = zod.input<typeof CreateWorkspaceRequest>;
@@ -250,7 +251,7 @@ export const Workspace = zod.object({
 	id: Uuid,
 	name: zod.string(),
 	organizationId: zod.string(),
-	ownerId: zod.string().nullish(),
+	ownerId: zod.string(),
 	type: WorkspaceType,
 	updatedAt: zod.iso.datetime({ offset: true }),
 });
@@ -291,15 +292,6 @@ export const DeleteStepResponse = zod.object({
 
 export type DeleteStepResponse = zod.input<typeof DeleteStepResponse>;
 export type DeleteStepResponseOutput = zod.output<typeof DeleteStepResponse>;
-
-export const DeleteWorkspaceResponse = zod.object({
-	message: zod.string(),
-});
-
-export type DeleteWorkspaceResponse = zod.input<typeof DeleteWorkspaceResponse>;
-export type DeleteWorkspaceResponseOutput = zod.output<
-	typeof DeleteWorkspaceResponse
->;
 
 export const DuplicateStepRequest = zod.object({
 	insertAfterStepId: zod.string().nullish(),
@@ -442,17 +434,6 @@ export const GetStepByIDResponse = zod.object({
 
 export type GetStepByIDResponse = zod.input<typeof GetStepByIDResponse>;
 export type GetStepByIDResponseOutput = zod.output<typeof GetStepByIDResponse>;
-
-export const GetWorkspaceByIDResponse = zod.object({
-	workspace: zod.union([zod.null(), Workspace]),
-});
-
-export type GetWorkspaceByIDResponse = zod.input<
-	typeof GetWorkspaceByIDResponse
->;
-export type GetWorkspaceByIDResponseOutput = zod.output<
-	typeof GetWorkspaceByIDResponse
->;
 
 export const HealthResponse = zod.object({
 	status: zod.string(),
@@ -641,13 +622,4 @@ export const UpdateWorkspaceRequest = zod.object({
 export type UpdateWorkspaceRequest = zod.input<typeof UpdateWorkspaceRequest>;
 export type UpdateWorkspaceRequestOutput = zod.output<
 	typeof UpdateWorkspaceRequest
->;
-
-export const UpdateWorkspaceResponse = zod.object({
-	workspace: Workspace,
-});
-
-export type UpdateWorkspaceResponse = zod.input<typeof UpdateWorkspaceResponse>;
-export type UpdateWorkspaceResponseOutput = zod.output<
-	typeof UpdateWorkspaceResponse
 >;

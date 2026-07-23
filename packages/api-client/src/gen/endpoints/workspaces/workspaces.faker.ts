@@ -9,10 +9,7 @@ import { faker } from "@faker-js/faker";
 
 import type {
 	CreateWorkspaceResponse,
-	DeleteWorkspaceResponse,
 	GetAllWorkspacesResponse,
-	GetWorkspaceByIDResponse,
-	UpdateWorkspaceResponse,
 } from "../../models";
 import { WorkspaceType } from "../../models";
 
@@ -27,13 +24,7 @@ export const getGetWorkspacesResponseMock = (
 		id: faker.string.uuid(),
 		name: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		organizationId: faker.string.alpha({ length: { min: 10, max: 20 } }),
-		ownerId: faker.helpers.arrayElement([
-			faker.helpers.arrayElement([
-				faker.string.alpha({ length: { min: 10, max: 20 } }),
-				null,
-			]),
-			undefined,
-		]),
+		ownerId: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		type: faker.helpers.arrayElement(Object.values(WorkspaceType)),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
 	})),
@@ -48,65 +39,7 @@ export const getCreateWorkspaceResponseMock = (
 		id: faker.string.uuid(),
 		name: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		organizationId: faker.string.alpha({ length: { min: 10, max: 20 } }),
-		ownerId: faker.helpers.arrayElement([
-			faker.helpers.arrayElement([
-				faker.string.alpha({ length: { min: 10, max: 20 } }),
-				null,
-			]),
-			undefined,
-		]),
-		type: faker.helpers.arrayElement(Object.values(WorkspaceType)),
-		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-	},
-	...overrideResponse,
-});
-
-export const getGetWorkspaceByIdResponseMock = (
-	overrideResponse: Partial<Extract<GetWorkspaceByIDResponse, object>> = {},
-): GetWorkspaceByIDResponse => ({
-	workspace: faker.helpers.arrayElement([
-		null,
-		{
-			createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-			id: faker.string.uuid(),
-			name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-			organizationId: faker.string.alpha({ length: { min: 10, max: 20 } }),
-			ownerId: faker.helpers.arrayElement([
-				faker.helpers.arrayElement([
-					faker.string.alpha({ length: { min: 10, max: 20 } }),
-					null,
-				]),
-				undefined,
-			]),
-			type: faker.helpers.arrayElement(Object.values(WorkspaceType)),
-			updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		},
-	]),
-	...overrideResponse,
-});
-
-export const getDeleteWorkspaceResponseMock = (
-	overrideResponse: Partial<Extract<DeleteWorkspaceResponse, object>> = {},
-): DeleteWorkspaceResponse => ({
-	message: faker.string.alpha({ length: { min: 10, max: 20 } }),
-	...overrideResponse,
-});
-
-export const getUpdateWorkspaceResponseMock = (
-	overrideResponse: Partial<Extract<UpdateWorkspaceResponse, object>> = {},
-): UpdateWorkspaceResponse => ({
-	workspace: {
-		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		id: faker.string.uuid(),
-		name: faker.string.alpha({ length: { min: 10, max: 20 } }),
-		organizationId: faker.string.alpha({ length: { min: 10, max: 20 } }),
-		ownerId: faker.helpers.arrayElement([
-			faker.helpers.arrayElement([
-				faker.string.alpha({ length: { min: 10, max: 20 } }),
-				null,
-			]),
-			undefined,
-		]),
+		ownerId: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		type: faker.helpers.arrayElement(Object.values(WorkspaceType)),
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
 	},

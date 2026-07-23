@@ -30,6 +30,7 @@ func workspacesInitial() authulamigrations.Migration {
 					created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 					updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 				);`,
+				`CREATE UNIQUE INDEX idx_workspaces_personal_org ON workspaces (organization_id) WHERE type = 'personal';`,
 				`CREATE INDEX idx_workspaces_organization_id ON workspaces (organization_id);`,
 				`CREATE INDEX idx_workspaces_owner_id ON workspaces (owner_id);`,
 				`CREATE INDEX idx_workspaces_type ON workspaces (type);`,

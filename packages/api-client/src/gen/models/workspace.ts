@@ -13,8 +13,7 @@ export type Workspace = {
 	id: Uuid;
 	name: string;
 	organizationId: string;
-	/** @nullable */
-	ownerId?: string | null;
+	ownerId: string;
 	type: WorkspaceType;
 	updatedAt: string;
 };

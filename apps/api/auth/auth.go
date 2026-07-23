@@ -89,7 +89,7 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 					csrfplugin.HookIDCSRFProtect.String(),
 				},
 			},
-			// Email-Password Routes
+			// Email & Password Routes
 			{
 				Paths: []string{
 					"POST:/email-password/sign-in",
@@ -110,6 +110,26 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 				Paths: []string{
 					"POST:/email-password/send-email-verification",
 					"POST:/email-password/request-email-change",
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+					csrfplugin.HookIDCSRFProtect.String(),
+				},
+			},
+			// Organizations Routes
+			{
+				Paths: []string{
+					"GET:/organizations/*",
+					"DELETE:/organizations/*",
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			{
+				Paths: []string{
+					"POST:/organizations/*",
+					"PATCH:/organizations/*",
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -250,7 +270,7 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			},
 		}),
 		csrfplugin.New(csrfplugin.CSRFPluginConfig{
-			Enabled:    false,
+			Enabled:    true,
 			CookieName: "authula_csrf_token",
 			HeaderName: "X-AUTHULA-CSRF-TOKEN",
 		}),
@@ -281,11 +301,11 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 		}),
 		organizationsplugin.New(organizationsplugintypes.OrganizationsPluginConfig{
 			Enabled:                          true,
-			OrganizationsLimit:               new(1),
+			OrganizationsLimit:               nil,
 			MembersLimit:                     nil,
 			InvitationsLimit:                 new(100),
 			InvitationExpiresIn:              7 * 24 * time.Hour,
-			RequireEmailVerifiedOnInvitation: false,
+			RequireEmailVerifiedOnInvitation: true,
 			ServiceHooks:                     &authServiceHooks.OrganizationsServiceHooksConfig,
 		}),
 		ratelimitplugin.New(ratelimitplugintypes.RateLimitPluginConfig{

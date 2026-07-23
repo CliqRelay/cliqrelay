@@ -6,14 +6,16 @@ import (
 	"log/slog"
 
 	authulamodels "github.com/Authula/authula/models"
-	organizationsplugin "github.com/Authula/authula/plugins/organizations"
 	organizationsplugintypes "github.com/Authula/authula/plugins/organizations/types"
-	authulaservices "github.com/Authula/authula/services"
+
+	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/models"
+	"github.com/CliqRelay/cliqrelay/types"
 )
 
-type OrganizationServiceAfterCreateHookFunc = func(ctx context.Context, actor *authulamodels.Actor, organization *organizationsplugintypes.Organization) error
+type workspaceServiceProviderFactory func() interfaces.WorkspaceService
 
-func ConstructOrganizationsServiceHooks() organizationsplugintypes.OrganizationsServiceHooksConfig {
+func ConstructOrganizationsServiceHooks(workspaceServiceProviderFactory workspaceServiceProviderFactory) organizationsplugintypes.OrganizationsServiceHooksConfig {
 	return organizationsplugintypes.OrganizationsServiceHooksConfig{
 		Organizations: &organizationsplugintypes.OrganizationServiceHooksConfig{
 			AfterCreate: func(ctx context.Context, actor *authulamodels.Actor, organization *organizationsplugintypes.Organization) error {
@@ -21,37 +23,37 @@ func ConstructOrganizationsServiceHooks() organizationsplugintypes.Organizations
 					return nil
 				}
 
-				foundUserService, userService := authulamodels.GetServiceFromContext[authulaservices.UserService](ctx, authulamodels.ServiceUser)
-				if !foundUserService {
-					return fmt.Errorf("%s not found", authulamodels.ServiceUser.String())
+				workspaceService := workspaceServiceProviderFactory()
+				if workspaceService == nil {
+					return fmt.Errorf("workspace service not initialized")
 				}
 
-				pluginRegistry := authulamodels.GetPluginRegistryFromContext(ctx)
-
-				organizationPlugin, ok := pluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizationsplugin.OrganizationsPlugin)
-				if !ok {
-					return fmt.Errorf("Organizations plugin not found")
+				personalType := models.WorkspaceTypePersonal
+				existing, err := workspaceService.GetAll(ctx, actor, &types.WorkspaceFilter{Type: &personalType})
+				if err != nil {
+					return fmt.Errorf("failed to check existing workspaces: %w", err)
+				}
+				for _, workspace := range existing {
+					if workspace.OrganizationID == organization.ID {
+						slog.Debug("Personal workspace already exists for organization",
+							"org_id", organization.ID,
+							"workspace_id", workspace.ID,
+						)
+						return nil
+					}
 				}
 
-				if err := CreatePersonalWorkspaceForNewUserHook(userService, *organizationPlugin.Api)(ctx, actor, organization); err != nil {
-					return err
+				_, err = workspaceService.Create(ctx, actor, &types.CreateWorkspaceRequest{
+					Name:           "Personal",
+					Type:           personalType,
+					OrganizationID: organization.ID,
+				})
+				if err != nil {
+					return fmt.Errorf("failed to create personal workspace: %w", err)
 				}
 
 				return nil
 			},
 		},
-	}
-}
-
-func CreatePersonalWorkspaceForNewUserHook(userService authulaservices.UserService, organizationsApi organizationsplugin.API) OrganizationServiceAfterCreateHookFunc {
-	return func(ctx context.Context, actor *authulamodels.Actor, organization *organizationsplugintypes.Organization) error {
-		user, err := userService.GetByID(ctx, actor.ID)
-		if err != nil {
-			return err
-		}
-
-		slog.Debug("User", "found user:", user.ID)
-
-		return nil
 	}
 }

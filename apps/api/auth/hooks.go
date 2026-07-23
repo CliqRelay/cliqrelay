@@ -2,10 +2,11 @@ package auth
 
 import (
 	"github.com/CliqRelay/cliqrelay/config"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 )
 
-func InitAuthServiceHooks() config.AuthServiceHooks {
+func InitAuthServiceHooks(provider func() interfaces.WorkspaceService) config.AuthServiceHooks {
 	return config.AuthServiceHooks{
-		OrganizationsServiceHooksConfig: ConstructOrganizationsServiceHooks(),
+		OrganizationsServiceHooksConfig: ConstructOrganizationsServiceHooks(provider),
 	}
 }

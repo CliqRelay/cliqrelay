@@ -6,7 +6,7 @@ import (
 )
 
 type WorkspaceID struct {
-	ID string `path:"workspaceId" validate:"required,uuid"`
+	ID string `path:"workspace_id" validate:"required,uuid"`
 }
 
 type WorkspaceIDQueryParam struct {
@@ -22,8 +22,9 @@ type WorkspaceFilter struct {
 }
 
 type CreateWorkspaceRequest struct {
-	Name string                `json:"name" validate:"required,lte=255" required:"true"`
-	Type *models.WorkspaceType `json:"type,omitempty" nullable:"true"`
+	OrganizationID string               `json:"organization_id" validate:"required" required:"true" nullable:"false"`
+	Name           string               `json:"name" validate:"required,lte=255" required:"true" nullable:"false"`
+	Type           models.WorkspaceType `json:"type" validate:"required" required:"true" nullable:"false"`
 }
 
 func (r *CreateWorkspaceRequest) Validate() error {

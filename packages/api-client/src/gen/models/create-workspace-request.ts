@@ -9,5 +9,6 @@ import type { WorkspaceType } from "./workspace-type";
 
 export type CreateWorkspaceRequest = {
 	name: string;
-	type?: null | WorkspaceType;
+	organizationId: string;
+	type: WorkspaceType;
 };
