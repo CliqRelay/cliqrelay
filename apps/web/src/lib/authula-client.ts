@@ -1,5 +1,6 @@
 import type { ClientWithPlugins } from "authula";
 import type {
+	AdminPlugin,
 	CSRFPlugin,
 	CorePlugin,
 	EmailPasswordPlugin,
@@ -7,7 +8,7 @@ import type {
 } from "authula/plugins";
 
 let _client: ClientWithPlugins<
-	readonly [CSRFPlugin, CorePlugin, EmailPasswordPlugin, OrganizationsPlugin]
+	readonly [CSRFPlugin, AdminPlugin, CorePlugin, EmailPasswordPlugin, OrganizationsPlugin]
 >;
 
 // Vite replaces import.meta.env.SSR at compile time:

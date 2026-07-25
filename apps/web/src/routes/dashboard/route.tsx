@@ -8,6 +8,11 @@ import {
 import { DashboardLayout } from "@/components/layout";
 import type { UserWithModifiedMetadata } from "@/models";
 import { authulaClient } from "@/lib/authula-client";
+import { useOrgStore } from "@/stores/org-store";
+import {
+	getActiveOrgCookie,
+	setActiveOrgCookie,
+} from "@/lib/org-cookie";
 
 export const Route = createFileRoute("/dashboard")({
 	beforeLoad: async () => {
@@ -34,6 +39,17 @@ export const Route = createFileRoute("/dashboard")({
 			if (!organizations || organizations.length === 0) {
 				throw redirect({ to: "/create-organization" });
 			}
+
+			const org = organizations[0];
+			const cookieOrgId = getActiveOrgCookie();
+			const isOrgValid = organizations.some((o) => o.id === cookieOrgId);
+			const activeOrgId = isOrgValid ? cookieOrgId! : org.id;
+			const activeOrg = organizations.find((o) => o.id === activeOrgId) ?? org;
+
+			if (!isOrgValid) {
+				setActiveOrgCookie(activeOrg.id);
+			}
+			useOrgStore.getState().setOrg(activeOrg.id, activeOrg.name);
 		} catch (error: unknown) {
 			if (isRedirect(error)) {
 				throw error;

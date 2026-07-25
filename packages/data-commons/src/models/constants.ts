@@ -13,6 +13,11 @@ export const COOKIE_CONSTANTS = {
 		name: "cliqrelay_active_team_id",
 		maxAge: 60 * 60 * 24 * 7, // 7 days
 		path: "/"
+	},
+	activeOrgId: {
+		name: "cliqrelay_active_org_id",
+		maxAge: 60 * 60 * 24 * 365, // 365 days
+		path: "/"
 	}
 } as const;
 

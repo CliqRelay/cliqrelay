@@ -1,6 +1,7 @@
 import { getStartContext } from "@tanstack/start-storage-context";
 import { createClient } from "authula";
 import {
+	AdminPlugin,
 	CorePlugin,
 	CSRFPlugin,
 	EmailPasswordPlugin,
@@ -48,6 +49,7 @@ export const authulaServerClient = createClient({
 			cookieName: COOKIE_CONSTANTS.csrf.name,
 			headerName: HEADER_CONSTANTS.csrfToken
 		}),
+		new AdminPlugin(),
 		new CorePlugin(),
 		new EmailPasswordPlugin(),
 		new OrganizationsPlugin(),
