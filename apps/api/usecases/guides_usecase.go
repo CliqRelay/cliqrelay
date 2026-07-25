@@ -51,24 +51,10 @@ func (uc *GuidesUseCase) CreateDemoGuide(ctx context.Context, actor *authulamode
 }
 
 func (uc *GuidesUseCase) List(ctx context.Context, actor *authulamodels.Actor, teamID string, status *string) ([]*models.Guide, error) {
-	filter, err := uc.authzService.GuideListFilter(ctx, actor, teamID)
-	if err != nil {
+	if _, err := uc.authzService.GuideListFilter(ctx, actor, teamID); err != nil {
 		return nil, err
 	}
-
-	filter.ViewerUserID = &actor.ID
-	parsedTeamID, err := uuidParse(teamID)
-	if err != nil {
-		return nil, err
-	}
-	filter.TeamID = &parsedTeamID
-
-	if status != nil {
-		statusVal := models.GuideStatus(*status)
-		filter.Status = &statusVal
-	}
-
-	return uc.guidesService.GetAll(ctx, teamID, status)
+	return uc.guidesService.GetAll(ctx, teamID, status, &actor.ID)
 }
 
 func (uc *GuidesUseCase) Get(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
@@ -114,18 +100,12 @@ func (uc *GuidesUseCase) Delete(ctx context.Context, actor *authulamodels.Actor,
 }
 
 func (uc *GuidesUseCase) GetCount(ctx context.Context, actor *authulamodels.Actor, teamID string) (int, error) {
-	filter, err := uc.authzService.GuideListFilter(ctx, actor, teamID)
+	_, err := uc.authzService.GuideListFilter(ctx, actor, teamID)
 	if err != nil {
 		return 0, err
 	}
 
-	parsedTeamID, err := uuidParse(teamID)
-	if err != nil {
-		return 0, err
-	}
-	filter.TeamID = &parsedTeamID
-
-	count, err := uc.guidesService.GetCount(ctx, teamID)
+	count, err := uc.guidesService.GetCount(ctx, teamID, &actor.ID)
 	if err != nil {
 		return 0, err
 	}
@@ -242,7 +222,7 @@ func (uc *GuidesUseCase) Star(ctx context.Context, actor *authulamodels.Actor, g
 		return err
 	}
 
-	return uc.starredService.Star(ctx, guideID)
+	return uc.starredService.Star(ctx, actor.ID, guideID)
 }
 
 func (uc *GuidesUseCase) Unstar(ctx context.Context, actor *authulamodels.Actor, guideID string) error {
@@ -256,7 +236,7 @@ func (uc *GuidesUseCase) Unstar(ctx context.Context, actor *authulamodels.Actor,
 		return err
 	}
 
-	return uc.starredService.Unstar(ctx, guideID)
+	return uc.starredService.Unstar(ctx, actor.ID, guideID)
 }
 
 func (uc *GuidesUseCase) GetStarred(ctx context.Context, actor *authulamodels.Actor, teamID string) ([]*models.Guide, error) {
@@ -272,5 +252,5 @@ func (uc *GuidesUseCase) GetStarred(ctx context.Context, actor *authulamodels.Ac
 	}
 	filter.TeamID = &parsedTeamID
 
-	return uc.starredService.GetStarredGuides(ctx)
+	return uc.starredService.GetStarredGuides(ctx, filter)
 }

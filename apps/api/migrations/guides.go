@@ -14,7 +14,6 @@ func guidesInitial() authulamigrations.Migration {
 			return authulamigrations.ExecStatements(
 				ctx,
 				tx,
-				`CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
 				`CREATE OR REPLACE FUNCTION set_updated_at_fn() RETURNS TRIGGER AS $$
 					BEGIN
 						NEW.updated_at = NOW();
@@ -29,6 +28,7 @@ func guidesInitial() authulamigrations.Migration {
 					description TEXT,
 					status VARCHAR(255) NOT NULL DEFAULT 'draft',
 					duration_seconds INT NOT NULL DEFAULT 0,
+					visibility VARCHAR(50) NOT NULL DEFAULT 'private',
 					published_at TIMESTAMP WITH TIME ZONE,
 					archived_at TIMESTAMP WITH TIME ZONE,
 					deleted_at TIMESTAMP WITH TIME ZONE,

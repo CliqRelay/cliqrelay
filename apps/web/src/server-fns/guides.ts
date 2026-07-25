@@ -21,7 +21,7 @@ export const createGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader()
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 					},
 				},
 			);
@@ -46,11 +46,12 @@ export const getAllGuides = createServerFn({
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader()
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 					},
 				},
 			);
-			return guidesResponse.guides;
+			const guides = guidesResponse.guides
+			return guides;
 		} catch (error) {
 			console.error("Failed to fetch guides:", error);
 			return [];
@@ -83,11 +84,11 @@ export const updateGuide = createServerFn({ method: "POST" })
 		try {
 			const updatedGuideResponse = await api.guides.updateGuide(
 				data.guideId,
-				data.input as any,
+				data.input,
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader()
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 					},
 				},
 			);
@@ -125,7 +126,7 @@ export const publishGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader()
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 					},
 				},
 			);
@@ -146,7 +147,7 @@ export const unpublishGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader()
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 					},
 				},
 			);
@@ -167,7 +168,7 @@ export const archiveGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader()
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 					},
 				},
 			);
@@ -188,7 +189,7 @@ export const unarchiveGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader()
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 					},
 				},
 			);
@@ -209,7 +210,7 @@ export const restoreGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader()
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 					},
 				},
 			);
@@ -228,7 +229,7 @@ export const permanentlyDeleteGuide = createServerFn({ method: "POST" })
 			const response = await api.guides.permanentlyDeleteGuide(data.guideId, {
 				headers: {
 					Cookie: context.headers.get("Cookie") ?? "",
-					...getCsrfTokenHeader()
+					...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 				},
 			});
 			return response.guide;
@@ -301,7 +302,6 @@ export const createDemoGuide = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		try {
-			const cookieHeader = context.headers.get("Cookie") ?? "";
 			const teamId = data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name);
 			if (!teamId) {
 				return null;
@@ -311,8 +311,8 @@ export const createDemoGuide = createServerFn({ method: "POST" })
 				{ teamId },
 				{
 					headers: {
-						Cookie: cookieHeader,
-						...getCsrfTokenHeader()
+						Cookie: context.headers.get("Cookie") ?? "",
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
 					},
 				},
 			);

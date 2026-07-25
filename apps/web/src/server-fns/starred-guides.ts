@@ -12,7 +12,7 @@ export const starGuide = createServerFn({ method: "POST" })
 		const starredGuideResponse = await api.guides.starGuide(data.guideId, {
 			headers: {
 				Cookie: context.headers.get("Cookie") ?? "",
-				...getCsrfTokenHeader()
+				...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 			},
 		});
 		return starredGuideResponse.message;
@@ -25,7 +25,7 @@ export const unstarGuide = createServerFn({ method: "POST" })
 		const unstarredGuideResponse = await api.guides.unstarGuide(data.guideId, {
 			headers: {
 				Cookie: context.headers.get("Cookie") ?? "",
-				...getCsrfTokenHeader()
+				...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
 			},
 		});
 		return unstarredGuideResponse.message;

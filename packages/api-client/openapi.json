@@ -1708,6 +1708,9 @@
           "updated_at": {
             "format": "date-time",
             "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
           }
         },
         "required": [
@@ -1717,6 +1720,7 @@
           "title",
           "status",
           "duration_seconds",
+          "visibility",
           "is_starred",
           "created_at",
           "updated_at"
@@ -2336,6 +2340,15 @@
           "step"
         ],
         "type": "object"
+      },
+      "Visibility": {
+        "description": "The visibility of the guide",
+        "enum": [
+          "private",
+          "team",
+          "public"
+        ],
+        "type": "string"
       }
     }
   }

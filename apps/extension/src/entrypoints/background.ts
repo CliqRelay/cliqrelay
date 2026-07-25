@@ -1,8 +1,12 @@
 import { browser } from "wxt/browser";
 
+import { COOKIE_CONSTANTS } from "@repo/data-commons";
+
 import { createCaptureHandler } from "@/background/capture-handler";
 import { handleOnMessageExternalEvents } from "@/background/external-messages-handler";
 import { createSessionManager } from "@/background/session-manager";
+import { RUNTIME_MESSAGE_TYPES } from "@/constants/runtime-message-types";
+import { env } from "@/constants/env";
 import { firefoxBrowser } from "@/constants/firefox-browser";
 import { SIDEPANEL_PORT_NAME } from "@/models/sidepanel";
 import { createNavigationListener } from "@/services/background";
@@ -77,7 +81,39 @@ export default defineBackground(() => {
 	sessionManager.setClearPendingActivations(clearPendingActivations);
 
 	browser.runtime.onMessage.addListener(
-		(message: unknown, sender, sendResponse) => {
+		async (message: unknown, sender, sendResponse) => {
+			if (
+				typeof message === "object" &&
+				message !== null &&
+				(message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_CSRF_TOKEN
+			) {
+				try {
+					const cookie = await browser.cookies.get({
+						url: env.VITE_API_URL,
+						name: COOKIE_CONSTANTS.csrf.name,
+					});
+					return cookie?.value;
+				} catch {
+					return undefined;
+				}
+			}
+
+			if (
+				typeof message === "object" &&
+				message !== null &&
+				(message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_ACTIVE_TEAM_ID
+			) {
+				try {
+					const cookie = await browser.cookies.get({
+						url: env.VITE_API_URL,
+						name: COOKIE_CONSTANTS.activeTeamId.name,
+					});
+					return cookie?.value;
+				} catch {
+					return undefined;
+				}
+			}
+
 			if (captureHandler.handleCapture(message, sender)) {
 				return;
 			}

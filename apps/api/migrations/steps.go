@@ -14,7 +14,6 @@ func stepsInitial() authulamigrations.Migration {
 			return authulamigrations.ExecStatements(
 				ctx,
 				tx,
-				`CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
 				`CREATE OR REPLACE FUNCTION set_updated_at_fn() RETURNS TRIGGER AS $$
 					BEGIN
 						NEW.updated_at = NOW();

@@ -20,64 +20,135 @@ func NewDefaultAuthorizationService(organizationsApi organizationsplugin.API) *D
 	return &DefaultAuthorizationService{organizationsApi: organizationsApi}
 }
 
-func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
-	if actor == nil {
-		return constants.ErrForbidden
+func (s *DefaultAuthorizationService) lookupActorOrgID(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error) {
+	systemActor := &authulamodels.Actor{
+		ID:     actor.ID,
+		Type:   authulamodels.ActorMachine,
+		Scopes: []string{"*"},
+		Claims: map[string]any{},
 	}
 
-	return nil
+	orgs, err := s.organizationsApi.GetAllOrganizationsByOwner(ctx, systemActor)
+	if err != nil {
+		return "", err
+	}
+
+	for _, org := range orgs {
+		teams, err := s.organizationsApi.GetAllTeams(ctx, systemActor, org.ID)
+		if err != nil {
+			continue
+		}
+		for _, team := range teams {
+			if team.ID == teamID {
+				return team.OrganizationID, nil
+			}
+		}
+	}
+
+	return "", errors.New("team not found in user's organizations")
 }
 
-func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
-	if actor == nil {
-		return constants.ErrForbidden
+func (s *DefaultAuthorizationService) isTeamMember(ctx context.Context, actor *authulamodels.Actor, orgID, teamID string) error {
+	systemActor := &authulamodels.Actor{
+		ID:     actor.ID,
+		Type:   authulamodels.ActorMachine,
+		Scopes: []string{"*"},
+		Claims: map[string]any{
+			"organization_id": orgID,
+		},
 	}
-	if actor.ID != guide.CreatorID {
-		return constants.ErrForbidden
-	}
-	return nil
-}
 
-func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
-	if actor == nil {
-		return constants.ErrForbidden
-	}
-	if actor.ID != guide.CreatorID {
-		return constants.ErrForbidden
-	}
-	return nil
-}
-
-func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
-	if actor == nil {
-		return constants.ErrForbidden
-	}
-	if actor.ID != guide.CreatorID {
-		return constants.ErrForbidden
-	}
-	return nil
-}
-
-func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor, teamID string) (*types.GuideFilter, error) {
-	if actor == nil {
-		return &types.GuideFilter{}, nil
-	}
-	return &types.GuideFilter{
-		CreatorID: &actor.ID,
-	}, nil
-}
-
-func (s *DefaultAuthorizationService) isUserMemberOfOrg(ctx context.Context, actor *authulamodels.Actor, organizationID string) error {
-	members, err := s.organizationsApi.GetAllMembers(ctx, actor, organizationID, 1, 1000)
+	member, err := s.organizationsApi.GetMemberByUserID(ctx, systemActor, orgID, actor.ID)
 	if err != nil {
 		return err
 	}
 
-	for _, member := range members {
-		if member.UserID == actor.ID {
-			return nil
-		}
+	teamMember, err := s.organizationsApi.GetTeamMember(ctx, systemActor, orgID, teamID, member.ID)
+	if err != nil {
+		return err
+	}
+	if teamMember == nil {
+		return errors.New("team member not found")
 	}
 
-	return errors.New("you are not part of the organization that owns this team")
+	return nil
+}
+
+func (s *DefaultAuthorizationService) CanReadTeam(ctx context.Context, actor *authulamodels.Actor, orgID string, teamID string) error {
+	return s.isTeamMember(ctx, actor, orgID, teamID)
+}
+
+func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
+	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	if err != nil {
+		return constants.ErrForbidden
+	}
+
+	return s.isTeamMember(ctx, actor, orgID, teamID)
+}
+
+func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
+	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	if err != nil {
+		return constants.ErrForbidden
+	}
+
+	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+		return constants.ErrForbidden
+	}
+
+	if guide.Visibility == models.VisibilityPrivate && actor.ID != guide.CreatorID {
+		return constants.ErrForbidden
+	}
+
+	return nil
+}
+
+func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
+	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	if err != nil {
+		return constants.ErrForbidden
+	}
+
+	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+		return constants.ErrForbidden
+	}
+
+	if guide.Visibility == models.VisibilityPrivate && actor.ID != guide.CreatorID {
+		return constants.ErrForbidden
+	}
+
+	return nil
+}
+
+func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
+	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	if err != nil {
+		return constants.ErrForbidden
+	}
+
+	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+		return constants.ErrForbidden
+	}
+
+	if actor.ID != guide.CreatorID {
+		return constants.ErrForbidden
+	}
+
+	return nil
+}
+
+func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor, teamID string) (*types.GuideFilter, error) {
+	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	if err != nil {
+		return nil, constants.ErrForbidden
+	}
+
+	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+		return nil, constants.ErrForbidden
+	}
+
+	return &types.GuideFilter{
+		CreatorID: &actor.ID,
+	}, nil
 }

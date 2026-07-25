@@ -37,6 +37,29 @@ func (GuideStatus) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
+type Visibility string
+
+const (
+	VisibilityPrivate Visibility = "private"
+	VisibilityTeam    Visibility = "team"
+	VisibilityPublic  Visibility = "public"
+)
+
+func (s Visibility) ToString() string {
+	return string(s)
+}
+
+func (Visibility) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithType(jsonschema.String.Type())
+	schema.Enum = []any{
+		string(VisibilityPrivate),
+		string(VisibilityTeam),
+		string(VisibilityPublic),
+	}
+	schema.WithDescription("The visibility of the guide")
+	return nil
+}
+
 type ExportGuideFormat string
 
 const (
@@ -72,6 +95,7 @@ type Guide struct {
 	Description      *string     `json:"description,omitempty" bun:"column:description" nullable:"true"`
 	Status           GuideStatus `json:"status" bun:"column:status" required:"true"`
 	DurationSeconds  int         `json:"duration_seconds" bun:"column:duration_seconds" required:"true"`
+	Visibility       Visibility  `json:"visibility" bun:"column:visibility" required:"true"`
 	PublishedAt      *time.Time  `json:"published_at,omitempty" bun:"column:published_at" nullable:"true"`
 	ArchivedAt       *time.Time  `json:"archived_at,omitempty" bun:"column:archived_at" nullable:"true"`
 	DeletedAt        *time.Time  `json:"deleted_at,omitempty" bun:"column:deleted_at" nullable:"true"`
@@ -85,9 +109,9 @@ type Guide struct {
 type StarredGuide struct {
 	bun.BaseModel `bun:"table:starred_guides"`
 
-	UserID      string    `json:"user_id" bun:"column:user_id,pk" required:"true"`
-	GuideID     uuid.UUID `json:"guide_id" bun:"column:guide_id,pk" required:"true"`
-	CreatedAt   time.Time `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true"`
+	UserID    string    `json:"user_id" bun:"column:user_id,pk" required:"true"`
+	GuideID   uuid.UUID `json:"guide_id" bun:"column:guide_id,pk" required:"true"`
+	CreatedAt time.Time `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true"`
 
 	Guide *Guide `json:"guide,omitempty" bun:"rel:belongs-to,join:guide_id=id"`
 }

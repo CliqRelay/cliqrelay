@@ -72,3 +72,4 @@ export * from "./update-step-request";
 export * from "./update-step-request-target-element";
 export * from "./update-step-response";
 export * from "./uuid";
+export * from "./visibility";

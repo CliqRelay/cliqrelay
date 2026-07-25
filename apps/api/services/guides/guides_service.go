@@ -103,11 +103,11 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 			CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader, HeadingText: new("Overview of CliqRelay"), BodyText: new("You can use this step to provide an overview or introduction to your guide.")},
 		},
 		{
-			GuideID:     guide.ID,
-			Type:        models.StepTypeInteraction,
-			Action:      &clickAction,
-			ActionText:  new("Click \"Some Button\""),
-			Notes:       new("This step demonstrates a click step which will be accompanied by a screenshot of the action."),
+			GuideID:    guide.ID,
+			Type:       models.StepTypeInteraction,
+			Action:     &clickAction,
+			ActionText: new("Click \"Some Button\""),
+			Notes:      new("This step demonstrates a click step which will be accompanied by a screenshot of the action."),
 		},
 		{
 			GuideID:       guide.ID,
@@ -135,7 +135,7 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 	return guideID, nil
 }
 
-func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *string) ([]*models.Guide, error) {
+func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *string, viewerUserID *string) ([]*models.Guide, error) {
 	filter := &types.GuideFilter{}
 
 	parsedTeamID, err := uuid.Parse(teamID)
@@ -143,6 +143,7 @@ func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *strin
 		return nil, constants.ErrTeamNotFound
 	}
 	filter.TeamID = &parsedTeamID
+	filter.ViewerUserID = viewerUserID
 
 	if status != nil {
 		if !slices.Contains([]string{
@@ -155,6 +156,14 @@ func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *strin
 		}
 		statusVal := models.GuideStatus(*status)
 		filter.Status = &statusVal
+
+		if statusVal == models.StatusPublished {
+			filter.PublishedOnly = true
+		}
+
+		if statusVal == models.StatusArchived {
+			filter.ArchivedOnly = true
+		}
 	}
 
 	return s.guidesRepo.GetAll(ctx, filter)
@@ -506,7 +515,7 @@ func (s *GuidesService) Restore(ctx context.Context, guideID string) (*models.Gu
 	return restored, nil
 }
 
-func (s *GuidesService) GetCount(ctx context.Context, teamID string) (int, error) {
+func (s *GuidesService) GetCount(ctx context.Context, teamID string, viewerUserID *string) (int, error) {
 	filter := &types.GuideFilter{}
 
 	parsedTeamID, err := uuid.Parse(teamID)
@@ -514,6 +523,7 @@ func (s *GuidesService) GetCount(ctx context.Context, teamID string) (int, error
 		return 0, constants.ErrTeamNotFound
 	}
 	filter.TeamID = &parsedTeamID
+	filter.CreatorID = viewerUserID
 
 	count, err := s.guidesRepo.GetCount(ctx, filter)
 	if err != nil {

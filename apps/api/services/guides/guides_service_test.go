@@ -1005,7 +1005,7 @@ func TestGuidesService_GetAll(t *testing.T) {
 			tt.setup(mockRepo)
 			svc := guidesservice.NewGuidesService(mockRepo, mockStarredRepo, new(tests.MockGuidesCacheService), new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
-			result, err := svc.GetAll(context.Background(), "00000000-0000-0000-0000-000000000001", tt.status)
+			result, err := svc.GetAll(context.Background(), "00000000-0000-0000-0000-000000000001", tt.status, nil)
 
 			if tt.wantErr {
 				assert.Error(t, err)

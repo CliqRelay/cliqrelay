@@ -9,7 +9,7 @@ export * from "./gen/endpoints/teams/teams.faker";
 export * from "./gen/endpoints/guides/guides.faker";
 export * from "./gen/endpoints/steps/steps.faker";
 export * from "./gen/endpoints/uploads/uploads.faker";
-export { ApiError } from "./mutators/custom-fetch";
+export { ApiError, getCachedCsrfToken } from "./mutators/custom-fetch";
 
 export const api = {
 	health,

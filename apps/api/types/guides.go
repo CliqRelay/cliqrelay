@@ -38,8 +38,8 @@ func (r *TeamIDQueryParam) Validate() error {
 }
 
 type GuideQueryParams struct {
-	Status  *models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
-	TeamID  string              `query:"team_id" validate:"omitempty,uuid" nullable:"true"`
+	Status *models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
+	TeamID string              `query:"team_id" validate:"omitempty,uuid" nullable:"true"`
 }
 
 func (r *GuideStatus) Validate() error {
@@ -59,21 +59,21 @@ type GuideWithStarred struct {
 }
 
 type GuideFilter struct {
-	IDs             []uuid.UUID
-	TeamID          *uuid.UUID
-	CreatorID       *string
-	ViewerUserID    *string
-	Status          *models.GuideStatus
-	Search          *string
-	IncludeDeleted  bool
-	IncludeArchived bool
-	PublishedOnly   bool
-	CreatedAfter    *time.Time
-	CreatedBefore   *time.Time
-	Limit           int
-	Offset          int
-	SortBy          GuideSortField
-	SortDesc        bool
+	IDs           []uuid.UUID
+	TeamID        *uuid.UUID
+	CreatorID     *string
+	ViewerUserID  *string
+	Status        *models.GuideStatus
+	Search        *string
+	DeletedOnly   bool
+	ArchivedOnly  bool
+	PublishedOnly bool
+	CreatedAfter  *time.Time
+	CreatedBefore *time.Time
+	Limit         int
+	Offset        int
+	SortBy        GuideSortField
+	SortDesc      bool
 }
 
 type CreateGuideRequest struct {

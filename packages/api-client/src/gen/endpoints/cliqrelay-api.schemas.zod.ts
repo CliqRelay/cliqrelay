@@ -17,6 +17,13 @@ export const GuideStatus = zod
 export type GuideStatus = zod.input<typeof GuideStatus>;
 export type GuideStatusOutput = zod.output<typeof GuideStatus>;
 
+export const Visibility = zod
+	.enum(["private", "team", "public"])
+	.describe("The visibility of the guide");
+
+export type Visibility = zod.input<typeof Visibility>;
+export type VisibilityOutput = zod.output<typeof Visibility>;
+
 export const Guide = zod.object({
 	archivedAt: zod.iso.datetime({ offset: true }).nullish(),
 	createdAt: zod.iso.datetime({ offset: true }),
@@ -33,6 +40,7 @@ export const Guide = zod.object({
 	teamId: Uuid,
 	title: zod.string(),
 	updatedAt: zod.iso.datetime({ offset: true }),
+	visibility: Visibility,
 });
 
 export type Guide = zod.input<typeof Guide>;

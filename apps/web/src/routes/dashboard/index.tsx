@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, Clock, FileText } from "lucide-react";
+import { Clock, FileText } from "lucide-react";
 
 import { api } from "@repo/api-client";
 import { formatTimeSaved } from "@repo/data-commons";
@@ -17,8 +17,7 @@ export const Route = createFileRoute("/dashboard/")({
 function DashboardPage() {
 	const activeTeamId = useTeamStore((s) => s.activeTeamId);
 	const teams = useTeamStore((s) => s.teams);
-	const activeTeam =
-		teams.find((team) => team.id === activeTeamId) ?? null;
+	const activeTeam = teams.find((team) => team.id === activeTeamId) ?? null;
 
 	const guidesCountQuery = api.guides.useGetGuidesCount(
 		activeTeamId ? { team_id: activeTeamId } : undefined,
@@ -43,16 +42,12 @@ function DashboardPage() {
 					<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 					{activeTeam ? (
 						<div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-							<Building2 className="h-3.5 w-3.5" />
-							<span>{activeTeam.name}</span>
 							<Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-								Team
+								{activeTeam.name}
 							</Badge>
 						</div>
 					) : activeTeamId === null ? (
-						<p className="mt-1 text-sm text-muted-foreground">
-							No team found
-						</p>
+						<p className="mt-1 text-sm text-muted-foreground">No team found</p>
 					) : (
 						<div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
 							<Skeleton className="h-4 w-32" />

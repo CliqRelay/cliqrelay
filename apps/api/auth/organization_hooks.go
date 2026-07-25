@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	authulamodels "github.com/Authula/authula/models"
 	accesscontrol "github.com/Authula/authula/plugins/access-control"
@@ -35,20 +34,18 @@ func ConstructOrganizationsServiceHooks(provider authulaProvider) organizationsp
 					return fmt.Errorf("access control plugin not found")
 				}
 
-			systemActor := &authulamodels.Actor{
+				systemActor := &authulamodels.Actor{
 					ID:     actor.ID,
 					Type:   authulamodels.ActorMachine,
 					Scopes: []string{"*"},
 				}
 
-				team, err := orgPlugin.Api.CreateTeam(ctx, systemActor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
+				_, err := orgPlugin.Api.CreateTeam(ctx, systemActor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
 					Name: "My Team",
 				})
 				if err != nil {
 					return fmt.Errorf("failed to create team: %w", err)
 				}
-
-				slog.Debug("Created team for organization", "org_id", organization.ID, "team_id", team.ID)
 
 				adminRole, err := acPlugin.Api.GetRoleByName(ctx, systemActor, "admin")
 				if err != nil {
@@ -60,8 +57,6 @@ func ConstructOrganizationsServiceHooks(provider authulaProvider) organizationsp
 				}, nil); err != nil {
 					return fmt.Errorf("failed to assign admin role to user: %w", err)
 				}
-
-				slog.Debug("Assigned admin role to user", "user_id", actor.ID, "role_id", adminRole.ID)
 
 				return nil
 			},

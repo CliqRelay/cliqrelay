@@ -7,6 +7,7 @@
  */
 import type { GuideStatus } from "./guide-status";
 import type { Uuid } from "./uuid";
+import type { Visibility } from "./visibility";
 
 export type Guide = {
 	/** @nullable */
@@ -30,4 +31,5 @@ export type Guide = {
 	teamId: Uuid;
 	title: string;
 	updatedAt: string;
+	visibility: Visibility;
 };

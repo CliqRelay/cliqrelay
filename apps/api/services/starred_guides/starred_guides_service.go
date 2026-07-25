@@ -27,7 +27,7 @@ func NewStarredGuidesService(
 	}
 }
 
-func (s *StarredGuidesService) Star(ctx context.Context, guideID string) error {
+func (s *StarredGuidesService) Star(ctx context.Context, userID string, guideID string) error {
 	if strings.TrimSpace(guideID) == "" {
 		return constants.ErrInvalidGuideID
 	}
@@ -44,10 +44,10 @@ func (s *StarredGuidesService) Star(ctx context.Context, guideID string) error {
 		return constants.ErrGuideNotFound
 	}
 
-	return s.starredGuidesRepo.Star(ctx, guide.CreatorID, parsedID)
+	return s.starredGuidesRepo.Star(ctx, userID, parsedID)
 }
 
-func (s *StarredGuidesService) Unstar(ctx context.Context, guideID string) error {
+func (s *StarredGuidesService) Unstar(ctx context.Context, userID string, guideID string) error {
 	if strings.TrimSpace(guideID) == "" {
 		return constants.ErrInvalidGuideID
 	}
@@ -64,12 +64,10 @@ func (s *StarredGuidesService) Unstar(ctx context.Context, guideID string) error
 		return constants.ErrGuideNotFound
 	}
 
-	return s.starredGuidesRepo.Unstar(ctx, guide.CreatorID, parsedID)
+	return s.starredGuidesRepo.Unstar(ctx, userID, parsedID)
 }
 
-func (s *StarredGuidesService) GetStarredGuides(ctx context.Context) ([]*models.Guide, error) {
-	filter := &types.GuideFilter{}
-
+func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, error) {
 	rows, err := s.starredGuidesRepo.GetAll(ctx, filter)
 	if err != nil {
 		return nil, err

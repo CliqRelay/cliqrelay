@@ -29,6 +29,7 @@ func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuide
 		Title:       dto.Title,
 		Description: dto.Description,
 		Status:      models.StatusDraft,
+		Visibility:  models.VisibilityPrivate,
 	}
 
 	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -73,17 +74,17 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 		}
 		if filter.Status != nil {
 			query = query.Where("g.status = ?", *filter.Status)
-		} else if filter.IncludeDeleted {
+		} else if filter.DeletedOnly {
 			query = query.Where("g.deleted_at IS NOT NULL")
 			query = query.Where("g.status = ?", models.StatusDeleted)
 		} else {
 			query = query.Where("g.deleted_at IS NULL")
 			if filter.PublishedOnly {
 				query = query.Where("g.status = ?", models.StatusPublished)
-			} else if filter.IncludeArchived {
-				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
+			} else if filter.ArchivedOnly {
+				query = query.Where("g.status = ?", models.StatusArchived.ToString())
 			} else {
-				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()}))
+				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
 			}
 		}
 		if filter.Search != nil {

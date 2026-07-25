@@ -35,7 +35,9 @@ export function useGuideStepMutations(guideId: string) {
 		},
 		request: {
 			credentials: "include",
-			...getCsrfTokenHeader(),
+			headers: {
+				...getCsrfTokenHeader(),
+			}
 		},
 	});
 
@@ -53,7 +55,9 @@ export function useGuideStepMutations(guideId: string) {
 		},
 		request: {
 			credentials: "include",
-			...getCsrfTokenHeader(),
+			headers: {
+				...getCsrfTokenHeader(),
+			}
 		},
 	});
 
@@ -88,7 +92,9 @@ export function useGuideStepMutations(guideId: string) {
 		},
 		request: {
 			credentials: "include",
-			...getCsrfTokenHeader(),
+			headers: {
+				...getCsrfTokenHeader(),
+			}
 		},
 	});
 
@@ -164,7 +170,9 @@ export function useGuideStepMutations(guideId: string) {
 		},
 		request: {
 			credentials: "include",
-			...getCsrfTokenHeader(),
+			headers: {
+				...getCsrfTokenHeader(),
+			}
 		},
 	});
 
@@ -188,7 +196,7 @@ export function useGuideStepMutations(guideId: string) {
 				: {}),
 			...(insertBeforeStepId ? { insertBeforeStepId } : {}),
 		};
-		createStep.mutate(
+		await createStep.mutateAsync(
 			{
 				data,
 			},
