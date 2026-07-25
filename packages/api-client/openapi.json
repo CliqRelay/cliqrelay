@@ -1788,8 +1788,7 @@
           "draft",
           "published",
           "archived",
-          "deleted",
-          "pending_purge"
+          "deleted"
         ],
         "type": "string"
       },

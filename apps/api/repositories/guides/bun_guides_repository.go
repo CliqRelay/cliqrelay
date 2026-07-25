@@ -357,10 +357,6 @@ func (r *BunGuidesRepository) PermanentlyDelete(ctx context.Context, id string) 
 		return nil, err
 	}
 
-	guide.PublishedAt = nil
-	guide.ArchivedAt = nil
-	guide.RestoredAt = nil
-	guide.Status = models.StatusPendingPurge
 	guide.PurgeRequestedAt = new(time.Now().UTC())
 
 	_, err = r.db.NewUpdate().

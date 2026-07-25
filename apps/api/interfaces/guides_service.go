@@ -14,6 +14,7 @@ type GuidesService interface {
 	CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error)
 	GetAll(ctx context.Context, teamID string, status *string, viewerUserID *string) ([]*models.Guide, error)
 	GetByID(ctx context.Context, guideID string) (*models.Guide, error)
+	GetByIDUnfiltered(ctx context.Context, guideID string) (*models.Guide, error)
 	Update(ctx context.Context, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error)
 	Delete(ctx context.Context, guideID string) (*models.Guide, error)
 	Publish(ctx context.Context, guideID string) (*models.Guide, error)

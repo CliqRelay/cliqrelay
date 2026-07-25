@@ -200,6 +200,23 @@ func (s *GuidesService) GetByID(ctx context.Context, guideID string) (*models.Gu
 	return guide, nil
 }
 
+func (s *GuidesService) GetByIDUnfiltered(ctx context.Context, guideID string) (*models.Guide, error) {
+	if strings.TrimSpace(guideID) == "" {
+		return nil, constants.ErrInvalidGuideID
+	}
+
+	guide, err := s.guidesRepo.GetByID(ctx, guideID)
+	if err != nil {
+		return nil, err
+	}
+
+	if guide == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	return guide, nil
+}
+
 func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID

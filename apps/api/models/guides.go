@@ -13,11 +13,10 @@ import (
 type GuideStatus string
 
 const (
-	StatusDraft        GuideStatus = "draft"
-	StatusPublished    GuideStatus = "published"
-	StatusArchived     GuideStatus = "archived"
-	StatusDeleted      GuideStatus = "deleted"
-	StatusPendingPurge GuideStatus = "pending_purge"
+	StatusDraft     GuideStatus = "draft"
+	StatusPublished GuideStatus = "published"
+	StatusArchived  GuideStatus = "archived"
+	StatusDeleted   GuideStatus = "deleted"
 )
 
 func (s GuideStatus) ToString() string {
@@ -31,7 +30,6 @@ func (GuideStatus) PrepareJSONSchema(schema *jsonschema.Schema) error {
 		string(StatusPublished),
 		string(StatusArchived),
 		string(StatusDeleted),
-		string(StatusPendingPurge),
 	}
 	schema.WithDescription("The status of the guide")
 	return nil

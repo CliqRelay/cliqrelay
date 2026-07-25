@@ -170,7 +170,7 @@ func (uc *GuidesUseCase) Unarchive(ctx context.Context, actor *authulamodels.Act
 }
 
 func (uc *GuidesUseCase) Restore(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
-	guide, err := uc.guidesService.GetByID(ctx, guideID)
+	guide, err := uc.guidesService.GetByIDUnfiltered(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func (uc *GuidesUseCase) Restore(ctx context.Context, actor *authulamodels.Actor
 }
 
 func (uc *GuidesUseCase) PermanentlyDelete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
-	guide, err := uc.guidesService.GetByID(ctx, guideID)
+	guide, err := uc.guidesService.GetByIDUnfiltered(ctx, guideID)
 	if err != nil {
 		return nil, err
 	}

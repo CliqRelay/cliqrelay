@@ -11,7 +11,7 @@ export type Uuid = zod.input<typeof Uuid>;
 export type UuidOutput = zod.output<typeof Uuid>;
 
 export const GuideStatus = zod
-	.enum(["draft", "published", "archived", "deleted", "pending_purge"])
+	.enum(["draft", "published", "archived", "deleted"])
 	.describe("The status of the guide");
 
 export type GuideStatus = zod.input<typeof GuideStatus>;
