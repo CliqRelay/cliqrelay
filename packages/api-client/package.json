@@ -16,7 +16,7 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.4",
+		"@biomejs/biome": "^2.5.5",
 		"@faker-js/faker": "^10.5.0",
 		"@types/node": "^26.1.1",
 		"@vitest/coverage-v8": "^4.1.10",
