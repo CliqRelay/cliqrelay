@@ -153,13 +153,8 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			// Guides
 			{
 				Paths: []string{
-					fmt.Sprintf("GET:%s/guides", apiBasePath),
-					fmt.Sprintf("GET:%s/guides/{id}", apiBasePath),
-					fmt.Sprintf("GET:%s/guides/count", apiBasePath),
-					fmt.Sprintf("GET:%s/guides/starred", apiBasePath),
-					fmt.Sprintf("GET:%s/guide-exports/{exportID}", apiBasePath),
-					fmt.Sprintf("DELETE:%s/guides/{id}", apiBasePath),
-					fmt.Sprintf("DELETE:%s/guides/{id}/star", apiBasePath),
+					fmt.Sprintf("GET:%s/guides/*", apiBasePath),
+					fmt.Sprintf("DELETE:%s/guides/*", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -167,18 +162,8 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			},
 			{
 				Paths: []string{
-					fmt.Sprintf("POST:%s/guides", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/demo", apiBasePath),
-					fmt.Sprintf("PATCH:%s/guides/{id}", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/publish", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/unpublish", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/archive", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/unarchive", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/restore", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/permanently-delete", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/star", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/recalculate-duration", apiBasePath),
-					fmt.Sprintf("POST:%s/guides/{id}/export", apiBasePath),
+					fmt.Sprintf("POST:%s/guides/*", apiBasePath),
+					fmt.Sprintf("PATCH:%s/guides/*", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -188,9 +173,8 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			// Steps
 			{
 				Paths: []string{
-					fmt.Sprintf("GET:%s/steps", apiBasePath),
-					fmt.Sprintf("GET:%s/steps/{id}", apiBasePath),
-					fmt.Sprintf("DELETE:%s/steps/{id}", apiBasePath),
+					fmt.Sprintf("GET:%s/steps/*", apiBasePath),
+					fmt.Sprintf("DELETE:%s/steps/*", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -198,21 +182,8 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			},
 			{
 				Paths: []string{
-					fmt.Sprintf("POST:%s/steps", apiBasePath),
-					fmt.Sprintf("PATCH:%s/steps/{id}", apiBasePath),
-					fmt.Sprintf("POST:%s/steps/{id}/duplicate", apiBasePath),
-					fmt.Sprintf("POST:%s/steps/reorder", apiBasePath),
-				},
-				Plugins: []string{
-					sessionplugin.HookIDSessionAuth.String(),
-					csrfplugin.HookIDCSRFProtect.String(),
-				},
-			},
-			// Uploads
-			{
-				Paths: []string{
-					fmt.Sprintf("POST:%s/uploads/presign", apiBasePath),
-					fmt.Sprintf("POST:%s/uploads/complete", apiBasePath),
+					fmt.Sprintf("POST:%s/steps/*", apiBasePath),
+					fmt.Sprintf("PATCH:%s/steps/*", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -222,9 +193,8 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			// Media Assets
 			{
 				Paths: []string{
-					fmt.Sprintf("GET:%s/media-assets", apiBasePath),
-					fmt.Sprintf("GET:%s/media-assets/{id}", apiBasePath),
-					fmt.Sprintf("DELETE:%s/media-assets/{id}", apiBasePath),
+					fmt.Sprintf("GET:%s/media-assets/*", apiBasePath),
+					fmt.Sprintf("DELETE:%s/media-assets/*", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
@@ -232,8 +202,18 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			},
 			{
 				Paths: []string{
-					fmt.Sprintf("POST:%s/media-assets", apiBasePath),
-					fmt.Sprintf("PATCH:%s/media-assets/{id}", apiBasePath),
+					fmt.Sprintf("POST:%s/media-assets/*", apiBasePath),
+					fmt.Sprintf("PATCH:%s/media-assets/*", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+					csrfplugin.HookIDCSRFProtect.String(),
+				},
+			},
+			// Uploads
+			{
+				Paths: []string{
+					fmt.Sprintf("POST:%s/uploads/*", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
