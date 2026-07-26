@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { z } from "zod";
-import { toCamelCaseKeys } from "es-toolkit";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,12 +16,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { authulaClient } from "@/lib/authula-client";
 import { authulaBrowserClient } from "@/lib/authula-client-browser";
 
-const invitationSearchSchema = z
-	.object({
-		organization_id: z.string().optional(),
-		invitation_id: z.string().optional(),
-	})
-	.transform((val) => toCamelCaseKeys(val));
+const invitationSearchSchema = z.object({
+	organization_id: z.string().optional(),
+	invitation_id: z.string().optional(),
+});
 
 export const Route = createFileRoute("/dashboard/organizations/invitation")({
 	validateSearch: invitationSearchSchema,
@@ -49,18 +46,13 @@ export const Route = createFileRoute("/dashboard/organizations/invitation")({
 function OrganizationInvitationPage() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
-	const organizationId = search.organizationId ?? "";
-	const invitationId = search.invitationId ?? "";
+	const organizationId = search.organization_id ?? "";
+	const invitationId = search.invitation_id ?? "";
 
 	const { data, isLoading, error } =
 		authulaBrowserClient.organizations.useGetOrganizationInvitation(
 			organizationId,
 			invitationId,
-			// {
-			// 	request: {
-			// 		credentials: "include",
-			// 	},
-			// },
 		);
 
 	const acceptMutation =
@@ -92,15 +84,6 @@ function OrganizationInvitationPage() {
 				},
 			},
 		});
-
-	if (data) {
-		// Clear any pending invitation from storage now that we've loaded it
-		try {
-			sessionStorage.removeItem("pendingInvitation");
-		} catch {
-			// sessionStorage not available
-		}
-	}
 
 	if (isLoading) {
 		return (
