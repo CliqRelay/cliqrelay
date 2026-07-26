@@ -1,5 +1,3 @@
-import { useCallback } from "react";
-
 import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Settings } from "lucide-react";
 
@@ -26,16 +24,13 @@ export function OrgDropdown() {
 	const setTeams = useTeamStore((state) => state.setTeams);
 	const navigate = useNavigate();
 
-	const switchOrg = useCallback(
-		async (newOrgId: string, newOrgName: string) => {
-			const org = organizations.find((o) => o.id === newOrgId);
-			setActiveOrgCookie(newOrgId);
-			setOrg(newOrgId, newOrgName, org?.ownerId ?? "");
-			setTeams([]);
-			navigate({ to: "/dashboard" });
-		},
-		[organizations, setOrg, setTeams, navigate],
-	);
+	const switchOrg = async (newOrgId: string, newOrgName: string) => {
+		const org = organizations.find((o) => o.id === newOrgId);
+		setActiveOrgCookie(newOrgId);
+		setOrg(newOrgId, newOrgName, org?.ownerId ?? "");
+		setTeams([]);
+		navigate({ to: "/dashboard" });
+	};
 
 	return (
 		<DropdownMenu>

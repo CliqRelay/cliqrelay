@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus, Settings, Users } from "lucide-react";
@@ -20,23 +20,21 @@ import { useOrgStore } from "@/stores/org-store";
 import { CreateTeamDialog } from "./create-team-dialog";
 
 export function TeamsDropdown() {
+	const navigate = useNavigate();
+
+	const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false);
+
 	const teams = useTeamStore((state) => state.teams);
 	const activeTeamId = useTeamStore((state) => state.activeTeamId);
 	const setActiveTeam = useTeamStore((state) => state.setActiveTeam);
-	const navigate = useNavigate();
-	const [createDialogOpen, setCreateDialogOpen] = useState(false);
-
 	const activeTeam = teams.find((t) => t.id === activeTeamId);
 	const orgId = useOrgStore((state) => state.orgId);
 
-	const switchTeam = useCallback(
-		(teamId: string) => {
-			setActiveTeamCookie(teamId);
-			setActiveTeam(teamId);
-			navigate({ to: "/dashboard" });
-		},
-		[setActiveTeam, navigate],
-	);
+	const switchTeam = (teamId: string) => {
+		setActiveTeamCookie(teamId);
+		setActiveTeam(teamId);
+		navigate({ to: "/dashboard" });
+	};
 
 	return (
 		<>
