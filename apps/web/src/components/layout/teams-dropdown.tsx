@@ -16,6 +16,7 @@ import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { setActiveTeamCookie } from "@/lib/team-cookie";
 import { useTeamStore } from "@/stores/team-store";
+import { useOrgStore } from "@/stores/org-store";
 import { CreateTeamDialog } from "./create-team-dialog";
 
 export function TeamsDropdown() {
@@ -26,6 +27,7 @@ export function TeamsDropdown() {
 	const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
 	const activeTeam = teams.find((t) => t.id === activeTeamId);
+	const orgId = useOrgStore((state) => state.orgId);
 
 	const switchTeam = useCallback(
 		(teamId: string) => {
@@ -50,7 +52,10 @@ export function TeamsDropdown() {
 						<span className="flex-1 truncate text-left text-sm font-medium">
 							{activeTeam?.name ?? "Select Team"}
 						</span>
-						<ChevronsUpDown size={14} className="shrink-0 text-muted-foreground/50" />
+						<ChevronsUpDown
+							size={14}
+							className="shrink-0 text-muted-foreground/50"
+						/>
 					</SidebarMenuButton>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
@@ -70,9 +75,7 @@ export function TeamsDropdown() {
 									key={team.id}
 									className={cn(
 										"mx-1 gap-2 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg",
-										isActive
-											? "bg-accent font-semibold"
-											: "hover:bg-accent/50",
+										isActive ? "bg-accent font-semibold" : "hover:bg-accent/50",
 									)}
 									onClick={() => switchTeam(team.id)}
 								>
@@ -96,7 +99,12 @@ export function TeamsDropdown() {
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						className="mx-1 gap-2 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
-						onClick={() => navigate({ to: "/dashboard/settings" })}
+						onClick={() =>
+							navigate({
+								to: "/dashboard/organizations/$orgId/settings",
+								params: { orgId: orgId ?? "" },
+							})
+						}
 					>
 						<Settings size={16} className="shrink-0 text-muted-foreground" />
 						<span>Settings</span>

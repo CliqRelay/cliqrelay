@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -24,42 +22,47 @@ import {
 } from "@/components/ui/select";
 import { authulaClient } from "@/lib/authula-client";
 import { useOrgStore } from "@/stores/org-store";
+import { envClient } from "@/constants/env-client";
 
 const inviteSchema = z.object({
-	email: z.string().email("Invalid email address"),
+	email: z.email("Invalid email address"),
 	role: z.enum(["admin", "editor", "viewer"]),
 });
 
-type InviteMemberDialogProps = {
+type Props = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	onInvited?: () => void;
 };
 
-export function InviteMemberDialog({
-	open,
-	onOpenChange,
-	onInvited,
-}: InviteMemberDialogProps) {
+export function InviteMemberDialog({ open, onOpenChange, onInvited }: Props) {
 	const orgId = useOrgStore((state) => state.orgId);
-	const [role, setRole] = useState("editor");
 
 	const form = useForm({
 		validators: { onSubmit: inviteSchema },
-		defaultValues: { email: "", role: "editor" as const },
+		defaultValues: {
+			email: "",
+			role: "viewer",
+		},
 		onSubmit: async ({ value }) => {
-			if (!orgId) {
-				toast.error("No organization selected");
-				return;
-			}
 			try {
-				await authulaClient.organizations.createOrganizationInvitation(orgId, {
-					email: value.email,
-					role: value.role,
-				});
+				if (!orgId) {
+					toast.error("No organization selected");
+					return;
+				}
+
+				await authulaClient.organizations.createOrganizationInvitation(
+					orgId,
+					{
+						email: value.email,
+						role: value.role,
+					},
+					{
+						redirectUrl: `${envClient.baseUrl}/dashboard/organizations/invitation`,
+					},
+				);
 				toast.success("Invitation sent");
 				form.reset();
-				setRole("editor");
 				onOpenChange(false);
 				onInvited?.();
 			} catch (error) {
@@ -108,9 +111,10 @@ export function InviteMemberDialog({
 									<Label htmlFor="role">Role</Label>
 									<Select
 										value={field.state.value}
-										onValueChange={(v) => {
-											field.handleChange(v as "admin" | "editor" | "viewer");
-											setRole(v);
+										onValueChange={(value) => {
+											field.handleChange(
+												value as "admin" | "editor" | "viewer",
+											);
 										}}
 									>
 										<SelectTrigger id="role">

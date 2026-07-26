@@ -24,12 +24,12 @@ func ConstructOrganizationsServiceHooks(provider authulaProvider) organizationsp
 					return fmt.Errorf("authula instance not initialized")
 				}
 
-				orgPlugin, ok := authulaInstance.PluginRegistry.GetPlugin("organizations").(*organizations.OrganizationsPlugin)
+				organizationsPlugin, ok := authulaInstance.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizations.OrganizationsPlugin)
 				if !ok {
 					return fmt.Errorf("organizations plugin not found")
 				}
 
-				acPlugin, ok := authulaInstance.PluginRegistry.GetPlugin("access_control").(*accesscontrol.AccessControlPlugin)
+				accessControlPlugin, ok := authulaInstance.PluginRegistry.GetPlugin(authulamodels.PluginAccessControl.String()).(*accesscontrol.AccessControlPlugin)
 				if !ok {
 					return fmt.Errorf("access control plugin not found")
 				}
@@ -40,22 +40,46 @@ func ConstructOrganizationsServiceHooks(provider authulaProvider) organizationsp
 					Scopes: []string{"*"},
 				}
 
-				_, err := orgPlugin.Api.CreateTeam(ctx, systemActor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
+				_, err := organizationsPlugin.Api.CreateTeam(ctx, systemActor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
 					Name: "My Team",
 				})
 				if err != nil {
 					return fmt.Errorf("failed to create team: %w", err)
 				}
 
-				adminRole, err := acPlugin.Api.GetRoleByName(ctx, systemActor, "admin")
+				adminRole, err := accessControlPlugin.Api.GetRoleByName(ctx, systemActor, "admin")
 				if err != nil {
 					return fmt.Errorf("failed to get admin role: %w", err)
 				}
 
-				if err := acPlugin.Api.AssignRoleToUser(ctx, systemActor, actor.ID, accesscontroltypes.AssignUserRoleRequest{
+				if err := accessControlPlugin.Api.AssignRoleToUser(ctx, systemActor, actor.ID, accesscontroltypes.AssignUserRoleRequest{
 					RoleID: adminRole.ID,
 				}, nil); err != nil {
 					return fmt.Errorf("failed to assign admin role to user: %w", err)
+				}
+
+				return nil
+			},
+		},
+		Members: &organizationsplugintypes.OrganizationMemberServiceHooksConfig{
+			BeforeDelete: func(ctx context.Context, actor *authulamodels.Actor, member *organizationsplugintypes.OrganizationMember) error {
+				authulaInstance := provider()
+				if authulaInstance == nil {
+					return fmt.Errorf("authula instance not initialized")
+				}
+
+				orgPlugin, ok := authulaInstance.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizations.OrganizationsPlugin)
+				if !ok {
+					return fmt.Errorf("%s plugin not found", authulamodels.PluginOrganizations.String())
+				}
+
+				org, err := orgPlugin.Api.GetOrganizationByID(ctx, actor, member.OrganizationID)
+				if err != nil {
+					return fmt.Errorf("failed to get organization: %w", err)
+				}
+
+				if member.UserID == org.OwnerID {
+					return fmt.Errorf("cannot remove the organization owner")
 				}
 
 				return nil

@@ -5,7 +5,6 @@ import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
-
 import {
 	rootRoute,
 	index,
@@ -25,6 +24,14 @@ export async function buildVirtualRouteConfig(
 			route("/guides/$guideId", "dashboard/guides/$guideId.tsx"),
 			route("/starred", "dashboard/starred/index.tsx"),
 			route("/trash", "dashboard/trash/index.tsx"),
+			route("/organizations", [
+				route("/$orgId/settings", "dashboard/organizations/$orgId/settings/route.tsx", [
+					index("dashboard/organizations/$orgId/settings/index.tsx"),
+					route("/general", "dashboard/organizations/$orgId/settings/general/index.tsx"),
+					route("/members", "dashboard/organizations/$orgId/settings/members/index.tsx"),
+				]),
+				route("/invitation", "dashboard/organizations/invitation/index.tsx"),
+			]),
 		]),
 		route("/auth", "auth/route.tsx", [
 			route("/sign-in", "auth/sign-in/index.tsx"),

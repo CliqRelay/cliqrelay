@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/Authula/authula"
+	authulamodels "github.com/Authula/authula/models"
 	organizationsplugin "github.com/Authula/authula/plugins/organizations"
+
 	"github.com/CliqRelay/cliqrelay/auth"
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -94,7 +96,7 @@ func main() {
 	storageService := storage.NewS3StorageService(appConfig.S3Client)
 	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
 
-	orgPlugin := authulaAuth.PluginRegistry.GetPlugin("organizations").(*organizationsplugin.OrganizationsPlugin)
+	orgPlugin := authulaAuth.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizationsplugin.OrganizationsPlugin)
 	authorizationService := authservice.NewDefaultAuthorizationService(*orgPlugin.Api)
 
 	guideHooks := (*interfaces.GuideHooks)(nil)

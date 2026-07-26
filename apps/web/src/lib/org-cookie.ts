@@ -2,11 +2,14 @@ import { parseCookie } from "cookie";
 
 import { COOKIE_CONSTANTS } from "@repo/data-commons";
 
-export function getActiveOrgCookie(): string | undefined {
-	if (typeof document === "undefined") {
+export function getActiveOrgCookie(cookieHeader?: string): string | undefined {
+	const header =
+		cookieHeader ??
+		(typeof document !== "undefined" ? document.cookie : undefined);
+	if (!header) {
 		return undefined;
 	}
-	return parseCookie(document.cookie)[COOKIE_CONSTANTS.activeOrgId.name];
+	return parseCookie(header)[COOKIE_CONSTANTS.activeOrgId.name];
 }
 
 export function setActiveOrgCookie(orgId: string) {

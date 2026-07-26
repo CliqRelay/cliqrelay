@@ -1,14 +1,11 @@
 import { useState } from "react";
 
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Eye, EyeOff, Lock, Mail, User as UserIcon } from "lucide-react";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, Lock, User as UserIcon } from "lucide-react";
-import type { Session, User } from "authula";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import {
 	Card,
 	CardContent,
@@ -16,9 +13,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { envClient } from "@/constants/env-client";
 import { toast } from "@/hooks/use-toast";
 import { authulaClient } from "@/lib/authula-client";
-import { envClient } from "@/constants/env-client";
 
 export const Route = createFileRoute("/auth/sign-up")({
 	component: SignupPage,

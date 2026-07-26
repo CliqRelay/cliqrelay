@@ -23,6 +23,11 @@ import { Route as dashboardGuidesIndexRouteImport } from './routes/dashboard/gui
 import { Route as dashboardStarredIndexRouteImport } from './routes/dashboard/starred/index'
 import { Route as dashboardTrashIndexRouteImport } from './routes/dashboard/trash/index'
 import { Route as dashboardGuidesGuideIdRouteImport } from './routes/dashboard/guides/$guideId'
+import { Route as dashboardOrganizationsInvitationIndexRouteImport } from './routes/dashboard/organizations/invitation/index'
+import { Route as dashboardOrganizationsOrgIdSettingsRouteRouteImport } from './routes/dashboard/organizations/$orgId/settings/route'
+import { Route as dashboardOrganizationsOrgIdSettingsIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/index'
+import { Route as dashboardOrganizationsOrgIdSettingsGeneralIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/general/index'
+import { Route as dashboardOrganizationsOrgIdSettingsMembersIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/members/index'
 
 const indexRoute = indexRouteImport.update({
   id: '/',
@@ -95,6 +100,36 @@ const dashboardGuidesGuideIdRoute = dashboardGuidesGuideIdRouteImport.update({
   path: '/guides/$guideId',
   getParentRoute: () => dashboardRouteRoute,
 } as any)
+const dashboardOrganizationsInvitationIndexRoute =
+  dashboardOrganizationsInvitationIndexRouteImport.update({
+    id: '/organizations/invitation',
+    path: '/organizations/invitation',
+    getParentRoute: () => dashboardRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsRouteRoute =
+  dashboardOrganizationsOrgIdSettingsRouteRouteImport.update({
+    id: '/organizations/$orgId/settings',
+    path: '/organizations/$orgId/settings',
+    getParentRoute: () => dashboardRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsIndexRoute =
+  dashboardOrganizationsOrgIdSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsGeneralIndexRoute =
+  dashboardOrganizationsOrgIdSettingsGeneralIndexRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsMembersIndexRoute =
+  dashboardOrganizationsOrgIdSettingsMembersIndexRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof indexRoute
@@ -111,6 +146,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/starred': typeof dashboardStarredIndexRoute
   '/dashboard/trash': typeof dashboardTrashIndexRoute
   '/dashboard/guides/$guideId': typeof dashboardGuidesGuideIdRoute
+  '/dashboard/organizations/invitation': typeof dashboardOrganizationsInvitationIndexRoute
+  '/dashboard/organizations/$orgId/settings': typeof dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren
+  '/dashboard/organizations/$orgId/settings/': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof indexRoute
@@ -126,6 +166,10 @@ export interface FileRoutesByTo {
   '/dashboard/starred': typeof dashboardStarredIndexRoute
   '/dashboard/trash': typeof dashboardTrashIndexRoute
   '/dashboard/guides/$guideId': typeof dashboardGuidesGuideIdRoute
+  '/dashboard/organizations/invitation': typeof dashboardOrganizationsInvitationIndexRoute
+  '/dashboard/organizations/$orgId/settings': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +187,11 @@ export interface FileRoutesById {
   '/dashboard/starred': typeof dashboardStarredIndexRoute
   '/dashboard/trash': typeof dashboardTrashIndexRoute
   '/dashboard/guides/$guideId': typeof dashboardGuidesGuideIdRoute
+  '/dashboard/organizations/invitation': typeof dashboardOrganizationsInvitationIndexRoute
+  '/dashboard/organizations/$orgId/settings': typeof dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren
+  '/dashboard/organizations/$orgId/settings/': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +210,11 @@ export interface FileRouteTypes {
     | '/dashboard/starred'
     | '/dashboard/trash'
     | '/dashboard/guides/$guideId'
+    | '/dashboard/organizations/invitation'
+    | '/dashboard/organizations/$orgId/settings'
+    | '/dashboard/organizations/$orgId/settings/'
+    | '/dashboard/organizations/$orgId/settings/general'
+    | '/dashboard/organizations/$orgId/settings/members'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -176,6 +230,10 @@ export interface FileRouteTypes {
     | '/dashboard/starred'
     | '/dashboard/trash'
     | '/dashboard/guides/$guideId'
+    | '/dashboard/organizations/invitation'
+    | '/dashboard/organizations/$orgId/settings'
+    | '/dashboard/organizations/$orgId/settings/general'
+    | '/dashboard/organizations/$orgId/settings/members'
   id:
     | '__root__'
     | '/'
@@ -192,6 +250,11 @@ export interface FileRouteTypes {
     | '/dashboard/starred'
     | '/dashboard/trash'
     | '/dashboard/guides/$guideId'
+    | '/dashboard/organizations/invitation'
+    | '/dashboard/organizations/$orgId/settings'
+    | '/dashboard/organizations/$orgId/settings/'
+    | '/dashboard/organizations/$orgId/settings/general'
+    | '/dashboard/organizations/$orgId/settings/members'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -301,6 +364,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof dashboardGuidesGuideIdRouteImport
       parentRoute: typeof dashboardRouteRoute
     }
+    '/dashboard/organizations/invitation': {
+      id: '/dashboard/organizations/invitation'
+      path: '/organizations/invitation'
+      fullPath: '/dashboard/organizations/invitation'
+      preLoaderRoute: typeof dashboardOrganizationsInvitationIndexRouteImport
+      parentRoute: typeof dashboardRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings': {
+      id: '/dashboard/organizations/$orgId/settings'
+      path: '/organizations/$orgId/settings'
+      fullPath: '/dashboard/organizations/$orgId/settings'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRouteImport
+      parentRoute: typeof dashboardRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/': {
+      id: '/dashboard/organizations/$orgId/settings/'
+      path: '/'
+      fullPath: '/dashboard/organizations/$orgId/settings/'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/general': {
+      id: '/dashboard/organizations/$orgId/settings/general'
+      path: '/general'
+      fullPath: '/dashboard/organizations/$orgId/settings/general'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/members': {
+      id: '/dashboard/organizations/$orgId/settings/members'
+      path: '/members'
+      fullPath: '/dashboard/organizations/$orgId/settings/members'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsMembersIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
   }
 }
 
@@ -324,12 +422,35 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
+interface dashboardOrganizationsOrgIdSettingsRouteRouteChildren {
+  dashboardOrganizationsOrgIdSettingsIndexRoute: typeof dashboardOrganizationsOrgIdSettingsIndexRoute
+  dashboardOrganizationsOrgIdSettingsGeneralIndexRoute: typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
+  dashboardOrganizationsOrgIdSettingsMembersIndexRoute: typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
+}
+
+const dashboardOrganizationsOrgIdSettingsRouteRouteChildren: dashboardOrganizationsOrgIdSettingsRouteRouteChildren =
+  {
+    dashboardOrganizationsOrgIdSettingsIndexRoute:
+      dashboardOrganizationsOrgIdSettingsIndexRoute,
+    dashboardOrganizationsOrgIdSettingsGeneralIndexRoute:
+      dashboardOrganizationsOrgIdSettingsGeneralIndexRoute,
+    dashboardOrganizationsOrgIdSettingsMembersIndexRoute:
+      dashboardOrganizationsOrgIdSettingsMembersIndexRoute,
+  }
+
+const dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren =
+  dashboardOrganizationsOrgIdSettingsRouteRoute._addFileChildren(
+    dashboardOrganizationsOrgIdSettingsRouteRouteChildren,
+  )
+
 interface dashboardRouteRouteChildren {
   dashboardIndexRoute: typeof dashboardIndexRoute
   dashboardGuidesIndexRoute: typeof dashboardGuidesIndexRoute
   dashboardStarredIndexRoute: typeof dashboardStarredIndexRoute
   dashboardTrashIndexRoute: typeof dashboardTrashIndexRoute
   dashboardGuidesGuideIdRoute: typeof dashboardGuidesGuideIdRoute
+  dashboardOrganizationsInvitationIndexRoute: typeof dashboardOrganizationsInvitationIndexRoute
+  dashboardOrganizationsOrgIdSettingsRouteRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren
 }
 
 const dashboardRouteRouteChildren: dashboardRouteRouteChildren = {
@@ -338,6 +459,10 @@ const dashboardRouteRouteChildren: dashboardRouteRouteChildren = {
   dashboardStarredIndexRoute: dashboardStarredIndexRoute,
   dashboardTrashIndexRoute: dashboardTrashIndexRoute,
   dashboardGuidesGuideIdRoute: dashboardGuidesGuideIdRoute,
+  dashboardOrganizationsInvitationIndexRoute:
+    dashboardOrganizationsInvitationIndexRoute,
+  dashboardOrganizationsOrgIdSettingsRouteRoute:
+    dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren,
 }
 
 const dashboardRouteRouteWithChildren = dashboardRouteRoute._addFileChildren(

@@ -13,6 +13,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authulaClient } from "@/lib/authula-client";
+import { clearActiveTeamCookie } from "@/lib/team-cookie";
+import { clearActiveOrgCookie } from "@/lib/org-cookie";
 import type { AppUser } from "@/models/auth";
 
 type LucideIcon = ComponentType<SVGAttributes<SVGElement>>;
@@ -49,6 +51,8 @@ export default function UserDropdown({
 
 	const handleSignOut = async () => {
 		try {
+			clearActiveTeamCookie();
+			clearActiveOrgCookie();
 			await authulaClient.core.signOut();
 			navigate({ to: "/auth/sign-in" });
 		} catch (error) {

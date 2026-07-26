@@ -1,26 +1,24 @@
-import {
-	HeadContent,
-	Scripts,
-	createRootRouteWithContext,
-	useRouterState,
-} from "@tanstack/react-router";
 import { useEffect } from "react";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { QueryClientProvider } from "@tanstack/react-query";
+import {
+	createRootRouteWithContext,
+	HeadContent,
+	Scripts,
+	useRouterState,
+} from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { ThemeProvider } from "next-themes";
 
 import { Toaster } from "@/components/ui/sonner";
-import { queryClient } from "@/constants/query-client";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useTeamStore } from "@/stores/team-store";
-import {
-	getActiveTeamCookie,
-	setActiveTeamCookie,
-} from "@/lib/team-cookie";
-import { getTeams } from "@/server-fns/teams";
-import TanStackQueryDevtools from "../integrations/tanstack-query/Devtools";
+import { queryClient } from "@/constants/query-client";
+import { getActiveTeamCookie, setActiveTeamCookie } from "@/lib/team-cookie";
 import type { MyRouterContext } from "@/router";
+import { getTeams } from "@/server-fns/teams";
+import { useTeamStore } from "@/stores/team-store";
+import TanStackQueryDevtools from "../integrations/tanstack-query/Devtools";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -29,13 +27,21 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			const response = await getTeams();
 			const teams = response.teams;
 
-			const cookieTeamId = getActiveTeamCookie();
-			const isValid = teams.some(
-				(team) => team.id === cookieTeamId,
-			);
-			const activeTeamId = isValid
-				? cookieTeamId!
-				: (teams[0]?.id ?? null);
+			let cookieHeader: string | undefined;
+			if (import.meta.env.SSR) {
+				try {
+					const { getStartContext } = await import(
+						"@tanstack/start-storage-context"
+					);
+					const ctx = getStartContext({ throwIfNotFound: false });
+					cookieHeader = ctx?.request?.headers?.get("Cookie") ?? undefined;
+				} catch {
+					// Not in a server request context
+				}
+			}
+			const cookieTeamId = getActiveTeamCookie(cookieHeader);
+			const isValid = teams.some((team) => team.id === cookieTeamId);
+			const activeTeamId = isValid ? cookieTeamId! : (teams[0]?.id ?? null);
 
 			if (!isValid && activeTeamId) {
 				setActiveTeamCookie(activeTeamId);
@@ -92,11 +98,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		if (rootContext?.teams) {
-			useTeamStore.getState().setTeams(rootContext.teams as any);
+			useTeamStore.getState().setTeams(rootContext.teams);
 			if (rootContext.activeTeamId) {
-				useTeamStore
-					.getState()
-					.setActiveTeam(rootContext.activeTeamId);
+				useTeamStore.getState().setActiveTeam(rootContext.activeTeamId);
 			}
 		}
 	}, [rootContext]);

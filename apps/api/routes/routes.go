@@ -10,14 +10,14 @@ import (
 	"github.com/CliqRelay/cliqrelay/openapi"
 )
 
-func InitRoutes(appConfig *config.AppConfig, svcs *interfaces.DomainUseCases, extraRoutes ...[]authulamodels.Route) []authulamodels.Route {
+func InitRoutes(appConfig *config.AppConfig, services *interfaces.DomainUseCases, extraRoutes ...[]authulamodels.Route) []authulamodels.Route {
 	routes := []authulamodels.Route{}
 	routes = append(routes, HealthRoutes(appConfig)...)
-	routes = append(routes, GuidesRoutes(appConfig, svcs.GuidesUseCase, svcs.ExportService)...)
-	routes = append(routes, StepsRoutes(appConfig, svcs.StepsUseCase)...)
-	routes = append(routes, MediaAssetsRoutes(appConfig, svcs.MediaAssetsUseCase)...)
-	routes = append(routes, UploadRoutes(appConfig, svcs.UploadsUseCase)...)
 	routes = append(routes, TeamsRoutes(appConfig)...)
+	routes = append(routes, GuidesRoutes(appConfig, services.GuidesUseCase, services.ExportService)...)
+	routes = append(routes, StepsRoutes(appConfig, services.StepsUseCase)...)
+	routes = append(routes, MediaAssetsRoutes(appConfig, services.MediaAssetsUseCase)...)
+	routes = append(routes, UploadRoutes(appConfig, services.UploadsUseCase)...)
 
 	for _, extra := range extraRoutes {
 		routes = append(routes, extra...)

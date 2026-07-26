@@ -2,11 +2,14 @@ import { parseCookie } from "cookie";
 
 import { COOKIE_CONSTANTS } from "@repo/data-commons";
 
-export function getActiveTeamCookie(): string | undefined {
-	if (typeof document === "undefined") {
+export function getActiveTeamCookie(cookieHeader?: string): string | undefined {
+	const header =
+		cookieHeader ??
+		(typeof document !== "undefined" ? document.cookie : undefined);
+	if (!header) {
 		return undefined;
 	}
-	return parseCookie(document.cookie)[COOKIE_CONSTANTS.activeTeamId.name];
+	return parseCookie(header)[COOKIE_CONSTANTS.activeTeamId.name];
 }
 
 export function setActiveTeamCookie(teamId: string) {

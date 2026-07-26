@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 
 	"github.com/Authula/authula"
 	coreerrors "github.com/Authula/authula/core/errors"
@@ -113,8 +112,6 @@ func SeedOrganizationRoles(ctx context.Context, authulaAuth *authula.Auth) error
 		if err := acPlugin.Api.ReplaceRolePermissions(ctx, systemActor, role.ID, permissionIDs, nil); err != nil {
 			return fmt.Errorf("failed to assign permissions to role %q: %w", r.Name, err)
 		}
-
-		slog.Debug("Ensured organization role with permissions", "role", r.Name, "weight", r.Weight)
 	}
 
 	return nil

@@ -18,11 +18,11 @@ import (
 	emailplugintypes "github.com/Authula/authula/plugins/email/types"
 	organizationsplugin "github.com/Authula/authula/plugins/organizations"
 	organizationsplugintypes "github.com/Authula/authula/plugins/organizations/types"
-
 	ratelimitplugin "github.com/Authula/authula/plugins/rate-limit"
 	ratelimitplugintypes "github.com/Authula/authula/plugins/rate-limit/types"
 	secondarystorageplugin "github.com/Authula/authula/plugins/secondary-storage"
 	sessionplugin "github.com/Authula/authula/plugins/session"
+
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
 )
@@ -275,11 +275,16 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			ServiceHooks:                     &authServiceHooks.OrganizationsServiceHooksConfig,
 		}),
 		ratelimitplugin.New(ratelimitplugintypes.RateLimitPluginConfig{
-			Enabled:     true,
-			Provider:    ratelimitplugintypes.RateLimitProviderRedis,
-			Window:      time.Minute,
-			Max:         60,
-			CustomRules: map[string]ratelimitplugintypes.RateLimitRule{},
+			Enabled:  true,
+			Provider: ratelimitplugintypes.RateLimitProviderRedis,
+			Window:   time.Minute,
+			Max:      200,
+			CustomRules: map[string]ratelimitplugintypes.RateLimitRule{
+				"/api/v1/guides/{id}/export": {
+					Window: time.Minute,
+					Max:    10,
+				},
+			},
 		}),
 	}
 

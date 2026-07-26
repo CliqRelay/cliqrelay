@@ -49,9 +49,9 @@ export const authulaServerClient = createClient({
 			cookieName: COOKIE_CONSTANTS.csrf.name,
 			headerName: HEADER_CONSTANTS.csrfToken
 		}),
-		new AdminPlugin(),
 		new CorePlugin(),
 		new EmailPasswordPlugin(),
+		new AdminPlugin(),
 		new OrganizationsPlugin(),
 	],
 });

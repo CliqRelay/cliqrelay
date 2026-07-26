@@ -20,7 +20,7 @@ export const Route = createFileRoute("/auth/email-verification")({
 });
 
 function EmailVerificationPage() {
-	const [isResending, setIsResending] = useState(false);
+	const [isResending, setIsResending] = useState<boolean>(false);
 	const email =
 		typeof window !== "undefined" ? localStorage.getItem("email") : null;
 
