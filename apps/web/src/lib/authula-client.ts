@@ -1,7 +1,15 @@
 import type { ClientWithPlugins } from "authula";
-import type { CorePlugin, CSRFPlugin, EmailPasswordPlugin } from "authula/plugins";
+import type {
+	AdminPlugin,
+	CSRFPlugin,
+	CorePlugin,
+	EmailPasswordPlugin,
+	OrganizationsPlugin,
+} from "authula/plugins";
 
-let _client: ClientWithPlugins<readonly [CorePlugin, EmailPasswordPlugin, CSRFPlugin]>;
+let _client: ClientWithPlugins<
+	readonly [CSRFPlugin, AdminPlugin, CorePlugin, EmailPasswordPlugin, OrganizationsPlugin]
+>;
 
 // Vite replaces import.meta.env.SSR at compile time:
 // - Client build: false → browser branch, server branch tree-shaken

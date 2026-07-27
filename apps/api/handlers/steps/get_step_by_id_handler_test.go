@@ -14,8 +14,10 @@ import (
 	handlerssteps "github.com/CliqRelay/cliqrelay/handlers/steps"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestGetStepByIDHandler(t *testing.T) {
@@ -35,7 +37,7 @@ func TestGetStepByIDHandler(t *testing.T) {
 			stepID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				guideID := uuid.New()
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Step{
 						ID:        uuid.New(),
 						GuideID:   guideID,
@@ -59,7 +61,7 @@ func TestGetStepByIDHandler(t *testing.T) {
 			name:   "service error",
 			stepID: uuid.New().String(),
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -80,9 +82,11 @@ func TestGetStepByIDHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, mockAuthz, (*interfaces.StepHooks)(nil))
-			handler := handlerssteps.NewGetStepByIDHandler(appConfig, svc)
+			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
+			handler := handlerssteps.NewGetStepByIDHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)
 			req.Req.SetPathValue("id", stepID)

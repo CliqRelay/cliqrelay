@@ -3,7 +3,7 @@ package uploads
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -14,17 +14,17 @@ import (
 
 type PresignUploadHandler struct {
 	appConfig      *config.AppConfig
-	uploadsService interfaces.UploadsService
+	uploadsUseCase interfaces.UploadsUseCase
 }
 
-func NewPresignUploadHandler(appConfig *config.AppConfig, uploadsService interfaces.UploadsService) *PresignUploadHandler {
-	return &PresignUploadHandler{appConfig: appConfig, uploadsService: uploadsService}
+func NewPresignUploadHandler(appConfig *config.AppConfig, uploadsUseCase interfaces.UploadsUseCase) *PresignUploadHandler {
+	return &PresignUploadHandler{appConfig: appConfig, uploadsUseCase: uploadsUseCase}
 }
 
 func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
 		var request types.PresignUploadRequest
@@ -39,7 +39,7 @@ func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.uploadsService.GeneratePresignedPutURL(ctx, actor, request.GuideID, request.StepID)
+		result, err := h.uploadsUseCase.PresignUpload(ctx, actor, &request)
 		if err != nil {
 			status := http.StatusInternalServerError
 			switch err {
@@ -54,7 +54,7 @@ func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 		}
 
 		reqCtx.SetJSONResponse(http.StatusOK, &types.PresignUploadResponse{
-			PresignedURL: result.URL,
+			PresignedURL: result.PresignedURL,
 			StoragePath:  result.StoragePath,
 		})
 	}

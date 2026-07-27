@@ -5,7 +5,6 @@ import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
-
 import {
 	rootRoute,
 	index,
@@ -18,12 +17,29 @@ export async function buildVirtualRouteConfig(
 ): Promise<VirtualRootRoute> {
 	const routes = rootRoute("__root.tsx", [
 		index("index.tsx"),
+		route("/create-organization", "create-organization/index.tsx"),
 		route("/dashboard", "dashboard/route.tsx", [
 			index("dashboard/index.tsx"),
 			route("/guides", "dashboard/guides/index.tsx"),
 			route("/guides/$guideId", "dashboard/guides/$guideId.tsx"),
 			route("/starred", "dashboard/starred/index.tsx"),
 			route("/trash", "dashboard/trash/index.tsx"),
+			route("/organizations", [
+				route("/$orgId/settings", "dashboard/organizations/$orgId/settings/route.tsx", [
+					index("dashboard/organizations/$orgId/settings/index.tsx"),
+					route("/general", "dashboard/organizations/$orgId/settings/general/index.tsx"),
+					route("/members", "dashboard/organizations/$orgId/settings/members/index.tsx"),
+					route("/teams", "dashboard/organizations/$orgId/settings/teams/index.tsx"),
+					route("/branding", "dashboard/organizations/$orgId/settings/branding/index.tsx"),
+					route("/integrations", "dashboard/organizations/$orgId/settings/integrations/index.tsx"),
+				]),
+				route("/$orgId/teams/$teamId/settings", "dashboard/organizations/$orgId/teams/$teamId/settings/route.tsx", [
+					index("dashboard/organizations/$orgId/teams/$teamId/settings/index.tsx"),
+					route("/general", "dashboard/organizations/$orgId/teams/$teamId/settings/general/index.tsx"),
+					route("/members", "dashboard/organizations/$orgId/teams/$teamId/settings/members/index.tsx"),
+				]),
+				route("/invitation", "dashboard/organizations/invitation/index.tsx"),
+			]),
 		]),
 		route("/auth", "auth/route.tsx", [
 			route("/sign-in", "auth/sign-in/index.tsx"),

@@ -4,6 +4,7 @@ import { Info } from "lucide-react";
 import { GuideList, TrashEmptyState } from "@/components/guides";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getTrashGuides } from "@/server-fns/guides";
+import { useTeamStore } from "@/stores/team-store";
 
 export const Route = createFileRoute("/dashboard/trash")({
 	component: TrashGuides,
@@ -34,13 +35,18 @@ function TrashGuides() {
 	const { guides } = Route.useLoaderData();
 	const navigate = useNavigate();
 
+	const teams = useTeamStore((state) => state.teams);
+	const activeTeamId = useTeamStore((state) => state.activeTeamId);
+	const activeTeam = teams.find((t) => t.id === activeTeamId);
+	const teamName = activeTeam?.name ?? "this team";
+
 	return (
 		<div className="p-6">
 			<div className="mb-6 flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">Trash</h1>
 					<p className="text-sm text-muted-foreground">
-						Deleted guides can be restored or permanently deleted
+						Deleted guides in {teamName}
 					</p>
 				</div>
 			</div>

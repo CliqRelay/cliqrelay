@@ -13,8 +13,8 @@
 		"check-types": "turbo run check-types"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.4",
-		"turbo": "^2.10.5",
+		"@biomejs/biome": "^2.5.5",
+		"turbo": "^2.10.6",
 		"typescript": "^6.0.3"
 	}
 }

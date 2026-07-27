@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as indexRouteImport } from './routes/index'
 import { Route as authRouteRouteImport } from './routes/auth/route'
+import { Route as createOrganizationIndexRouteImport } from './routes/create-organization/index'
 import { Route as dashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as authChangePasswordIndexRouteImport } from './routes/auth/change-password/index'
 import { Route as authEmailVerificationIndexRouteImport } from './routes/auth/email-verification/index'
@@ -22,6 +23,18 @@ import { Route as dashboardGuidesIndexRouteImport } from './routes/dashboard/gui
 import { Route as dashboardStarredIndexRouteImport } from './routes/dashboard/starred/index'
 import { Route as dashboardTrashIndexRouteImport } from './routes/dashboard/trash/index'
 import { Route as dashboardGuidesGuideIdRouteImport } from './routes/dashboard/guides/$guideId'
+import { Route as dashboardOrganizationsInvitationIndexRouteImport } from './routes/dashboard/organizations/invitation/index'
+import { Route as dashboardOrganizationsOrgIdSettingsRouteRouteImport } from './routes/dashboard/organizations/$orgId/settings/route'
+import { Route as dashboardOrganizationsOrgIdSettingsIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/index'
+import { Route as dashboardOrganizationsOrgIdSettingsBrandingIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/branding/index'
+import { Route as dashboardOrganizationsOrgIdSettingsGeneralIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/general/index'
+import { Route as dashboardOrganizationsOrgIdSettingsIntegrationsIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/integrations/index'
+import { Route as dashboardOrganizationsOrgIdSettingsMembersIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/members/index'
+import { Route as dashboardOrganizationsOrgIdSettingsTeamsIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/teams/index'
+import { Route as dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteImport } from './routes/dashboard/organizations/$orgId/teams/$teamId/settings/route'
+import { Route as dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRouteImport } from './routes/dashboard/organizations/$orgId/teams/$teamId/settings/index'
+import { Route as dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRouteImport } from './routes/dashboard/organizations/$orgId/teams/$teamId/settings/general/index'
+import { Route as dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRouteImport } from './routes/dashboard/organizations/$orgId/teams/$teamId/settings/members/index'
 
 const indexRoute = indexRouteImport.update({
   id: '/',
@@ -31,6 +44,11 @@ const indexRoute = indexRouteImport.update({
 const authRouteRoute = authRouteRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const createOrganizationIndexRoute = createOrganizationIndexRouteImport.update({
+  id: '/create-organization',
+  path: '/create-organization',
   getParentRoute: () => rootRouteImport,
 } as any)
 const dashboardRouteRoute = dashboardRouteRouteImport.update({
@@ -89,11 +107,87 @@ const dashboardGuidesGuideIdRoute = dashboardGuidesGuideIdRouteImport.update({
   path: '/guides/$guideId',
   getParentRoute: () => dashboardRouteRoute,
 } as any)
+const dashboardOrganizationsInvitationIndexRoute =
+  dashboardOrganizationsInvitationIndexRouteImport.update({
+    id: '/organizations/invitation',
+    path: '/organizations/invitation',
+    getParentRoute: () => dashboardRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsRouteRoute =
+  dashboardOrganizationsOrgIdSettingsRouteRouteImport.update({
+    id: '/organizations/$orgId/settings',
+    path: '/organizations/$orgId/settings',
+    getParentRoute: () => dashboardRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsIndexRoute =
+  dashboardOrganizationsOrgIdSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsBrandingIndexRoute =
+  dashboardOrganizationsOrgIdSettingsBrandingIndexRouteImport.update({
+    id: '/branding',
+    path: '/branding',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsGeneralIndexRoute =
+  dashboardOrganizationsOrgIdSettingsGeneralIndexRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute =
+  dashboardOrganizationsOrgIdSettingsIntegrationsIndexRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsMembersIndexRoute =
+  dashboardOrganizationsOrgIdSettingsMembersIndexRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdSettingsTeamsIndexRoute =
+  dashboardOrganizationsOrgIdSettingsTeamsIndexRouteImport.update({
+    id: '/teams',
+    path: '/teams',
+    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute =
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteImport.update({
+    id: '/organizations/$orgId/teams/$teamId/settings',
+    path: '/organizations/$orgId/teams/$teamId/settings',
+    getParentRoute: () => dashboardRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute =
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () =>
+      dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRoute =
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () =>
+      dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute,
+  } as any)
+const dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRoute =
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () =>
+      dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof indexRoute
   '/auth': typeof authRouteRouteWithChildren
   '/dashboard': typeof dashboardRouteRouteWithChildren
+  '/create-organization': typeof createOrganizationIndexRoute
   '/dashboard/': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -104,10 +198,23 @@ export interface FileRoutesByFullPath {
   '/dashboard/starred': typeof dashboardStarredIndexRoute
   '/dashboard/trash': typeof dashboardTrashIndexRoute
   '/dashboard/guides/$guideId': typeof dashboardGuidesGuideIdRoute
+  '/dashboard/organizations/invitation': typeof dashboardOrganizationsInvitationIndexRoute
+  '/dashboard/organizations/$orgId/settings': typeof dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren
+  '/dashboard/organizations/$orgId/settings/': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/settings/branding': typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRoute
+  '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/settings/integrations': typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute
+  '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
+  '/dashboard/organizations/$orgId/settings/teams': typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteWithChildren
+  '/dashboard/organizations/$orgId/teams/$teamId/settings/': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings/general': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings/members': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof indexRoute
   '/auth': typeof authRouteRouteWithChildren
+  '/create-organization': typeof createOrganizationIndexRoute
   '/dashboard': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -118,12 +225,23 @@ export interface FileRoutesByTo {
   '/dashboard/starred': typeof dashboardStarredIndexRoute
   '/dashboard/trash': typeof dashboardTrashIndexRoute
   '/dashboard/guides/$guideId': typeof dashboardGuidesGuideIdRoute
+  '/dashboard/organizations/invitation': typeof dashboardOrganizationsInvitationIndexRoute
+  '/dashboard/organizations/$orgId/settings': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/settings/branding': typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRoute
+  '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/settings/integrations': typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute
+  '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
+  '/dashboard/organizations/$orgId/settings/teams': typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings/general': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings/members': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof indexRoute
   '/auth': typeof authRouteRouteWithChildren
   '/dashboard': typeof dashboardRouteRouteWithChildren
+  '/create-organization': typeof createOrganizationIndexRoute
   '/dashboard/': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -134,6 +252,18 @@ export interface FileRoutesById {
   '/dashboard/starred': typeof dashboardStarredIndexRoute
   '/dashboard/trash': typeof dashboardTrashIndexRoute
   '/dashboard/guides/$guideId': typeof dashboardGuidesGuideIdRoute
+  '/dashboard/organizations/invitation': typeof dashboardOrganizationsInvitationIndexRoute
+  '/dashboard/organizations/$orgId/settings': typeof dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren
+  '/dashboard/organizations/$orgId/settings/': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/settings/branding': typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRoute
+  '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/settings/integrations': typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute
+  '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
+  '/dashboard/organizations/$orgId/settings/teams': typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteWithChildren
+  '/dashboard/organizations/$orgId/teams/$teamId/settings/': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings/general': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRoute
+  '/dashboard/organizations/$orgId/teams/$teamId/settings/members': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +271,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/create-organization'
     | '/dashboard/'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -151,10 +282,23 @@ export interface FileRouteTypes {
     | '/dashboard/starred'
     | '/dashboard/trash'
     | '/dashboard/guides/$guideId'
+    | '/dashboard/organizations/invitation'
+    | '/dashboard/organizations/$orgId/settings'
+    | '/dashboard/organizations/$orgId/settings/'
+    | '/dashboard/organizations/$orgId/settings/branding'
+    | '/dashboard/organizations/$orgId/settings/general'
+    | '/dashboard/organizations/$orgId/settings/integrations'
+    | '/dashboard/organizations/$orgId/settings/members'
+    | '/dashboard/organizations/$orgId/settings/teams'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings/'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings/general'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings/members'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/create-organization'
     | '/dashboard'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -165,11 +309,22 @@ export interface FileRouteTypes {
     | '/dashboard/starred'
     | '/dashboard/trash'
     | '/dashboard/guides/$guideId'
+    | '/dashboard/organizations/invitation'
+    | '/dashboard/organizations/$orgId/settings'
+    | '/dashboard/organizations/$orgId/settings/branding'
+    | '/dashboard/organizations/$orgId/settings/general'
+    | '/dashboard/organizations/$orgId/settings/integrations'
+    | '/dashboard/organizations/$orgId/settings/members'
+    | '/dashboard/organizations/$orgId/settings/teams'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings/general'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings/members'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/create-organization'
     | '/dashboard/'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -180,12 +335,25 @@ export interface FileRouteTypes {
     | '/dashboard/starred'
     | '/dashboard/trash'
     | '/dashboard/guides/$guideId'
+    | '/dashboard/organizations/invitation'
+    | '/dashboard/organizations/$orgId/settings'
+    | '/dashboard/organizations/$orgId/settings/'
+    | '/dashboard/organizations/$orgId/settings/branding'
+    | '/dashboard/organizations/$orgId/settings/general'
+    | '/dashboard/organizations/$orgId/settings/integrations'
+    | '/dashboard/organizations/$orgId/settings/members'
+    | '/dashboard/organizations/$orgId/settings/teams'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings/'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings/general'
+    | '/dashboard/organizations/$orgId/teams/$teamId/settings/members'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   indexRoute: typeof indexRoute
   authRouteRoute: typeof authRouteRouteWithChildren
   dashboardRouteRoute: typeof dashboardRouteRouteWithChildren
+  createOrganizationIndexRoute: typeof createOrganizationIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -202,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof authRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create-organization': {
+      id: '/create-organization'
+      path: '/create-organization'
+      fullPath: '/create-organization'
+      preLoaderRoute: typeof createOrganizationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -281,6 +456,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof dashboardGuidesGuideIdRouteImport
       parentRoute: typeof dashboardRouteRoute
     }
+    '/dashboard/organizations/invitation': {
+      id: '/dashboard/organizations/invitation'
+      path: '/organizations/invitation'
+      fullPath: '/dashboard/organizations/invitation'
+      preLoaderRoute: typeof dashboardOrganizationsInvitationIndexRouteImport
+      parentRoute: typeof dashboardRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings': {
+      id: '/dashboard/organizations/$orgId/settings'
+      path: '/organizations/$orgId/settings'
+      fullPath: '/dashboard/organizations/$orgId/settings'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRouteImport
+      parentRoute: typeof dashboardRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/': {
+      id: '/dashboard/organizations/$orgId/settings/'
+      path: '/'
+      fullPath: '/dashboard/organizations/$orgId/settings/'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/branding': {
+      id: '/dashboard/organizations/$orgId/settings/branding'
+      path: '/branding'
+      fullPath: '/dashboard/organizations/$orgId/settings/branding'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/general': {
+      id: '/dashboard/organizations/$orgId/settings/general'
+      path: '/general'
+      fullPath: '/dashboard/organizations/$orgId/settings/general'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/integrations': {
+      id: '/dashboard/organizations/$orgId/settings/integrations'
+      path: '/integrations'
+      fullPath: '/dashboard/organizations/$orgId/settings/integrations'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/members': {
+      id: '/dashboard/organizations/$orgId/settings/members'
+      path: '/members'
+      fullPath: '/dashboard/organizations/$orgId/settings/members'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsMembersIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/settings/teams': {
+      id: '/dashboard/organizations/$orgId/settings/teams'
+      path: '/teams'
+      fullPath: '/dashboard/organizations/$orgId/settings/teams'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/teams/$teamId/settings': {
+      id: '/dashboard/organizations/$orgId/teams/$teamId/settings'
+      path: '/organizations/$orgId/teams/$teamId/settings'
+      fullPath: '/dashboard/organizations/$orgId/teams/$teamId/settings'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteImport
+      parentRoute: typeof dashboardRouteRoute
+    }
+    '/dashboard/organizations/$orgId/teams/$teamId/settings/': {
+      id: '/dashboard/organizations/$orgId/teams/$teamId/settings/'
+      path: '/'
+      fullPath: '/dashboard/organizations/$orgId/teams/$teamId/settings/'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/teams/$teamId/settings/general': {
+      id: '/dashboard/organizations/$orgId/teams/$teamId/settings/general'
+      path: '/general'
+      fullPath: '/dashboard/organizations/$orgId/teams/$teamId/settings/general'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute
+    }
+    '/dashboard/organizations/$orgId/teams/$teamId/settings/members': {
+      id: '/dashboard/organizations/$orgId/teams/$teamId/settings/members'
+      path: '/members'
+      fullPath: '/dashboard/organizations/$orgId/teams/$teamId/settings/members'
+      preLoaderRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRouteImport
+      parentRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute
+    }
   }
 }
 
@@ -304,12 +563,66 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
+interface dashboardOrganizationsOrgIdSettingsRouteRouteChildren {
+  dashboardOrganizationsOrgIdSettingsIndexRoute: typeof dashboardOrganizationsOrgIdSettingsIndexRoute
+  dashboardOrganizationsOrgIdSettingsBrandingIndexRoute: typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRoute
+  dashboardOrganizationsOrgIdSettingsGeneralIndexRoute: typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
+  dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute: typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute
+  dashboardOrganizationsOrgIdSettingsMembersIndexRoute: typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
+  dashboardOrganizationsOrgIdSettingsTeamsIndexRoute: typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRoute
+}
+
+const dashboardOrganizationsOrgIdSettingsRouteRouteChildren: dashboardOrganizationsOrgIdSettingsRouteRouteChildren =
+  {
+    dashboardOrganizationsOrgIdSettingsIndexRoute:
+      dashboardOrganizationsOrgIdSettingsIndexRoute,
+    dashboardOrganizationsOrgIdSettingsBrandingIndexRoute:
+      dashboardOrganizationsOrgIdSettingsBrandingIndexRoute,
+    dashboardOrganizationsOrgIdSettingsGeneralIndexRoute:
+      dashboardOrganizationsOrgIdSettingsGeneralIndexRoute,
+    dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute:
+      dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute,
+    dashboardOrganizationsOrgIdSettingsMembersIndexRoute:
+      dashboardOrganizationsOrgIdSettingsMembersIndexRoute,
+    dashboardOrganizationsOrgIdSettingsTeamsIndexRoute:
+      dashboardOrganizationsOrgIdSettingsTeamsIndexRoute,
+  }
+
+const dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren =
+  dashboardOrganizationsOrgIdSettingsRouteRoute._addFileChildren(
+    dashboardOrganizationsOrgIdSettingsRouteRouteChildren,
+  )
+
+interface dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteChildren {
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRoute
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRoute
+}
+
+const dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteChildren: dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteChildren =
+  {
+    dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute:
+      dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute,
+    dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRoute:
+      dashboardOrganizationsOrgIdTeamsTeamIdSettingsGeneralIndexRoute,
+    dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRoute:
+      dashboardOrganizationsOrgIdTeamsTeamIdSettingsMembersIndexRoute,
+  }
+
+const dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteWithChildren =
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute._addFileChildren(
+    dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteChildren,
+  )
+
 interface dashboardRouteRouteChildren {
   dashboardIndexRoute: typeof dashboardIndexRoute
   dashboardGuidesIndexRoute: typeof dashboardGuidesIndexRoute
   dashboardStarredIndexRoute: typeof dashboardStarredIndexRoute
   dashboardTrashIndexRoute: typeof dashboardTrashIndexRoute
   dashboardGuidesGuideIdRoute: typeof dashboardGuidesGuideIdRoute
+  dashboardOrganizationsInvitationIndexRoute: typeof dashboardOrganizationsInvitationIndexRoute
+  dashboardOrganizationsOrgIdSettingsRouteRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute: typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteWithChildren
 }
 
 const dashboardRouteRouteChildren: dashboardRouteRouteChildren = {
@@ -318,6 +631,12 @@ const dashboardRouteRouteChildren: dashboardRouteRouteChildren = {
   dashboardStarredIndexRoute: dashboardStarredIndexRoute,
   dashboardTrashIndexRoute: dashboardTrashIndexRoute,
   dashboardGuidesGuideIdRoute: dashboardGuidesGuideIdRoute,
+  dashboardOrganizationsInvitationIndexRoute:
+    dashboardOrganizationsInvitationIndexRoute,
+  dashboardOrganizationsOrgIdSettingsRouteRoute:
+    dashboardOrganizationsOrgIdSettingsRouteRouteWithChildren,
+  dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRoute:
+    dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteWithChildren,
 }
 
 const dashboardRouteRouteWithChildren = dashboardRouteRoute._addFileChildren(
@@ -328,6 +647,7 @@ const rootRouteChildren: RootRouteChildren = {
   indexRoute: indexRoute,
   authRouteRoute: authRouteRouteWithChildren,
   dashboardRouteRoute: dashboardRouteRouteWithChildren,
+  createOrganizationIndexRoute: createOrganizationIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

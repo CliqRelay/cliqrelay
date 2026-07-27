@@ -5,4 +5,4 @@ export type {
 } from "./steps";
 export { STEP_TYPE_CONFIG } from "./steps";
 export type { AppUser as UserWithModifiedMetadata } from "./auth";
-export type { OnboardingChecklistItemType } from "./dashboard";
+export type { MemberProfile } from "./members";

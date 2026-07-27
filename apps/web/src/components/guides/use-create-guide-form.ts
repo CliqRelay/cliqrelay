@@ -1,6 +1,7 @@
 import { useForm, useStore } from "@tanstack/react-form";
 
 import { toast } from "@/hooks/use-toast";
+import { useTeamStore } from "@/stores/team-store";
 import { createGuide } from "@/server-fns/guides";
 
 type UseCreateGuideFormOptions = {
@@ -24,7 +25,8 @@ export function useCreateGuideForm({
 				return;
 			}
 			try {
-				const guide = await createGuide({ data: value });
+				const teamId = useTeamStore.getState().activeTeamId ?? "";
+				const guide = await createGuide({ data: { ...value, teamId } });
 				toast({ title: "Success", description: "Guide created" });
 				form.reset();
 				onOpenChange(false);

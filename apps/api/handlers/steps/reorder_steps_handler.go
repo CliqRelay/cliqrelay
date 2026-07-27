@@ -3,7 +3,7 @@ package steps
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -13,17 +13,17 @@ import (
 
 type ReorderStepsHandler struct {
 	appConfig    *config.AppConfig
-	stepsService interfaces.StepsService
+	stepsUseCase interfaces.StepsUseCase
 }
 
-func NewReorderStepsHandler(appConfig *config.AppConfig, stepsService interfaces.StepsService) *ReorderStepsHandler {
-	return &ReorderStepsHandler{appConfig: appConfig, stepsService: stepsService}
+func NewReorderStepsHandler(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) *ReorderStepsHandler {
+	return &ReorderStepsHandler{appConfig: appConfig, stepsUseCase: stepsUseCase}
 }
 
 func (h *ReorderStepsHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
 		var request types.ReorderStepsRequest
@@ -38,7 +38,7 @@ func (h *ReorderStepsHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		steps, err := h.stepsService.Reorder(ctx, actor, request.GuideID.String(), request.TargetStepID, request.PrevStepID, request.NextStepID)
+		steps, err := h.stepsUseCase.Reorder(ctx, actor, &request)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

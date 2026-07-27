@@ -3,7 +3,7 @@ package media_assets
 import (
 	"net/http"
 
-	"github.com/Authula/authula/models"
+	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -12,22 +12,22 @@ import (
 
 type GetMediaAssetByIDHandler struct {
 	appConfig          *config.AppConfig
-	mediaAssetsService interfaces.MediaAssetsService
+	mediaAssetsUseCase interfaces.MediaAssetsUseCase
 }
 
-func NewGetMediaAssetByIDHandler(appConfig *config.AppConfig, mediaAssetsService interfaces.MediaAssetsService) *GetMediaAssetByIDHandler {
-	return &GetMediaAssetByIDHandler{appConfig: appConfig, mediaAssetsService: mediaAssetsService}
+func NewGetMediaAssetByIDHandler(appConfig *config.AppConfig, mediaAssetsUseCase interfaces.MediaAssetsUseCase) *GetMediaAssetByIDHandler {
+	return &GetMediaAssetByIDHandler{appConfig: appConfig, mediaAssetsUseCase: mediaAssetsUseCase}
 }
 
 func (h *GetMediaAssetByIDHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		reqCtx, _ := models.GetRequestContext(ctx)
+		reqCtx, _ := authulamodels.GetRequestContext(ctx)
 		actor := reqCtx.Actor
 
-		id := r.PathValue("id")
+		mediaAssetID := r.PathValue("id")
 
-		mediaAsset, err := h.mediaAssetsService.GetByID(ctx, actor, id)
+		mediaAsset, err := h.mediaAssetsUseCase.Get(ctx, actor, mediaAssetID)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

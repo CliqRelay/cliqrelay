@@ -14,63 +14,63 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func StepsRoutes(appConfig *config.AppConfig, stepsSvc interfaces.StepsService) []authulamodels.Route {
-	stepsService := stepsSvc
-
-	createHandler := steps.NewCreateStepHandler(appConfig, stepsService)
-	getAllHandler := steps.NewGetAllStepsHandler(appConfig, stepsService)
-	getByIDHandler := steps.NewGetStepByIDHandler(appConfig, stepsService)
-	updateHandler := steps.NewUpdateStepHandler(appConfig, stepsService)
-	deleteHandler := steps.NewDeleteStepHandler(appConfig, stepsService)
-	reorderHandler := steps.NewReorderStepsHandler(appConfig, stepsService)
-	duplicateHandler := steps.NewDuplicateStepHandler(appConfig, stepsService)
+func StepsRoutes(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) []authulamodels.Route {
+	createHandler := steps.NewCreateStepHandler(appConfig, stepsUseCase)
+	getAllHandler := steps.NewGetAllStepsHandler(appConfig, stepsUseCase)
+	getByIDHandler := steps.NewGetStepByIDHandler(appConfig, stepsUseCase)
+	updateHandler := steps.NewUpdateStepHandler(appConfig, stepsUseCase)
+	deleteHandler := steps.NewDeleteStepHandler(appConfig, stepsUseCase)
+	reorderHandler := steps.NewReorderStepsHandler(appConfig, stepsUseCase)
+	duplicateHandler := steps.NewDuplicateStepHandler(appConfig, stepsUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
+	base := appConfig.BasePath
+
 	return []authulamodels.Route{
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/steps", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/steps", base),
 			Middleware: authMiddleware,
 			Handler:    createHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/steps", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/steps", base),
 			Middleware: authMiddleware,
 			Handler:    getAllHandler.Handle(),
 		},
 		{
+			Method:     "POST",
+			Path:       fmt.Sprintf("%s/steps/reorder", base),
+			Middleware: authMiddleware,
+			Handler:    reorderHandler.Handle(),
+		},
+		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/steps/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/steps/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    getByIDHandler.Handle(),
 		},
 		{
 			Method:     "PATCH",
-			Path:       fmt.Sprintf("%s/steps/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/steps/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    updateHandler.Handle(),
 		},
 		{
 			Method:     "DELETE",
-			Path:       fmt.Sprintf("%s/steps/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/steps/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    deleteHandler.Handle(),
 		},
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/steps/{id}/duplicate", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/steps/{id}/duplicate", base),
 			Middleware: authMiddleware,
 			Handler:    duplicateHandler.Handle(),
-		},
-		{
-			Method:     "POST",
-			Path:       fmt.Sprintf("%s/steps/reorder", appConfig.BasePath),
-			Middleware: authMiddleware,
-			Handler:    reorderHandler.Handle(),
 		},
 	}
 }

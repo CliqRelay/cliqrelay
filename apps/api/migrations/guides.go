@@ -7,14 +7,13 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func guidesPostgresInitial() authulamigrations.Migration {
+func guidesInitial() authulamigrations.Migration {
 	return authulamigrations.Migration{
-		Version: "20260605000000_guides_initial",
+		Version: "20260602000000_guides_initial",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return authulamigrations.ExecStatements(
 				ctx,
 				tx,
-				`CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
 				`CREATE OR REPLACE FUNCTION set_updated_at_fn() RETURNS TRIGGER AS $$
 					BEGIN
 						NEW.updated_at = NOW();
@@ -23,11 +22,13 @@ func guidesPostgresInitial() authulamigrations.Migration {
 					$$ LANGUAGE plpgsql;`,
 				`CREATE TABLE guides (
 					id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+					team_id UUID NOT NULL REFERENCES organization_teams(id) ON DELETE RESTRICT,
 					creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
 					title VARCHAR(255) NOT NULL,
 					description TEXT,
 					status VARCHAR(255) NOT NULL DEFAULT 'draft',
 					duration_seconds INT NOT NULL DEFAULT 0,
+					visibility VARCHAR(50) NOT NULL DEFAULT 'private',
 					published_at TIMESTAMP WITH TIME ZONE,
 					archived_at TIMESTAMP WITH TIME ZONE,
 					deleted_at TIMESTAMP WITH TIME ZONE,
@@ -40,6 +41,7 @@ func guidesPostgresInitial() authulamigrations.Migration {
 				`CREATE INDEX idx_guides_status ON guides (status);`,
 				`CREATE INDEX idx_guides_deleted_at ON guides (deleted_at);`,
 				`CREATE INDEX idx_guides_purge_requested_at ON guides (purge_requested_at);`,
+				`CREATE INDEX idx_guides_team_status_deleted ON guides (team_id, status, deleted_at);`,
 				`DROP TRIGGER IF EXISTS update_guides_updated_at_trigger ON guides;`,
 				`CREATE TRIGGER update_guides_updated_at_trigger
 					BEFORE UPDATE ON guides

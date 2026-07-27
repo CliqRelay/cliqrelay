@@ -11,6 +11,33 @@ import { toCamelCaseKeys, toSnakeCaseKeys } from "es-toolkit";
  *   to match the generated TypeScript types.
  */
 
+const CSRF_COOKIE_NAME = "authula_csrf_token";
+
+let cachedCsrfToken: string | undefined;
+
+function extractCsrfFromSetCookieHeaders(headers: Headers): void {
+	try {
+		const setCookie = typeof headers.getSetCookie === "function"
+			? headers.getSetCookie()
+			: [];
+		for (const cookie of setCookie) {
+			const match = cookie.match(
+				new RegExp(`(?:^|;\\s*)${CSRF_COOKIE_NAME}=([^;]+)`),
+			);
+			if (match) {
+				cachedCsrfToken = match[1];
+				return;
+			}
+		}
+	} catch {
+		// headers API not available in this environment
+	}
+}
+
+export function getCachedCsrfToken(): string | undefined {
+	return cachedCsrfToken;
+}
+
 // A dedicated error class makes it easy to type check and handle in UI layers
 export class ApiError extends Error {
 	status: number;
@@ -44,6 +71,8 @@ export const customFetch = async <T>(
 	const body = convertRequestBodyToSnakeCase(options?.body);
 
 	const res = await fetch(resolvedUrl, { ...options, body });
+
+	extractCsrfFromSetCookieHeaders(res.headers);
 
 	const responseBody = [204, 205, 304].includes(res.status)
 		? null

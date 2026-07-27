@@ -34,22 +34,26 @@ func (r *BunStarredGuidesRepository) GetAll(ctx context.Context, filter *types.G
 
 	if filter.Status != nil {
 		query = query.Where("g.status = ?", *filter.Status)
-	} else if filter.IncludeDeleted {
+	} else if filter.DeletedOnly {
 		query = query.Where("g.deleted_at IS NOT NULL")
 		query = query.Where("g.status = ?", models.StatusDeleted)
 	} else {
 		query = query.Where("g.deleted_at IS NULL")
 		if filter.PublishedOnly {
 			query = query.Where("g.status = ?", models.StatusPublished)
-		} else if filter.IncludeArchived {
-			query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
+		} else if filter.ArchivedOnly {
+			query = query.Where("g.status = ?", models.StatusArchived.ToString())
 		} else {
-			query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()}))
+			query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
 		}
 	}
 
 	if filter.Search != nil {
 		query = query.Where("g.title ILIKE ?", "%"+*filter.Search+"%")
+	}
+
+	if filter.TeamID != nil {
+		query = query.Where("g.team_id = ?", *filter.TeamID)
 	}
 
 	err := query.Order("g.updated_at DESC").Scan(ctx, &rows)

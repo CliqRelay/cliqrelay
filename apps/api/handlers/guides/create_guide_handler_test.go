@@ -15,6 +15,7 @@ import (
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestCreateGuideHandler(t *testing.T) {
@@ -33,11 +34,12 @@ func TestCreateGuideHandler(t *testing.T) {
 		{
 			name: "success",
 			payload: types.CreateGuideRequest{
+				TeamID:      uuid.New(),
 				Title:       "Test Guide",
 				Description: new("A description"),
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
-				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateGuideDTO")).
+				mockRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: "test-user-123",
@@ -59,7 +61,8 @@ func TestCreateGuideHandler(t *testing.T) {
 		{
 			name: "validation error",
 			payload: types.CreateGuideRequest{
-				Title: "",
+				TeamID: uuid.New(),
+				Title:  "",
 			},
 			setup:          func(mockRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -68,10 +71,11 @@ func TestCreateGuideHandler(t *testing.T) {
 		{
 			name: "service error",
 			payload: types.CreateGuideRequest{
-				Title: "Test",
+				TeamID: uuid.New(),
+				Title:  "Test",
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
-				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateGuideDTO")).
+				mockRepo.On("Create", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -87,9 +91,10 @@ func TestCreateGuideHandler(t *testing.T) {
 			mockRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanCreateGuide", mock.Anything, mock.AnythingOfType("*models.Actor")).Return(nil)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, mockAuthz, (*interfaces.GuideHooks)(nil))
-			handler := handlersguides.NewCreateGuideHandler(appConfig, svc)
+			mockAuthz.On("CanCreateGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
+			handler := handlersguides.NewCreateGuideHandler(appConfig, uc)
 
 			var req tests.HandlerTestRequest
 			if tt.rawBody != nil {

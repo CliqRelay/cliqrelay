@@ -11,8 +11,10 @@ import (
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
 	"github.com/CliqRelay/cliqrelay/tests"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestStarGuideHandler(t *testing.T) {
@@ -65,11 +67,11 @@ func TestStarGuideHandler(t *testing.T) {
 						Title:     "Guide Title",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
+					Twice()
 				mockStarredRepo.On("Star", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(nil).
 					Once()
-				mockAuthz.On("CanReadGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			} else {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
@@ -78,19 +80,20 @@ func TestStarGuideHandler(t *testing.T) {
 						Title:     "Guide Title",
 						Status:    models.StatusDraft,
 					}, nil).
-					Once()
+					Twice()
 				mockStarredRepo.On("Star", mock.Anything, "test-user-123", uuid.MustParse(guideID)).
 					Return(assert.AnError).
 					Once()
-				mockAuthz.On("CanReadGuide", mock.Anything, mock.AnythingOfType("*models.Actor"), mock.AnythingOfType("*models.Guide")).Return(nil)
+				mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
 
-			svc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo, mockAuthz)
-			handler := handlersguides.NewStarGuideHandler(appConfig, svc)
+			starredSvc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
+			handler := handlersguides.NewStarGuideHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)
 			req.Req.SetPathValue("id", guideID)
-
 			handler.Handle()(req.W, req.Req)
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)

@@ -8,6 +8,7 @@ export type NavItem = {
   href?: string;
   children?: NavItem[];
   isActive?: boolean;
+  component?: ComponentType;
 };
 
 export interface SlotRegistration {

@@ -2,6 +2,7 @@ import { browser } from "wxt/browser";
 
 import { api } from "@repo/api-client";
 
+import { getActiveTeamId } from "@/lib/active-team";
 import { withCsrf } from "@/lib/csrf";
 import { validateOffscreenCommand } from "@/models/offscreen";
 import { createOffscreenRuntime } from "@/services/offscreen";
@@ -20,8 +21,9 @@ const getOrCreateGuideId =
 		}
 
 		const createPromise = (async () => {
+			const teamId = await getActiveTeamId();
 			const guideResponse = await api.guides.createGuide(
-				{ title: "Untitled Guide" },
+				{ title: "Untitled Guide", teamId: teamId ?? "" },
 				await withCsrf(),
 			);
 			activeGuideId = guideResponse.guide.id;

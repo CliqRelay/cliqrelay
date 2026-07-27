@@ -14,47 +14,47 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func MediaAssetsRoutes(appConfig *config.AppConfig, mediaSvc interfaces.MediaAssetsService) []authulamodels.Route {
-	mediaAssetsService := mediaSvc
-
-	createHandler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, mediaAssetsService)
-	getAllHandler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, mediaAssetsService)
-	getByIDHandler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, mediaAssetsService)
-	updateHandler := handlersmediaassets.NewUpdateMediaAssetHandler(appConfig, mediaAssetsService)
-	deleteHandler := handlersmediaassets.NewDeleteMediaAssetHandler(appConfig, mediaAssetsService)
+func MediaAssetsRoutes(appConfig *config.AppConfig, mediaUseCase interfaces.MediaAssetsUseCase) []authulamodels.Route {
+	createHandler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, mediaUseCase)
+	getAllHandler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, mediaUseCase)
+	getByIDHandler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, mediaUseCase)
+	updateHandler := handlersmediaassets.NewUpdateMediaAssetHandler(appConfig, mediaUseCase)
+	deleteHandler := handlersmediaassets.NewDeleteMediaAssetHandler(appConfig, mediaUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
+	base := appConfig.BasePath
+
 	return []authulamodels.Route{
 		{
 			Method:     "POST",
-			Path:       fmt.Sprintf("%s/media-assets", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/media-assets", base),
 			Middleware: authMiddleware,
 			Handler:    createHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/media-assets", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/media-assets", base),
 			Middleware: authMiddleware,
 			Handler:    getAllHandler.Handle(),
 		},
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/media-assets/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/media-assets/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    getByIDHandler.Handle(),
 		},
 		{
 			Method:     "PATCH",
-			Path:       fmt.Sprintf("%s/media-assets/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/media-assets/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    updateHandler.Handle(),
 		},
 		{
 			Method:     "DELETE",
-			Path:       fmt.Sprintf("%s/media-assets/{id}", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/media-assets/{id}", base),
 			Middleware: authMiddleware,
 			Handler:    deleteHandler.Handle(),
 		},

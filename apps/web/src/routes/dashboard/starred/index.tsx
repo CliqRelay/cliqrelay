@@ -5,6 +5,7 @@ import { GuideList, StarredEmptyState } from "@/components/guides";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getStarredGuides } from "@/server-fns/guides";
+import { useTeamStore } from "@/stores/team-store";
 
 export const Route = createFileRoute("/dashboard/starred")({
 	component: StarredGuides,
@@ -71,13 +72,18 @@ function StarredGuides() {
 	const { guides } = Route.useLoaderData();
 	const router = useRouter();
 
+	const teams = useTeamStore((state) => state.teams);
+	const activeTeamId = useTeamStore((state) => state.activeTeamId);
+	const activeTeam = teams.find((t) => t.id === activeTeamId);
+	const teamName = activeTeam?.name ?? "this team";
+
 	return (
 		<div className="p-6">
 			<div className="mb-6 flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">Starred Guides</h1>
 					<p className="text-sm text-muted-foreground">
-						Guides you&apos;ve bookmarked for quick access
+						Starred guides in {teamName}
 					</p>
 				</div>
 			</div>

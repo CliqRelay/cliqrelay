@@ -12,8 +12,11 @@ import (
 	handlersmediaassets "github.com/CliqRelay/cliqrelay/handlers/media_assets"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	media_assetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
+	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/tests"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestDeleteMediaAssetHandler(t *testing.T) {
@@ -34,13 +37,13 @@ func TestDeleteMediaAssetHandler(t *testing.T) {
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				stepID := uuid.New()
 				guideID := uuid.New()
-				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      stepID,
 						StoragePath: "screenshots/test.png",
 					}, nil).
-					Once()
+					Twice()
 				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
@@ -56,7 +59,7 @@ func TestDeleteMediaAssetHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("Delete", mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      uuid.New(),
@@ -73,13 +76,13 @@ func TestDeleteMediaAssetHandler(t *testing.T) {
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				stepID := uuid.New()
 				guideID := uuid.New()
-				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      stepID,
 						StoragePath: "screenshots/test.png",
 					}, nil).
-					Once()
+					Twice()
 				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
 					Return(&models.Step{
 						ID:        stepID,
@@ -95,7 +98,7 @@ func TestDeleteMediaAssetHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("Delete", mock.Anything, mock.AnythingOfType("string")).
+				mockMediaAssetsRepo.On("Delete", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -116,9 +119,12 @@ func TestDeleteMediaAssetHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, mockAuthz, (*interfaces.MediaAssetHooks)(nil))
-			handler := handlersmediaassets.NewDeleteMediaAssetHandler(appConfig, svc)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			maSvc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewMediaAssetsUseCase(mockAuthz, maSvc, stepsSvc, guidesSvc)
+			handler := handlersmediaassets.NewDeleteMediaAssetHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodDelete, path, nil)
 			req.Req.SetPathValue("id", assetID)

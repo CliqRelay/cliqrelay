@@ -2,6 +2,7 @@ import { UserRound } from "lucide-react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import UserDropdown from "./user-dropdown";
+import { OrgDropdown } from "./org-dropdown";
 import { ThemeToggle } from "./theme-toggle";
 import type { AppUser } from "@/models/auth";
 import { Button } from "../ui/button";
@@ -13,8 +14,9 @@ type Props = {
 export function SiteHeader({ user }: Props) {
 	return (
 		<div className="flex w-full items-center justify-between">
-			<div className="flex items-center gap-2">
+			<div className="flex items-center gap-1">
 				<SidebarTrigger className="-ml-1 h-8 w-8 cursor-pointer" />
+				<OrgDropdown />
 			</div>
 			<div className="flex items-center gap-1">
 				<ThemeToggle />

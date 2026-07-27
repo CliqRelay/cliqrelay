@@ -12,6 +12,7 @@ import { api, type Guide } from "@repo/api-client";
 import type { AppUser } from "@/models/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 type Props = {
 	user: AppUser;
@@ -21,7 +22,12 @@ type Props = {
 
 export function GuideMetadataCard({ user, guide, stepCount }: Props) {
 	const mutation = api.guides.useRecalculateGuideDuration({
-		request: { credentials: "include" },
+		request: {
+			credentials: "include",
+			headers: {
+				...getCsrfTokenHeader(),
+			},
+		},
 	});
 
 	useEffect(() => {

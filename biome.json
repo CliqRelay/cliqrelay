@@ -36,6 +36,9 @@
 			"preset": "recommended",
 			"suspicious": {
 				"noArrayIndexKey": "warn"
+			},
+			"correctness": {
+				"noChildrenProp": "off"
 			}
 		}
 	},

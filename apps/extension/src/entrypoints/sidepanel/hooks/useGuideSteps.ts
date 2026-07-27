@@ -13,7 +13,7 @@ type UseGuideStepsResult = {
 
 export function useGuideSteps(guideId: string | null): UseGuideStepsResult {
 	const query = api.steps.useGetAllStepsByGuideId(
-		{ guideId: guideId ?? undefined },
+		{ guide_id: guideId ?? undefined },
 		{
 			query: {
 				enabled: !!guideId,

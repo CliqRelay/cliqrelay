@@ -10,10 +10,14 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	handlersuploads "github.com/CliqRelay/cliqrelay/handlers/uploads"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
+	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
 func TestCompleteUploadHandler(t *testing.T) {
@@ -52,7 +56,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 						SortOrder: "a0",
 						Action:    &stepAction,
 					}, nil).
-					Once()
+					Twice()
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
@@ -61,7 +65,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockMediaAssetsRepo.On("Create", mock.Anything, mock.AnythingOfType("*types.CreateMediaAssetDTO")).
+				mockMediaAssetsRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.MediaAsset{
 						ID:          uuid.New(),
 						StepID:      stepID,
@@ -118,7 +122,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 				StoragePath: storagePath,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
 			},
@@ -154,7 +158,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 				StoragePath: storagePath,
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
-				mockStepsRepo.On("GetByID", mock.Anything, mock.AnythingOfType("string")).
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -176,9 +180,12 @@ func TestCompleteUploadHandler(t *testing.T) {
 				tt.presignSetup(mockPresignClient)
 			}
 			mockAuthz := new(tests.MockAuthorizationService)
-			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, mockAuthz, "test-bucket")
-			handler := handlersuploads.NewCompleteUploadHandler(appConfig, svc)
+			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, "test-bucket")
+			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			uc := usecases.NewUploadsUseCase(mockAuthz, svc, guidesSvc, stepsSvc)
+			handler := handlersuploads.NewCompleteUploadHandler(appConfig, uc)
 
 			path := "/api/v1/uploads/complete"
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, tt.payload)
