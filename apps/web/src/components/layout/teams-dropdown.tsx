@@ -13,11 +13,11 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 import { setActiveTeamCookie } from "@/lib/team-cookie";
-import { useTeamStore } from "@/stores/team-store";
+import { cn } from "@/lib/utils";
 import { useOrgStore } from "@/stores/org-store";
-import { CreateTeamDialog } from "./create-team-dialog";
+import { useTeamStore } from "@/stores/team-store";
+import { CreateTeamDialogSlot } from "./create-team-dialog-slot";
 
 export function TeamsDropdown() {
 	const navigate = useNavigate();
@@ -114,7 +114,7 @@ export function TeamsDropdown() {
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-			<CreateTeamDialog
+			<CreateTeamDialogSlot
 				open={createDialogOpen}
 				onOpenChange={setCreateDialogOpen}
 			/>
