@@ -2,10 +2,10 @@ import { useState } from "react";
 
 import type { Guide } from "@repo/api-client";
 
-import { GuideEditableTitle } from "./guide-editable-title";
-import { GuideEditableDescription } from "./guide-editable-description";
-import { GuideMetadataCard } from "./guide-metadata-card";
 import type { AppUser } from "@/models/auth";
+import { GuideEditableDescription } from "./guide-editable-description";
+import { GuideEditableTitle } from "./guide-editable-title";
+import { GuideMetadataCard } from "./guide-metadata-card";
 
 type Props = {
 	user: AppUser;

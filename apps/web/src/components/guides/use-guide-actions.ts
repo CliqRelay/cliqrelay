@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import {
 	archiveGuide,
 	deleteGuide,
@@ -11,7 +11,15 @@ import {
 	unpublishGuide,
 } from "@/server-fns/guides";
 
-type ConfirmActionType = "publish" | "unpublish" | "archive" | "unarchive" | "delete" | "restore" | "permanently-delete" | null;
+type ConfirmActionType =
+	| "publish"
+	| "unpublish"
+	| "archive"
+	| "unarchive"
+	| "delete"
+	| "restore"
+	| "permanently-delete"
+	| null;
 
 const actionMessages: Record<string, string> = {
 	publish: "Guide published",
@@ -32,18 +40,15 @@ export function useGuideActions(onAction?: (action: string) => void) {
 		setLoading(true);
 		try {
 			await fn();
-			toast({
-				title: "Success",
+			toast("Success", {
 				description: actionMessages[action] ?? "Action completed",
 			});
 			setConfirmAction(null);
 			onAction?.(action);
 		} catch (error) {
-			toast({
-				title: "Error",
+			toast.error("Error", {
 				description:
 					error instanceof Error ? error.message : "An error occurred",
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -59,7 +64,8 @@ export function useGuideActions(onAction?: (action: string) => void) {
 			unarchive: (id) => unarchiveGuide({ data: { guideId: id } }),
 			delete: (id) => deleteGuide({ data: { guideId: id } }),
 			restore: (id) => restoreGuide({ data: { guideId: id } }),
-			"permanently-delete": (id) => permanentlyDeleteGuide({ data: { guideId: id } }),
+			"permanently-delete": (id) =>
+				permanentlyDeleteGuide({ data: { guideId: id } }),
 		};
 		execute(confirmAction, () => serverFns[confirmAction](guideId));
 	};

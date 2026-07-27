@@ -149,7 +149,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
-			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
 			handler := handlerssteps.NewGetAllStepsHandler(appConfig, uc)
 

@@ -204,7 +204,7 @@ func TestUpdateStepHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
-			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
 			handler := handlerssteps.NewUpdateStepHandler(appConfig, uc)
 

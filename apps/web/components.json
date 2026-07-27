@@ -6,7 +6,7 @@
   "tailwind": {
     "config": "",
     "css": "src/styles.css",
-    "baseColor": "zinc",
+    "baseColor": "slate",
     "cssVariables": true,
     "prefix": ""
   },
@@ -19,6 +19,7 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@shadcn-space": "https://shadcnspace.com/r/{name}.json"
+    "@shadcn-space": "https://shadcnspace.com/r/{name}.json",
+    "@beui": "https://beui.dev/r/{name}.json"
   }
 }

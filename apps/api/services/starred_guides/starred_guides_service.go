@@ -67,10 +67,22 @@ func (s *StarredGuidesService) Unstar(ctx context.Context, userID string, guideI
 	return s.starredGuidesRepo.Unstar(ctx, userID, parsedID)
 }
 
-func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, error) {
-	rows, err := s.starredGuidesRepo.GetAll(ctx, filter)
+func (s *StarredGuidesService) IsStarred(ctx context.Context, guideID string, userID string) (bool, error) {
+	if strings.TrimSpace(guideID) == "" {
+		return false, constants.ErrInvalidGuideID
+	}
+	parsedID, err := uuid.Parse(guideID)
 	if err != nil {
-		return nil, err
+		return false, constants.ErrInvalidGuideID
+	}
+
+	return s.starredGuidesRepo.IsStarred(ctx, parsedID, userID)
+}
+
+func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error) {
+	rows, total, err := s.starredGuidesRepo.GetAll(ctx, filter)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	guides := make([]*models.Guide, len(rows))
@@ -79,5 +91,5 @@ func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, filter *typ
 		guides[i].IsStarred = true
 	}
 
-	return guides, nil
+	return guides, total, nil
 }

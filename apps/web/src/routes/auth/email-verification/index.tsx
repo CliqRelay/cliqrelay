@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Mail, ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Mail, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,9 +11,9 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
-import { authulaClient } from "@/lib/authula-client";
 import { envClient } from "@/constants/env-client";
+import { authulaClient } from "@/lib/authula-client";
+import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute("/auth/email-verification")({
 	component: EmailVerificationPage,
@@ -31,13 +31,11 @@ function EmailVerificationPage() {
 				callbackUrl: `${envClient.baseUrl}/dashboard`,
 			});
 
-			toast({
-				title: "Email sent",
+			toast("Email sent", {
 				description: "Verification email has been resent.",
 			});
 		} catch (error: any) {
-			toast({
-				title: "Failed to resend",
+			toast("Failed to resend", {
 				description: error?.message || "An unknown error occurred",
 			});
 		} finally {

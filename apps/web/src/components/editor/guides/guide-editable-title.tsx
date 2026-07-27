@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { useInlineEditField } from "@/hooks/useInlineEditField";
+import { cn } from "@/lib/utils";
 
 type Props = {
 	title: string;

@@ -1,15 +1,13 @@
+import { useForm } from "@tanstack/react-form";
 import {
 	createFileRoute,
 	isRedirect,
 	redirect,
 	useNavigate,
 } from "@tanstack/react-router";
-import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import {
 	Card,
 	CardContent,
@@ -17,8 +15,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { authulaClient } from "@/lib/authula-client";
+import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute("/create-organization")({
 	beforeLoad: async () => {
@@ -77,15 +77,13 @@ function CreateOrganization() {
 					role: "admin",
 				});
 
-				toast({
-					title: "Success",
+				toast("Success", {
 					description: "Your organization has been created.",
 				});
 
 				navigate({ to: "/dashboard" });
 			} catch (error: any) {
-				toast({
-					title: "Failed to create organization",
+				toast("Failed to create organization", {
 					description: error?.message || "An unknown error occurred",
 				});
 			}

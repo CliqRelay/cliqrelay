@@ -12,7 +12,7 @@ import (
 type GuidesUseCase interface {
 	Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateGuideRequest) (*models.Guide, error)
 	CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error)
-	List(ctx context.Context, actor *authulamodels.Actor, teamID string, status *string) ([]*models.Guide, error)
+	List(ctx context.Context, actor *authulamodels.Actor, teamID string, status *string, excludeArchived bool, page, limit int, sortBy, sortDir string) ([]*models.Guide, int, error)
 	Get(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	Update(ctx context.Context, actor *authulamodels.Actor, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error)
 	Delete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
@@ -24,7 +24,8 @@ type GuidesUseCase interface {
 	Restore(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	PermanentlyDelete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	RecalculateDuration(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
+	BulkAction(ctx context.Context, actor *authulamodels.Actor, action string, req *types.BulkGuidesRequest) error
 	Star(ctx context.Context, actor *authulamodels.Actor, guideID string) error
 	Unstar(ctx context.Context, actor *authulamodels.Actor, guideID string) error
-	GetStarred(ctx context.Context, actor *authulamodels.Actor, teamID string) ([]*models.Guide, error)
+	GetStarred(ctx context.Context, actor *authulamodels.Actor, teamID string, page, limit int) ([]*models.Guide, int, error)
 }

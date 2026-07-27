@@ -2,12 +2,12 @@ import { Activity } from "react";
 
 import type { Guide } from "@repo/api-client";
 
-import { GuideHeader } from "./guide-header";
-import { GuideWorkflowEditMode } from "./guide-workflow-edit-mode";
-import { GuideWorkflowViewMode } from "./guide-workflow-view-mode";
 import { useGuideStepMutations } from "@/hooks/useGuideStepMutations";
 import { useStepEditor } from "@/hooks/useStepEditor";
 import type { AppUser } from "@/models/auth";
+import { GuideHeader } from "./guide-header";
+import { GuideWorkflowEditMode } from "./guide-workflow-edit-mode";
+import { GuideWorkflowViewMode } from "./guide-workflow-view-mode";
 
 type Props = {
 	user: AppUser;

@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
 import { authulaClient } from "@/lib/authula-client";
+import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute("/auth/sign-in")({
 	component: SignInPage,
@@ -46,15 +46,13 @@ function SignInPage() {
 			try {
 				await authulaClient.emailPassword.signIn(value);
 
-				toast({
-					title: "Success",
+				toast("Success", {
 					description: "Signed in successfully.",
 				});
 
 				navigate({ to: "/dashboard" });
 			} catch (error: any) {
-				toast({
-					title: "Sign in failed",
+				toast("Sign in failed", {
 					description: error?.message || "An unknown error occurred",
 				});
 			}

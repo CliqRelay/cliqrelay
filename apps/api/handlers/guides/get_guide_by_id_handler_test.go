@@ -69,7 +69,7 @@ func TestGetGuideHandler(t *testing.T) {
 					Once()
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
 			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := handlersguides.NewGetGuideByIDHandler(appConfig, uc)
 

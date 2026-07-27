@@ -22,9 +22,9 @@ func (m *MockGuidesRepository) Create(ctx context.Context, data *types.CreateGui
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
-func (m *MockGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, error) {
+func (m *MockGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error) {
 	args := m.Called(ctx, filter)
-	return args.Get(0).([]*models.Guide), args.Error(1)
+	return args.Get(0).([]*models.Guide), args.Int(1), args.Error(2)
 }
 
 func (m *MockGuidesRepository) GetByID(ctx context.Context, id string) (*models.Guide, error) {
@@ -120,4 +120,19 @@ func (m *MockGuidesRepository) GetPendingPurge(ctx context.Context) ([]uuid.UUID
 func (m *MockGuidesRepository) HardDelete(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
+}
+
+func (m *MockGuidesRepository) BulkDelete(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error) {
+	args := m.Called(ctx, ids, teamID, actorID, isAdmin)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockGuidesRepository) BulkRestore(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error) {
+	args := m.Called(ctx, ids, teamID, actorID, isAdmin)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockGuidesRepository) BulkPermanentlyDelete(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error) {
+	args := m.Called(ctx, ids, teamID, actorID, isAdmin)
+	return args.Get(0).(int64), args.Error(1)
 }

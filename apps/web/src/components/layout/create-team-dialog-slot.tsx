@@ -12,7 +12,7 @@ export function CreateTeamDialogSlot({ open, onOpenChange }: Props) {
 
 	if (slot) {
 		const Component = slot.component;
-		return <Component />;
+		return <Component open={open} onOpenChange={onOpenChange} />;
 	}
 
 	return (

@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { ExtensionSlot } from "@repo/extensions-sdk";
+
 import { OrgSettingsTeamsFallback } from "@/components/settings/org-settings-teams-fallback";
 
 export const Route = createFileRoute(
@@ -9,5 +11,10 @@ export const Route = createFileRoute(
 });
 
 function OrgSettingsTeamsPageComponent() {
-	return <OrgSettingsTeamsFallback isUpgradeAvailable={false} />;
+	return (
+		<ExtensionSlot
+			name="org-settings-teams"
+			fallback={OrgSettingsTeamsFallback}
+		/>
+	);
 }

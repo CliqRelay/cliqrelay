@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { Lock, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { envClient } from "@/constants/env-client";
+import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
 
 type Props = {
 	isUpgradeAvailable: boolean;
@@ -62,7 +61,7 @@ export function CreateTeamFallback({
 						</ul>
 					</div>
 				</div>
-				<DialogFooter>
+				<DialogFooter className="flex flex-row justify-between items-center">
 					<Button
 						type="button"
 						variant="outline"
@@ -80,14 +79,7 @@ export function CreateTeamFallback({
 							Upgrade to Pro
 						</Button>
 					) : (
-						<Button
-							type="button"
-							variant="default"
-							className="gap-2"
-							onClick={() => window.open(envClient.siteUrl)}
-						>
-							Learn About {envClient.appName} Pro
-						</Button>
+						<LearnAboutProButton />
 					)}
 				</DialogFooter>
 			</DialogContent>

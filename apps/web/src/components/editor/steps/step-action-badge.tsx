@@ -1,4 +1,4 @@
-import { MousePointerClickIcon, KeyboardIcon, CompassIcon } from "lucide-react";
+import { CompassIcon, KeyboardIcon, MousePointerClickIcon } from "lucide-react";
 
 import type { StepAction } from "@repo/api-client";
 

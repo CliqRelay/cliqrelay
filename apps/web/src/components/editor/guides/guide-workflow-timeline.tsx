@@ -173,7 +173,7 @@ export function GuideWorkflowTimeline({
 								<Button
 									variant="outline"
 									size="sm"
-									className="w-full border-dashed text-muted-foreground hover:text-foreground"
+									className="w-full border-dashed text-muted-foreground hover:text-foreground bg-background"
 								>
 									<PlusIcon className="mr-1 h-4 w-4" />
 									Add Step

@@ -1,18 +1,16 @@
 import { useState } from "react";
 
+import { useForm } from "@tanstack/react-form";
 import {
 	createFileRoute,
 	Link,
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { useForm } from "@tanstack/react-form";
+import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react";
 import { z } from "zod";
-import { Eye, EyeOff, Lock, ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import {
 	Card,
 	CardContent,
@@ -20,8 +18,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { authulaClient } from "@/lib/authula-client";
+import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute("/auth/change-password")({
 	component: ChangePasswordPage,
@@ -70,15 +70,13 @@ function ChangePasswordPage() {
 					password: value.password,
 				});
 
-				toast({
-					title: "Success",
+				toast("Success", {
 					description: "Your password has been changed successfully.",
 				});
 
 				navigate({ to: "/auth/sign-in" });
 			} catch (error: any) {
-				toast({
-					title: "Change failed",
+				toast("Change failed", {
 					description: error?.message || "An unknown error occurred",
 				});
 			}

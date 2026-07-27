@@ -38,13 +38,13 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 	cases := []struct {
 		name    string
 		guideID string
-		setup   func(*tests.MockGuidesRepository, *tests.MockGuidesCacheService, *tests.MockStepsRepository)
+		setup   func(*tests.MockGuidesRepository, *tests.MockStepsRepository)
 		wantErr bool
 	}{
 		{
 			name:    "publishes guide successfully",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService, mockStepsRepo *tests.MockStepsRepository) {
+			setup: func(mockRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository) {
 				future := time.Now().Add(time.Hour).UTC()
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(draftGuide, nil).
@@ -69,22 +69,19 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 						PublishedAt: &future,
 					}, nil).
 					Once()
-				mockCache.On("Invalidate", mock.Anything, mock.Anything).
-					Return(nil).
-					Once()
 			},
 		},
 		{
 			name:    "returns error for empty guide ID",
 			guideID: "",
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService, mockStepsRepo *tests.MockStepsRepository) {
+			setup: func(mockRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository) {
 			},
 			wantErr: true,
 		},
 		{
 			name:    "returns error when guide not found via GetByID",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService, mockStepsRepo *tests.MockStepsRepository) {
+			setup: func(mockRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
@@ -94,7 +91,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 		{
 			name:    "returns error when guide is not draft",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService, mockStepsRepo *tests.MockStepsRepository) {
+			setup: func(mockRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
@@ -109,7 +106,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 		{
 			name:    "propagates repository error",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService, mockStepsRepo *tests.MockStepsRepository) {
+			setup: func(mockRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(draftGuide, nil).
 					Once()
@@ -136,10 +133,9 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			mockRepo := new(tests.MockGuidesRepository)
-			mockCache := new(tests.MockGuidesCacheService)
 			mockStepsRepo := new(tests.MockStepsRepository)
-			tt.setup(mockRepo, mockCache, mockStepsRepo)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, mockStepsRepo, testRedisClient(), (*interfaces.GuideHooks)(nil))
+			tt.setup(mockRepo, mockStepsRepo)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, mockStepsRepo, testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Publish(context.Background(), tt.guideID)
 
@@ -154,7 +150,6 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
-			mockCache.AssertExpectations(t)
 		})
 	}
 }
@@ -171,13 +166,13 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 	cases := []struct {
 		name    string
 		guideID string
-		setup   func(*tests.MockGuidesRepository, *tests.MockGuidesCacheService)
+		setup   func(*tests.MockGuidesRepository)
 		wantErr bool
 	}{
 		{
 			name:    "unpublishes published guide successfully",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(publishedGuide, nil).
 					Once()
@@ -189,21 +184,18 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Once()
-				mockCache.On("Invalidate", mock.Anything, mock.Anything).
-					Return(nil).
-					Once()
 			},
 		},
 		{
 			name:    "returns error for empty guide ID",
 			guideID: "",
-			setup:   func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {},
+			setup:   func(mockRepo *tests.MockGuidesRepository) {},
 			wantErr: true,
 		},
 		{
 			name:    "returns error when guide not found via GetByID",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
@@ -213,7 +205,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 		{
 			name:    "returns error when guide is draft",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
@@ -228,7 +220,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 		{
 			name:    "returns error when guide is archived",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
@@ -243,7 +235,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 		{
 			name:    "propagates repository error",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(publishedGuide, nil).
 					Once()
@@ -259,9 +251,8 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			mockRepo := new(tests.MockGuidesRepository)
-			mockCache := new(tests.MockGuidesCacheService)
-			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
+			tt.setup(mockRepo)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Unpublish(context.Background(), tt.guideID)
 
@@ -276,7 +267,6 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
-			mockCache.AssertExpectations(t)
 		})
 	}
 }
@@ -293,13 +283,13 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 	cases := []struct {
 		name    string
 		guideID string
-		setup   func(*tests.MockGuidesRepository, *tests.MockGuidesCacheService)
+		setup   func(*tests.MockGuidesRepository)
 		wantErr bool
 	}{
 		{
 			name:    "archives published guide successfully",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				future := time.Now().Add(time.Hour).UTC()
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(publishedGuide, nil).
@@ -313,15 +303,12 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 						ArchivedAt: &future,
 					}, nil).
 					Once()
-				mockCache.On("Invalidate", mock.Anything, mock.Anything).
-					Return(nil).
-					Once()
 			},
 		},
 		{
 			name:    "archives draft guide successfully",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				draftGuide := &models.Guide{
 					ID:        uuid.New(),
 					CreatorID: uuid.New().String(),
@@ -341,21 +328,18 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 						ArchivedAt: &future,
 					}, nil).
 					Once()
-				mockCache.On("Invalidate", mock.Anything, mock.Anything).
-					Return(nil).
-					Once()
 			},
 		},
 		{
 			name:    "returns error for empty guide ID",
 			guideID: "",
-			setup:   func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {},
+			setup:   func(mockRepo *tests.MockGuidesRepository) {},
 			wantErr: true,
 		},
 		{
 			name:    "returns error when guide not found via GetByID",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
@@ -365,7 +349,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 		{
 			name:    "returns error when guide is archived",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
@@ -380,7 +364,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 		{
 			name:    "propagates repository error",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(publishedGuide, nil).
 					Once()
@@ -396,9 +380,8 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			mockRepo := new(tests.MockGuidesRepository)
-			mockCache := new(tests.MockGuidesCacheService)
-			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
+			tt.setup(mockRepo)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Archive(context.Background(), tt.guideID)
 
@@ -413,7 +396,6 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
-			mockCache.AssertExpectations(t)
 		})
 	}
 }
@@ -423,13 +405,13 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 	cases := []struct {
 		name    string
 		guideID string
-		setup   func(*tests.MockGuidesRepository, *tests.MockGuidesCacheService)
+		setup   func(*tests.MockGuidesRepository)
 		wantErr bool
 	}{
 		{
 			name:    "restores guide successfully",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				deletedGuide := &models.Guide{
 					ID:        uuid.New(),
 					CreatorID: "test-user-123",
@@ -449,21 +431,18 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 						RestoredAt: &future,
 					}, nil).
 					Once()
-				mockCache.On("Invalidate", mock.Anything, mock.Anything).
-					Return(nil).
-					Once()
 			},
 		},
 		{
 			name:    "returns error for empty guide ID",
 			guideID: "",
-			setup:   func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {},
+			setup:   func(mockRepo *tests.MockGuidesRepository) {},
 			wantErr: true,
 		},
 		{
 			name:    "returns error when guide not found",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
@@ -473,7 +452,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 		{
 			name:    "returns error when guide is not deleted",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				guide := &models.Guide{
 					ID:        uuid.New(),
 					CreatorID: "test-user-123",
@@ -492,7 +471,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 		{
 			name:    "propagates repository error",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				deletedGuide := &models.Guide{
 					ID:        uuid.New(),
 					CreatorID: "test-user-123",
@@ -514,9 +493,8 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			mockRepo := new(tests.MockGuidesRepository)
-			mockCache := new(tests.MockGuidesCacheService)
-			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
+			tt.setup(mockRepo)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Restore(context.Background(), tt.guideID)
 
@@ -531,7 +509,6 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
-			mockCache.AssertExpectations(t)
 		})
 	}
 }
@@ -548,13 +525,13 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 	cases := []struct {
 		name    string
 		guideID string
-		setup   func(*tests.MockGuidesRepository, *tests.MockGuidesCacheService)
+		setup   func(*tests.MockGuidesRepository)
 		wantErr bool
 	}{
 		{
 			name:    "unarchives guide successfully",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				future := time.Now().Add(time.Hour).UTC()
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(archivedGuide, nil).
@@ -568,21 +545,18 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 						RestoredAt: &future,
 					}, nil).
 					Once()
-				mockCache.On("Invalidate", mock.Anything, mock.Anything).
-					Return(nil).
-					Once()
 			},
 		},
 		{
 			name:    "returns error for empty guide ID",
 			guideID: "",
-			setup:   func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {},
+			setup:   func(mockRepo *tests.MockGuidesRepository) {},
 			wantErr: true,
 		},
 		{
 			name:    "returns error when guide not found via GetByID",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(nil, nil).
 					Once()
@@ -592,7 +566,7 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 		{
 			name:    "returns error when guide is not archived",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
@@ -607,7 +581,7 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 		{
 			name:    "propagates repository error",
 			guideID: uuid.New().String(),
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(archivedGuide, nil).
 					Once()
@@ -623,9 +597,8 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			mockRepo := new(tests.MockGuidesRepository)
-			mockCache := new(tests.MockGuidesCacheService)
-			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
+			tt.setup(mockRepo)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Unarchive(context.Background(), tt.guideID)
 
@@ -640,7 +613,6 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
-			mockCache.AssertExpectations(t)
 		})
 	}
 }
@@ -651,7 +623,7 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 		name    string
 		req     *types.CreateGuideRequest
 		actor   *authulamodels.Actor
-		setup   func(*tests.MockGuidesRepository, *tests.MockGuidesCacheService)
+		setup   func(*tests.MockGuidesRepository)
 		wantErr bool
 	}{
 		{
@@ -661,7 +633,7 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 				Title:       "Test Guide",
 				Description: new("A test description"),
 			},
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
@@ -678,7 +650,7 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 			req: &types.CreateGuideRequest{
 				Title: "Test",
 			},
-			setup: func(mockRepo *tests.MockGuidesRepository, mockCache *tests.MockGuidesCacheService) {
+			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("Create", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()
@@ -691,9 +663,8 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			mockRepo := new(tests.MockGuidesRepository)
-			mockCache := new(tests.MockGuidesCacheService)
-			tt.setup(mockRepo, mockCache)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
+			tt.setup(mockRepo)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
 			guide, err := svc.Create(context.Background(), tt.actor, "00000000-0000-0000-0000-000000000001", tt.req)
 
@@ -710,214 +681,8 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 			}
 
 			mockRepo.AssertExpectations(t)
-			mockCache.AssertExpectations(t)
 		})
 	}
-}
-
-func TestGuidesService_GetByID_CacheHit(t *testing.T) {
-
-	guideID := uuid.New()
-	guide := &models.Guide{
-		ID:        guideID,
-		CreatorID: "user-123",
-		Title:     "Cached Guide",
-		Status:    models.StatusDraft,
-	}
-
-	mockRepo := new(tests.MockGuidesRepository)
-	mockCache := new(tests.MockGuidesCacheService)
-
-	mockCache.On("Get", mock.Anything, guideID.String()).
-		Return(guide, nil).
-		Once()
-
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
-
-	result, err := svc.GetByID(context.Background(), guideID.String())
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, guideID, result.ID)
-	assert.Equal(t, "Cached Guide", result.Title)
-
-	mockRepo.AssertExpectations(t)
-	mockCache.AssertExpectations(t)
-}
-
-func TestGuidesService_GetByID_CacheMiss(t *testing.T) {
-
-	guideID := uuid.New()
-	guide := &models.Guide{
-		ID:        guideID,
-		CreatorID: "user-123",
-		Title:     "DB Guide",
-		Status:    models.StatusDraft,
-	}
-
-	mockRepo := new(tests.MockGuidesRepository)
-	mockCache := new(tests.MockGuidesCacheService)
-	mockCache.On("Get", mock.Anything, guideID.String()).
-		Return(nil, nil).
-		Once()
-	mockRepo.On("GetByID", mock.Anything, guideID.String()).
-		Return(guide, nil).
-		Once()
-	mockCache.On("Set", mock.Anything, guide).
-		Return(nil).
-		Once()
-
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
-
-	result, err := svc.GetByID(context.Background(), guideID.String())
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, guideID, result.ID)
-	assert.Equal(t, "DB Guide", result.Title)
-
-	mockRepo.AssertExpectations(t)
-	mockCache.AssertExpectations(t)
-}
-
-func TestGuidesService_GetByID_CacheWrongOwner(t *testing.T) {
-
-	guideID := uuid.New()
-	guide := &models.Guide{
-		ID:        guideID,
-		CreatorID: "other-user",
-		Title:     "Cached Guide",
-		Status:    models.StatusDraft,
-	}
-
-	mockRepo := new(tests.MockGuidesRepository)
-	mockCache := new(tests.MockGuidesCacheService)
-	mockCache.On("Get", mock.Anything, guideID.String()).
-		Return(guide, nil).
-		Once()
-
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
-
-	result, err := svc.GetByID(context.Background(), guideID.String())
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-
-	mockCache.AssertExpectations(t)
-}
-
-func TestGuidesService_GetByID_NoCache(t *testing.T) {
-
-	guideID := uuid.New()
-	guide := &models.Guide{
-		ID:        guideID,
-		CreatorID: "user-123",
-		Title:     "DB Guide",
-		Status:    models.StatusDraft,
-	}
-
-	mockRepo := new(tests.MockGuidesRepository)
-	mockRepo.On("GetByID", mock.Anything, guideID.String()).
-		Return(guide, nil).
-		Once()
-
-	mockCache := new(tests.MockGuidesCacheService)
-
-	mockCache.On("Get", mock.Anything, guideID.String()).
-		Return(nil, nil).
-		Once()
-	mockCache.On("Set", mock.Anything, guide).
-		Return(nil).
-		Once()
-
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
-
-	result, err := svc.GetByID(context.Background(), guideID.String())
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "DB Guide", result.Title)
-
-	mockRepo.AssertExpectations(t)
-	mockCache.AssertExpectations(t)
-}
-
-func TestGuidesService_Update_InvalidatesCache(t *testing.T) {
-
-	guideID := uuid.New()
-
-	mockRepo := new(tests.MockGuidesRepository)
-	mockCache := new(tests.MockGuidesCacheService)
-	mockRepo.On("GetByID", mock.Anything, guideID.String()).
-		Return(&models.Guide{
-			ID:        guideID,
-			CreatorID: "test-user-123",
-			Title:     "Original Guide",
-			Status:    models.StatusDraft,
-		}, nil).
-		Once()
-	mockRepo.On("Update", mock.Anything, mock.Anything).
-		Return(&models.Guide{
-			ID:        guideID,
-			CreatorID: "test-user-123",
-			Title:     "Updated Guide",
-			Status:    models.StatusDraft,
-		}, nil).
-		Once()
-	mockCache.On("Invalidate", mock.Anything, guideID.String()).
-		Return(nil).
-		Once()
-
-	title := "Updated Guide"
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
-
-	result, err := svc.Update(context.Background(), guideID.String(), &types.UpdateGuideRequest{
-		Title: &title,
-	})
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "Updated Guide", result.Title)
-
-	mockRepo.AssertExpectations(t)
-	mockCache.AssertExpectations(t)
-}
-
-func TestGuidesService_Delete_InvalidatesCache(t *testing.T) {
-
-	guideID := uuid.New()
-
-	mockRepo := new(tests.MockGuidesRepository)
-	mockCache := new(tests.MockGuidesCacheService)
-	mockRepo.On("GetByID", mock.Anything, guideID.String()).
-		Return(&models.Guide{
-			ID:        guideID,
-			CreatorID: "test-user-123",
-			Title:     "Test Guide",
-			Status:    models.StatusDraft,
-		}, nil).
-		Once()
-	mockRepo.On("Delete", mock.Anything, guideID.String()).
-		Return(&models.Guide{
-			ID:        guideID,
-			CreatorID: "test-user-123",
-			Title:     "Deleted Guide",
-			Status:    models.StatusDeleted,
-		}, nil).
-		Once()
-	mockCache.On("Invalidate", mock.Anything, guideID.String()).
-		Return(nil).
-		Once()
-
-	svc := guidesservice.NewGuidesService(mockRepo, nil, mockCache, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
-
-	result, err := svc.Delete(context.Background(), guideID.String())
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-
-	mockRepo.AssertExpectations(t)
-	mockCache.AssertExpectations(t)
 }
 
 func TestGuidesService_GetAll(t *testing.T) {
@@ -939,7 +704,7 @@ func TestGuidesService_GetAll(t *testing.T) {
 			status: nil,
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return(guides, nil).
+					Return(guides, 2, nil).
 					Once()
 			},
 		},
@@ -948,7 +713,7 @@ func TestGuidesService_GetAll(t *testing.T) {
 			status: new(models.StatusArchived.ToString()),
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return(guides, nil).
+					Return(guides, 1, nil).
 					Once()
 			},
 		},
@@ -957,7 +722,7 @@ func TestGuidesService_GetAll(t *testing.T) {
 			status: new(models.StatusDraft.ToString()),
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return(guides, nil).
+					Return(guides, 1, nil).
 					Once()
 			},
 		},
@@ -966,16 +731,7 @@ func TestGuidesService_GetAll(t *testing.T) {
 			status: new(models.StatusPublished.ToString()),
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return(guides, nil).
-					Once()
-			},
-		},
-		{
-			name:   "returns deleted guides",
-			status: new(models.StatusDeleted.ToString()),
-			setup: func(mockRepo *tests.MockGuidesRepository) {
-				mockRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return(guides, nil).
+					Return(guides, 1, nil).
 					Once()
 			},
 		},
@@ -990,7 +746,7 @@ func TestGuidesService_GetAll(t *testing.T) {
 			status: new(models.StatusArchived.ToString()),
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return(([]*models.Guide)(nil), assert.AnError).
+					Return(([]*models.Guide)(nil), 0, assert.AnError).
 					Once()
 			},
 			wantErr: true,
@@ -1003,17 +759,44 @@ func TestGuidesService_GetAll(t *testing.T) {
 			mockRepo := new(tests.MockGuidesRepository)
 			mockStarredRepo := new(tests.MockStarredGuidesRepository)
 			tt.setup(mockRepo)
-			svc := guidesservice.NewGuidesService(mockRepo, mockStarredRepo, new(tests.MockGuidesCacheService), new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, mockStarredRepo, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
-			result, err := svc.GetAll(context.Background(), "00000000-0000-0000-0000-000000000001", tt.status, nil)
+			result, total, err := svc.GetAll(context.Background(), "00000000-0000-0000-0000-000000000001", tt.status, nil, false, 1, 10, "", "")
 
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, result)
+				assert.Zero(t, total)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, result)
 				assert.Len(t, result, 2)
+				assert.Greater(t, total, 0)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+
+			mockRepo := new(tests.MockGuidesRepository)
+			mockStarredRepo := new(tests.MockStarredGuidesRepository)
+			tt.setup(mockRepo)
+			svc := guidesservice.NewGuidesService(mockRepo, mockStarredRepo, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
+
+			result, total, err := svc.GetAll(context.Background(), "00000000-0000-0000-0000-000000000001", tt.status, nil, false, 1, 10, "", "")
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				assert.Zero(t, total)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				assert.Len(t, result, 2)
+				assert.Greater(t, total, 0)
 			}
 
 			mockRepo.AssertExpectations(t)

@@ -5,8 +5,8 @@ import {
 	redirect,
 } from "@tanstack/react-router";
 
-import type { UserWithModifiedMetadata } from "@/models";
 import { authulaClient } from "@/lib/authula-client";
+import type { UserWithModifiedMetadata } from "@/models";
 
 export const Route = createFileRoute("/auth")({
 	beforeLoad: async ({ location }) => {

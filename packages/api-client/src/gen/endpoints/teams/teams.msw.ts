@@ -9,22 +9,10 @@
 import type { RequestHandlerOptions } from "msw";
 import { HttpResponse, http } from "msw";
 
-import type {
-	GetAllTeamsResponse,
-	GetTeamMembershipsResponse,
-	UpdateTeamMembershipsResponse,
-} from "../../models";
-import {
-	getGetTeamMembershipsResponseMock,
-	getGetTeamsResponseMock,
-	getUpdateTeamMembershipsResponseMock,
-} from "./teams.faker";
+import type { GetAllTeamsResponse } from "../../models";
+import { getGetTeamsResponseMock } from "./teams.faker";
 
-export {
-	getGetTeamMembershipsResponseMock,
-	getGetTeamsResponseMock,
-	getUpdateTeamMembershipsResponseMock,
-} from "./teams.faker";
+export { getGetTeamsResponseMock } from "./teams.faker";
 
 export const getGetTeamsMockHandler = (
 	overrideResponse?:
@@ -49,58 +37,4 @@ export const getGetTeamsMockHandler = (
 		options,
 	);
 };
-
-export const getGetTeamMembershipsMockHandler = (
-	overrideResponse?:
-		| GetTeamMembershipsResponse
-		| ((
-				info: Parameters<Parameters<typeof http.get>[1]>[0],
-		  ) => Promise<GetTeamMembershipsResponse> | GetTeamMembershipsResponse),
-	options?: RequestHandlerOptions,
-) => {
-	return http.get(
-		"*/api/v1/teams/members/:memberId",
-		async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getGetTeamMembershipsResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
-};
-
-export const getUpdateTeamMembershipsMockHandler = (
-	overrideResponse?:
-		| UpdateTeamMembershipsResponse
-		| ((
-				info: Parameters<Parameters<typeof http.put>[1]>[0],
-		  ) =>
-				| Promise<UpdateTeamMembershipsResponse>
-				| UpdateTeamMembershipsResponse),
-	options?: RequestHandlerOptions,
-) => {
-	return http.put(
-		"*/api/v1/teams/members/:memberId",
-		async (info: Parameters<Parameters<typeof http.put>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getUpdateTeamMembershipsResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
-};
-export const getTeamsMock = () => [
-	getGetTeamsMockHandler(),
-	getGetTeamMembershipsMockHandler(),
-	getUpdateTeamMembershipsMockHandler(),
-];
+export const getTeamsMock = () => [getGetTeamsMockHandler()];

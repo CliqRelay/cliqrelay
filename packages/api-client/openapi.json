@@ -53,6 +53,13 @@
         "operationId": "getAllGuides",
         "parameters": [
           {
+            "name": "team_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "status",
             "in": "query",
             "schema": {
@@ -67,10 +74,48 @@
             }
           },
           {
-            "name": "team_id",
+            "name": "exclude_archived",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/components/schemas/GuideSortField"
+                }
+              ]
+            }
+          },
+          {
+            "name": "sort_dir",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ]
             }
           }
         ],
@@ -110,6 +155,46 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CreateGuideResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/guides/bulk": {
+      "post": {
+        "tags": [
+          "Guides"
+        ],
+        "summary": "Bulk action on guides",
+        "description": "Performs a bulk action (delete, restore, permanently-delete) on multiple guides",
+        "operationId": "bulkGuidesAction",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkGuidesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkGuidesResponse"
                 }
               }
             }
@@ -194,6 +279,20 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -202,7 +301,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetAllGuidesResponse"
+                  "$ref": "#/components/schemas/GetStarredGuidesResponse"
                 }
               }
             }
@@ -1059,8 +1158,8 @@
         "tags": [
           "Teams"
         ],
-        "summary": "Get all teams",
-        "description": "Returns all teams for the authenticated user's organizations",
+        "summary": "Get all teams for a user.",
+        "description": "Returns all teams the user belongs to.",
         "operationId": "getTeams",
         "responses": {
           "200": {
@@ -1069,85 +1168,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetAllTeamsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/teams/members/{memberId}": {
-      "get": {
-        "tags": [
-          "Teams"
-        ],
-        "summary": "Get member's team memberships",
-        "description": "Returns the list of team IDs a member belongs to within an organization",
-        "operationId": "getTeamMemberships",
-        "parameters": [
-          {
-            "name": "memberId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "organization_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Response containing the list of team IDs the member belongs to",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetTeamMembershipsResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Teams"
-        ],
-        "summary": "Update member's team memberships",
-        "description": "Sets which teams a member belongs to within an organization — computes the add/remove diff automatically",
-        "operationId": "updateTeamMemberships",
-        "parameters": [
-          {
-            "name": "memberId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTeamMembershipsRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Response after updating a member's team memberships",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateTeamMembershipsResponse"
                 }
               }
             }
@@ -1228,6 +1248,34 @@
         },
         "required": [
           "guide"
+        ],
+        "type": "object"
+      },
+      "BulkGuidesRequest": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "team_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BulkGuidesResponse": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
         ],
         "type": "object"
       },
@@ -1578,15 +1626,27 @@
       },
       "GetAllGuidesResponse": {
         "properties": {
-          "guides": {
+          "data": {
             "items": {
               "$ref": "#/components/schemas/Guide"
             },
             "type": "array"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
           }
         },
         "required": [
-          "guides"
+          "data",
+          "total",
+          "page",
+          "limit"
         ],
         "type": "object"
       },
@@ -1698,6 +1758,32 @@
         ],
         "type": "object"
       },
+      "GetStarredGuidesResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/Guide"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit"
+        ],
+        "type": "object"
+      },
       "GetStepByIDResponse": {
         "properties": {
           "step": {
@@ -1713,21 +1799,6 @@
         },
         "required": [
           "step"
-        ],
-        "type": "object"
-      },
-      "GetTeamMembershipsResponse": {
-        "description": "Response containing the list of team IDs the member belongs to",
-        "properties": {
-          "team_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "team_ids"
         ],
         "type": "object"
       },
@@ -1875,6 +1946,14 @@
           "updated_at"
         ],
         "type": "object"
+      },
+      "GuideSortField": {
+        "description": "The field to sort guides by",
+        "enum": [
+          "created_at",
+          "updated_at"
+        ],
+        "type": "string"
       },
       "GuideStatus": {
         "description": "The status of the guide",
@@ -2431,49 +2510,6 @@
         },
         "required": [
           "step"
-        ],
-        "type": "object"
-      },
-      "UpdateTeamMembershipsRequest": {
-        "description": "Request body for updating a member's team memberships",
-        "properties": {
-          "organization_id": {
-            "type": "string"
-          },
-          "team_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "organization_id",
-          "team_ids"
-        ],
-        "type": "object"
-      },
-      "UpdateTeamMembershipsResponse": {
-        "description": "Response after updating a member's team memberships",
-        "properties": {
-          "errors": {
-            "items": {
-              "type": "string"
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "team_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "team_ids"
         ],
         "type": "object"
       },

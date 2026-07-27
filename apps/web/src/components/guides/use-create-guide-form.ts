@@ -1,8 +1,8 @@
 import { useForm, useStore } from "@tanstack/react-form";
 
-import { toast } from "@/hooks/use-toast";
-import { useTeamStore } from "@/stores/team-store";
+import { toast } from "@/lib/toast";
 import { createGuide } from "@/server-fns/guides";
+import { useTeamStore } from "@/stores/team-store";
 
 type UseCreateGuideFormOptions = {
 	onSuccess?: (guideId: string) => void;
@@ -17,28 +17,24 @@ export function useCreateGuideForm({
 		defaultValues: { title: "", description: "" },
 		onSubmit: async ({ value }) => {
 			if (!value.title?.trim()) {
-				toast({
-					title: "Validation Error",
+				toast.error("Validation Error", {
 					description: "Title is required",
-					variant: "destructive",
 				});
 				return;
 			}
 			try {
 				const teamId = useTeamStore.getState().activeTeamId ?? "";
 				const guide = await createGuide({ data: { ...value, teamId } });
-				toast({ title: "Success", description: "Guide created" });
+				toast("Success", { description: "Guide created" });
 				form.reset();
 				onOpenChange(false);
 				if (guide) {
 					onSuccess?.(guide.id);
 				}
 			} catch (error) {
-				toast({
-					title: "Error",
+				toast.error("Error", {
 					description:
 						error instanceof Error ? error.message : "An error occurred",
-					variant: "destructive",
 				});
 			}
 		},

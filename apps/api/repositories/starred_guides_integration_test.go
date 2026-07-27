@@ -27,11 +27,11 @@ func seedTeamWithGuide(t *testing.T, db bun.IDB, userID, title string) (*models.
 	require.NoError(t, err)
 
 	guide := &models.Guide{
-		ID:       uuid.New(),
-		TeamID:   teamID,
+		ID:        uuid.New(),
+		TeamID:    teamID,
 		CreatorID: userID,
-		Title:    title,
-		Status:   models.StatusDraft,
+		Title:     title,
+		Status:    models.StatusDraft,
 	}
 	_, err = db.NewInsert().Model(guide).Exec(context.Background())
 	require.NoError(t, err)
@@ -146,13 +146,14 @@ func TestBunStarredGuidesRepository_GetAll_TeamFilter(t *testing.T) {
 			userID, teamID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			result, err := repo.GetAll(ctx, &types.GuideFilter{
+			result, total, err := repo.GetAll(ctx, &types.GuideFilter{
 				ViewerUserID: &userID,
 				TeamID:       teamID,
 			})
 
 			require.NoError(t, err)
 			assert.Len(t, result, tt.wantLen)
+			assert.Equal(t, tt.wantLen, total)
 
 			if teamID != nil {
 				for _, r := range result {

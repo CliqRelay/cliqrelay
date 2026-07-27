@@ -8,4 +8,6 @@
 
 export type GetStarredGuidesParams = {
 	team_id?: string;
+	page?: number;
+	limit?: number;
 };

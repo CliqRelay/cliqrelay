@@ -1,10 +1,10 @@
+import { Link, useParams, useRouterState } from "@tanstack/react-router";
+import type { OrganizationTeam } from "authula";
 import { ArrowLeft, Settings, Users } from "lucide-react";
 
-import { Link, useParams, useRouterState } from "@tanstack/react-router";
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
 import { cn } from "@/lib/utils";
-import type { OrganizationTeam } from "authula";
 
 const sections = [
 	{
@@ -35,7 +35,7 @@ export function TeamSettingsSidebar({ team }: Props) {
 		sections.find((s) => location.pathname.endsWith(s.id))?.id ?? "general";
 
 	return (
-		<div className="flex flex-col w-64 shrink-0 border-r bg-background">
+		<div className="flex flex-col w-64 shrink-0 border-r">
 			<div className="flex h-14 items-center gap-3 border-b px-4">
 				<div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
 					<span className="text-sm font-bold text-primary">

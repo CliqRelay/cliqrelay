@@ -1,18 +1,16 @@
 import { useState } from "react";
 
+import { useForm } from "@tanstack/react-form";
 import {
 	createFileRoute,
 	Link,
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
-import { useForm } from "@tanstack/react-form";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import {
 	Card,
 	CardContent,
@@ -20,9 +18,11 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
-import { authulaClient } from "@/lib/authula-client";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { envClient } from "@/constants/env-client";
+import { authulaClient } from "@/lib/authula-client";
+import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute("/auth/reset-password")({
 	component: ResetPasswordPage,
@@ -76,16 +76,14 @@ function ResetPasswordPage() {
 					callbackUrl: `${envClient.baseUrl}/auth/change-password`,
 				});
 
-				toast({
-					title: "Email sent",
+				toast("Email sent", {
 					description:
 						"If an account exists with that email, you will receive a password reset link.",
 				});
 
 				navigate({ to: "/auth/sign-in" });
 			} catch (error: any) {
-				toast({
-					title: "Request failed",
+				toast("Request failed", {
 					description: error?.message || "An unknown error occurred",
 				});
 			}
@@ -107,15 +105,13 @@ function ResetPasswordPage() {
 					password: value.password,
 				});
 
-				toast({
-					title: "Success",
+				toast("Success", {
 					description: "Your password has been reset successfully.",
 				});
 
 				navigate({ to: "/auth/sign-in" });
 			} catch (error: any) {
-				toast({
-					title: "Reset failed",
+				toast("Reset failed", {
 					description: error?.message || "An unknown error occurred",
 				});
 			}

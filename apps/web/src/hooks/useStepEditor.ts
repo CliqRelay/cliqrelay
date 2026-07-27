@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { api, type Step, type UpdateStepRequest } from "@repo/api-client";
 
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import { useEditorStore } from "@/store/editor-store";
 
 export function useStepEditor(guideId: string) {
@@ -31,11 +31,9 @@ export function useStepEditor(guideId: string) {
 				queryClient.invalidateQueries({ queryKey });
 			},
 			onError: (error) => {
-				toast({
-					title: "Error",
+				toast.error("Error", {
 					description:
 						error instanceof Error ? error.message : "Failed to update step",
-					variant: "destructive" as const,
 				});
 			},
 		},
@@ -75,11 +73,9 @@ export function useStepEditor(guideId: string) {
 			});
 			markClean(stepId);
 		} catch (error) {
-			toast({
-				title: "Error",
+			toast.error("Error", {
 				description:
 					error instanceof Error ? error.message : "Failed to save step",
-				variant: "destructive" as const,
 			});
 		}
 	};
@@ -106,13 +102,11 @@ export function useStepEditor(guideId: string) {
 				});
 				markClean(stepId);
 			} catch (error) {
-				toast({
-					title: "Error",
+				toast.error("Error", {
 					description:
 						error instanceof Error
 							? error.message
 							: `Failed to save step ${stepId}`,
-					variant: "destructive" as const,
 				});
 			}
 		}

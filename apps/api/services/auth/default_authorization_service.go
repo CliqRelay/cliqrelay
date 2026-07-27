@@ -3,9 +3,11 @@ package auth
 import (
 	"context"
 	"errors"
+	"slices"
 
 	authulamodels "github.com/Authula/authula/models"
 	organizationsplugin "github.com/Authula/authula/plugins/organizations"
+	orgconstants "github.com/Authula/authula/plugins/organizations/constants"
 
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -131,7 +133,16 @@ func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor 
 		return constants.ErrForbidden
 	}
 
-	if actor.ID != guide.CreatorID {
+	if actor.ID == guide.CreatorID {
+		return nil
+	}
+
+	isAdmin := slices.Contains(actor.Scopes, orgconstants.All)
+	if !isAdmin {
+		return constants.ErrForbidden
+	}
+
+	if guide.Visibility == models.VisibilityPrivate {
 		return constants.ErrForbidden
 	}
 
@@ -149,6 +160,7 @@ func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor
 	}
 
 	return &types.GuideFilter{
-		CreatorID: &actor.ID,
+		ViewerUserID:   &actor.ID,
+		AccessibleOnly: true,
 	}, nil
 }

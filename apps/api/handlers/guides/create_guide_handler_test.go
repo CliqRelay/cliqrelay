@@ -92,7 +92,7 @@ func TestCreateGuideHandler(t *testing.T) {
 			tt.setup(mockRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanCreateGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
 			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := handlersguides.NewCreateGuideHandler(appConfig, uc)
 

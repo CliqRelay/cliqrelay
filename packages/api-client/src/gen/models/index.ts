@@ -7,6 +7,9 @@
  */
 
 export * from "./archive-guide-response";
+export * from "./bulk-guides-action-params";
+export * from "./bulk-guides-request";
+export * from "./bulk-guides-response";
 export * from "./complete-upload-request";
 export * from "./complete-upload-response";
 export * from "./create-demo-guide-request";
@@ -39,11 +42,11 @@ export * from "./get-guides-count-params";
 export * from "./get-guides-count-response";
 export * from "./get-media-asset-by-id-response";
 export * from "./get-starred-guides-params";
+export * from "./get-starred-guides-response";
 export * from "./get-step-by-id-response";
-export * from "./get-team-memberships-params";
-export * from "./get-team-memberships-response";
 export * from "./guide";
 export * from "./guide-export";
+export * from "./guide-sort-field";
 export * from "./guide-status";
 export * from "./health-response";
 export * from "./media-asset";
@@ -73,7 +76,5 @@ export * from "./update-media-asset-response";
 export * from "./update-step-request";
 export * from "./update-step-request-target-element";
 export * from "./update-step-response";
-export * from "./update-team-memberships-request";
-export * from "./update-team-memberships-response";
 export * from "./uuid";
 export * from "./visibility";

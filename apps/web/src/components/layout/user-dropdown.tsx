@@ -13,8 +13,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authulaClient } from "@/lib/authula-client";
-import { clearActiveTeamCookie } from "@/lib/team-cookie";
 import { clearActiveOrgCookie } from "@/lib/org-cookie";
+import { clearActiveTeamCookie } from "@/lib/team-cookie";
 import type { AppUser } from "@/models/auth";
 
 type LucideIcon = ComponentType<SVGAttributes<SVGElement>>;

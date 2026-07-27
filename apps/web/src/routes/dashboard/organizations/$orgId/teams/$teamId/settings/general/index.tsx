@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { TeamSettingsGeneralSection } from "@/components/settings/team-settings-general-section";
 import { authulaClient } from "@/lib/authula-client";

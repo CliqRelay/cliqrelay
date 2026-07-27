@@ -44,8 +44,8 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "success",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:        models.StepTypeInteraction,
-				Action:      new(models.StepActionClick),
+				Type:    models.StepTypeInteraction,
+				Action:  new(models.StepActionClick),
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
@@ -72,7 +72,7 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "success with canvas content",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:        models.StepTypeCanvas,
+				Type:    models.StepTypeCanvas,
 				CanvasContent: &models.StepCanvasContent{
 					Type: models.StepCanvasTypeCallout,
 				},
@@ -141,7 +141,7 @@ func TestCreateStepHandler(t *testing.T) {
 		{
 			name: "validation error",
 			payload: types.CreateStepRequest{
-				GuideID:     uuid.Nil,
+				GuideID: uuid.Nil,
 			},
 			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -151,8 +151,8 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "canvas step with action rejected",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:        models.StepTypeCanvas,
-				Action:      new(models.StepActionClick),
+				Type:    models.StepTypeCanvas,
+				Action:  new(models.StepActionClick),
 			},
 			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -162,8 +162,8 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "canvas step with url rejected",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:        models.StepTypeCanvas,
-				URL:         new("https://example.com"),
+				Type:    models.StepTypeCanvas,
+				URL:     new("https://example.com"),
 			},
 			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
@@ -173,7 +173,7 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "interaction step with canvas_content rejected",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:        models.StepTypeInteraction,
+				Type:    models.StepTypeInteraction,
 				CanvasContent: &models.StepCanvasContent{
 					Type: models.StepCanvasTypeCallout,
 				},
@@ -186,7 +186,7 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "guide not found",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:        models.StepTypeInteraction,
+				Type:    models.StepTypeInteraction,
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
@@ -200,7 +200,7 @@ func TestCreateStepHandler(t *testing.T) {
 			name: "service error",
 			payload: types.CreateStepRequest{
 				GuideID: uuid.New(),
-				Type:        models.StepTypeInteraction,
+				Type:    models.StepTypeInteraction,
 			},
 			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
@@ -231,7 +231,7 @@ func TestCreateStepHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
-			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
 			handler := handlerssteps.NewCreateStepHandler(appConfig, uc)
 

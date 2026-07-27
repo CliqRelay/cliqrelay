@@ -1,5 +1,4 @@
 import { useForm } from "@tanstack/react-form";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authulaClient } from "@/lib/authula-client";
+import { toast } from "@/lib/toast";
 import { useOrgStore } from "@/stores/org-store";
 
 const formSchema = z.object({
@@ -27,7 +27,9 @@ function FieldInfo({ field }: { field: any }) {
 	}
 	return (
 		<p className="text-sm text-destructive mt-1">
-			{field.state.meta.errors.join(", ")}
+			{field.state.meta.errors
+				.map((e: any) => (typeof e === "string" ? e : (e.message ?? e)))
+				.join(", ")}
 		</p>
 	);
 }
@@ -97,7 +99,7 @@ export function OrganizationSettingsGeneralSection() {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<form
-						className="flex flex-col gap-2"
+						className="flex flex-col gap-4"
 						onSubmit={(e) => {
 							e.preventDefault();
 							e.stopPropagation();
@@ -140,14 +142,19 @@ export function OrganizationSettingsGeneralSection() {
 						/>
 						<form.Subscribe
 							selector={(state) => ({
-								isDirty: state.isDirty,
+								values: state.values,
 								isSubmitting: state.isSubmitting,
 							})}
-							children={({ isDirty, isSubmitting }) => (
-								<Button type="submit" disabled={!isDirty || isSubmitting}>
-									{isSubmitting ? "Saving..." : "Save"}
-								</Button>
-							)}
+							children={({ values, isSubmitting }) => {
+								const hasChanges =
+									values.name !== form.options.defaultValues?.name ||
+									values.slug !== form.options.defaultValues?.slug;
+								return (
+									<Button type="submit" disabled={!hasChanges || isSubmitting}>
+										{isSubmitting ? "Saving..." : "Save"}
+									</Button>
+								);
+							}}
 						/>
 					</form>
 				</CardContent>

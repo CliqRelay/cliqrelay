@@ -1,6 +1,4 @@
-import type {
-	StepCanvasType,
-} from "@repo/api-client";
+import type { StepCanvasType } from "@repo/api-client";
 
 export type StepTypeOption = "step" | StepCanvasType;
 

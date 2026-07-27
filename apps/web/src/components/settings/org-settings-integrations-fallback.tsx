@@ -1,4 +1,4 @@
-import { Plug, Zap, Webhook, Shield } from "lucide-react";
+import { Plug, Shield, Webhook, Zap } from "lucide-react";
 
 import {
 	Card,
@@ -7,7 +7,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { envClient } from "@/constants/env-client";
+import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
 import { Separator } from "../ui/separator";
 
 export function OrgSettingsIntegrationsFallback() {
@@ -67,14 +67,7 @@ export function OrgSettingsIntegrationsFallback() {
 						</li>
 					</ul>
 					<Separator />
-					<a
-						href={envClient.siteUrl}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-sm text-sky-500 hover:underline"
-					>
-						Learn About {envClient.appName} Pro
-					</a>
+					<LearnAboutProButton />
 				</CardContent>
 			</Card>
 		</div>

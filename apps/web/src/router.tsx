@@ -1,14 +1,14 @@
+import type { QueryClient } from "@tanstack/react-query";
 import {
 	createRouter as createTanStackRouter,
 	Link,
 } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
-import type { QueryClient } from "@tanstack/react-query";
-import type { User } from "authula";
 
 import { extensionRegistry } from "@repo/extensions-sdk";
 
 import { getContext } from "./integrations/tanstack-query/RootProvider";
+import type { AppUser } from "./models/auth";
 import { routeTree } from "./routeTree.gen";
 
 await import("virtual:extensions");
@@ -16,7 +16,7 @@ extensionRegistry.freeze();
 
 export interface MyRouterContext {
 	queryClient: QueryClient;
-	user: User | null;
+	user: AppUser | null;
 	activeTeamId: string | null;
 	teams: Array<{ id: string; name: string }>;
 	hideSiteHeader?: boolean;

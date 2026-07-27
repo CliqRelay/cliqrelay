@@ -3,15 +3,15 @@ import { useEffect } from "react";
 import { format } from "date-fns";
 import { Clock, Hourglass, UserRound } from "lucide-react";
 
+import { api, type Guide } from "@repo/api-client";
 import {
 	formatGuideCreationTime,
 	formatGuideDuration,
 } from "@repo/data-commons";
-import { api, type Guide } from "@repo/api-client";
 
-import type { AppUser } from "@/models/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { AppUser } from "@/models/auth";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 type Props = {

@@ -2,6 +2,7 @@ package guides
 
 import (
 	"net/http"
+	"strconv"
 
 	authulamodels "github.com/Authula/authula/models"
 
@@ -27,15 +28,31 @@ func (h *GetStarredGuidesHandler) Handle() http.HandlerFunc {
 
 		teamID := r.URL.Query().Get("team_id")
 
-		guides, err := h.guidesUseCase.GetStarred(ctx, actor, teamID)
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page < 1 {
+			page = 1
+		}
+
+		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+		if limit < 1 {
+			limit = 10
+		}
+		if limit > 100 {
+			limit = 100
+		}
+
+		guides, total, err := h.guidesUseCase.GetStarred(ctx, actor, teamID, page, limit)
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}
 
-		reqCtx.SetJSONResponse(http.StatusOK, &types.GetAllGuidesResponse{
-			Guides: guides,
+		reqCtx.SetJSONResponse(http.StatusOK, &types.GetStarredGuidesResponse{
+			Data:  guides,
+			Total: total,
+			Page:  page,
+			Limit: limit,
 		})
 	}
 }

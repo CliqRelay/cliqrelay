@@ -5,9 +5,18 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import type { GuideSortField } from "./guide-sort-field";
 import type { GuideStatus } from "./guide-status";
 
 export type GetAllGuidesParams = {
-	status?: null | GuideStatus;
 	team_id?: string;
+	status?: null | GuideStatus;
+	exclude_archived?: boolean;
+	page?: number;
+	limit?: number;
+	sort_by?: null | GuideSortField;
+	/**
+	 * @nullable
+	 */
+	sort_dir?: string | null;
 };

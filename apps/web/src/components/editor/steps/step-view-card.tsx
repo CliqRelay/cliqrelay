@@ -1,7 +1,10 @@
+import { ExternalLink } from "lucide-react";
+
 import type { Step } from "@repo/api-client";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { parseTextSegments } from "@/utils/regex.utils";
 import { CanvasStepPreview } from "./canvas-step-preview";
 import { StepMedia } from "./step-media";
 import { StepNotes } from "./step-notes";
@@ -17,6 +20,9 @@ export function GuideWorkflowViewStep({ step, stepNumber }: Props) {
 		return <CanvasStepPreview step={step} />;
 	}
 
+	const isNavigationStep =
+		step.type === "interaction" && step.action === "navigation";
+
 	return (
 		<Card>
 			<CardHeader
@@ -30,7 +36,24 @@ export function GuideWorkflowViewStep({ step, stepNumber }: Props) {
 						{stepNumber}
 					</div>
 					<h3 className="w-full text-base font-semibold tracking-tight break-all">
-						{step.actionText || `Step ${stepNumber}`}
+						{step.actionText
+							? parseTextSegments(step.actionText).map((segment, i) =>
+									segment.type === "url" && isNavigationStep ? (
+										<a
+											key={i}
+											href={segment.value}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded break-all"
+										>
+											{segment.value}
+											<ExternalLink className="h-3.5 w-3.5 shrink-0" />
+										</a>
+									) : (
+										<span key={i}>{segment.value}</span>
+									),
+								)
+							: `Step ${stepNumber}`}
 					</h3>
 				</div>
 			</CardHeader>

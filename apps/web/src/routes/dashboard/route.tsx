@@ -7,7 +7,6 @@ import {
 	redirect,
 } from "@tanstack/react-router";
 
-import { DashboardLayout } from "@/components/layout";
 import { authulaClient } from "@/lib/authula-client";
 import { getActiveOrgCookie, setActiveOrgCookie } from "@/lib/org-cookie";
 import type { UserWithModifiedMetadata } from "@/models";
@@ -22,6 +21,8 @@ type OrgInfo = {
 };
 
 import type { OrganizationMemberResponse } from "authula";
+
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 type ContextType = {
 	user: UserWithModifiedMetadata;
@@ -125,7 +126,7 @@ function DashboardRoute() {
 	const ctx = Route.useRouteContext();
 
 	useEffect(() => {
-		useUserStore.getState().setUser(ctx.user.id);
+		useUserStore.getState().setUser(ctx.user.id, ctx.user.name, ctx.user.email);
 		if (ctx.activeOrg) {
 			useOrgStore
 				.getState()
@@ -138,12 +139,14 @@ function DashboardRoute() {
 	}, [ctx.user.id, ctx.orgs, ctx.activeOrg, ctx.currentMember]);
 
 	// Hydrate org store during SSR so data is available immediately on first render
+	if (import.meta.env.SSR) {
+		useUserStore.getState().setUser(ctx.user.id, ctx.user.name, ctx.user.email);
+	}
+
 	if (import.meta.env.SSR && ctx.activeOrg) {
-		useOrgStore.getState().setOrg(
-			ctx.activeOrg.id,
-			ctx.activeOrg.name,
-			ctx.activeOrg.ownerId,
-		);
+		useOrgStore
+			.getState()
+			.setOrg(ctx.activeOrg.id, ctx.activeOrg.name, ctx.activeOrg.ownerId);
 		useOrgStore.getState().setOrganizations(ctx.orgs);
 		if (ctx.currentMember) {
 			useOrgStore.getState().setCurrentMember(ctx.currentMember);

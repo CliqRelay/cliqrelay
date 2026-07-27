@@ -2,8 +2,11 @@ package usecases
 
 import (
 	"context"
+	"fmt"
+	"slices"
 
 	authulamodels "github.com/Authula/authula/models"
+	orgconstants "github.com/Authula/authula/plugins/organizations/constants"
 	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -50,11 +53,11 @@ func (uc *GuidesUseCase) CreateDemoGuide(ctx context.Context, actor *authulamode
 	return uc.guidesService.CreateDemoGuide(ctx, actor, teamID)
 }
 
-func (uc *GuidesUseCase) List(ctx context.Context, actor *authulamodels.Actor, teamID string, status *string) ([]*models.Guide, error) {
+func (uc *GuidesUseCase) List(ctx context.Context, actor *authulamodels.Actor, teamID string, status *string, excludeArchived bool, page, limit int, sortBy, sortDir string) ([]*models.Guide, int, error) {
 	if _, err := uc.authzService.GuideListFilter(ctx, actor, teamID); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return uc.guidesService.GetAll(ctx, teamID, status, &actor.ID)
+	return uc.guidesService.GetAll(ctx, teamID, status, &actor.ID, excludeArchived, page, limit, sortBy, sortDir)
 }
 
 func (uc *GuidesUseCase) Get(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
@@ -66,6 +69,11 @@ func (uc *GuidesUseCase) Get(ctx context.Context, actor *authulamodels.Actor, gu
 	teamID := guide.TeamID.String()
 	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
+	}
+
+	starred, err := uc.starredService.IsStarred(ctx, guideID, actor.ID)
+	if err == nil {
+		guide.IsStarred = starred
 	}
 
 	return guide, nil
@@ -197,6 +205,27 @@ func (uc *GuidesUseCase) PermanentlyDelete(ctx context.Context, actor *authulamo
 	return uc.guidesService.PermanentlyDelete(ctx, guideID)
 }
 
+func (uc *GuidesUseCase) BulkAction(ctx context.Context, actor *authulamodels.Actor, action string, req *types.BulkGuidesRequest) error {
+	if _, err := uc.authzService.GuideListFilter(ctx, actor, req.TeamID); err != nil {
+		return err
+	}
+
+	isAdmin := slices.Contains(actor.Scopes, orgconstants.All)
+
+	var err error
+	switch action {
+	case "delete":
+		_, err = uc.guidesService.BulkDelete(ctx, req.IDs, req.TeamID, actor.ID, isAdmin)
+	case "restore":
+		_, err = uc.guidesService.BulkRestore(ctx, req.IDs, req.TeamID, actor.ID, isAdmin)
+	case "permanently-delete":
+		_, err = uc.guidesService.BulkPermanentlyDelete(ctx, req.IDs, req.TeamID, actor.ID, isAdmin)
+	default:
+		return fmt.Errorf("invalid bulk action: %s", action)
+	}
+	return err
+}
+
 func (uc *GuidesUseCase) RecalculateDuration(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
 	guide, err := uc.guidesService.GetByID(ctx, guideID)
 	if err != nil {
@@ -239,18 +268,26 @@ func (uc *GuidesUseCase) Unstar(ctx context.Context, actor *authulamodels.Actor,
 	return uc.starredService.Unstar(ctx, actor.ID, guideID)
 }
 
-func (uc *GuidesUseCase) GetStarred(ctx context.Context, actor *authulamodels.Actor, teamID string) ([]*models.Guide, error) {
+func (uc *GuidesUseCase) GetStarred(ctx context.Context, actor *authulamodels.Actor, teamID string, page, limit int) ([]*models.Guide, int, error) {
 	filter, err := uc.authzService.GuideListFilter(ctx, actor, teamID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	filter.ViewerUserID = &actor.ID
 	parsedTeamID, err := uuidParse(teamID)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	filter.TeamID = &parsedTeamID
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	filter.Offset = (page - 1) * limit
+	filter.Limit = limit
 
 	return uc.starredService.GetStarredGuides(ctx, filter)
 }

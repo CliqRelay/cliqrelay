@@ -9,7 +9,8 @@ import (
 )
 
 type StarredGuidesRepository interface {
-	GetAll(ctx context.Context, filter *types.GuideFilter) ([]*types.GuideWithStarred, error)
+	GetAll(ctx context.Context, filter *types.GuideFilter) ([]*types.GuideWithStarred, int, error)
 	Star(ctx context.Context, userID string, guideID uuid.UUID) error
 	Unstar(ctx context.Context, userID string, guideID uuid.UUID) error
+	IsStarred(ctx context.Context, guideID uuid.UUID, userID string) (bool, error)
 }

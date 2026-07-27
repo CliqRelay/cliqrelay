@@ -63,6 +63,7 @@ func publishGuide(t *testing.T, db bun.IDB, guideID uuid.UUID) {
 	_, err := db.NewUpdate().
 		Model((*models.Guide)(nil)).
 		Set("status = 'published'").
+		Set("visibility = 'team'").
 		Set("published_at = CURRENT_TIMESTAMP").
 		Where("id = ?", guideID).
 		Exec(context.Background())
@@ -131,9 +132,9 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 
 			teamID, _ := createTestOrgTeam(ctx, db, t)
 			guide, err := repo.Create(ctx, &types.CreateGuideDTO{
-				TeamID:    teamID,
-				CreatorID: tt.userID,
-				Title:     tt.title,
+				TeamID:      teamID,
+				CreatorID:   tt.userID,
+				Title:       tt.title,
 				Description: tt.desc,
 			})
 
@@ -214,13 +215,14 @@ func TestBunGuidesRepository_GetAll(t *testing.T) {
 			userID, _ := tt.setup(db)
 			ctx := context.Background()
 
-			result, err := repo.GetAll(ctx, &types.GuideFilter{CreatorID: &userID})
+			result, total, err := repo.GetAll(ctx, &types.GuideFilter{ViewerUserID: &userID, AccessibleOnly: true})
 
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
 				require.NoError(t, err)
 				assert.Len(t, result, tt.wantLen)
+				assert.Equal(t, tt.wantLen, total)
 			}
 		})
 	}
@@ -311,10 +313,11 @@ func TestBunGuidesRepository_GetAllByStatus(t *testing.T) {
 				status = models.StatusDraft
 			}
 
-			result, err := repo.GetAll(ctx, &types.GuideFilter{CreatorID: &userID, Status: &status})
+			result, total, err := repo.GetAll(ctx, &types.GuideFilter{ViewerUserID: &userID, AccessibleOnly: true, Status: &status})
 
 			require.NoError(t, err)
 			assert.Len(t, result, tt.wantLen)
+			assert.Equal(t, tt.wantLen, total)
 		})
 	}
 }
@@ -407,9 +410,9 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			},
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
-					ID:    guide.ID,
+					ID:     guide.ID,
 					TeamID: guide.TeamID,
-					Title: new("Updated Title"),
+					Title:  new("Updated Title"),
 				}
 			},
 			check: func(t *testing.T, guide *models.Guide) {
@@ -461,9 +464,9 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			},
 			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
 				return &types.UpdateGuideDTO{
-					ID:      uuid.New(),
-					TeamID:  uuid.Nil,
-					Title:   new("Nope"),
+					ID:     uuid.New(),
+					TeamID: uuid.Nil,
+					Title:  new("Nope"),
 				}
 			},
 			wantNil: true,
@@ -717,6 +720,7 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 				require.NotNil(t, published)
 				assert.Equal(t, targetID, published.ID.String())
 				assert.Equal(t, models.StatusPublished, published.Status)
+				assert.Equal(t, models.VisibilityTeam, published.Visibility)
 				assert.NotNil(t, published.PublishedAt)
 				assert.Nil(t, published.ArchivedAt)
 				assert.Nil(t, published.DeletedAt)
@@ -787,6 +791,7 @@ func TestBunGuidesRepository_UnpublishGuide(t *testing.T) {
 				require.NotNil(t, guide)
 				assert.Equal(t, targetID, guide.ID.String())
 				assert.Equal(t, models.StatusDraft, guide.Status)
+				assert.Equal(t, models.VisibilityPrivate, guide.Visibility)
 				assert.Nil(t, guide.PublishedAt)
 				assert.Nil(t, guide.ArchivedAt)
 			}

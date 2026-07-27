@@ -16,8 +16,8 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { envClient } from "@/constants/env-client";
-import { toast } from "@/hooks/use-toast";
 import { authulaClient } from "@/lib/authula-client";
+import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute("/auth/sign-up")({
 	component: SignupPage,
@@ -71,15 +71,13 @@ function SignupPage() {
 
 				localStorage.setItem("email", value.email);
 
-				toast({
-					title: "Success",
+				toast("Success", {
 					description: "Signed up successfully.",
 				});
 
 				navigate({ to: "/dashboard" });
 			} catch (error: any) {
-				toast({
-					title: "Sign up failed",
+				toast("Sign up failed", {
 					description: error?.message || "An unknown error occurred",
 				});
 			}

@@ -8,8 +8,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
 import { useOrgStore } from "@/stores/org-store";
-import { envClient } from "@/constants/env-client";
 import { Separator } from "../ui/separator";
 
 type Props = {
@@ -101,14 +101,7 @@ export function OrgSettingsMembersFallback({
 							Upgrade to Pro
 						</Button>
 					) : (
-						<a
-							href={envClient.siteUrl}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-sm text-sky-500 hover:underline"
-						>
-							Learn About {envClient.appName} Pro
-						</a>
+						<LearnAboutProButton />
 					)}
 				</CardContent>
 			</Card>
