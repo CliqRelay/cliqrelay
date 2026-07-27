@@ -408,6 +408,19 @@ export const GetStepByIDResponse = zod.object({
 export type GetStepByIDResponse = zod.input<typeof GetStepByIDResponse>;
 export type GetStepByIDResponseOutput = zod.output<typeof GetStepByIDResponse>;
 
+export const GetTeamMembershipsResponse = zod
+	.object({
+		teamIds: zod.array(zod.string()),
+	})
+	.describe("Response containing the list of team IDs the member belongs to");
+
+export type GetTeamMembershipsResponse = zod.input<
+	typeof GetTeamMembershipsResponse
+>;
+export type GetTeamMembershipsResponseOutput = zod.output<
+	typeof GetTeamMembershipsResponse
+>;
+
 export const HealthResponse = zod.object({
 	status: zod.string(),
 });
@@ -585,3 +598,31 @@ export const UpdateStepResponse = zod.object({
 
 export type UpdateStepResponse = zod.input<typeof UpdateStepResponse>;
 export type UpdateStepResponseOutput = zod.output<typeof UpdateStepResponse>;
+
+export const UpdateTeamMembershipsRequest = zod
+	.object({
+		organizationId: zod.string(),
+		teamIds: zod.array(zod.string()),
+	})
+	.describe("Request body for updating a member's team memberships");
+
+export type UpdateTeamMembershipsRequest = zod.input<
+	typeof UpdateTeamMembershipsRequest
+>;
+export type UpdateTeamMembershipsRequestOutput = zod.output<
+	typeof UpdateTeamMembershipsRequest
+>;
+
+export const UpdateTeamMembershipsResponse = zod
+	.object({
+		errors: zod.array(zod.string()).nullish(),
+		teamIds: zod.array(zod.string()),
+	})
+	.describe("Response after updating a member's team memberships");
+
+export type UpdateTeamMembershipsResponse = zod.input<
+	typeof UpdateTeamMembershipsResponse
+>;
+export type UpdateTeamMembershipsResponseOutput = zod.output<
+	typeof UpdateTeamMembershipsResponse
+>;

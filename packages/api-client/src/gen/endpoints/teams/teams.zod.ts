@@ -5,10 +5,44 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
-import { GetAllTeamsResponse } from "../cliqrelay-api.schemas.zod";
+import * as zod from "zod";
+
+import {
+	GetAllTeamsResponse,
+	GetTeamMembershipsResponse,
+	UpdateTeamMembershipsRequest,
+	UpdateTeamMembershipsResponse,
+} from "../cliqrelay-api.schemas.zod";
 
 /**
  * Returns all teams for the authenticated user's organizations
  * @summary Get all teams
  */
 export const GetTeamsResponse = GetAllTeamsResponse;
+
+/**
+ * Returns the list of team IDs a member belongs to within an organization
+ * @summary Get member's team memberships
+ */
+export const GetTeamMembershipsParams = zod.object({
+	memberId: zod.string(),
+});
+
+export const GetTeamMembershipsQueryParams = zod.object({
+	organization_id: zod.string(),
+});
+
+export const GetTeamMembershipsResponseSchema = GetTeamMembershipsResponse;
+
+/**
+ * Sets which teams a member belongs to within an organization — computes the add/remove diff automatically
+ * @summary Update member's team memberships
+ */
+export const UpdateTeamMembershipsParams = zod.object({
+	memberId: zod.string(),
+});
+
+export const UpdateTeamMembershipsBody = UpdateTeamMembershipsRequest;
+
+export const UpdateTeamMembershipsResponseSchema =
+	UpdateTeamMembershipsResponse;

@@ -12,6 +12,7 @@ interface TeamState {
 	loaded: boolean;
 	setTeams: (teams: Team[]) => void;
 	setActiveTeam: (id: string | null) => void;
+	resetTeams: () => void;
 }
 
 export const useTeamStore = create<TeamState>((set) => ({
@@ -21,4 +22,5 @@ export const useTeamStore = create<TeamState>((set) => ({
 
 	setTeams: (teams) => set({ teams, loaded: true }),
 	setActiveTeam: (activeTeamId) => set({ activeTeamId }),
+	resetTeams: () => set({ teams: [], activeTeamId: null, loaded: false }),
 }));

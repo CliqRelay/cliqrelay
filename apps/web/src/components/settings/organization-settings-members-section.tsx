@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { OrganizationMemberResponse } from "authula";
 
 import { InviteMemberDialog } from "./invite-member-dialog";
+import { ManageMemberTeamsSheet } from "./manage-member-teams-sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { authulaClient } from "@/lib/authula-client";
 import { useOrgStore } from "@/stores/org-store";
 import { useUserStore } from "@/stores/user-store";
@@ -52,6 +54,12 @@ export function OrganizationSettingsMembersSection() {
 
 	const currentMember = useOrgStore((state) => state.currentMember);
 	const canRemoveMembers = currentMember?.role === "admin";
+
+	const [manageTeamsSheetOpen, setManageTeamsSheetOpen] = useState(false);
+	const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
+
+	const canManageTeams = (member: MemberProfile) =>
+		canRemoveMembers && member.userId !== currentUserId && member.userId !== orgOwnerId;
 
 	const loadData = useCallback(async () => {
 		try {
@@ -197,7 +205,19 @@ export function OrganizationSettingsMembersSection() {
 						</TableHeader>
 						<TableBody>
 							{members.map((member) => (
-								<TableRow key={member.memberId}>
+								<TableRow
+									key={member.memberId}
+									className={cn(
+										canManageTeams(member) &&
+											"cursor-pointer hover:bg-muted/50",
+									)}
+									onClick={() => {
+										if (canManageTeams(member)) {
+											setSelectedMember(member);
+											setManageTeamsSheetOpen(true);
+										}
+									}}
+								>
 									<TableCell className="pl-6">
 										<div className="flex items-center gap-3">
 											<Avatar className="size-8">
@@ -233,7 +253,10 @@ export function OrganizationSettingsMembersSection() {
 													member.userId === orgOwnerId ||
 													member.userId === currentUserId
 												}
-												onClick={() => handleRemoveMember(member.memberId)}
+												onClick={(e) => {
+													e.stopPropagation();
+													handleRemoveMember(member.memberId);
+												}}
 											>
 												<Trash2 size={14} />
 											</Button>
@@ -321,6 +344,17 @@ export function OrganizationSettingsMembersSection() {
 				open={inviteDialogOpen}
 				onOpenChange={setInviteDialogOpen}
 				onInvited={() => loadData()}
+			/>
+
+			<ManageMemberTeamsSheet
+				open={manageTeamsSheetOpen}
+				onOpenChange={(open) => {
+					setManageTeamsSheetOpen(open);
+					if (!open) setSelectedMember(null);
+				}}
+				member={selectedMember}
+				orgId={orgId ?? ""}
+				onSuccess={() => loadData()}
 			/>
 		</div>
 	);

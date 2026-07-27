@@ -10,17 +10,26 @@ import type {
 	DataTag,
 	DefinedInitialDataOptions,
 	DefinedUseQueryResult,
+	MutationFunction,
 	QueryClient,
 	QueryFunction,
 	QueryKey,
 	UndefinedInitialDataOptions,
+	UseMutationOptions,
+	UseMutationResult,
 	UseQueryOptions,
 	UseQueryResult,
 } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { customFetch } from "../../../mutators/custom-fetch";
-import type { GetAllTeamsResponse } from "../../models";
+import type {
+	GetAllTeamsResponse,
+	GetTeamMembershipsParams,
+	GetTeamMembershipsResponse,
+	UpdateTeamMembershipsRequest,
+	UpdateTeamMembershipsResponse,
+} from "../../models";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -177,3 +186,304 @@ export function useGetTeams<
 
 	return withQueryKey(query, queryOptions.queryKey);
 }
+
+export const getGetTeamMembershipsUrl = (
+	memberId: string,
+	params: GetTeamMembershipsParams,
+) => {
+	const normalizedParams = new URLSearchParams();
+
+	Object.entries(params || {}).forEach(([key, value]) => {
+		if (value !== undefined) {
+			normalizedParams.append(key, value === null ? "null" : String(value));
+		}
+	});
+
+	const stringifiedParams = normalizedParams.toString();
+
+	return stringifiedParams.length > 0
+		? `${import.meta.env.VITE_API_URL}/api/v1/teams/members/${memberId}?${stringifiedParams}`
+		: `${import.meta.env.VITE_API_URL}/api/v1/teams/members/${memberId}`;
+};
+
+/**
+ * Returns the list of team IDs a member belongs to within an organization
+ * @summary Get member's team memberships
+ */
+export const getTeamMemberships = async (
+	memberId: string,
+	params: GetTeamMembershipsParams,
+	options?: Parameters<typeof customFetch>[1],
+): Promise<GetTeamMembershipsResponse> => {
+	return customFetch<GetTeamMembershipsResponse>(
+		getGetTeamMembershipsUrl(memberId, params),
+		{
+			...options,
+			method: "GET",
+		},
+	);
+};
+
+export const getGetTeamMembershipsQueryKey = (
+	memberId: string,
+	params?: GetTeamMembershipsParams,
+) => {
+	return [
+		`${import.meta.env.VITE_API_URL}/api/v1/teams/members/${memberId}`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetTeamMembershipsQueryOptions = <
+	TData = Awaited<ReturnType<typeof getTeamMemberships>>,
+	TError = unknown,
+>(
+	memberId: string,
+	params: GetTeamMembershipsParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getTeamMemberships>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+) => {
+	const { query: queryOptions, request: requestOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetTeamMembershipsQueryKey(memberId, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getTeamMemberships>>
+	> = ({ signal }) =>
+		getTeamMemberships(memberId, params, { signal, ...requestOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: memberId !== null && memberId !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getTeamMemberships>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetTeamMembershipsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getTeamMemberships>>
+>;
+export type GetTeamMembershipsQueryError = unknown;
+
+export function useGetTeamMemberships<
+	TData = Awaited<ReturnType<typeof getTeamMemberships>>,
+	TError = unknown,
+>(
+	memberId: string,
+	params: GetTeamMembershipsParams,
+	options: {
+		query: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getTeamMemberships>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				DefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getTeamMemberships>>,
+					TError,
+					Awaited<ReturnType<typeof getTeamMemberships>>
+				>,
+				"initialData"
+			>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetTeamMemberships<
+	TData = Awaited<ReturnType<typeof getTeamMemberships>>,
+	TError = unknown,
+>(
+	memberId: string,
+	params: GetTeamMembershipsParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getTeamMemberships>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				UndefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getTeamMemberships>>,
+					TError,
+					Awaited<ReturnType<typeof getTeamMemberships>>
+				>,
+				"initialData"
+			>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetTeamMemberships<
+	TData = Awaited<ReturnType<typeof getTeamMemberships>>,
+	TError = unknown,
+>(
+	memberId: string,
+	params: GetTeamMembershipsParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getTeamMemberships>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get member's team memberships
+ */
+
+export function useGetTeamMemberships<
+	TData = Awaited<ReturnType<typeof getTeamMemberships>>,
+	TError = unknown,
+>(
+	memberId: string,
+	params: GetTeamMembershipsParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getTeamMemberships>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+} {
+	const queryOptions = getGetTeamMembershipsQueryOptions(
+		memberId,
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+		TData,
+		TError
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateTeamMembershipsUrl = (memberId: string) => {
+	return `${import.meta.env.VITE_API_URL}/api/v1/teams/members/${memberId}`;
+};
+
+/**
+ * Sets which teams a member belongs to within an organization — computes the add/remove diff automatically
+ * @summary Update member's team memberships
+ */
+export const updateTeamMemberships = async (
+	memberId: string,
+	updateTeamMembershipsRequest?: UpdateTeamMembershipsRequest,
+	options?: Parameters<typeof customFetch>[1],
+): Promise<UpdateTeamMembershipsResponse> => {
+	return customFetch<UpdateTeamMembershipsResponse>(
+		getUpdateTeamMembershipsUrl(memberId),
+		{
+			...options,
+			method: "PUT",
+			headers: { "Content-Type": "application/json", ...options?.headers },
+			body: JSON.stringify(updateTeamMembershipsRequest),
+		},
+	);
+};
+
+export const getUpdateTeamMembershipsMutationOptions = <
+	TError = unknown,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateTeamMemberships>>,
+		TError,
+		{ memberId: string; data?: UpdateTeamMembershipsRequest },
+		TContext
+	>;
+	request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateTeamMemberships>>,
+	TError,
+	{ memberId: string; data?: UpdateTeamMembershipsRequest },
+	TContext
+> => {
+	const mutationKey = ["updateTeamMemberships"];
+	const { mutation: mutationOptions, request: requestOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, request: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateTeamMemberships>>,
+		{ memberId: string; data?: UpdateTeamMembershipsRequest }
+	> = (props) => {
+		const { memberId, data } = props ?? {};
+
+		return updateTeamMemberships(memberId, data, requestOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateTeamMembershipsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateTeamMemberships>>
+>;
+export type UpdateTeamMembershipsMutationBody =
+	| UpdateTeamMembershipsRequest
+	| undefined;
+export type UpdateTeamMembershipsMutationError = unknown;
+
+/**
+ * @summary Update member's team memberships
+ */
+export const useUpdateTeamMemberships = <TError = unknown, TContext = unknown>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof updateTeamMemberships>>,
+			TError,
+			{ memberId: string; data?: UpdateTeamMembershipsRequest },
+			TContext
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof updateTeamMemberships>>,
+	TError,
+	{ memberId: string; data?: UpdateTeamMembershipsRequest },
+	TContext
+> => {
+	return useMutation(
+		getUpdateTeamMembershipsMutationOptions(options),
+		queryClient,
+	);
+};

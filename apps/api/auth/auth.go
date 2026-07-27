@@ -150,6 +150,23 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 					sessionplugin.HookIDSessionAuth.String(),
 				},
 			},
+			{
+				Paths: []string{
+					fmt.Sprintf("GET:%s/teams/members/*", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			{
+				Paths: []string{
+					fmt.Sprintf("PUT:%s/teams/members/*", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+					csrfplugin.HookIDCSRFProtect.String(),
+				},
+			},
 			// Guides
 			{
 				Paths: []string{

@@ -23,8 +23,7 @@ export function OrgDropdown() {
 	const orgName = useOrgStore((state) => state.orgName);
 	const organizations = useOrgStore((state) => state.organizations);
 	const setOrg = useOrgStore((state) => state.setOrg);
-	const setTeams = useTeamStore((state) => state.setTeams);
-	const setActiveTeam = useTeamStore((state) => state.setActiveTeam);
+	const resetTeams = useTeamStore((state) => state.resetTeams);
 	const navigate = useNavigate();
 
 	const isLoading = !orgId && organizations.length === 0;
@@ -42,8 +41,7 @@ export function OrgDropdown() {
 		const org = organizations.find((o) => o.id === newOrgId);
 		setActiveOrgCookie(newOrgId);
 		setOrg(newOrgId, newOrgName, org?.ownerId ?? "");
-		setTeams([]);
-		setActiveTeam(null);
+		resetTeams();
 		clearActiveTeamCookie();
 		navigate({ to: "/dashboard" });
 	};

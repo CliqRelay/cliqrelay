@@ -33,6 +33,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/services/presign"
 	"github.com/CliqRelay/cliqrelay/services/purge"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
+	team_memberships_service "github.com/CliqRelay/cliqrelay/services/team_memberships"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/services/storage"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
@@ -116,13 +117,17 @@ func main() {
 	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, mediaAssetsService, stepsService, guidesService)
 	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, uploadsService, guidesService, stepsService)
 
+	teamMembershipsService := team_memberships_service.NewTeamMembershipsService(orgPlugin.Api)
+	teamMembershipsUseCase := usecases.NewTeamMembershipsUseCase(orgPlugin.Api, teamMembershipsService)
+
 	svcs := &interfaces.DomainUseCases{
-		GuidesUseCase:      guidesUseCase,
-		StepsUseCase:       stepsUseCase,
-		MediaAssetsUseCase: mediaAssetsUseCase,
-		ExportService:      exportService,
-		UploadsUseCase:     uploadsUseCase,
-		PurgeService:       purgeService,
+		GuidesUseCase:           guidesUseCase,
+		StepsUseCase:            stepsUseCase,
+		MediaAssetsUseCase:      mediaAssetsUseCase,
+		ExportService:           exportService,
+		UploadsUseCase:          uploadsUseCase,
+		PurgeService:            purgeService,
+		TeamMembershipsUseCase:  teamMembershipsUseCase,
 	}
 
 	routes.InitRoutes(appConfig, svcs)

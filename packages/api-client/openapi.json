@@ -1076,6 +1076,85 @@
         }
       }
     },
+    "/api/v1/teams/members/{memberId}": {
+      "get": {
+        "tags": [
+          "Teams"
+        ],
+        "summary": "Get member's team memberships",
+        "description": "Returns the list of team IDs a member belongs to within an organization",
+        "operationId": "getTeamMemberships",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organization_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Response containing the list of team IDs the member belongs to",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTeamMembershipsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Teams"
+        ],
+        "summary": "Update member's team memberships",
+        "description": "Sets which teams a member belongs to within an organization — computes the add/remove diff automatically",
+        "operationId": "updateTeamMemberships",
+        "parameters": [
+          {
+            "name": "memberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamMembershipsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response after updating a member's team memberships",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTeamMembershipsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/uploads/complete": {
       "post": {
         "tags": [
@@ -1634,6 +1713,21 @@
         },
         "required": [
           "step"
+        ],
+        "type": "object"
+      },
+      "GetTeamMembershipsResponse": {
+        "description": "Response containing the list of team IDs the member belongs to",
+        "properties": {
+          "team_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "team_ids"
         ],
         "type": "object"
       },
@@ -2337,6 +2431,49 @@
         },
         "required": [
           "step"
+        ],
+        "type": "object"
+      },
+      "UpdateTeamMembershipsRequest": {
+        "description": "Request body for updating a member's team memberships",
+        "properties": {
+          "organization_id": {
+            "type": "string"
+          },
+          "team_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "organization_id",
+          "team_ids"
+        ],
+        "type": "object"
+      },
+      "UpdateTeamMembershipsResponse": {
+        "description": "Response after updating a member's team memberships",
+        "properties": {
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "team_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "team_ids"
         ],
         "type": "object"
       },
