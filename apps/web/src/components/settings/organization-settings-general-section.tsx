@@ -1,6 +1,6 @@
-import { useState } from "react";
-
+import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,42 +15,69 @@ import { Label } from "@/components/ui/label";
 import { authulaClient } from "@/lib/authula-client";
 import { useOrgStore } from "@/stores/org-store";
 
+const formSchema = z.object({
+	name: z.string().trim().min(1, "Organization name is required"),
+	slug: z.string().trim().optional(),
+});
+type FormSchema = z.infer<typeof formSchema>;
+
+function FieldInfo({ field }: { field: any }) {
+	if (!field.state.meta.isTouched || field.state.meta.errors.length === 0) {
+		return null;
+	}
+	return (
+		<p className="text-sm text-destructive mt-1">
+			{field.state.meta.errors.join(", ")}
+		</p>
+	);
+}
+
 export function OrganizationSettingsGeneralSection() {
 	const orgId = useOrgStore((state) => state.orgId);
 	const orgName = useOrgStore((state) => state.orgName);
-	const setOrg = useOrgStore((state) => state.setOrg);
 	const organizations = useOrgStore((state) => state.organizations);
+	const setOrg = useOrgStore((state) => state.setOrg);
 	const setOrganizations = useOrgStore((state) => state.setOrganizations);
 
-	const [name, setName] = useState<string>(orgName ?? "");
-	const [saving, setSaving] = useState<boolean>(false);
-
-	const handleSave = async () => {
-		try {
-			if (!orgId || !name.trim()) {
-				return;
+	const form = useForm({
+		validators: {
+			onChange: formSchema,
+		},
+		defaultValues: {
+			name: orgName ?? "",
+			slug: organizations.find((o) => o.id === orgId)?.slug ?? "",
+		} satisfies FormSchema,
+		onSubmit: async ({ value }) => {
+			try {
+				if (!orgId) {
+					return;
+				}
+				const org = await authulaClient.organizations.updateOrganization(
+					orgId,
+					{
+						name: value.name,
+						slug: value.slug || undefined,
+					},
+				);
+				setOrg(orgId, value.name, org?.ownerId ?? "");
+				setOrganizations(
+					organizations.map((o) =>
+						o.id === orgId
+							? { ...o, name: value.name, slug: org?.slug ?? value.slug }
+							: o,
+					),
+				);
+				form.reset({ name: value.name, slug: org?.slug ?? value.slug });
+				toast.success("Organization settings updated");
+			} catch (error) {
+				toast.error(
+					error instanceof Error
+						? error.message
+						: "Failed to update organization",
+				);
 			}
-			setSaving(true);
-			const org = await authulaClient.organizations.updateOrganization(orgId, {
-				name: name.trim(),
-			});
-			setOrg(orgId, name.trim(), org?.ownerId ?? "");
-			setOrganizations(
-				organizations.map((o) =>
-					o.id === orgId ? { ...o, name: name.trim() } : o,
-				),
-			);
-			toast.success("Organization name updated");
-		} catch (error) {
-			toast.error(
-				error instanceof Error
-					? error.message
-					: "Failed to update organization",
-			);
-		} finally {
-			setSaving(false);
-		}
-	};
+		},
+	});
 
 	return (
 		<div className="space-y-8">
@@ -69,22 +96,60 @@ export function OrganizationSettingsGeneralSection() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					<div className="space-y-2">
-						<Label htmlFor="org-name">Name</Label>
-						<Input
-							id="org-name"
-							value={name}
-							onChange={(e) => setName(e.target.value)}
-							placeholder="My Organization"
-							className="max-w-md"
-						/>
-					</div>
-					<Button
-						onClick={handleSave}
-						disabled={saving || !name.trim() || name === orgName}
+					<form
+						className="flex flex-col gap-2"
+						onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							form.handleSubmit();
+						}}
 					>
-						{saving ? "Saving..." : "Save"}
-					</Button>
+						<form.Field
+							name="name"
+							children={(field) => (
+								<div className="space-y-2">
+									<Label htmlFor="org-name">Name</Label>
+									<Input
+										id="org-name"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										onBlur={field.handleBlur}
+										placeholder="My Organization"
+										className="w-full"
+									/>
+									<FieldInfo field={field} />
+								</div>
+							)}
+						/>
+						<form.Field
+							name="slug"
+							children={(field) => (
+								<div className="space-y-2">
+									<Label htmlFor="org-slug">Slug</Label>
+									<Input
+										id="org-slug"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value)}
+										onBlur={field.handleBlur}
+										placeholder="my-organization"
+										className="w-full"
+									/>
+									<FieldInfo field={field} />
+								</div>
+							)}
+						/>
+						<form.Subscribe
+							selector={(state) => ({
+								isDirty: state.isDirty,
+								isSubmitting: state.isSubmitting,
+							})}
+							children={({ isDirty, isSubmitting }) => (
+								<Button type="submit" disabled={!isDirty || isSubmitting}>
+									{isSubmitting ? "Saving..." : "Save"}
+								</Button>
+							)}
+						/>
+					</form>
 				</CardContent>
 			</Card>
 		</div>

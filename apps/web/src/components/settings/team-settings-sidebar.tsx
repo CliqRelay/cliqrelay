@@ -1,63 +1,36 @@
-import { Link, useParams, useRouterState } from "@tanstack/react-router";
-import { Building2, Layers, Palette, Plug, Settings, Users } from "lucide-react";
+import { ArrowLeft, Settings, Users } from "lucide-react";
 
+import { Link, useParams, useRouterState } from "@tanstack/react-router";
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
 import { cn } from "@/lib/utils";
-import { useOrgStore } from "@/stores/org-store";
+import type { OrganizationTeam } from "authula";
 
-const allSections = [
+const sections = [
 	{
 		id: "general",
 		label: "General",
 		icon: Settings,
-		to: "/dashboard/organizations/$orgId/settings/general",
+		to: "/dashboard/organizations/$orgId/teams/$teamId/settings/general",
 	},
 	{
 		id: "members",
 		label: "Members",
 		icon: Users,
-		to: "/dashboard/organizations/$orgId/settings/members",
-	},
-	{
-		id: "teams",
-		label: "Teams",
-		icon: Layers,
-		to: "/dashboard/organizations/$orgId/settings/teams",
-		adminOnly: true,
-	},
-	{
-		id: "branding",
-		label: "Branding",
-		icon: Palette,
-		to: "/dashboard/organizations/$orgId/settings/branding",
-		adminOnly: true,
-	},
-	{
-		id: "integrations",
-		label: "Integrations",
-		icon: Plug,
-		to: "/dashboard/organizations/$orgId/settings/integrations",
-		adminOnly: true,
+		to: "/dashboard/organizations/$orgId/teams/$teamId/settings/members",
 	},
 ] as const;
 
-type Section = (typeof allSections)[number];
+type Props = {
+	team: OrganizationTeam;
+};
 
-export function SettingsSidebar() {
-	const orgName = useOrgStore((state) => state.orgName);
-	const currentMember = useOrgStore((state) => state.currentMember);
-	const { orgId } = useParams({
-		from: "/dashboard/organizations/$orgId/settings",
+export function TeamSettingsSidebar({ team }: Props) {
+	const { orgId, teamId } = useParams({
+		from: "/dashboard/organizations/$orgId/teams/$teamId/settings",
 	});
 
 	const location = useRouterState({ select: (s) => s.location });
-
-	const role = currentMember?.role ?? "";
-	const isAdmin = role === "owner" || role === "admin";
-
-	const sections = allSections.filter((s) => !("adminOnly" in s && s.adminOnly) || isAdmin) as Section[];
-
 	const activeSection =
 		sections.find((s) => location.pathname.endsWith(s.id))?.id ?? "general";
 
@@ -65,23 +38,33 @@ export function SettingsSidebar() {
 		<div className="flex flex-col w-64 shrink-0 border-r bg-background">
 			<div className="flex h-14 items-center gap-3 border-b px-4">
 				<div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-					<Building2 size={16} className="text-primary" />
+					<span className="text-sm font-bold text-primary">
+						{team.name?.charAt(0)?.toUpperCase() ?? "?"}
+					</span>
 				</div>
 				<div className="flex flex-col">
 					<span className="text-sm font-semibold">Settings</span>
 					<span className="text-xs text-muted-foreground truncate max-w-40">
-						{orgName}
+						{team.name}
 					</span>
 				</div>
 			</div>
 			<nav className="flex-1 p-2 space-y-0.5 overflow-auto">
+				<Link
+					to="/dashboard/organizations/$orgId/settings/teams"
+					params={{ orgId }}
+					className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 mb-2"
+				>
+					<ArrowLeft size={14} className="shrink-0" />
+					<span>Back to Teams</span>
+				</Link>
 				{sections.map((s) => {
 					const isActive = activeSection === s.id;
 					return (
 						<Link
 							key={s.id}
 							to={s.to}
-							params={{ orgId }}
+							params={{ orgId, teamId }}
 							className={cn(
 								"flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
 								isActive
@@ -96,7 +79,7 @@ export function SettingsSidebar() {
 				})}
 			</nav>
 			<div className="p-2 border-t">
-				<ExtensionSlot name="org-settings-sidebar-bottom" />
+				<ExtensionSlot name="team-settings-sidebar-bottom" />
 			</div>
 		</div>
 	);

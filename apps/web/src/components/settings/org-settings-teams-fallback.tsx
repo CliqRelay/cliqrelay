@@ -8,7 +8,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { useOrgStore } from "@/stores/org-store";
 import { envClient } from "@/constants/env-client";
 import { Separator } from "../ui/separator";
 
@@ -17,53 +16,40 @@ type Props = {
 	onUpgrade?: () => Promise<void>;
 };
 
-export function OrgSettingsMembersFallback({
+export function OrgSettingsTeamsFallback({
 	isUpgradeAvailable = false,
 	onUpgrade,
 }: Props) {
-	const orgName = useOrgStore((state) => state.orgName);
-
 	return (
 		<div className="space-y-8">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Members</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Teams</h1>
 					<p className="text-sm text-muted-foreground mt-1">
-						Manage who has access to your organization
+						Manage teams across your organization
 					</p>
 				</div>
 			</div>
 
 			<Card>
 				<CardHeader className="pb-3">
-					<div className="flex items-center justify-between">
-						<div>
-							<CardTitle className="text-base">Current Members</CardTitle>
-							<CardDescription>1 member in your organization</CardDescription>
-						</div>
-						<span className="text-xs text-muted-foreground">1/1 seats</span>
-					</div>
+					<CardTitle className="text-base">Team Management</CardTitle>
+					<CardDescription>
+						Create and manage teams to organize your workspace
+					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="rounded-lg border bg-muted/30 p-4">
-						<p className="text-xs font-semibold uppercase text-muted-foreground mb-3">
-							Active Seat
-						</p>
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-3">
-								<div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
-									<Users size={14} className="text-primary" />
-								</div>
-								<div>
-									<p className="text-sm font-medium">
-										You (Organization Owner)
-									</p>
-									<p className="text-xs text-muted-foreground">{orgName}</p>
-								</div>
+						<div className="flex items-center gap-3">
+							<div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+								<Users size={14} className="text-primary" />
 							</div>
-							<span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-medium">
-								Owner
-							</span>
+							<div>
+								<p className="text-sm font-medium">Organization Teams</p>
+								<p className="text-xs text-muted-foreground">
+									Teams are created by organization owners and admins
+								</p>
+							</div>
 						</div>
 					</div>
 				</CardContent>
@@ -73,26 +59,26 @@ export function OrgSettingsMembersFallback({
 				<CardHeader>
 					<CardTitle className="text-base flex items-center gap-2">
 						<Lock size={16} className="text-muted-foreground" />
-						Unlock Team Collaboration
+						Unlock Team Management
 					</CardTitle>
 					<CardDescription>
-						Upgrade to Pro to invite team members, assign roles, and manage
-						seats.
+						Upgrade to Pro to create teams, manage members, and organize your
+						workspace.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<ul className="space-y-2 text-sm text-muted-foreground">
 						<li className="flex items-center gap-2">
 							<span className="size-1.5 rounded-full bg-primary" />
-							Invite unlimited team members
+							Create multiple teams for different departments
 						</li>
 						<li className="flex items-center gap-2">
 							<span className="size-1.5 rounded-full bg-primary" />
-							Fine-grained role assignments (Admin, Editor, Viewer)
+							Assign members to specific teams
 						</li>
 						<li className="flex items-center gap-2">
 							<span className="size-1.5 rounded-full bg-primary" />
-							Centralized seat management & billing
+							Keep guides and workflows scoped to the right team
 						</li>
 					</ul>
 					<Separator />

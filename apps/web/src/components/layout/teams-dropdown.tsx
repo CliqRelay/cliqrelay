@@ -102,12 +102,16 @@ export function TeamsDropdown() {
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						className="mx-1 gap-2 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
-						onClick={() =>
+						onClick={() => {
+							const targetTeamId = activeTeam?.id ?? orgTeams[0]?.id;
+							if (!targetTeamId || !orgId) {
+								return;
+							}
 							navigate({
-								to: "/dashboard/organizations/$orgId/settings",
-								params: { orgId: orgId ?? "" },
-							})
-						}
+								to: "/dashboard/organizations/$orgId/teams/$teamId/settings/general",
+								params: { orgId, teamId: targetTeamId },
+							});
+						}}
 					>
 						<Settings size={16} className="shrink-0 text-muted-foreground" />
 						<span>Settings</span>

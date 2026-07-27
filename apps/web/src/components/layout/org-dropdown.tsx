@@ -22,9 +22,14 @@ export function OrgDropdown() {
 	const orgId = useOrgStore((state) => state.orgId);
 	const orgName = useOrgStore((state) => state.orgName);
 	const organizations = useOrgStore((state) => state.organizations);
+	const currentMember = useOrgStore((state) => state.currentMember);
 	const setOrg = useOrgStore((state) => state.setOrg);
+	const setCurrentMember = useOrgStore((state) => state.setCurrentMember);
 	const resetTeams = useTeamStore((state) => state.resetTeams);
 	const navigate = useNavigate();
+
+	const role = currentMember?.role ?? "";
+	const isAdmin = role === "owner" || role === "admin";
 
 	const isLoading = !orgId && organizations.length === 0;
 
@@ -41,6 +46,7 @@ export function OrgDropdown() {
 		const org = organizations.find((o) => o.id === newOrgId);
 		setActiveOrgCookie(newOrgId);
 		setOrg(newOrgId, newOrgName, org?.ownerId ?? "");
+		setCurrentMember(null);
 		resetTeams();
 		clearActiveTeamCookie();
 		navigate({ to: "/dashboard" });
@@ -95,19 +101,23 @@ export function OrgDropdown() {
 						);
 					})}
 				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem
-					className="mx-1 gap-2.5 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
-					onClick={() =>
-						navigate({
-							to: "/dashboard/organizations/$orgId/settings",
-							params: { orgId: orgId ?? "" },
-						})
-					}
-				>
-					<Settings size={16} className="shrink-0 text-muted-foreground" />
-					<span>Settings</span>
-				</DropdownMenuItem>
+				{isAdmin && (
+					<>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							className="mx-1 gap-2.5 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
+							onClick={() =>
+								navigate({
+									to: "/dashboard/organizations/$orgId/settings",
+									params: { orgId: orgId ?? "" },
+								})
+							}
+						>
+							<Settings size={16} className="shrink-0 text-muted-foreground" />
+							<span>Settings</span>
+						</DropdownMenuItem>
+					</>
+				)}
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

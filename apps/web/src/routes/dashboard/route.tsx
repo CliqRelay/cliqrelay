@@ -21,10 +21,13 @@ type OrgInfo = {
 	slug: string;
 };
 
+import type { OrganizationMemberResponse } from "authula";
+
 type ContextType = {
 	user: UserWithModifiedMetadata;
 	orgs: OrgInfo[];
 	activeOrg: OrgInfo | null;
+	currentMember: OrganizationMemberResponse | null;
 };
 
 export const Route = createFileRoute("/dashboard")({
@@ -73,6 +76,7 @@ export const Route = createFileRoute("/dashboard")({
 					user: userResponse.user,
 					orgs: [],
 					activeOrg: null,
+					currentMember: null,
 				};
 			}
 
@@ -89,10 +93,23 @@ export const Route = createFileRoute("/dashboard")({
 				setActiveOrgCookie(activeOrg.id);
 			}
 
+			let currentMember: OrganizationMemberResponse | null = null;
+			try {
+				const members =
+					await authulaClient.organizations.listOrganizationMembers(
+						activeOrg.id,
+					);
+				currentMember =
+					members?.find((m) => m.user.id === userResponse.user.id) ?? null;
+			} catch {
+				// Non-critical
+			}
+
 			return {
 				user: userResponse.user,
 				orgs: organizations,
 				activeOrg,
+				currentMember,
 			};
 		} catch (error: unknown) {
 			if (isRedirect(error)) {
@@ -115,7 +132,10 @@ function DashboardRoute() {
 				.setOrg(ctx.activeOrg.id, ctx.activeOrg.name, ctx.activeOrg.ownerId);
 		}
 		useOrgStore.getState().setOrganizations(ctx.orgs);
-	}, [ctx.user.id, ctx.orgs, ctx.activeOrg]);
+		if (ctx.currentMember) {
+			useOrgStore.getState().setCurrentMember(ctx.currentMember);
+		}
+	}, [ctx.user.id, ctx.orgs, ctx.activeOrg, ctx.currentMember]);
 
 	// Hydrate org store during SSR so data is available immediately on first render
 	if (import.meta.env.SSR && ctx.activeOrg) {
@@ -125,6 +145,9 @@ function DashboardRoute() {
 			ctx.activeOrg.ownerId,
 		);
 		useOrgStore.getState().setOrganizations(ctx.orgs);
+		if (ctx.currentMember) {
+			useOrgStore.getState().setCurrentMember(ctx.currentMember);
+		}
 	}
 
 	return (

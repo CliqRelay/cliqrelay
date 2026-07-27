@@ -1,23 +1,40 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
+import { authulaClient } from "@/lib/authula-client";
+import { useOrgStore } from "@/stores/org-store";
 
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/settings",
 )({
 	beforeLoad: async ({ params, context }) => {
-		const orgs = (
-			context as {
-				orgs?: Array<{
-					id: string;
-					name: string;
-					slug: string;
-					ownerId: string;
-				}>;
-			}
-		).orgs;
-		if (!orgs?.some((o) => o.id === params.orgId)) {
+		const ctx = context as {
+			orgs?: Array<{
+				id: string;
+				name: string;
+				slug: string;
+				ownerId: string;
+			}>;
+			user?: { id: string };
+		};
+		if (!ctx.orgs?.some((o) => o.id === params.orgId)) {
 			throw redirect({ to: "/dashboard" });
+		}
+
+		if (ctx.user?.id) {
+			try {
+				const members =
+					await authulaClient.organizations.listOrganizationMembers(
+						params.orgId,
+					);
+				const currentMember =
+					members?.find((m) => m.user.id === ctx.user?.id) ?? null;
+				if (currentMember) {
+					useOrgStore.getState().setCurrentMember(currentMember);
+				}
+			} catch {
+				// Non-critical — sidebar will show fewer items
+			}
 		}
 	},
 	component: SettingsLayout,
