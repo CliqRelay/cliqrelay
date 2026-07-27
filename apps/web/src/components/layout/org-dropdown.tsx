@@ -11,6 +11,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { setActiveOrgCookie } from "@/lib/org-cookie";
+import { clearActiveTeamCookie } from "@/lib/team-cookie";
 import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ export function OrgDropdown() {
 	const organizations = useOrgStore((state) => state.organizations);
 	const setOrg = useOrgStore((state) => state.setOrg);
 	const setTeams = useTeamStore((state) => state.setTeams);
+	const setActiveTeam = useTeamStore((state) => state.setActiveTeam);
 	const navigate = useNavigate();
 
 	const switchOrg = async (newOrgId: string, newOrgName: string) => {
@@ -29,6 +31,8 @@ export function OrgDropdown() {
 		setActiveOrgCookie(newOrgId);
 		setOrg(newOrgId, newOrgName, org?.ownerId ?? "");
 		setTeams([]);
+		setActiveTeam(null);
+		clearActiveTeamCookie();
 		navigate({ to: "/dashboard" });
 	};
 

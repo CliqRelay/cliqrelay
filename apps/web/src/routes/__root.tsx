@@ -14,6 +14,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "@/constants/query-client";
+import { getActiveOrgCookie } from "@/lib/org-cookie";
 import { getActiveTeamCookie, setActiveTeamCookie } from "@/lib/team-cookie";
 import type { MyRouterContext } from "@/router";
 import { getTeams } from "@/server-fns/teams";
@@ -25,7 +26,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	beforeLoad: async () => {
 		try {
 			const response = await getTeams();
-			const teams = response.teams;
+			let teams = response.teams;
 
 			let cookieHeader: string | undefined;
 			if (import.meta.env.SSR) {
@@ -39,6 +40,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 					// Not in a server request context
 				}
 			}
+
+			const activeOrgId = getActiveOrgCookie(cookieHeader);
+			if (activeOrgId) {
+				teams = teams.filter((team) => team.organizationId === activeOrgId);
+			}
+
 			const cookieTeamId = getActiveTeamCookie(cookieHeader);
 			const isValid = teams.some((team) => team.id === cookieTeamId);
 			const activeTeamId = isValid ? cookieTeamId! : (teams[0]?.id ?? null);
@@ -89,7 +96,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			const root = state.matches.find((m) => m.routeId === "__root__");
 			return root?.context as
 				| {
-						teams?: Array<{ id: string; name: string }>;
+						teams?: Array<{ id: string; name: string; organizationId: string }>;
 						activeTeamId?: string | null;
 				  }
 				| undefined;

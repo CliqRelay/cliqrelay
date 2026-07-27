@@ -6,6 +6,7 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 	organizations "github.com/Authula/authula/plugins/organizations"
+	orgtypes "github.com/Authula/authula/plugins/organizations/types"
 
 	"github.com/CliqRelay/cliqrelay/config"
 )
@@ -55,7 +56,25 @@ func (h *GetTeamsHandler) Handle() http.HandlerFunc {
 			if err != nil {
 				continue
 			}
+
+			isOwner := org.OwnerID == actor.ID
+
+			var member *orgtypes.OrganizationMemberResponse
+			if !isOwner {
+				member, err = orgPlugin.Api.GetMemberByUserID(r.Context(), actor, org.ID, actor.ID)
+				if err != nil || member == nil {
+					continue
+				}
+			}
+
 			for _, t := range orgTeams {
+				if !isOwner {
+					teamMember, err := orgPlugin.Api.GetTeamMember(r.Context(), actor, org.ID, t.ID, member.ID)
+					if err != nil || teamMember == nil {
+						continue
+					}
+				}
+
 				teams = append(teams, teamResponse{
 					ID:             t.ID,
 					Name:           t.Name,

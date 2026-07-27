@@ -27,8 +27,13 @@ export function TeamsDropdown() {
 	const teams = useTeamStore((state) => state.teams);
 	const activeTeamId = useTeamStore((state) => state.activeTeamId);
 	const setActiveTeam = useTeamStore((state) => state.setActiveTeam);
-	const activeTeam = teams.find((t) => t.id === activeTeamId);
 	const orgId = useOrgStore((state) => state.orgId);
+	const orgTeams = teams.filter((team) => team.organizationId === orgId);
+	const activeTeam = orgTeams.find((t) => t.id === activeTeamId);
+
+	if (orgTeams.length === 0) {
+		return null;
+	}
 
 	const switchTeam = (teamId: string) => {
 		setActiveTeamCookie(teamId);
@@ -66,7 +71,7 @@ export function TeamsDropdown() {
 						<DropdownMenuLabel className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
 							Switch Team
 						</DropdownMenuLabel>
-						{teams.map((team) => {
+						{orgTeams.map((team) => {
 							const isActive = team.id === activeTeamId;
 							return (
 								<DropdownMenuItem

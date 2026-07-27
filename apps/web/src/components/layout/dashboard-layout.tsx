@@ -13,16 +13,16 @@ import {
 	Sidebar,
 	SidebarContent,
 	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuItem,
 	SidebarProvider,
 } from "@/components/ui/sidebar";
 import { NavMain } from "./nav-main";
 import { SiteHeader } from "./site-header";
 import type { AppUser } from "@/models/auth";
 import { TeamsDropdown } from "./teams-dropdown";
+import { useOrgStore } from "@/stores/org-store";
+import { useTeamStore } from "@/stores/team-store";
 
-const baseNavData: NavItem[] = [
+const navLinks: NavItem[] = [
 	{
 		title: "Dashboard",
 		icon: LayoutDashboard,
@@ -54,8 +54,23 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 		select: (state) => state.matches.some((m) => !!m.context?.hideSiteHeader),
 	});
 
+	const teams = useTeamStore((state) => state.teams);
+	const orgId = useOrgStore((state) => state.orgId);
+	const hasTeamsInOrg = teams.some((team) => team.organizationId === orgId);
+
 	const navData: NavItem[] = [
-		...baseNavData,
+		...navLinks,
+		...(hasTeamsInOrg
+			? [
+					{
+						label: "Teams",
+						isSection: true,
+					} as NavItem,
+					{
+						component: TeamsDropdown,
+					} as NavItem,
+				]
+			: []),
 		...(extensionRegistry.getNavItems() ?? []),
 	];
 
@@ -64,31 +79,24 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 			<Sidebar className="pt-4 px-0 bg-background">
 				<div className="flex flex-col gap-6 bg-background min-h-0 flex-1">
 					<SidebarHeader className="py-0 px-4">
-						<SidebarMenu>
-							<SidebarMenuItem>
-								<img
-									src="/app-logo-dark.png"
-									alt="CliqRelay Logo"
-									height="125"
-									width="125"
-									className="block dark:hidden"
-								/>
-								<img
-									src="/app-logo-light.png"
-									alt="CliqRelay Logo"
-									height="125"
-									width="125"
-									className="hidden dark:block"
-								/>
-							</SidebarMenuItem>
-						</SidebarMenu>
+						<img
+							src="/app-logo-dark.png"
+							alt="CliqRelay Logo"
+							height="125"
+							width="125"
+							className="block dark:hidden"
+						/>
+						<img
+							src="/app-logo-light.png"
+							alt="CliqRelay Logo"
+							height="125"
+							width="125"
+							className="hidden dark:block"
+						/>
 					</SidebarHeader>
 					<SidebarContent className="overflow-hidden gap-0 px-0 flex-1">
 						<div className="px-4">
 							<NavMain items={navData} />
-							<div className="pt-5">
-								<TeamsDropdown />
-							</div>
 						</div>
 					</SidebarContent>
 					<div className="mt-auto">

@@ -23,7 +23,11 @@ import { cn } from "@/lib/utils";
 export function NavMain({ items }: { items: NavItem[] }) {
 	const { pathname } = useLocation();
 
-	const renderItem = (item: NavItem) => {
+	const renderItem = (item: NavItem, index: number) => {
+		if (item.component) {
+			const Component = item.component;
+			return <Component key={`component-${index}`} />;
+		}
 		if (item.isSection && item.label) {
 			return (
 				<SidebarGroup key={item.label} className="p-0 pt-5 first:pt-0">
@@ -101,11 +105,11 @@ export function NavMain({ items }: { items: NavItem[] }) {
 		return null;
 	};
 
-	const renderItemSub = (item: NavItem) => {
+	const renderItemSub = (item: NavItem, index: number) => {
 		const hasChildren = !!item.children?.length;
 		if (hasChildren && item.title) {
 			return (
-				<SidebarMenuSubItem key={item.title}>
+				<SidebarMenuSubItem key={`sub-${index}`}>
 					<Collapsible>
 						<CollapsibleTrigger className="w-full">
 							<SidebarMenuSubButton className="rounded-xl text-sm px-3 py-2 h-9">
@@ -125,7 +129,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
 		}
 		if (item.title) {
 			return (
-				<SidebarMenuSubItem key={item.title} className="w-full">
+				<SidebarMenuSubItem key={`leaf-${index}`} className="w-full">
 					<SidebarMenuSubButton className="w-full" asChild>
 						<Link to={item.href}>{item.title}</Link>
 					</SidebarMenuSubButton>
