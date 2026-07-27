@@ -12,6 +12,7 @@ import { authulaClient } from "@/lib/authula-client";
 import { getActiveOrgCookie, setActiveOrgCookie } from "@/lib/org-cookie";
 import type { UserWithModifiedMetadata } from "@/models";
 import { useOrgStore } from "@/stores/org-store";
+import { useUserStore } from "@/stores/user-store";
 
 type OrgInfo = {
 	id: string;
@@ -107,13 +108,14 @@ function DashboardRoute() {
 	const ctx = Route.useRouteContext();
 
 	useEffect(() => {
+		useUserStore.getState().setUser(ctx.user.id);
 		if (ctx.activeOrg) {
 			useOrgStore
 				.getState()
 				.setOrg(ctx.activeOrg.id, ctx.activeOrg.name, ctx.activeOrg.ownerId);
 		}
 		useOrgStore.getState().setOrganizations(ctx.orgs);
-	}, [ctx.orgs, ctx.activeOrg]);
+	}, [ctx.user.id, ctx.orgs, ctx.activeOrg]);
 
 	return (
 		<DashboardLayout user={ctx.user}>

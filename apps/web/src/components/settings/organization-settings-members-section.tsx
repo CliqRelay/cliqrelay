@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { authulaClient } from "@/lib/authula-client";
 import { useOrgStore } from "@/stores/org-store";
+import { useUserStore } from "@/stores/user-store";
 
 type MemberProfile = {
 	memberId: string;
@@ -39,6 +40,8 @@ type MemberProfile = {
 export function OrganizationSettingsMembersSection() {
 	const orgId = useOrgStore((state) => state.orgId);
 	const orgOwnerId = useOrgStore((state) => state.orgOwnerId);
+	const currentUserId = useUserStore((state) => state.userId);
+	const setCurrentMember = useOrgStore((state) => state.setCurrentMember);
 
 	const [members, setMembers] = useState<MemberProfile[]>([]);
 	const [invitations, setInvitations] = useState<
@@ -46,6 +49,9 @@ export function OrganizationSettingsMembersSection() {
 	>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [inviteDialogOpen, setInviteDialogOpen] = useState<boolean>(false);
+
+	const currentMember = useOrgStore((state) => state.currentMember);
+	const canRemoveMembers = currentMember?.role === "admin";
 
 	const loadData = useCallback(async () => {
 		try {
@@ -58,9 +64,8 @@ export function OrganizationSettingsMembersSection() {
 				authulaClient.organizations.listOrganizationInvitations(orgId),
 			]);
 
-			const members: MemberProfile[] = (
-				orgMembersRes as OrganizationMemberResponse[]
-			)
+			const rawMembers = orgMembersRes as OrganizationMemberResponse[];
+			const members: MemberProfile[] = rawMembers
 				.map((m) => ({
 					memberId: m.id,
 					userId: m.user.id,
@@ -71,6 +76,13 @@ export function OrganizationSettingsMembersSection() {
 					image: m.user?.image,
 				}))
 				.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+			const currentUserMember = rawMembers.find(
+				(m) => m.user.id === currentUserId,
+			);
+			if (currentUserMember) {
+				setCurrentMember(currentUserMember);
+			}
 
 			setMembers(members);
 			setInvitations(
@@ -86,7 +98,7 @@ export function OrganizationSettingsMembersSection() {
 		} finally {
 			setLoading(false);
 		}
-	}, [orgId]);
+	}, [orgId, currentUserId]);
 
 	useEffect(() => {
 		loadData();
@@ -212,20 +224,22 @@ export function OrganizationSettingsMembersSection() {
 										</Badge>
 									</TableCell>
 									<TableCell>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="size-8 text-muted-foreground hover:text-destructive"
-											disabled={member.userId === orgOwnerId}
-											title={
-												member.userId === orgOwnerId
-													? "Cannot remove the organization owner"
-													: "Remove member"
-											}
-											onClick={() => handleRemoveMember(member.memberId)}
-										>
-											<Trash2 size={14} />
-										</Button>
+										{canRemoveMembers ? (
+											<Button
+												variant="ghost"
+												size="icon"
+												className="size-8 text-muted-foreground hover:text-destructive"
+												disabled={
+													member.userId === orgOwnerId ||
+													member.userId === currentUserId
+												}
+												onClick={() => handleRemoveMember(member.memberId)}
+											>
+												<Trash2 size={14} />
+											</Button>
+										) : (
+											<div className="size-8" />
+										)}
 									</TableCell>
 								</TableRow>
 							))}
@@ -259,7 +273,7 @@ export function OrganizationSettingsMembersSection() {
 									<TableHead className="pl-6">Email</TableHead>
 									<TableHead>Role</TableHead>
 									<TableHead>Status</TableHead>
-									<TableHead className="w-20" />
+							<TableHead className="w-20" />
 								</TableRow>
 							</TableHeader>
 							<TableBody>

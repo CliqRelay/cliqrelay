@@ -82,6 +82,10 @@ func ConstructOrganizationsServiceHooks(provider authulaProvider) organizationsp
 					return fmt.Errorf("cannot remove the organization owner")
 				}
 
+				if actor.ID == member.UserID {
+					return fmt.Errorf("cannot remove yourself from the organization")
+				}
+
 				return nil
 			},
 		},
