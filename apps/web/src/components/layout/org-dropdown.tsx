@@ -15,6 +15,7 @@ import { clearActiveTeamCookie } from "@/lib/team-cookie";
 import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export function OrgDropdown() {
@@ -25,6 +26,17 @@ export function OrgDropdown() {
 	const setTeams = useTeamStore((state) => state.setTeams);
 	const setActiveTeam = useTeamStore((state) => state.setActiveTeam);
 	const navigate = useNavigate();
+
+	const isLoading = !orgId && organizations.length === 0;
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center gap-2 px-2 h-8">
+				<Skeleton className="size-6 rounded-md" />
+				<Skeleton className="h-4 w-24" />
+			</div>
+		);
+	}
 
 	const switchOrg = async (newOrgId: string, newOrgName: string) => {
 		const org = organizations.find((o) => o.id === newOrgId);

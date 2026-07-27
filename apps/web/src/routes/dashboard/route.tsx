@@ -117,6 +117,16 @@ function DashboardRoute() {
 		useOrgStore.getState().setOrganizations(ctx.orgs);
 	}, [ctx.user.id, ctx.orgs, ctx.activeOrg]);
 
+	// Hydrate org store during SSR so data is available immediately on first render
+	if (import.meta.env.SSR && ctx.activeOrg) {
+		useOrgStore.getState().setOrg(
+			ctx.activeOrg.id,
+			ctx.activeOrg.name,
+			ctx.activeOrg.ownerId,
+		);
+		useOrgStore.getState().setOrganizations(ctx.orgs);
+	}
+
 	return (
 		<DashboardLayout user={ctx.user}>
 			<Outlet />

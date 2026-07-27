@@ -10,7 +10,6 @@ import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
@@ -39,8 +38,8 @@ function NoTeamsView({
 						👋 Welcome to {orgName ?? "your organization"}!
 					</CardTitle>
 					<CardDescription className="text-base mt-2">
-						You're a member of this organization, but you haven't been
-						assigned to a team yet.
+						You're a member of this organization, but you haven't been assigned
+						to a team yet.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
@@ -49,8 +48,8 @@ function NoTeamsView({
 							💡 What would you like to do next?
 						</p>
 						<Button
-							variant="default"
-							className="w-full justify-start gap-3 h-auto py-3 px-4"
+							variant="outline"
+							className="w-full justify-start gap-3 h-auto py-3 px-4 cursor-pointer"
 							onClick={onRequestAccess}
 						>
 							<MailQuestion size={18} />
@@ -63,9 +62,6 @@ function NoTeamsView({
 						</Button>
 					</div>
 				</CardContent>
-				<CardFooter className="justify-center text-sm text-muted-foreground">
-					You can switch organizations using the dropdown in the header
-				</CardFooter>
 			</Card>
 		</div>
 	);

@@ -52,6 +52,10 @@ func (r *BunStarredGuidesRepository) GetAll(ctx context.Context, filter *types.G
 		query = query.Where("g.title ILIKE ?", "%"+*filter.Search+"%")
 	}
 
+	if filter.TeamID != nil {
+		query = query.Where("g.team_id = ?", *filter.TeamID)
+	}
+
 	err := query.Order("g.updated_at DESC").Scan(ctx, &rows)
 	if err != nil {
 		return nil, err

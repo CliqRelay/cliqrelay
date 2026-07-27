@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 import { CreateGuideDialog, GuideList } from "@/components/guides";
 import { Button } from "@/components/ui/button";
 import { getAllGuides } from "@/server-fns/guides";
+import { useTeamStore } from "@/stores/team-store";
 
 export const Route = createFileRoute("/dashboard/guides")({
 	component: Guides,
@@ -48,16 +49,19 @@ function Guides() {
 	const navigate = useNavigate();
 	const router = useRouter();
 
+	const teams = useTeamStore((state) => state.teams);
+	const activeTeamId = useTeamStore((state) => state.activeTeamId);
+	const activeTeam = teams.find((t) => t.id === activeTeamId);
+	const teamName = activeTeam?.name ?? "this team";
+
 	const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false);
 
 	return (
 		<div className="p-6">
 			<div className="mb-6 flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">My Guides</h1>
-					<p className="text-sm text-muted-foreground">
-						Manage your documentation guides
-					</p>
+					<h1 className="text-2xl font-bold tracking-tight">Guides</h1>
+					<p className="text-sm text-muted-foreground">Guides in {teamName}</p>
 				</div>
 				<Button variant="default" onClick={() => setCreateDialogOpen(true)}>
 					<Plus className="mr-2 h-4 w-4" />

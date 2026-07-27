@@ -22,28 +22,29 @@ import { TeamsDropdown } from "./teams-dropdown";
 import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
 
-const navLinks: NavItem[] = [
-	{
-		title: "Dashboard",
-		icon: LayoutDashboard,
-		href: "/dashboard",
-	},
-	{
-		title: "My Guides",
-		icon: Library,
-		href: "/dashboard/guides",
-	},
-	{
-		title: "Starred",
-		icon: Star,
-		href: "/dashboard/starred",
-	},
-	{
-		title: "Trash",
-		icon: Trash,
-		href: "/dashboard/trash",
-	},
-];
+const dashboardNav: NavItem = {
+	title: "Dashboard",
+	icon: LayoutDashboard,
+	href: "/dashboard",
+};
+
+const guideNav: NavItem = {
+	title: "Guides",
+	icon: Library,
+	href: "/dashboard/guides",
+};
+
+const starredNav: NavItem = {
+	title: "Starred",
+	icon: Star,
+	href: "/dashboard/starred",
+};
+
+const trashNav: NavItem = {
+	title: "Trash",
+	icon: Trash,
+	href: "/dashboard/trash",
+};
 
 type Props = {
 	user: AppUser;
@@ -55,11 +56,15 @@ export function DashboardLayout({ children, user }: PropsWithChildren<Props>) {
 	});
 
 	const teams = useTeamStore((state) => state.teams);
+	const teamLoaded = useTeamStore((state) => state.loaded);
+	const activeTeamId = useTeamStore((state) => state.activeTeamId);
 	const orgId = useOrgStore((state) => state.orgId);
 	const hasTeamsInOrg = teams.some((team) => team.organizationId === orgId);
+	const showTeamScopedNav = teamLoaded && !!activeTeamId;
 
 	const navData: NavItem[] = [
-		...navLinks,
+		dashboardNav,
+		...(showTeamScopedNav ? [guideNav, starredNav, trashNav] : []),
 		...(hasTeamsInOrg
 			? [
 					{

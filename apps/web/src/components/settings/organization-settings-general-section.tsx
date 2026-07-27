@@ -21,6 +21,7 @@ export function OrganizationSettingsGeneralSection() {
 	const setOrg = useOrgStore((state) => state.setOrg);
 	const organizations = useOrgStore((state) => state.organizations);
 	const setOrganizations = useOrgStore((state) => state.setOrganizations);
+
 	const [name, setName] = useState<string>(orgName ?? "");
 	const [saving, setSaving] = useState<boolean>(false);
 
