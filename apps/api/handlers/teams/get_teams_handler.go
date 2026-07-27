@@ -21,9 +21,9 @@ func NewGetTeamsHandler(appConfig *config.AppConfig) *GetTeamsHandler {
 
 type teamResponse struct {
 	ID             string `json:"id"`
-	Name           string `json:"name"`
 	OrganizationID string `json:"organization_id"`
 	OwnerID        string `json:"owner_id"`
+	Name           string `json:"name"`
 	CreatedAt      string `json:"created_at"`
 	UpdatedAt      string `json:"updated_at"`
 }

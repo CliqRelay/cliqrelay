@@ -13,7 +13,7 @@ import (
 func InitRoutes(appConfig *config.AppConfig, services *interfaces.DomainUseCases, extraRoutes ...[]authulamodels.Route) []authulamodels.Route {
 	routes := []authulamodels.Route{}
 	routes = append(routes, HealthRoutes(appConfig)...)
-	routes = append(routes, TeamsRoutes(appConfig, services.TeamMembershipsUseCase)...)
+	routes = append(routes, TeamsRoutes(appConfig)...)
 	routes = append(routes, GuidesRoutes(appConfig, services.GuidesUseCase, services.ExportService)...)
 	routes = append(routes, StepsRoutes(appConfig, services.StepsUseCase)...)
 	routes = append(routes, MediaAssetsRoutes(appConfig, services.MediaAssetsUseCase)...)
