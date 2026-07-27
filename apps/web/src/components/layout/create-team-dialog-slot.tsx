@@ -15,5 +15,11 @@ export function CreateTeamDialogSlot({ open, onOpenChange }: Props) {
 		return <Component />;
 	}
 
-	return <CreateTeamFallback open={open} onOpenChange={onOpenChange} />;
+	return (
+		<CreateTeamFallback
+			isUpgradeAvailable={false}
+			open={open}
+			onOpenChange={onOpenChange}
+		/>
+	);
 }
