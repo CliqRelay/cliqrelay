@@ -16,7 +16,7 @@ export const Route = createFileRoute(
 				}>;
 			}
 		).orgs;
-		if (!orgs || !orgs.some((o) => o.id === params.orgId)) {
+		if (!orgs?.some((o) => o.id === params.orgId)) {
 			throw redirect({ to: "/dashboard" });
 		}
 	},

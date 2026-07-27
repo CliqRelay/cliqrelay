@@ -9,8 +9,17 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { useOrgStore } from "@/stores/org-store";
+import { envClient } from "@/constants/env-client";
 
-export function OrgMembersFallback() {
+type Props = {
+	isUpgradeAvailable: boolean;
+	onUpgrade?: () => Promise<void>;
+};
+
+export function OrgSettingsMembersFallback({
+	isUpgradeAvailable = false,
+	onUpgrade,
+}: Props) {
 	const orgName = useOrgStore((state) => state.orgName);
 
 	return (
@@ -22,10 +31,6 @@ export function OrgMembersFallback() {
 						Manage who has access to your organization
 					</p>
 				</div>
-				<Button disabled className="opacity-60">
-					<Lock className="mr-2 h-4 w-4" />
-					Invite Member
-				</Button>
 			</div>
 
 			<Card>
@@ -35,9 +40,7 @@ export function OrgMembersFallback() {
 							<CardTitle className="text-base">Current Members</CardTitle>
 							<CardDescription>1 member in your organization</CardDescription>
 						</div>
-						<span className="text-xs text-muted-foreground">
-							Free tier: 1/1 seats
-						</span>
+						<span className="text-xs text-muted-foreground">1/1 seats</span>
 					</div>
 				</CardHeader>
 				<CardContent>
@@ -91,7 +94,20 @@ export function OrgMembersFallback() {
 							Centralized seat management & billing
 						</li>
 					</ul>
-					<Button className="w-full">Upgrade to Pro</Button>
+					{isUpgradeAvailable ? (
+						<Button className="w-full" onClick={() => onUpgrade?.()}>
+							Upgrade to Pro
+						</Button>
+					) : (
+						<a
+							href={envClient.siteUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-sm text-sky-500 hover:underline"
+						>
+							Learn About {envClient.appName} Pro
+						</a>
+					)}
 				</CardContent>
 			</Card>
 		</div>

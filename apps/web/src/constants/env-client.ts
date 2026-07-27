@@ -7,6 +7,7 @@ const validatedEnv = createEnv({
 		VITE_EXTENSION_ID: z.string().nonempty(),
 		VITE_AUTHULA_URL: z.string().nonempty(),
 		VITE_BASE_URL: z.string().nonempty(),
+		VITE_APP_SITE_URL: z.string().nonempty(),
 		VITE_APP_NAME: z.string().nonempty(),
 	},
 	runtimeEnv: import.meta.env,
@@ -19,5 +20,6 @@ export const envClient = {
 	extensionId: validatedEnv.VITE_EXTENSION_ID,
 	authulaUrl: validatedEnv.VITE_AUTHULA_URL,
 	baseUrl: validatedEnv.VITE_BASE_URL,
+	siteUrl: validatedEnv.VITE_APP_SITE_URL,
 	appName: validatedEnv.VITE_APP_NAME,
 } as const;

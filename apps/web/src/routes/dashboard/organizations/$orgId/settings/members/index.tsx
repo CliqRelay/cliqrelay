@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
-import { OrgMembersFallback } from "@/components/settings/members/members-fallback";
+import { OrgSettingsMembersFallback } from "@/components/settings/org-settings-members-fallback";
 
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/settings/members",
@@ -12,6 +12,9 @@ export const Route = createFileRoute(
 
 function OrganizationsSettingsMembersPageComponent() {
 	return (
-		<ExtensionSlot name="org-settings-members" fallback={OrgMembersFallback} />
+		<ExtensionSlot
+			name="org-settings-members"
+			fallback={OrgSettingsMembersFallback}
+		/>
 	);
 }
