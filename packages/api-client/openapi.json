@@ -2389,6 +2389,16 @@
               "null",
               "string"
             ]
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Visibility"
+              }
+            ]
           }
         },
         "type": "object"

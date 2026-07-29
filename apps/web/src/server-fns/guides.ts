@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 
-import { api } from "@repo/api-client";
+import { api, type Visibility } from "@repo/api-client";
 import { COOKIE_CONSTANTS } from "@repo/data-commons";
 
 import { authMiddleware } from "@/middleware/auth.middleware";
@@ -102,6 +102,25 @@ export const updateGuide = createServerFn({ method: "POST" })
 			console.error("Failed to update guide:", error);
 			return null;
 		}
+	});
+
+export const updateGuideVisibility = createServerFn({ method: "POST" })
+	.validator(
+		(input: { guideId: string; visibility: Visibility }) => input,
+	)
+	.middleware([authMiddleware])
+	.handler(async ({ data, context }) => {
+		const response = await api.guides.updateGuide(
+			data.guideId,
+			{ visibility: data.visibility },
+			{
+				headers: {
+					Cookie: context.headers.get("Cookie") ?? "",
+					...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+				},
+			},
+		);
+		return response.guide;
 	});
 
 export const deleteGuide = createServerFn({ method: "POST" })

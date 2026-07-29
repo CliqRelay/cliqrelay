@@ -42,7 +42,7 @@ func (h *UpdateGuideHandler) Handle() http.HandlerFunc {
 
 		guide, err := h.guidesUseCase.Update(ctx, actor, guideID, &request)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}

@@ -9,6 +9,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type GetAllGuidesHandler struct {
@@ -56,7 +57,7 @@ func (h *GetAllGuidesHandler) Handle() http.HandlerFunc {
 
 		guides, total, err := h.guidesUseCase.List(ctx, actor, teamID, status, excludeArchived, page, limit, sortBy, sortDir)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}

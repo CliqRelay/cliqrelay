@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { api } from "@repo/api-client";
+import { api, type Visibility } from "@repo/api-client";
 
 import { CreateGuideDialog } from "@/components/guides/create-guide-dialog";
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
@@ -13,6 +13,7 @@ import { GuidesList } from "@/components/guides/guides-list";
 import { useGuideActions } from "@/components/guides/use-guide-actions";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
+import { updateGuideVisibility } from "@/server-fns/guides";
 import { useGuidesStore } from "@/store/guides-store";
 import { useTeamStore } from "@/stores/team-store";
 
@@ -134,6 +135,14 @@ function Guides() {
 		invalidateGuides();
 	};
 
+	const handleVisibilityChange = async (
+		guideId: string,
+		visibility: Visibility,
+	) => {
+		await updateGuideVisibility({ data: { guideId, visibility } });
+		invalidateGuides();
+	};
+
 	return (
 		<div className="dashboard-page__wrapper">
 			<GuidePageHeader />
@@ -150,6 +159,7 @@ function Guides() {
 							onPublish={handlePublish}
 							onUnpublish={handleUnpublish}
 							onUnarchive={handleUnarchive}
+							onVisibilityChange={handleVisibilityChange}
 						/>
 					</div>
 					<DataPagination

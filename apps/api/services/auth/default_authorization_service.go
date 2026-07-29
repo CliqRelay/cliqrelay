@@ -83,7 +83,7 @@ func (s *DefaultAuthorizationService) CanReadTeam(ctx context.Context, actor *au
 func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
 	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
 	if err != nil {
-		return constants.ErrForbidden
+		return constants.ErrTeamAccessDenied
 	}
 
 	return s.isTeamMember(ctx, actor, orgID, teamID)
@@ -92,15 +92,15 @@ func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor 
 func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
 	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
 	if err != nil {
-		return constants.ErrForbidden
+		return constants.ErrTeamAccessDenied
 	}
 
 	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
-		return constants.ErrForbidden
+		return constants.ErrGuideAccessDenied
 	}
 
 	if guide.Visibility == models.VisibilityPrivate && actor.ID != guide.CreatorID {
-		return constants.ErrForbidden
+		return constants.ErrGuideReadDenied
 	}
 
 	return nil
@@ -109,15 +109,15 @@ func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *a
 func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
 	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
 	if err != nil {
-		return constants.ErrForbidden
+		return constants.ErrTeamAccessDenied
 	}
 
 	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
-		return constants.ErrForbidden
+		return constants.ErrGuideEditDenied
 	}
 
 	if guide.Visibility == models.VisibilityPrivate && actor.ID != guide.CreatorID {
-		return constants.ErrForbidden
+		return constants.ErrGuideEditDenied
 	}
 
 	return nil
@@ -126,11 +126,11 @@ func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *a
 func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
 	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
 	if err != nil {
-		return constants.ErrForbidden
+		return constants.ErrTeamAccessDenied
 	}
 
 	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
-		return constants.ErrForbidden
+		return constants.ErrGuideDeleteDenied
 	}
 
 	if actor.ID == guide.CreatorID {
@@ -139,11 +139,11 @@ func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor 
 
 	isAdmin := slices.Contains(actor.Scopes, orgconstants.All)
 	if !isAdmin {
-		return constants.ErrForbidden
+		return constants.ErrGuideDeleteDenied
 	}
 
 	if guide.Visibility == models.VisibilityPrivate {
-		return constants.ErrForbidden
+		return constants.ErrGuideDeleteDenied
 	}
 
 	return nil
@@ -152,11 +152,11 @@ func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor 
 func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor, teamID string) (*types.GuideFilter, error) {
 	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
 	if err != nil {
-		return nil, constants.ErrForbidden
+		return nil, constants.ErrTeamAccessDenied
 	}
 
 	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
-		return nil, constants.ErrForbidden
+		return nil, constants.ErrTeamAccessDenied
 	}
 
 	return &types.GuideFilter{

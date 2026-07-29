@@ -47,7 +47,7 @@ func (h *BulkGuideActionHandler) Handle() http.HandlerFunc {
 
 		err := h.guidesUseCase.BulkAction(ctx, actor, action, &req)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}

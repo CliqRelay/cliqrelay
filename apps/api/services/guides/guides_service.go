@@ -251,6 +251,7 @@ func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.U
 		TeamID:      existing.TeamID,
 		Title:       req.Title,
 		Description: req.Description,
+		Visibility:  req.Visibility,
 	})
 	if err != nil {
 		return nil, err

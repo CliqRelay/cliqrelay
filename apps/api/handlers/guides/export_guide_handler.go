@@ -47,7 +47,7 @@ func (h *ExportGuideHandler) Handle() http.HandlerFunc {
 
 		exportID, err := h.exportService.RequestExport(reqCtx, guideID, request.Format)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}

@@ -179,6 +179,9 @@ func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuid
 	if data.Description != nil {
 		guide.Description = data.Description
 	}
+	if data.Visibility != nil {
+		guide.Visibility = *data.Visibility
+	}
 
 	_, err = r.db.NewUpdate().
 		Model(guide).

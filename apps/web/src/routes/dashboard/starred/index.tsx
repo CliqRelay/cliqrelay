@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { AlertTriangle, RefreshCw, Star } from "lucide-react";
 
-import { api } from "@repo/api-client";
+import { api, type Visibility } from "@repo/api-client";
 
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
 import { GuidesList } from "@/components/guides/guides-list";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
+import { updateGuideVisibility } from "@/server-fns/guides";
 import { useTeamStore } from "@/stores/team-store";
 
 const PAGE_SIZE = 10;
@@ -145,6 +146,14 @@ function StarredGuides() {
 		invalidateStarred();
 	};
 
+	const handleVisibilityChange = async (
+		guideId: string,
+		visibility: Visibility,
+	) => {
+		await updateGuideVisibility({ data: { guideId, visibility } });
+		invalidateStarred();
+	};
+
 	const handleConfirm = () => {
 		if (pendingGuideId) {
 			confirm(pendingGuideId);
@@ -172,6 +181,7 @@ function StarredGuides() {
 							onPublish={handlePublish}
 							onUnpublish={handleUnpublish}
 							onUnarchive={handleUnarchive}
+							onVisibilityChange={handleVisibilityChange}
 							renderEmpty={() => (
 								<Card className="w-full">
 									<CardContent className="flex flex-col items-center justify-center py-16">

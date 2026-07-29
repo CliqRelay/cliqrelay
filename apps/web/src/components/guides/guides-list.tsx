@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { FileText } from "lucide-react";
 
-import type { Guide } from "@repo/api-client";
+import type { Guide, Visibility } from "@repo/api-client";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { GuideCard } from "./guide-card";
@@ -15,6 +15,7 @@ type Props = {
 	onPublish?: (guideId: string) => void;
 	onUnpublish?: (guideId: string) => void;
 	onUnarchive?: (guideId: string) => void;
+	onVisibilityChange?: (guideId: string, visibility: Visibility) => void;
 	renderEmpty?: () => ReactNode;
 };
 
@@ -26,6 +27,7 @@ export function GuidesList({
 	onPublish,
 	onUnpublish,
 	onUnarchive,
+	onVisibilityChange,
 	renderEmpty,
 }: Props) {
 	if (guides.length === 0) {
@@ -59,6 +61,7 @@ export function GuidesList({
 					onPublish={onPublish}
 					onUnpublish={onUnpublish}
 					onUnarchive={onUnarchive}
+					onVisibilityChange={onVisibilityChange}
 				/>
 			))}
 		</div>

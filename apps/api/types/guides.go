@@ -148,8 +148,9 @@ type GetGuideByIDResponse struct {
 }
 
 type UpdateGuideRequest struct {
-	Title       *string `json:"title,omitempty" validate:"omitempty,gt=0,lte=255" nullable:"true"`
-	Description *string `json:"description,omitempty" validate:"omitempty,gt=0" nullable:"true"`
+	Title       *string           `json:"title,omitempty" validate:"omitempty,gt=0,lte=255" nullable:"true"`
+	Description *string           `json:"description,omitempty" validate:"omitempty,gt=0" nullable:"true"`
+	Visibility  *models.Visibility `json:"visibility,omitempty" validate:"omitempty,oneof=private team public" nullable:"true"`
 }
 
 func (r *UpdateGuideRequest) Validate() error {
@@ -161,10 +162,11 @@ func (r *UpdateGuideRequest) Validate() error {
 }
 
 type UpdateGuideDTO struct {
-	ID          uuid.UUID `json:"id" required:"true" validate:"required"`
-	TeamID      uuid.UUID `json:"team_id" validate:"required"`
-	Title       *string   `json:"title,omitempty" validate:"omitempty,lte=255" nullable:"true"`
-	Description *string   `json:"description,omitempty" nullable:"true"`
+	ID          uuid.UUID          `json:"id" required:"true" validate:"required"`
+	TeamID      uuid.UUID          `json:"team_id" validate:"required"`
+	Title       *string            `json:"title,omitempty" validate:"omitempty,lte=255" nullable:"true"`
+	Description *string            `json:"description,omitempty" nullable:"true"`
+	Visibility  *models.Visibility `json:"visibility,omitempty" nullable:"true"`
 }
 
 func (r *UpdateGuideDTO) Validate() error {

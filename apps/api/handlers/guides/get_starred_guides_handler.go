@@ -9,6 +9,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type GetStarredGuidesHandler struct {
@@ -43,7 +44,7 @@ func (h *GetStarredGuidesHandler) Handle() http.HandlerFunc {
 
 		guides, total, err := h.guidesUseCase.GetStarred(ctx, actor, teamID, page, limit)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}

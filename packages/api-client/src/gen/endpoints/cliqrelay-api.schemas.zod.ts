@@ -568,6 +568,7 @@ export type UnstarGuideResponseOutput = zod.output<typeof UnstarGuideResponse>;
 export const UpdateGuideRequest = zod.object({
 	description: zod.string().nullish(),
 	title: zod.string().nullish(),
+	visibility: zod.union([zod.null(), Visibility]).optional(),
 });
 
 export type UpdateGuideRequest = zod.input<typeof UpdateGuideRequest>;

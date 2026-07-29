@@ -14,7 +14,7 @@ export function TopBar({
 	user?: AppUser | null;
 }) {
 	return (
-		<header className="sticky top-0 z-30 h-14 flex items-center gap-2 px-6 border-b bg-background">
+		<header className="sticky top-0 z-30 h-14 flex items-center gap-2 px-6 border-b backdrop-blur-md">
 			{onMenuToggle && (
 				<button
 					type="button"
@@ -42,7 +42,7 @@ export function TopBar({
 				</Button> */}
 
 				<ThemeToggle
-					className="size-8 rounded-[14px]"
+					className="size-8 rounded-[14px] cursor-pointer hover:bg-muted"
 					iconClassName="size-4"
 					variant="circle-blur"
 				/>

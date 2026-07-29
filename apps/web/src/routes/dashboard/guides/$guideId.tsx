@@ -147,7 +147,7 @@ function GuideDetailPage() {
 	return (
 		<div className="flex flex-col">
 			{/* Sticky header */}
-			<header className="sticky top-0 z-10 flex flex-col border-b bg-background">
+			<header className="sticky top-0 z-10 flex flex-col border-b backdrop-blur-md">
 				<div className="flex items-center gap-3 px-4 py-3">
 					<Button asChild variant="ghost" size="sm">
 						<Link to="/dashboard/guides">

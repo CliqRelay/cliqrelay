@@ -15,7 +15,7 @@ import {
 	Users,
 } from "lucide-react";
 
-import type { Guide } from "@repo/api-client";
+import type { Guide, Visibility } from "@repo/api-client";
 
 import {
 	DropdownMenu,
@@ -38,6 +38,7 @@ type Props = {
 	onPublish?: (guideId: string) => void;
 	onUnpublish?: (guideId: string) => void;
 	onUnarchive?: (guideId: string) => void;
+	onVisibilityChange?: (guideId: string, visibility: Visibility) => void;
 	isUpgradeAvailable?: boolean;
 	onUpgrade?: () => Promise<void>;
 };
@@ -50,6 +51,7 @@ export function GuideCard({
 	onPublish,
 	onUnpublish,
 	onUnarchive,
+	onVisibilityChange,
 	isUpgradeAvailable,
 	onUpgrade,
 }: Props) {
@@ -77,24 +79,62 @@ export function GuideCard({
 				<div className="flex flex-1 flex-col p-4 gap-3">
 					<div className="flex items-start justify-between gap-2">
 						<div className="flex items-center gap-1.5 min-w-0">
-							{guide.visibility === "private" && (
-								<span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1">
-									<Lock className="size-3" />
-									Private
-								</span>
-							)}
-							{guide.visibility === "team" && (
-								<span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1">
-									<Users className="size-3" />
-									Team
-								</span>
-							)}
-							{guide.visibility === "public" && (
-								<span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1">
-									<Globe className="size-3" />
-									Public
-								</span>
-							)}
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<button
+										type="button"
+										className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1 hover:bg-surface-hover transition-colors duration-200"
+									>
+										{guide.visibility === "private" && (
+											<>
+												<Lock className="size-3" />
+												Private
+											</>
+										)}
+										{guide.visibility === "team" && (
+											<>
+												<Users className="size-3" />
+												Team
+											</>
+										)}
+										{guide.visibility === "public" && (
+											<>
+												<Globe className="size-3" />
+												Public
+											</>
+										)}
+									</button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="start" className="w-36">
+									<DropdownMenuItem
+										onClick={(e) => {
+											e.stopPropagation();
+											onVisibilityChange?.(guide.id, "private");
+										}}
+									>
+										<Lock className="mr-2 size-3.5" />
+										Private
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={(e) => {
+											e.stopPropagation();
+											onVisibilityChange?.(guide.id, "team");
+										}}
+									>
+										<Users className="mr-2 size-3.5" />
+										Team
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={(e) => {
+											e.stopPropagation();
+											onVisibilityChange?.(guide.id, "public");
+										}}
+									>
+										<Globe className="mr-2 size-3.5" />
+										Public
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 							{teamName && (
 								<span className="inline-flex items-center rounded-md bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary truncate max-w-35">
 									{teamName}

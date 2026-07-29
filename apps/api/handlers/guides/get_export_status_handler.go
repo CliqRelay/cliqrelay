@@ -8,6 +8,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type GetExportStatusHandler struct {
@@ -28,7 +29,7 @@ func (h *GetExportStatusHandler) Handle() http.HandlerFunc {
 
 		export, err := h.exportService.GetExportStatus(reqCtx, exportID)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}

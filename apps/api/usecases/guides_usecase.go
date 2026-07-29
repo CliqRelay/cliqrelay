@@ -9,6 +9,7 @@ import (
 	orgconstants "github.com/Authula/authula/plugins/organizations/constants"
 	"github.com/google/uuid"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -88,6 +89,10 @@ func (uc *GuidesUseCase) Update(ctx context.Context, actor *authulamodels.Actor,
 	teamID := guide.TeamID.String()
 	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
 		return nil, err
+	}
+
+	if req.Visibility != nil && *req.Visibility == models.VisibilityPrivate && guide.CreatorID != actor.ID {
+		return nil, constants.ErrCannotSetGuideToPrivate
 	}
 
 	return uc.guidesService.Update(ctx, guideID, req)
