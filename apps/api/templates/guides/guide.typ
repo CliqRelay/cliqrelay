@@ -47,7 +47,7 @@
   align(center, text(size: 10pt, fill: muted-fg, g.description))
 }
 #v(4pt)
-#align(center, text(size: 9pt, fill: muted-fg, "Duration: " + g.duration + "  ·  " + g.created_at))
+#align(center, text(size: 9pt, fill: muted-fg, "Steps: " + str(g.step_count) + "  ·  Duration: " + g.duration + "  ·  Created on: " + g.created_at))
 #v(16pt)
 
 // -------- Helper Functions --------

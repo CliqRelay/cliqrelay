@@ -29,6 +29,7 @@ const (
 type typstInputGuide struct {
 	Title       string  `json:"title"`
 	Description *string `json:"description"`
+	StepCount   int     `json:"step_count"`
 	Duration    string  `json:"duration"`
 	CreatedAt   string  `json:"created_at"`
 }
@@ -142,10 +143,18 @@ func generatePDFWithTypst(
 }
 
 func buildTypstInput(guide *models.Guide, steps []*models.Step) typstInput {
+	stepCount := 0
+	for _, step := range steps {
+		if step.Type == models.StepTypeInteraction {
+			stepCount++
+		}
+	}
+
 	input := typstInput{
 		Guide: typstInputGuide{
 			Title:       guide.Title,
 			Description: guide.Description,
+			StepCount:   stepCount,
 			Duration:    formatDuration(guide.DurationSeconds),
 			CreatedAt:   guide.CreatedAt.Format("January 2, 2006"),
 		},
