@@ -1,6 +1,6 @@
 import { extensionRegistry } from "@repo/extensions-sdk";
 
-import { CreateTeamFallback } from "./teams/create-team-fallback";
+import { CreateTeamFallback } from "../pro/create-team-fallback";
 
 type Props = {
 	open: boolean;

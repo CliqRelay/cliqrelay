@@ -1,6 +1,6 @@
 import { extensionRegistry } from "@repo/extensions-sdk";
 
-import { MoveToTeamFallback } from "./move-to-team-fallback";
+import { MoveToTeamFallback } from "../pro/move-to-team-fallback";
 
 type Props = {
 	guideId: string;

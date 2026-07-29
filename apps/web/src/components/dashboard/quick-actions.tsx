@@ -149,7 +149,7 @@ export function QuickActions() {
 
 	return (
 		<div className="rounded-[20px] p-4 mb-8 surface-card">
-			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+			<div className="grid grid-cols-1 sm:grid-cols-2 xl:flex xl:flex-row xl:flex-wrap xl:justify-between xl:items-center gap-4">
 				{quickActions.map((quickActionItem) => {
 					const Icon = quickActionItem.icon;
 					const handleClick = () => quickActionItem.onClick?.();
@@ -158,7 +158,7 @@ export function QuickActions() {
 							<button
 								key={quickActionItem.label}
 								type="button"
-								className="group relative col-span-2 md:col-span-1 lg:col-span-1 text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover bg-linear-to-br from-[#234DF0] to-[#03A0EC] border border-[rgba(3,160,236,0.18)] shadow-(--shadow-primary)"
+								className="flex-1 group relative text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover bg-linear-to-br from-[#234DF0] to-[#03A0EC] border border-[rgba(3,160,236,0.18)] shadow-(--shadow-primary)"
 								onClick={handleClick}
 							>
 								<div className="relative size-8 rounded-2xl flex items-center justify-center bg-white/10">
@@ -182,8 +182,8 @@ export function QuickActions() {
 						<button
 							key={quickActionItem.label}
 							type="button"
+							className={`flex-1 group text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover ${quickActionItem.comingSoon ? "opacity-50" : ""}`}
 							onClick={handleClick}
-							className={`group text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover ${quickActionItem.comingSoon ? "opacity-50" : ""}`}
 						>
 							<div className="flex items-start justify-between">
 								<div className="size-11 rounded-2xl flex items-center justify-center bg-(--icon-subtle)">

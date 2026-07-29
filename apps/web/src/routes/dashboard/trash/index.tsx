@@ -59,6 +59,7 @@ function TrashSkeleton() {
 function TrashGuides() {
 	const queryClient = useQueryClient();
 	const activeTeamId = useTeamStore((s) => s.activeTeamId);
+
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
 	const [deleteDialogGuideId, setDeleteDialogGuideId] = useState<string | null>(

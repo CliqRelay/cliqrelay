@@ -7,6 +7,7 @@ export function LearnAboutProButton() {
 			type="button"
 			variant="outline"
 			size="sm"
+			className="cursor-pointer"
 			onClick={() => window.open(envClient.siteUrl)}
 		>
 			Learn More

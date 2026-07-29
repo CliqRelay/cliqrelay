@@ -1,13 +1,16 @@
+import { useState } from "react";
+
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
 	ChevronLeft,
 	ChevronRight,
-	Cloud,
 	FileText,
+	KeyRound,
 	LayoutDashboard,
 	Sparkles,
 	Star,
 	Trash,
+	Webhook,
 } from "lucide-react";
 
 import {
@@ -23,7 +26,10 @@ import type { AppUser } from "@/models/auth";
 import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
 import { Logo } from "./logo";
-import { ProFallback } from "./pro-fallback";
+import { ApiKeysFallback } from "../pro/api-keys-fallback";
+import { WebhooksFallback } from "../pro/webhooks-fallback";
+import { ProFallback } from "../pro/pro-fallback";
+import { ProFeatureDialog } from "../pro/pro-feature-dialog";
 import { SidebarTooltip } from "./sidebar-tooltip";
 import { TeamsDropdown } from "./teams-dropdown";
 
@@ -52,6 +58,9 @@ export function SidebarContent({
 	const teams = useTeamStore((s) => s.teams);
 	const hasTeamsInOrg = teams.some((t) => t.organizationId === orgId);
 	const extNavItems = extensionRegistry.getNavItems();
+	const [activeDialog, setActiveDialog] = useState<
+		"webhooks" | "api-keys" | null
+	>(null);
 
 	return (
 		<TooltipProvider delayDuration={0}>
@@ -248,6 +257,66 @@ export function SidebarContent({
 				</div>
 			)}
 
+			{/* Pro section */}
+			<div
+				className={cn(
+					"mt-6 shrink-0",
+					collapsed ? "px-3 items-center" : "px-3",
+				)}
+			>
+				{!collapsed && (
+					<div className="px-3 mb-1.5">
+						<span className="text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
+							Pro
+						</span>
+					</div>
+				)}
+				<nav
+					className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
+				>
+					<SidebarTooltip collapsed={collapsed} label="Webhooks">
+						<button
+							type="button"
+							aria-label={collapsed ? "Webhooks" : undefined}
+							className={cn(
+								"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
+								collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
+								"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
+							)}
+							onClick={() => setActiveDialog("webhooks")}
+						>
+							<Webhook
+								className="relative shrink-0 size-4.25"
+								strokeWidth={1.9}
+							/>
+							{!collapsed && (
+								<span className="relative font-medium">Webhooks</span>
+							)}
+						</button>
+					</SidebarTooltip>
+					<SidebarTooltip collapsed={collapsed} label="API Keys">
+						<button
+							type="button"
+							aria-label={collapsed ? "API Keys" : undefined}
+							className={cn(
+								"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
+								collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
+								"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
+							)}
+							onClick={() => setActiveDialog("api-keys")}
+						>
+							<KeyRound
+								className="relative shrink-0 size-4.25"
+								strokeWidth={1.9}
+							/>
+							{!collapsed && (
+								<span className="relative font-medium">API Keys</span>
+							)}
+						</button>
+					</SidebarTooltip>
+				</nav>
+			</div>
+
 			{/* Bottom section */}
 			<div
 				className={cn(
@@ -273,6 +342,20 @@ export function SidebarContent({
 					<ExtensionSlot name="dashboard-sidebar-pro" fallback={ProFallback} />
 				)}
 			</div>
+
+			{/* Pro feature dialogs */}
+			<ProFeatureDialog
+				slotName="sidebar-webhooks"
+				open={activeDialog === "webhooks"}
+				onOpenChange={(o) => !o && setActiveDialog(null)}
+				FallbackComponent={WebhooksFallback}
+			/>
+			<ProFeatureDialog
+				slotName="sidebar-api-keys"
+				open={activeDialog === "api-keys"}
+				onOpenChange={(o) => !o && setActiveDialog(null)}
+				FallbackComponent={ApiKeysFallback}
+			/>
 		</TooltipProvider>
 	);
 }
