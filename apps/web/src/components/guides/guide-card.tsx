@@ -5,6 +5,7 @@ import {
 	Archive,
 	ArchiveRestore,
 	Clock,
+	Eye,
 	Globe,
 	Lock,
 	MoreHorizontal,
@@ -17,6 +18,15 @@ import {
 
 import type { Guide, Visibility } from "@repo/api-client";
 
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -24,7 +34,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTeamStore } from "@/stores/team-store";
+import { useUserStore } from "@/stores/user-store";
 import { formatDuration, timeAgo } from "@/utils/time.utils";
 import { GuideStatus } from "./guide-status";
 import { MoveToTeamSlot } from "./move-to-team-slot";
@@ -59,8 +71,12 @@ export function GuideCard({
 
 	const teams = useTeamStore((s) => s.teams);
 	const teamName = teams.find((t) => t.id === guide.teamId)?.name;
+	const userId = useUserStore((s) => s.userId);
+	const isCreator = userId === guide.creatorId;
 
 	const [moveToTeamOpen, setMoveToTeamOpen] = useState<boolean>(false);
+	const [visibilityDialogOpen, setVisibilityDialogOpen] = useState<boolean>(false);
+	const [selectedVisibility, setSelectedVisibility] = useState<Visibility>(guide.visibility);
 
 	return (
 		<>
@@ -79,62 +95,24 @@ export function GuideCard({
 				<div className="flex flex-1 flex-col p-4 gap-3">
 					<div className="flex items-start justify-between gap-2">
 						<div className="flex items-center gap-1.5 min-w-0">
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<button
-										type="button"
-										className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1 hover:bg-surface-hover transition-colors duration-200"
-									>
-										{guide.visibility === "private" && (
-											<>
-												<Lock className="size-3" />
-												Private
-											</>
-										)}
-										{guide.visibility === "team" && (
-											<>
-												<Users className="size-3" />
-												Team
-											</>
-										)}
-										{guide.visibility === "public" && (
-											<>
-												<Globe className="size-3" />
-												Public
-											</>
-										)}
-									</button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="start" className="w-36">
-									<DropdownMenuItem
-										onClick={(e) => {
-											e.stopPropagation();
-											onVisibilityChange?.(guide.id, "private");
-										}}
-									>
-										<Lock className="mr-2 size-3.5" />
-										Private
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={(e) => {
-											e.stopPropagation();
-											onVisibilityChange?.(guide.id, "team");
-										}}
-									>
-										<Users className="mr-2 size-3.5" />
-										Team
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={(e) => {
-											e.stopPropagation();
-											onVisibilityChange?.(guide.id, "public");
-										}}
-									>
-										<Globe className="mr-2 size-3.5" />
-										Public
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
+							{guide.visibility === "private" && (
+								<span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1">
+									<Lock className="size-3" />
+									Private
+								</span>
+							)}
+							{guide.visibility === "team" && (
+								<span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1">
+									<Users className="size-3" />
+									Team
+								</span>
+							)}
+							{guide.visibility === "public" && (
+								<span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1">
+									<Globe className="size-3" />
+									Public
+								</span>
+							)}
 							{teamName && (
 								<span className="inline-flex items-center rounded-md bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary truncate max-w-35">
 									{teamName}
@@ -235,6 +213,17 @@ export function GuideCard({
 										onClick={(e) => {
 											e.stopPropagation();
 											e.preventDefault();
+											setSelectedVisibility(guide.visibility);
+											setVisibilityDialogOpen(true);
+										}}
+									>
+										<Eye className="mr-2 size-3.5" />
+										Change Visibility
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										onClick={(e) => {
+											e.stopPropagation();
+											e.preventDefault();
 											setMoveToTeamOpen(true);
 										}}
 									>
@@ -266,6 +255,70 @@ export function GuideCard({
 				open={moveToTeamOpen}
 				onOpenChange={setMoveToTeamOpen}
 			/>
+			<Dialog open={visibilityDialogOpen} onOpenChange={setVisibilityDialogOpen}>
+				<DialogContent className="sm:max-w-sm">
+					<DialogHeader>
+						<DialogTitle>Change Visibility</DialogTitle>
+						<DialogDescription>
+							Choose who can see this guide.
+						</DialogDescription>
+					</DialogHeader>
+					<RadioGroup
+						value={selectedVisibility}
+						onValueChange={(v) => setSelectedVisibility(v as Visibility)}
+						className="py-2"
+					>
+						<label
+							className={`flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5 ${!isCreator ? "cursor-not-allowed opacity-50" : ""}`}
+						>
+							<RadioGroupItem value="private" disabled={!isCreator} />
+							<div className="flex flex-col gap-0.5">
+								<span className="text-sm font-medium">Private</span>
+								<span className="text-xs text-muted-foreground">
+									{isCreator
+										? "Only you can see this guide"
+										: "Only the creator can set this"}
+								</span>
+							</div>
+						</label>
+						<label className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
+							<RadioGroupItem value="team" />
+							<div className="flex flex-col gap-0.5">
+								<span className="text-sm font-medium">Team</span>
+								<span className="text-xs text-muted-foreground">
+									Visible to all team members
+								</span>
+							</div>
+						</label>
+						<label className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
+							<RadioGroupItem value="public" />
+							<div className="flex flex-col gap-0.5">
+								<span className="text-sm font-medium">Public</span>
+								<span className="text-xs text-muted-foreground">
+									Anyone with the link can view
+								</span>
+							</div>
+						</label>
+					</RadioGroup>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setVisibilityDialogOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							disabled={selectedVisibility === guide.visibility}
+							onClick={() => {
+								setVisibilityDialogOpen(false);
+								onVisibilityChange?.(guide.id, selectedVisibility);
+							}}
+						>
+							Save
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</>
 	);
 }

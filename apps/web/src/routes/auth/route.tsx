@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 
 import { authulaClient } from "@/lib/authula-client";
-import type { UserWithModifiedMetadata } from "@/models";
+import type { AppUser } from "@/models";
 
 export const Route = createFileRoute("/auth")({
 	beforeLoad: async ({ location }) => {
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/auth")({
 				}
 
 				return {
-					user: response.user as UserWithModifiedMetadata,
+					user: response.user as AppUser,
 				};
 			}
 			throw redirect({ to: "/dashboard" });
