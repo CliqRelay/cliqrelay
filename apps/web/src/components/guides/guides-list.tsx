@@ -9,14 +9,19 @@ import { GuideCard } from "./guide-card";
 
 type Props = {
 	guides: Guide[];
-	onDelete: (guideId: string) => void;
-	onStarToggle: (guideId: string) => void;
-	onArchive: (guideId: string) => void;
+	onDelete?: (guideId: string) => void;
+	onStarToggle?: (guideId: string) => void;
+	onArchive?: (guideId: string) => void;
 	onPublish?: (guideId: string) => void;
 	onUnpublish?: (guideId: string) => void;
 	onUnarchive?: (guideId: string) => void;
 	onVisibilityChange?: (guideId: string, visibility: Visibility) => void;
 	renderEmpty?: () => ReactNode;
+	selectable?: boolean;
+	selectedIds?: string[];
+	onToggleSelect?: (guideId: string) => void;
+	onRestore?: (guideId: string) => void;
+	onDeletePermanently?: (guideId: string) => void;
 };
 
 export function GuidesList({
@@ -29,6 +34,11 @@ export function GuidesList({
 	onUnarchive,
 	onVisibilityChange,
 	renderEmpty,
+	selectable,
+	selectedIds,
+	onToggleSelect,
+	onRestore,
+	onDeletePermanently,
 }: Props) {
 	if (guides.length === 0) {
 		if (renderEmpty) {
@@ -62,6 +72,11 @@ export function GuidesList({
 					onUnpublish={onUnpublish}
 					onUnarchive={onUnarchive}
 					onVisibilityChange={onVisibilityChange}
+					selectable={selectable}
+					selected={selectedIds?.includes(guide.id)}
+					onToggleSelect={onToggleSelect}
+					onRestore={onRestore}
+					onDeletePermanently={onDeletePermanently}
 				/>
 			))}
 		</div>

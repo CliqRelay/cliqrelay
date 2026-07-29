@@ -9,6 +9,7 @@ import {
 	Globe,
 	Lock,
 	MoreHorizontal,
+	RotateCcw,
 	Send,
 	Shuffle,
 	Trash2,
@@ -19,6 +20,7 @@ import {
 import type { Guide, Visibility } from "@repo/api-client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -44,15 +46,20 @@ import { StarButton } from "./star-button";
 
 type Props = {
 	guide: Guide;
-	onDelete: (guideId: string) => void;
-	onStarToggle: (guideId: string) => void;
-	onArchive: (guideId: string) => void;
+	onDelete?: (guideId: string) => void;
+	onStarToggle?: (guideId: string) => void;
+	onArchive?: (guideId: string) => void;
 	onPublish?: (guideId: string) => void;
 	onUnpublish?: (guideId: string) => void;
 	onUnarchive?: (guideId: string) => void;
 	onVisibilityChange?: (guideId: string, visibility: Visibility) => void;
 	isUpgradeAvailable?: boolean;
 	onUpgrade?: () => Promise<void>;
+	selectable?: boolean;
+	selected?: boolean;
+	onToggleSelect?: (guideId: string) => void;
+	onRestore?: (guideId: string) => void;
+	onDeletePermanently?: (guideId: string) => void;
 };
 
 export function GuideCard({
@@ -66,6 +73,11 @@ export function GuideCard({
 	onVisibilityChange,
 	isUpgradeAvailable,
 	onUpgrade,
+	selectable = false,
+	selected = false,
+	onToggleSelect,
+	onRestore,
+	onDeletePermanently,
 }: Props) {
 	const navigate = useNavigate();
 
@@ -75,8 +87,11 @@ export function GuideCard({
 	const isCreator = userId === guide.creatorId;
 
 	const [moveToTeamOpen, setMoveToTeamOpen] = useState<boolean>(false);
-	const [visibilityDialogOpen, setVisibilityDialogOpen] = useState<boolean>(false);
-	const [selectedVisibility, setSelectedVisibility] = useState<Visibility>(guide.visibility);
+	const [visibilityDialogOpen, setVisibilityDialogOpen] =
+		useState<boolean>(false);
+	const [selectedVisibility, setSelectedVisibility] = useState<Visibility>(
+		guide.visibility,
+	);
 
 	return (
 		<>
@@ -84,17 +99,26 @@ export function GuideCard({
 			<div
 				role="button"
 				tabIndex={0}
-				className="group relative flex flex-col rounded-2xl surface-card surface-card-hover transition-all duration-200 cursor-pointer mx-auto w-full max-w-sm"
-				onClick={() =>
+				className={`group relative flex flex-col rounded-2xl surface-card surface-card-hover transition-all duration-200 cursor-pointer mx-auto w-full max-w-sm ${selectable && selected ? "ring-2 ring-primary" : ""}`}
+				onClick={() => {
+					if (selectable && guide.status === "deleted") return;
 					navigate({
 						to: "/dashboard/guides/$guideId",
 						params: { guideId: guide.id },
-					})
-				}
+					});
+				}}
 			>
 				<div className="flex flex-1 flex-col p-4 gap-3">
 					<div className="flex items-start justify-between gap-2">
 						<div className="flex items-center gap-1.5 min-w-0">
+							{selectable && (
+								<Checkbox
+									checked={selected}
+									onCheckedChange={() => onToggleSelect?.(guide.id)}
+									className="size-4 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+									onClick={(e) => e.stopPropagation()}
+								/>
+							)}
 							{guide.visibility === "private" && (
 								<span className="inline-flex items-center rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground gap-1">
 									<Lock className="size-3" />
@@ -119,10 +143,12 @@ export function GuideCard({
 								</span>
 							)}
 						</div>
-						<StarButton
-							isStarred={guide.isStarred}
-							onToggle={() => onStarToggle(guide.id)}
-						/>
+						{onStarToggle && (
+							<StarButton
+								isStarred={guide.isStarred}
+								onToggle={() => onStarToggle(guide.id)}
+							/>
+						)}
 					</div>
 
 					<div className="space-y-1">
@@ -160,88 +186,125 @@ export function GuideCard({
 									</button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end" className="w-48">
-									{guide.status === "draft" && onPublish && (
-										<DropdownMenuItem
-											onClick={(e) => {
-												e.stopPropagation();
-												e.preventDefault();
-												onPublish(guide.id);
-											}}
-										>
-											<Send className="mr-2 size-3.5" />
-											Publish
-										</DropdownMenuItem>
+									{guide.status === "deleted" &&
+									(onRestore || onDeletePermanently) ? (
+										<>
+											{onRestore && (
+												<DropdownMenuItem
+													className="text-[13px] gap-2.5 rounded-lg px-3 py-2 cursor-pointer"
+													onClick={(e) => {
+														e.stopPropagation();
+														e.preventDefault();
+														onRestore(guide.id);
+													}}
+												>
+													<RotateCcw className="size-3.5 text-muted-foreground" />
+													Restore
+												</DropdownMenuItem>
+											)}
+											{onDeletePermanently && (
+												<>
+													<DropdownMenuSeparator className="my-1" />
+													<DropdownMenuItem
+														className="text-[13px] gap-2.5 rounded-lg px-3 py-2 text-destructive focus:text-destructive cursor-pointer"
+														onClick={(e) => {
+															e.stopPropagation();
+															e.preventDefault();
+															onDeletePermanently(guide.id);
+														}}
+													>
+														<Trash2 className="size-3.5" />
+														Delete Permanently
+													</DropdownMenuItem>
+												</>
+											)}
+										</>
+									) : (
+										<>
+											{guide.status === "draft" && onPublish && (
+												<DropdownMenuItem
+													onClick={(e) => {
+														e.stopPropagation();
+														e.preventDefault();
+														onPublish(guide.id);
+													}}
+												>
+													<Send className="mr-2 size-3.5" />
+													Publish
+												</DropdownMenuItem>
+											)}
+											{guide.status === "published" && onUnpublish && (
+												<DropdownMenuItem
+													onClick={(e) => {
+														e.stopPropagation();
+														e.preventDefault();
+														onUnpublish(guide.id);
+													}}
+												>
+													<Undo2 className="mr-2 size-3.5" />
+													Unpublish
+												</DropdownMenuItem>
+											)}
+											{(guide.status === "draft" ||
+												guide.status === "published") && (
+												<DropdownMenuItem
+													onClick={(e) => {
+														e.stopPropagation();
+														e.preventDefault();
+														onArchive?.(guide.id);
+													}}
+												>
+													<Archive className="mr-2 size-3.5" />
+													Archive
+												</DropdownMenuItem>
+											)}
+											{guide.status === "archived" && onUnarchive && (
+												<DropdownMenuItem
+													onClick={(e) => {
+														e.stopPropagation();
+														e.preventDefault();
+														onUnarchive(guide.id);
+													}}
+												>
+													<ArchiveRestore className="mr-2 size-3.5" />
+													Unarchive
+												</DropdownMenuItem>
+											)}
+											<DropdownMenuItem
+												onClick={(e) => {
+													e.stopPropagation();
+													e.preventDefault();
+													setSelectedVisibility(guide.visibility);
+													setVisibilityDialogOpen(true);
+												}}
+											>
+												<Eye className="mr-2 size-3.5" />
+												Change Visibility
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												onClick={(e) => {
+													e.stopPropagation();
+													e.preventDefault();
+													setMoveToTeamOpen(true);
+												}}
+											>
+												<Shuffle className="mr-2 size-3.5" />
+												Move to Team
+											</DropdownMenuItem>
+											<DropdownMenuSeparator />
+											<DropdownMenuItem
+												className="text-destructive focus:text-destructive"
+												onClick={(e) => {
+													e.stopPropagation();
+													e.preventDefault();
+													onDelete?.(guide.id);
+												}}
+											>
+												<Trash2 className="mr-2 size-3.5" />
+												Delete
+											</DropdownMenuItem>
+										</>
 									)}
-									{guide.status === "published" && onUnpublish && (
-										<DropdownMenuItem
-											onClick={(e) => {
-												e.stopPropagation();
-												e.preventDefault();
-												onUnpublish(guide.id);
-											}}
-										>
-											<Undo2 className="mr-2 size-3.5" />
-											Unpublish
-										</DropdownMenuItem>
-									)}
-									{(guide.status === "draft" ||
-										guide.status === "published") && (
-										<DropdownMenuItem
-											onClick={(e) => {
-												e.stopPropagation();
-												e.preventDefault();
-												onArchive(guide.id);
-											}}
-										>
-											<Archive className="mr-2 size-3.5" />
-											Archive
-										</DropdownMenuItem>
-									)}
-									{guide.status === "archived" && onUnarchive && (
-										<DropdownMenuItem
-											onClick={(e) => {
-												e.stopPropagation();
-												e.preventDefault();
-												onUnarchive(guide.id);
-											}}
-										>
-											<ArchiveRestore className="mr-2 size-3.5" />
-											Unarchive
-										</DropdownMenuItem>
-									)}
-									<DropdownMenuItem
-										onClick={(e) => {
-											e.stopPropagation();
-											e.preventDefault();
-											setSelectedVisibility(guide.visibility);
-											setVisibilityDialogOpen(true);
-										}}
-									>
-										<Eye className="mr-2 size-3.5" />
-										Change Visibility
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={(e) => {
-											e.stopPropagation();
-											e.preventDefault();
-											setMoveToTeamOpen(true);
-										}}
-									>
-										<Shuffle className="mr-2 size-3.5" />
-										Move to Team
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-									<DropdownMenuItem
-										className="text-destructive focus:text-destructive"
-										onClick={(e) => {
-											e.stopPropagation();
-											e.preventDefault();
-											onDelete(guide.id);
-										}}
-									>
-										<Trash2 className="mr-2 size-3.5" />
-										Delete
-									</DropdownMenuItem>
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</div>
@@ -255,7 +318,10 @@ export function GuideCard({
 				open={moveToTeamOpen}
 				onOpenChange={setMoveToTeamOpen}
 			/>
-			<Dialog open={visibilityDialogOpen} onOpenChange={setVisibilityDialogOpen}>
+			<Dialog
+				open={visibilityDialogOpen}
+				onOpenChange={setVisibilityDialogOpen}
+			>
 				<DialogContent className="sm:max-w-sm">
 					<DialogHeader>
 						<DialogTitle>Change Visibility</DialogTitle>

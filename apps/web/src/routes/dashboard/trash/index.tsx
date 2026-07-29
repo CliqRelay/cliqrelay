@@ -7,9 +7,9 @@ import type { Guide } from "@repo/api-client";
 import { api } from "@repo/api-client";
 
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
+import { GuidesList } from "@/components/guides/guides-list";
 import { TrashPageHeader } from "@/components/trash/trash-page-header";
 import { TrashSidebar } from "@/components/trash/trash-sidebar";
-import { TrashTable } from "@/components/trash/trash-table";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { useTeamStore } from "@/stores/team-store";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
@@ -27,19 +27,32 @@ function TrashSkeleton() {
 			<div className="h-8 w-48 animate-pulse rounded bg-muted" />
 			<div className="flex gap-6">
 				<div className="flex-1 min-w-0">
-					<div className="rounded-[20px] overflow-hidden bg-surface-1 border border-border">
-						<div className="p-4 space-y-3">
-							{[...Array(5)].map((_, i) => (
-								<div key={i} className="flex items-center gap-4">
-									<div className="size-4 rounded animate-pulse bg-muted/50" />
-									<div className="size-11 rounded-[10px] animate-pulse bg-muted/30" />
-									<div className="flex-1 h-4 rounded animate-pulse bg-muted/50" />
-									<div className="w-16 h-4 rounded animate-pulse bg-muted/30" />
-									<div className="w-24 h-4 rounded animate-pulse bg-muted/30" />
-									<div className="w-20 h-4 rounded animate-pulse bg-muted/30" />
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+						{[...Array(6)].map((_, i) => (
+							<div
+								key={i}
+								className="rounded-2xl surface-card border border-border p-4 flex flex-col gap-3"
+							>
+								<div className="flex items-start justify-between gap-2">
+									<div className="flex items-center gap-1.5">
+										<div className="h-5 w-14 animate-pulse rounded-md bg-muted/50" />
+									</div>
+									<div className="size-7 animate-pulse rounded-lg bg-muted/30" />
 								</div>
-							))}
-						</div>
+								<div className="space-y-2 flex-1">
+									<div className="h-4 w-full animate-pulse rounded bg-muted/50" />
+									<div className="h-4 w-2/3 animate-pulse rounded bg-muted/30" />
+								</div>
+								<div className="flex items-center gap-2 pt-1">
+									<div className="h-5 w-14 animate-pulse rounded-md bg-muted/40" />
+									<div className="size-3 animate-pulse rounded bg-muted/30" />
+									<div className="h-3 w-10 animate-pulse rounded bg-muted/30" />
+									<div className="size-1 animate-pulse rounded-full bg-muted/30" />
+									<div className="h-3 w-14 animate-pulse rounded bg-muted/30" />
+									<div className="ml-auto size-7 animate-pulse rounded-lg bg-muted/30" />
+								</div>
+							</div>
+						))}
 					</div>
 				</div>
 				<div className="hidden xl:block w-72 shrink-0">
@@ -214,14 +227,22 @@ function TrashGuides() {
 		<div className="dashboard-page__wrapper">
 			<TrashPageHeader
 				selectedCount={selectedIds.length}
+				totalCount={guides.length}
+				selectable={true}
+				onSelectAll={() =>
+					setSelectedIds((prev) =>
+						prev.length === guides.length ? [] : guides.map((g: Guide) => g.id),
+					)
+				}
 				onRestore={handleBulkRestore}
 				onDeletePermanently={handleBulkDelete}
 			/>
 
 			<div className="flex gap-6">
 				<div className="flex-1 min-w-0">
-					<TrashTable
+					<GuidesList
 						guides={guides}
+						selectable={true}
 						selectedIds={selectedIds}
 						onToggleSelect={(id) =>
 							setSelectedIds((prev) =>
@@ -230,15 +251,13 @@ function TrashGuides() {
 									: [...prev, id],
 							)
 						}
-						onToggleAll={() =>
-							setSelectedIds((prev) =>
-								prev.length === guides.length
-									? []
-									: guides.map((g: Guide) => g.id),
-							)
-						}
 						onRestore={handleRestore}
 						onDeletePermanently={handleDeletePermanently}
+						renderEmpty={() => (
+							<div className="flex flex-col items-center justify-center py-16 text-center text-sm text-muted-foreground">
+								No items in trash.
+							</div>
+						)}
 					/>
 					<DataPagination
 						currentPage={currentPage}
