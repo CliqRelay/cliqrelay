@@ -51,11 +51,12 @@ export function ExportDialog({
 	open,
 	onOpenChange,
 }: Props) {
+	const startTimeRef = useRef<number>(0);
+	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 	const [selectedFormat, setSelectedFormat] =
 		useState<ExportGuideFormat>("pdf");
 	const [exportId, setExportId] = useState<string | null>(null);
-	const startTimeRef = useRef<number>(0);
-	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const clearTimeoutRef = useCallback(() => {
 		if (timeoutRef.current) {

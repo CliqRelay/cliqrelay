@@ -32,6 +32,7 @@ import { ProFallback } from "../pro/pro-fallback";
 import { ProFeatureDialog } from "../pro/pro-feature-dialog";
 import { SidebarTooltip } from "./sidebar-tooltip";
 import { TeamsDropdown } from "./teams-dropdown";
+import { Separator } from "../ui/separator";
 
 const nav = [
 	{ label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
@@ -45,6 +46,27 @@ interface SidebarContentProps {
 	onNavigate?: () => void;
 	collapsed: boolean;
 	onToggleCollapse: () => void;
+}
+
+function ProNavSkeleton({ collapsed }: { collapsed: boolean }) {
+	return (
+		<nav className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
+			{Array.from({ length: 2 }).map((_, i) => (
+				<div
+					key={i}
+					className={cn(
+						"flex items-center rounded-lg",
+						collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
+					)}
+				>
+					<Skeleton className="shrink-0 size-4.25 rounded-md bg-sidebar-foreground/10" />
+					{!collapsed && (
+						<Skeleton className="h-3.5 w-20 rounded-md bg-sidebar-foreground/10" />
+					)}
+				</div>
+			))}
+		</nav>
+	);
 }
 
 export function SidebarContent({
@@ -160,7 +182,7 @@ export function SidebarContent({
 			</nav>
 
 			{/* Teams Section */}
-			<div className={cn("mt-4 shrink-0", collapsed ? "px-3" : "px-3")}>
+			<div className={cn("mt-3 shrink-0", collapsed ? "px-3" : "px-3")}>
 				{!collapsed && (
 					<div className="flex items-center justify-between px-3 mb-1.5">
 						<span className="text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
@@ -190,77 +212,10 @@ export function SidebarContent({
 				</div>
 			</div>
 
-			{/* Extension nav items */}
-			{extNavItems.length > 0 && (
-				<div
-					className={cn(
-						"mt-6 shrink-0",
-						collapsed ? "px-3 items-center" : "px-3",
-					)}
-				>
-					{!collapsed && (
-						<div className="px-3 mb-1.5">
-							<span className="text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
-								Extensions
-							</span>
-						</div>
-					)}
-					<nav
-						className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
-					>
-						{extNavItems.map((item: NavItem, i: number) => {
-							if (item.component) {
-								const Component = item.component;
-								return <Component key={`ext-component-${i}`} />;
-							}
-							if (item.title && item.href) {
-								const Icon = item.icon;
-								const active = pathname === item.href;
-								return (
-									<SidebarTooltip
-										key={item.href}
-										collapsed={collapsed}
-										label={item.title}
-									>
-										<Link
-											to={item.href}
-											onClick={onNavigate}
-											className={cn(
-												"group relative flex items-center rounded-lg text-[13.5px] transition-premium",
-												collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
-												active
-													? "text-foreground"
-													: "text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
-											)}
-										>
-											{Icon && (
-												<Icon
-													className={cn(
-														"relative shrink-0",
-														collapsed ? "size-4.5" : "size-4.25",
-														active ? "text-primary" : "",
-													)}
-												/>
-											)}
-											{!collapsed && (
-												<span className="relative font-medium">
-													{item.title}
-												</span>
-											)}
-										</Link>
-									</SidebarTooltip>
-								);
-							}
-							return null;
-						})}
-					</nav>
-				</div>
-			)}
-
 			{/* Pro section */}
 			<div
 				className={cn(
-					"mt-6 shrink-0",
+					"mt-3 shrink-0",
 					collapsed ? "px-3 items-center" : "px-3",
 				)}
 			>
@@ -271,50 +226,54 @@ export function SidebarContent({
 						</span>
 					</div>
 				)}
-				<nav
-					className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
-				>
-					<SidebarTooltip collapsed={collapsed} label="Webhooks">
-						<button
-							type="button"
-							aria-label={collapsed ? "Webhooks" : undefined}
-							className={cn(
-								"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
-								collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
-								"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
-							)}
-							onClick={() => setActiveDialog("webhooks")}
-						>
-							<Webhook
-								className="relative shrink-0 size-4.25"
-								strokeWidth={1.9}
-							/>
-							{!collapsed && (
-								<span className="relative font-medium">Webhooks</span>
-							)}
-						</button>
-					</SidebarTooltip>
-					<SidebarTooltip collapsed={collapsed} label="API Keys">
-						<button
-							type="button"
-							aria-label={collapsed ? "API Keys" : undefined}
-							className={cn(
-								"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
-								collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
-								"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
-							)}
-							onClick={() => setActiveDialog("api-keys")}
-						>
-							<KeyRound
-								className="relative shrink-0 size-4.25"
-								strokeWidth={1.9}
-							/>
-							{!collapsed && (
-								<span className="relative font-medium">API Keys</span>
-							)}
-						</button>
-					</SidebarTooltip>
-				</nav>
+				{!teamLoaded ? (
+					<ProNavSkeleton collapsed={collapsed} />
+				) : (
+					<nav
+						className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
+					>
+						<SidebarTooltip collapsed={collapsed} label="Webhooks">
+							<button
+								type="button"
+								aria-label={collapsed ? "Webhooks" : undefined}
+								className={cn(
+									"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
+									collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
+									"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
+								)}
+								onClick={() => setActiveDialog("webhooks")}
+							>
+								<Webhook
+									className="relative shrink-0 size-4.25"
+									strokeWidth={1.9}
+								/>
+								{!collapsed && (
+									<span className="relative font-medium">Webhooks</span>
+								)}
+							</button>
+						</SidebarTooltip>
+						<SidebarTooltip collapsed={collapsed} label="API Keys">
+							<button
+								type="button"
+								aria-label={collapsed ? "API Keys" : undefined}
+								className={cn(
+									"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
+									collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
+									"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
+								)}
+								onClick={() => setActiveDialog("api-keys")}
+							>
+								<KeyRound
+									className="relative shrink-0 size-4.25"
+									strokeWidth={1.9}
+								/>
+								{!collapsed && (
+									<span className="relative font-medium">API Keys</span>
+								)}
+							</button>
+						</SidebarTooltip>
+					</nav>
+				)}
 			</div>
 
 			{/* Bottom section */}
@@ -328,19 +287,23 @@ export function SidebarContent({
 				<ExtensionSlot name="dashboard-sidebar-bottom" />
 
 				{/* Upgrade */}
-				{collapsed ? (
-					<SidebarTooltip collapsed={collapsed} label="Upgrade to Pro">
-						<button
-							type="button"
-							className="flex size-9 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors"
-							aria-label="Upgrade to Pro"
-						>
-							<Sparkles className="size-4.5" />
-						</button>
-					</SidebarTooltip>
-				) : (
-					<ExtensionSlot name="dashboard-sidebar-pro" fallback={ProFallback} />
-				)}
+				{teamLoaded &&
+					(collapsed ? (
+						<SidebarTooltip collapsed={collapsed} label="Upgrade to Pro">
+							<button
+								type="button"
+								className="flex size-9 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors"
+								aria-label="Upgrade to Pro"
+							>
+								<Sparkles className="size-4.5" />
+							</button>
+						</SidebarTooltip>
+					) : (
+						<ExtensionSlot
+							name="dashboard-sidebar-pro"
+							fallback={ProFallback}
+						/>
+					))}
 			</div>
 
 			{/* Pro feature dialogs */}
@@ -360,10 +323,10 @@ export function SidebarContent({
 	);
 }
 
-interface AppSidebarProps {
+type AppSidebarProps = {
 	collapsed: boolean;
 	onToggleCollapse: () => void;
-}
+};
 
 export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
 	return (

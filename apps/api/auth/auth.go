@@ -187,6 +187,15 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 					csrfplugin.HookIDCSRFProtect.String(),
 				},
 			},
+			// Guide Exports
+			{
+				Paths: []string{
+					fmt.Sprintf("GET:%s/guide-exports/*", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
 			// Steps
 			{
 				Paths: []string{

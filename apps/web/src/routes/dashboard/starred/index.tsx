@@ -33,7 +33,7 @@ function StarredGuidesSkeleton() {
 				{Array.from({ length: 6 }).map((_, i) => (
 					<div
 						key={i}
-						className="h-70 animate-pulse rounded-[20px] bg-muted/50"
+						className="h-32 animate-pulse rounded-[20px] bg-muted/50"
 					/>
 				))}
 			</div>
