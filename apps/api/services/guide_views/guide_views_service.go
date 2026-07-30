@@ -25,15 +25,15 @@ func NewGuideViewsService(repo interfaces.GuideViewsRepository, redisClient *red
 
 func (s *GuideViewsService) RecordView(ctx context.Context, teamID, guideID uuid.UUID, viewerID *uuid.UUID, ipHash, userAgent, viewedAt string) error {
 	if viewerID != nil {
-		dedupKey := fmt.Sprintf("dedup:guide-view:user:%s:%s", viewerID.String(), guideID.String())
+		dedupeKey := fmt.Sprintf("dedupe:guide-view:user:%s:%s", viewerID.String(), guideID.String())
 
-		exists, err := s.redisClient.Exists(ctx, dedupKey).Result()
+		exists, err := s.redisClient.Exists(ctx, dedupeKey).Result()
 		if err == nil && exists > 0 {
 			return nil
 		}
 
 		defer func() {
-			_ = s.redisClient.Set(ctx, dedupKey, "1", dedupTTL).Err()
+			_ = s.redisClient.Set(ctx, dedupeKey, "1", dedupTTL).Err()
 		}()
 	}
 

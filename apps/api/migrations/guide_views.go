@@ -9,7 +9,7 @@ import (
 
 func guideViewsInitial() authulamigrations.Migration {
 	return authulamigrations.Migration{
-		Version: "20260602000000_guide_views_initial",
+		Version: "20260607000000_guide_views_initial",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return authulamigrations.ExecStatements(
 				ctx,
@@ -21,11 +21,11 @@ func guideViewsInitial() authulamigrations.Migration {
 					viewer_id UUID REFERENCES users(id) ON DELETE SET NULL,
 					ip_hash TEXT,
 					user_agent TEXT,
-					created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+					viewed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 				);`,
-				`CREATE INDEX idx_guide_views_team_analytics ON guide_views(team_id, created_at DESC);`,
-				`CREATE INDEX idx_guide_views_dedupe_user ON guide_views(guide_id, viewer_id, created_at DESC) WHERE viewer_id IS NOT NULL;`,
-				`CREATE INDEX idx_guide_views_dedupe_ip ON guide_views(guide_id, ip_hash, created_at DESC) WHERE viewer_id IS NULL;`,
+				`CREATE INDEX idx_guide_views_team_analytics ON guide_views(team_id, viewed_at DESC);`,
+				`CREATE INDEX idx_guide_views_dedupe_user ON guide_views(guide_id, viewer_id, viewed_at DESC) WHERE viewer_id IS NOT NULL;`,
+				`CREATE INDEX idx_guide_views_dedupe_ip ON guide_views(guide_id, ip_hash, viewed_at DESC) WHERE viewer_id IS NULL;`,
 			)
 		},
 		Down: func(ctx context.Context, tx bun.Tx) error {

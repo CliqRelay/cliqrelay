@@ -17,5 +17,4 @@ type GuideView struct {
 	IPHash    *string   `json:"ip_hash,omitempty" bun:"column:ip_hash" nullable:"true"`
 	UserAgent *string   `json:"user_agent,omitempty" bun:"column:user_agent" nullable:"true"`
 	ViewedAt  time.Time `json:"viewed_at" bun:"column:viewed_at" required:"true"`
-	CreatedAt time.Time `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true"`
 }
