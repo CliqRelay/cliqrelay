@@ -20,13 +20,14 @@ export const Route = createFileRoute("/auth/email-verification")({
 });
 
 function EmailVerificationPage() {
+	const email = localStorage.getItem("email") ?? null;
+
 	const [isResending, setIsResending] = useState<boolean>(false);
-	const email =
-		typeof window !== "undefined" ? localStorage.getItem("email") : null;
 
 	const handleResend = async () => {
-		setIsResending(true);
 		try {
+			setIsResending(true);
+
 			await authulaClient.emailPassword.sendEmailVerification({
 				callbackUrl: `${envClient.baseUrl}/dashboard`,
 			});

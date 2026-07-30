@@ -22,7 +22,7 @@ import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
 
 export const Route = createFileRoute("/dashboard/")({
-	component: DashboardPageComponent,
+	component: DashboardPage,
 });
 
 function NoTeamsView({
@@ -175,7 +175,7 @@ function DashboardSkeleton() {
 	);
 }
 
-function DashboardPageComponent() {
+function DashboardPage() {
 	const navigate = useNavigate();
 	const teams = useTeamStore((s) => s.teams);
 	const loaded = useTeamStore((s) => s.loaded);

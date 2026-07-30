@@ -105,18 +105,27 @@ function SignupPage() {
 							validators={{ onChange: signUpSchema.shape.name }}
 						>
 							{(field) => (
-								<Field data-invalid={field.state.meta.errors.length > 0}>
+								<Field
+									data-invalid={
+										field.state.meta.isTouched &&
+										field.state.meta.errors.length > 0
+									}
+								>
 									<FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
 									<div className="relative">
 										<UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 										<Input
 											id={field.name}
 											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
 											className="pl-10"
+											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 									</div>
-									<FieldError errors={field.state.meta.errors} />
+									<FieldError
+										errors={
+											field.state.meta.isTouched ? field.state.meta.errors : []
+										}
+									/>
 								</Field>
 							)}
 						</form.Field>
@@ -127,7 +136,12 @@ function SignupPage() {
 							validators={{ onChange: signUpSchema.shape.email }}
 						>
 							{(field) => (
-								<Field data-invalid={field.state.meta.errors.length > 0}>
+								<Field
+									data-invalid={
+										field.state.meta.isTouched &&
+										field.state.meta.errors.length > 0
+									}
+								>
 									<FieldLabel htmlFor={field.name}>Email</FieldLabel>
 									<div className="relative">
 										<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -135,11 +149,15 @@ function SignupPage() {
 											id={field.name}
 											type="email"
 											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
 											className="pl-10"
+											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 									</div>
-									<FieldError errors={field.state.meta.errors} />
+									<FieldError
+										errors={
+											field.state.meta.isTouched ? field.state.meta.errors : []
+										}
+									/>
 								</Field>
 							)}
 						</form.Field>
@@ -150,7 +168,12 @@ function SignupPage() {
 							validators={{ onChange: signUpSchema.shape.password }}
 						>
 							{(field) => (
-								<Field data-invalid={field.state.meta.errors.length > 0}>
+								<Field
+									data-invalid={
+										field.state.meta.isTouched &&
+										field.state.meta.errors.length > 0
+									}
+								>
 									<FieldLabel htmlFor={field.name}>Password</FieldLabel>
 									<div className="relative">
 										<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -158,8 +181,8 @@ function SignupPage() {
 											id={field.name}
 											type={showPassword ? "text" : "password"}
 											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
 											className="pl-10 pr-10"
+											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 										<button
 											type="button"
@@ -169,7 +192,11 @@ function SignupPage() {
 											{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
 										</button>
 									</div>
-									<FieldError errors={field.state.meta.errors} />
+									<FieldError
+										errors={
+											field.state.meta.isTouched ? field.state.meta.errors : []
+										}
+									/>
 								</Field>
 							)}
 						</form.Field>
@@ -177,7 +204,12 @@ function SignupPage() {
 						{/* CONFIRM PASSWORD */}
 						<form.Field name="confirmPassword">
 							{(field) => (
-								<Field data-invalid={field.state.meta.errors.length > 0}>
+								<Field
+									data-invalid={
+										field.state.meta.isTouched &&
+										field.state.meta.errors.length > 0
+									}
+								>
 									<FieldLabel htmlFor={field.name}>Confirm Password</FieldLabel>
 									<div className="relative">
 										<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -185,8 +217,8 @@ function SignupPage() {
 											id={field.name}
 											type={showConfirmPassword ? "text" : "password"}
 											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
 											className="pl-10 pr-10"
+											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 										<button
 											type="button"
@@ -200,7 +232,11 @@ function SignupPage() {
 											)}
 										</button>
 									</div>
-									<FieldError errors={field.state.meta.errors} />
+									<FieldError
+										errors={
+											field.state.meta.isTouched ? field.state.meta.errors : []
+										}
+									/>
 								</Field>
 							)}
 						</form.Field>
