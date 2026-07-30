@@ -4,7 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
 
-import { type GetAllGuidesResponse, type Guide, api } from "@repo/api-client";
+import { type Guide, api } from "@repo/api-client";
+
+import { invalidateGuidesCount, updateGuidesCache } from "@/utils/guides-cache.utils";
 
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
 import { GuidesList } from "@/components/guides/guides-list";
@@ -93,32 +95,6 @@ function TrashGuides() {
 		}
 	}, [currentPage, totalPages]);
 
-	const invalidateGuides = () => {
-		queryClient.invalidateQueries({
-			queryKey: api.guides.getGetAllGuidesQueryKey(),
-		});
-		queryClient.invalidateQueries({
-			queryKey: api.guides.getGetGuidesCountQueryKey(),
-		});
-	};
-
-	const removeFromGuidesCache = (idsToRemove: string[]) => {
-		const queryKey = api.guides.getGetAllGuidesQueryKey({
-			team_id: activeTeamId ?? undefined,
-			status: "deleted",
-			page: currentPage,
-			limit: PAGE_SIZE,
-		});
-		queryClient.setQueryData<GetAllGuidesResponse>(queryKey, (old) => {
-			if (!old) return old;
-			return {
-				...old,
-				data: old.data.filter((g) => !idsToRemove.includes(g.id)),
-				total: old.total - idsToRemove.length,
-			};
-		});
-	};
-
 	const restoreMutation = api.guides.useRestoreGuide({
 		request: {
 			credentials: "include",
@@ -149,7 +125,12 @@ function TrashGuides() {
 	const handleRestore = async (guideId: string) => {
 		await restoreMutation.mutateAsync({ id: guideId });
 		setSelectedIds((prev) => prev.filter((id) => id !== guideId));
-		removeFromGuidesCache([guideId]);
+		updateGuidesCache(queryClient, {
+			idsToRemove: [guideId],
+			teamId: activeTeamId ?? undefined,
+			currentPage,
+			pageSize: PAGE_SIZE,
+		});
 		const newTotalPages = Math.max(
 			1,
 			Math.ceil(Math.max(0, total - 1) / PAGE_SIZE),
@@ -157,7 +138,7 @@ function TrashGuides() {
 		if (currentPage > newTotalPages) {
 			setCurrentPage(newTotalPages);
 		}
-		invalidateGuides();
+		invalidateGuidesCount(queryClient);
 	};
 
 	const handleDeletePermanently = (guideId: string) => {
@@ -170,7 +151,12 @@ function TrashGuides() {
 			data: { teamId: activeTeamId, ids: selectedIds },
 			params: { action: "restore" },
 		});
-		removeFromGuidesCache(selectedIds);
+		updateGuidesCache(queryClient, {
+			idsToRemove: selectedIds,
+			teamId: activeTeamId ?? undefined,
+			currentPage,
+			pageSize: PAGE_SIZE,
+		});
 		setSelectedIds([]);
 		const newTotalPages = Math.max(
 			1,
@@ -179,7 +165,7 @@ function TrashGuides() {
 		if (currentPage > newTotalPages) {
 			setCurrentPage(newTotalPages);
 		}
-		invalidateGuides();
+		invalidateGuidesCount(queryClient);
 	};
 
 	const handleBulkDelete = () => {
@@ -213,7 +199,12 @@ function TrashGuides() {
 			setSelectedIds((prev) => prev.filter((id) => id !== deleteDialogGuideId));
 		}
 
-		removeFromGuidesCache(idsToRemove);
+		updateGuidesCache(queryClient, {
+			idsToRemove,
+			teamId: activeTeamId ?? undefined,
+			currentPage,
+			pageSize: PAGE_SIZE,
+		});
 		setDeleteDialogGuideId(null);
 		const newTotalPages = Math.max(
 			1,
@@ -222,7 +213,17 @@ function TrashGuides() {
 		if (currentPage > newTotalPages) {
 			setCurrentPage(newTotalPages);
 		}
-		invalidateGuides();
+		const countQueryKey = api.guides.getGetGuidesCountQueryKey({
+			team_id: activeTeamId ?? undefined,
+		});
+		queryClient.setQueryData<{ count: number }>(countQueryKey, (old) => {
+			if (!old) return old;
+			return {
+				...old,
+				count: Math.max(0, old.count - deletedCount),
+			};
+		});
+		invalidateGuidesCount(queryClient);
 	};
 
 	const cancelPermanentDelete = () => {
