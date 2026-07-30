@@ -34,7 +34,7 @@ type RecordGuideViewResponse struct {
 }
 
 type GetGuideViewsCountQueryParams struct {
-	TeamID uuid.UUID `query:"team_id" validate:"required,uuid" required:"true"`
+	TeamID uuid.UUID `query:"team_id" validate:"required,uuid"`
 }
 
 func (r *GetGuideViewsCountQueryParams) Validate() error {

@@ -1021,7 +1021,7 @@ export function useGetStarredGuides<
 	return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const getGetGuideViewsCountUrl = (params: GetGuideViewsCountParams) => {
+export const getGetGuideViewsCountUrl = (params?: GetGuideViewsCountParams) => {
 	const normalizedParams = new URLSearchParams();
 
 	Object.entries(params || {}).forEach(([key, value]) => {
@@ -1042,7 +1042,7 @@ export const getGetGuideViewsCountUrl = (params: GetGuideViewsCountParams) => {
  * @summary Get guide views count
  */
 export const getGuideViewsCount = async (
-	params: GetGuideViewsCountParams,
+	params?: GetGuideViewsCountParams,
 	options?: Parameters<typeof customFetch>[1],
 ): Promise<GetGuideViewsCountResponse> => {
 	return customFetch<GetGuideViewsCountResponse>(
@@ -1067,7 +1067,7 @@ export const getGetGuideViewsCountQueryOptions = <
 	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
 	TError = unknown,
 >(
-	params: GetGuideViewsCountParams,
+	params?: GetGuideViewsCountParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1104,7 +1104,7 @@ export function useGetGuideViewsCount<
 	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
 	TError = unknown,
 >(
-	params: GetGuideViewsCountParams,
+	params: undefined | GetGuideViewsCountParams,
 	options: {
 		query: Partial<
 			UseQueryOptions<
@@ -1131,7 +1131,7 @@ export function useGetGuideViewsCount<
 	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
 	TError = unknown,
 >(
-	params: GetGuideViewsCountParams,
+	params?: GetGuideViewsCountParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1158,7 +1158,7 @@ export function useGetGuideViewsCount<
 	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
 	TError = unknown,
 >(
-	params: GetGuideViewsCountParams,
+	params?: GetGuideViewsCountParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -1181,7 +1181,7 @@ export function useGetGuideViewsCount<
 	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
 	TError = unknown,
 >(
-	params: GetGuideViewsCountParams,
+	params?: GetGuideViewsCountParams,
 	options?: {
 		query?: Partial<
 			UseQueryOptions<
@@ -2389,7 +2389,7 @@ export const getRecordGuideViewUrl = (id: string) => {
 };
 
 /**
- * Records a view of a guide asynchronously via Redis Stream
+ * Records a view of a guide.
  * @summary Record guide view
  */
 export const recordGuideView = async (

@@ -21,7 +21,7 @@ export function StatsCards({ teamId }: { teamId?: string }) {
 	);
 
 	const count = guidesCountQuery.data?.count ?? 0;
-	const timeSaved = count ? formatTimeSaved(count * 15) : "N/A";
+	const timeSaved = count ? formatTimeSaved(count * 15) : 0;
 	const viewCount = guideViewsQuery.data?.count ?? 0;
 
 	const stats = [

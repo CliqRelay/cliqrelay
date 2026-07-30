@@ -5,7 +5,8 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import type { Uuid } from "./uuid";
 
 export type GetGuideViewsCountParams = {
-	team_id: string;
+	team_id?: Uuid;
 };

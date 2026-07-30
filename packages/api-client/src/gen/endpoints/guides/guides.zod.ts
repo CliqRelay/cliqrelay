@@ -120,7 +120,7 @@ export const GetStarredGuidesResponseSchema = GetStarredGuidesResponse;
  * @summary Get guide views count
  */
 export const GetGuideViewsCountQueryParams = zod.object({
-	team_id: zod.string(),
+	team_id: zod.uuid().optional(),
 });
 
 export const GetGuideViewsCountResponseSchema = GetGuideViewsCountResponse;
@@ -261,7 +261,7 @@ export const UnpublishGuideParams = zod.object({
 export const UnpublishGuideResponseSchema = UnpublishGuideResponse;
 
 /**
- * Records a view of a guide asynchronously via Redis Stream
+ * Records a view of a guide.
  * @summary Record guide view
  */
 export const RecordGuideViewParams = zod.object({

@@ -321,9 +321,8 @@
           {
             "name": "team_id",
             "in": "query",
-            "required": true,
             "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/UUID"
             }
           }
         ],
@@ -775,7 +774,7 @@
           "Guides"
         ],
         "summary": "Record guide view",
-        "description": "Records a view of a guide asynchronously via Redis Stream",
+        "description": "Records a view of a guide.",
         "operationId": "recordGuideView",
         "parameters": [
           {
