@@ -45,7 +45,7 @@ func NewGuidesService(
 
 func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, teamID string, req *types.CreateGuideRequest) (*models.Guide, error) {
 	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, teamID, req); err != nil {
+		if err := s.hooks.BeforeCreate(ctx, actor, teamID, req); err != nil {
 			return nil, err
 		}
 	}
@@ -66,7 +66,7 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 	}
 
 	if s.hooks != nil && s.hooks.AfterCreate != nil {
-		if err := s.hooks.AfterCreate(ctx, guideCreated); err != nil {
+		if err := s.hooks.AfterCreate(ctx, actor, guideCreated); err != nil {
 			return nil, err
 		}
 	}
@@ -225,7 +225,7 @@ func (s *GuidesService) GetByIDUnfiltered(ctx context.Context, guideID string) (
 	return guide, nil
 }
 
-func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
+func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -244,7 +244,7 @@ func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.U
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, existing); err != nil {
+		if err := s.hooks.BeforeUpdate(ctx, actor, existing); err != nil {
 			return nil, err
 		}
 	}
@@ -261,7 +261,7 @@ func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.U
 	}
 
 	if s.hooks != nil && s.hooks.AfterUpdate != nil {
-		if err := s.hooks.AfterUpdate(ctx, updated); err != nil {
+		if err := s.hooks.AfterUpdate(ctx, actor, updated); err != nil {
 			return nil, err
 		}
 	}
@@ -269,7 +269,7 @@ func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.U
 	return updated, nil
 }
 
-func (s *GuidesService) Delete(ctx context.Context, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -283,7 +283,7 @@ func (s *GuidesService) Delete(ctx context.Context, guideID string) (*models.Gui
 	}
 
 	if s.hooks != nil && s.hooks.BeforeDelete != nil {
-		if err := s.hooks.BeforeDelete(ctx, guideID); err != nil {
+		if err := s.hooks.BeforeDelete(ctx, actor, guideID); err != nil {
 			return nil, err
 		}
 	}
@@ -298,7 +298,7 @@ func (s *GuidesService) Delete(ctx context.Context, guideID string) (*models.Gui
 	}
 
 	if s.hooks != nil && s.hooks.AfterDelete != nil {
-		if err := s.hooks.AfterDelete(ctx, guideID); err != nil {
+		if err := s.hooks.AfterDelete(ctx, actor, guideID); err != nil {
 			return nil, err
 		}
 	}
@@ -320,7 +320,7 @@ func (s *GuidesService) recalculateDuration(ctx context.Context, guideID string)
 	return nil
 }
 
-func (s *GuidesService) Publish(ctx context.Context, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -338,7 +338,7 @@ func (s *GuidesService) Publish(ctx context.Context, guideID string) (*models.Gu
 	}
 
 	if s.hooks != nil && s.hooks.BeforePublish != nil {
-		if err := s.hooks.BeforePublish(ctx, guide); err != nil {
+		if err := s.hooks.BeforePublish(ctx, actor, guide); err != nil {
 			return nil, err
 		}
 	}
@@ -357,7 +357,7 @@ func (s *GuidesService) Publish(ctx context.Context, guideID string) (*models.Gu
 	}
 
 	if s.hooks != nil && s.hooks.AfterPublish != nil {
-		if err := s.hooks.AfterPublish(ctx, published); err != nil {
+		if err := s.hooks.AfterPublish(ctx, actor, published); err != nil {
 			return nil, err
 		}
 	}
@@ -365,7 +365,7 @@ func (s *GuidesService) Publish(ctx context.Context, guideID string) (*models.Gu
 	return published, nil
 }
 
-func (s *GuidesService) Unpublish(ctx context.Context, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -383,7 +383,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, guideID string) (*models.
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUnpublish != nil {
-		if err := s.hooks.BeforeUnpublish(ctx, guide); err != nil {
+		if err := s.hooks.BeforeUnpublish(ctx, actor, guide); err != nil {
 			return nil, err
 		}
 	}
@@ -398,7 +398,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, guideID string) (*models.
 	}
 
 	if s.hooks != nil && s.hooks.AfterUnpublish != nil {
-		if err := s.hooks.AfterUnpublish(ctx, unpublished); err != nil {
+		if err := s.hooks.AfterUnpublish(ctx, actor, unpublished); err != nil {
 			return nil, err
 		}
 	}
@@ -406,7 +406,7 @@ func (s *GuidesService) Unpublish(ctx context.Context, guideID string) (*models.
 	return unpublished, nil
 }
 
-func (s *GuidesService) Archive(ctx context.Context, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -424,7 +424,7 @@ func (s *GuidesService) Archive(ctx context.Context, guideID string) (*models.Gu
 	}
 
 	if s.hooks != nil && s.hooks.BeforeArchive != nil {
-		if err := s.hooks.BeforeArchive(ctx, guide); err != nil {
+		if err := s.hooks.BeforeArchive(ctx, actor, guide); err != nil {
 			return nil, err
 		}
 	}
@@ -439,7 +439,7 @@ func (s *GuidesService) Archive(ctx context.Context, guideID string) (*models.Gu
 	}
 
 	if s.hooks != nil && s.hooks.AfterArchive != nil {
-		if err := s.hooks.AfterArchive(ctx, archived); err != nil {
+		if err := s.hooks.AfterArchive(ctx, actor, archived); err != nil {
 			return nil, err
 		}
 	}
@@ -447,7 +447,7 @@ func (s *GuidesService) Archive(ctx context.Context, guideID string) (*models.Gu
 	return archived, nil
 }
 
-func (s *GuidesService) Unarchive(ctx context.Context, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -465,7 +465,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, guideID string) (*models.
 	}
 
 	if s.hooks != nil && s.hooks.BeforeUnarchive != nil {
-		if err := s.hooks.BeforeUnarchive(ctx, guide); err != nil {
+		if err := s.hooks.BeforeUnarchive(ctx, actor, guide); err != nil {
 			return nil, err
 		}
 	}
@@ -480,7 +480,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, guideID string) (*models.
 	}
 
 	if s.hooks != nil && s.hooks.AfterUnarchive != nil {
-		if err := s.hooks.AfterUnarchive(ctx, unarchived); err != nil {
+		if err := s.hooks.AfterUnarchive(ctx, actor, unarchived); err != nil {
 			return nil, err
 		}
 	}

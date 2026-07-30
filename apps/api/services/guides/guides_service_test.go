@@ -137,7 +137,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 			tt.setup(mockRepo, mockStepsRepo)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, mockStepsRepo, testRedisClient(), (*interfaces.GuideHooks)(nil))
 
-			guide, err := svc.Publish(context.Background(), tt.guideID)
+			guide, err := svc.Publish(context.Background(), nil, tt.guideID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -254,7 +254,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 			tt.setup(mockRepo)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
-			guide, err := svc.Unpublish(context.Background(), tt.guideID)
+			guide, err := svc.Unpublish(context.Background(), nil, tt.guideID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -383,7 +383,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 			tt.setup(mockRepo)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
-			guide, err := svc.Archive(context.Background(), tt.guideID)
+			guide, err := svc.Archive(context.Background(), nil, tt.guideID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -600,7 +600,7 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 			tt.setup(mockRepo)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
-			guide, err := svc.Unarchive(context.Background(), tt.guideID)
+			guide, err := svc.Unarchive(context.Background(), nil, tt.guideID)
 
 			if tt.wantErr {
 				assert.Error(t, err)

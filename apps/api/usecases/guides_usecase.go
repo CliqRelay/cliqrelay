@@ -97,7 +97,7 @@ func (uc *GuidesUseCase) Update(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrCannotSetGuideToPrivate
 	}
 
-	return uc.guidesService.Update(ctx, guideID, req)
+	return uc.guidesService.Update(ctx, actor, guideID, req)
 }
 
 func (uc *GuidesUseCase) Delete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
@@ -111,7 +111,7 @@ func (uc *GuidesUseCase) Delete(ctx context.Context, actor *authulamodels.Actor,
 		return nil, err
 	}
 
-	return uc.guidesService.Delete(ctx, guideID)
+	return uc.guidesService.Delete(ctx, actor, guideID)
 }
 
 func (uc *GuidesUseCase) GetCount(ctx context.Context, actor *authulamodels.Actor, teamID string) (int, error) {
@@ -139,7 +139,7 @@ func (uc *GuidesUseCase) Publish(ctx context.Context, actor *authulamodels.Actor
 		return nil, err
 	}
 
-	return uc.guidesService.Publish(ctx, guideID)
+	return uc.guidesService.Publish(ctx, actor, guideID)
 }
 
 func (uc *GuidesUseCase) Unpublish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
@@ -153,7 +153,7 @@ func (uc *GuidesUseCase) Unpublish(ctx context.Context, actor *authulamodels.Act
 		return nil, err
 	}
 
-	return uc.guidesService.Unpublish(ctx, guideID)
+	return uc.guidesService.Unpublish(ctx, actor, guideID)
 }
 
 func (uc *GuidesUseCase) Archive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
@@ -167,7 +167,7 @@ func (uc *GuidesUseCase) Archive(ctx context.Context, actor *authulamodels.Actor
 		return nil, err
 	}
 
-	return uc.guidesService.Archive(ctx, guideID)
+	return uc.guidesService.Archive(ctx, actor, guideID)
 }
 
 func (uc *GuidesUseCase) Unarchive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
@@ -181,7 +181,7 @@ func (uc *GuidesUseCase) Unarchive(ctx context.Context, actor *authulamodels.Act
 		return nil, err
 	}
 
-	return uc.guidesService.Unarchive(ctx, guideID)
+	return uc.guidesService.Unarchive(ctx, actor, guideID)
 }
 
 func (uc *GuidesUseCase) Restore(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
