@@ -1,4 +1,4 @@
-import { Clock, Eye, FileText, Share2 } from "lucide-react";
+import { Clock, FileText } from "lucide-react";
 
 import { api } from "@repo/api-client";
 import { formatTimeSaved } from "@repo/data-commons";
@@ -35,8 +35,11 @@ export function StatsCards({ teamId }: { teamId?: string }) {
 			{stats.map((stat) => {
 				const Icon = stat.icon;
 				return (
-					<div key={stat.label} className="surface-card rounded-[20px] p-5">
-						<div className="flex items-center gap-2.5">
+					<div
+						key={stat.label}
+						className="grid place-items-center surface-card rounded-[20px] p-5"
+					>
+						<div className="flex items-center gap-2">
 							<div className="size-8 rounded-full flex items-center justify-center bg-(--icon-subtle)">
 								<Icon className="text-primary size-5" />
 							</div>
