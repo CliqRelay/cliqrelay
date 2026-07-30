@@ -62,7 +62,7 @@ func TestUnstarGuideHandler(t *testing.T) {
 			mockGuidesRepo.On("GetByID", mock.Anything, guideID).
 				Return(&models.Guide{
 					ID:        uuid.MustParse(guideID),
-					CreatorID: "test-user-123",
+					CreatorID: new("test-user-123"),
 					Title:     "Guide Title",
 					Status:    models.StatusDraft,
 				}, nil).
@@ -80,7 +80,7 @@ func TestUnstarGuideHandler(t *testing.T) {
 			}
 
 			starredSvc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo)
-			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil, nil)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil)
 			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
 			handler := handlersguides.NewUnstarGuideHandler(appConfig, uc)
 

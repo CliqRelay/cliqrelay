@@ -124,12 +124,12 @@ func (s *MediaAssetsService) Update(ctx context.Context, mediaAssetID string, re
 	}
 
 	updated, err := s.mediaAssetsRepo.Update(ctx, &types.UpdateMediaAssetDTO{
-		ID:        parsedID,
-		AltText:   req.AltText,
-		MimeType:  req.MimeType,
-		Height:    req.Height,
-		Width:     req.Width,
-		ByteSize:  req.ByteSize,
+		ID:       parsedID,
+		AltText:  req.AltText,
+		MimeType: req.MimeType,
+		Height:   req.Height,
+		Width:    req.Width,
+		ByteSize: req.ByteSize,
 	})
 	if err != nil {
 		return nil, err

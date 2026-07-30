@@ -44,7 +44,7 @@ func TestStepsService_Create(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user",
+						CreatorID: new("test-user"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -72,7 +72,7 @@ func TestStepsService_Create(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user",
+						CreatorID: new("test-user"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -116,7 +116,7 @@ func TestStepsService_Create(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user",
+						CreatorID: new("test-user"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).

@@ -8,5 +8,8 @@
 import type { Guide } from "./guide";
 
 export type GetAllGuidesResponse = {
-	guides: Guide[];
+	data: Guide[];
+	limit: number;
+	page: number;
+	total: number;
 };

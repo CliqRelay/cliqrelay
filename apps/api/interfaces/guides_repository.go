@@ -12,7 +12,7 @@ import (
 type GuidesRepository interface {
 	Create(ctx context.Context, data *types.CreateGuideDTO) (*models.Guide, error)
 	GetByID(ctx context.Context, id string) (*models.Guide, error)
-	GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, error)
+	GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error)
 	Update(ctx context.Context, data *types.UpdateGuideDTO) (*models.Guide, error)
 	Delete(ctx context.Context, id string) (*models.Guide, error)
 	Publish(ctx context.Context, id string) (*models.Guide, error)
@@ -25,4 +25,7 @@ type GuidesRepository interface {
 	UpdateDuration(ctx context.Context, id string, durationSeconds int) (*models.Guide, error)
 	GetCount(ctx context.Context, filter *types.GuideFilter) (int, error)
 	GetPendingPurge(ctx context.Context) ([]uuid.UUID, error)
+	BulkDelete(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error)
+	BulkRestore(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error)
+	BulkPermanentlyDelete(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error)
 }

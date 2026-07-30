@@ -57,7 +57,7 @@ func TestGetGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Found Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -69,7 +69,7 @@ func TestGetGuideHandler(t *testing.T) {
 					Once()
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
 			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := handlersguides.NewGetGuideByIDHandler(appConfig, uc)
 

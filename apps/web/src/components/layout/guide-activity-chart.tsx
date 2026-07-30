@@ -1,11 +1,12 @@
 import { useMemo } from "react";
+
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import type { Guide } from "@repo/api-client";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 
 const MONTHS = [

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import {
 	FileText,
@@ -8,12 +8,12 @@ import {
 	TriangleAlert,
 } from "lucide-react";
 
-import type { StepTypeOption } from "@/models";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import type { StepTypeOption } from "@/models";
 
 type StepOption = {
 	value: StepTypeOption;

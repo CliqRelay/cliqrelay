@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Settings } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -10,13 +11,12 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { setActiveOrgCookie } from "@/lib/org-cookie";
 import { clearActiveTeamCookie } from "@/lib/team-cookie";
+import { cn } from "@/lib/utils";
 import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 export function OrgDropdown() {
 	const orgId = useOrgStore((state) => state.orgId);
@@ -57,7 +57,7 @@ export function OrgDropdown() {
 			<DropdownMenuTrigger asChild>
 				<Button
 					variant="ghost"
-					className="h-8 gap-2 px-2 text-sm font-medium border border-sidebar-border/40 hover:border-sidebar-border hover:bg-accent/50 data-[state=open]:border-sidebar-border data-[state=open]:bg-accent/50 transition-all duration-200"
+					className="h-8 gap-2 px-2 text-sm font-medium border border-sidebar-border hover:border-sidebar-border hover:bg-accent/50 data-[state=open]:border-sidebar-border data-[state=open]:bg-accent/50 transition-all duration-200"
 				>
 					<div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
 						{orgName?.charAt(0)?.toUpperCase() ?? "?"}

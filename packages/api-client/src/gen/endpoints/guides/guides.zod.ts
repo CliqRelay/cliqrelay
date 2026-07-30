@@ -9,6 +9,8 @@ import * as zod from "zod";
 
 import {
 	ArchiveGuideResponse,
+	BulkGuidesRequest,
+	BulkGuidesResponse,
 	CreateDemoGuideRequest,
 	CreateDemoGuideResponse,
 	CreateGuideRequest,
@@ -20,6 +22,8 @@ import {
 	GetExportStatusResponse,
 	GetGuideByIDResponse,
 	GetGuidesCountResponse,
+	GetStarredGuidesResponse,
+	GuideSortField,
 	GuideStatus,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
@@ -48,8 +52,13 @@ export const GetExportStatusResponseSchema = GetExportStatusResponse;
  * @summary Get all guides
  */
 export const GetAllGuidesQueryParams = zod.object({
-	status: zod.union([zod.null(), GuideStatus]).optional(),
 	team_id: zod.string().optional(),
+	status: zod.union([zod.null(), GuideStatus]).optional(),
+	exclude_archived: zod.boolean().optional(),
+	page: zod.int().optional(),
+	limit: zod.int().optional(),
+	sort_by: zod.union([zod.null(), GuideSortField]).optional(),
+	sort_dir: zod.string().nullish(),
 });
 
 export const GetAllGuidesResponseSchema = GetAllGuidesResponse;
@@ -61,6 +70,18 @@ export const GetAllGuidesResponseSchema = GetAllGuidesResponse;
 export const CreateGuideBody = CreateGuideRequest;
 
 export const CreateGuideResponseSchema = CreateGuideResponse;
+
+/**
+ * Performs a bulk action (delete, restore, permanently-delete) on multiple guides
+ * @summary Bulk action on guides
+ */
+export const BulkGuidesActionQueryParams = zod.object({
+	action: zod.string().optional(),
+});
+
+export const BulkGuidesActionBody = BulkGuidesRequest;
+
+export const BulkGuidesActionResponse = BulkGuidesResponse;
 
 /**
  * Returns the total count of non-deleted guides for the authenticated user
@@ -86,9 +107,11 @@ export const CreateDemoGuideResponseSchema = CreateDemoGuideResponse;
  */
 export const GetStarredGuidesQueryParams = zod.object({
 	team_id: zod.string().optional(),
+	page: zod.int().optional(),
+	limit: zod.int().optional(),
 });
 
-export const GetStarredGuidesResponse = GetAllGuidesResponse;
+export const GetStarredGuidesResponseSchema = GetStarredGuidesResponse;
 
 /**
  * Retrieves a single guide by its ID

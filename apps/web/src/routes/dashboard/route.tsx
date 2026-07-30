@@ -7,12 +7,12 @@ import {
 	redirect,
 } from "@tanstack/react-router";
 
-import { DashboardLayout } from "@/components/layout";
 import { authulaClient } from "@/lib/authula-client";
 import { getActiveOrgCookie, setActiveOrgCookie } from "@/lib/org-cookie";
-import type { UserWithModifiedMetadata } from "@/models";
 import { useOrgStore } from "@/stores/org-store";
 import { useUserStore } from "@/stores/user-store";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import type { AppUser, AppOrganizationMemberResponse } from "@/models";
 
 type OrgInfo = {
 	id: string;
@@ -21,25 +21,23 @@ type OrgInfo = {
 	slug: string;
 };
 
-import type { OrganizationMemberResponse } from "authula";
-
 type ContextType = {
-	user: UserWithModifiedMetadata;
+	user: AppUser;
 	orgs: OrgInfo[];
 	activeOrg: OrgInfo | null;
-	currentMember: OrganizationMemberResponse | null;
+	currentMember: AppOrganizationMemberResponse | null;
 };
 
 export const Route = createFileRoute("/dashboard")({
 	beforeLoad: async ({ location }): Promise<ContextType> => {
-		let userResponse: { user: UserWithModifiedMetadata };
+		let userResponse: { user: AppUser };
 		try {
 			const response = await authulaClient.core.getMe();
 			if (!response.user.emailVerified) {
 				throw redirect({ to: "/auth/email-verification" });
 			}
 			userResponse = {
-				user: response.user as UserWithModifiedMetadata,
+				user: response.user as AppUser,
 			};
 		} catch (error: unknown) {
 			if (isRedirect(error)) {
@@ -93,12 +91,12 @@ export const Route = createFileRoute("/dashboard")({
 				setActiveOrgCookie(activeOrg.id);
 			}
 
-			let currentMember: OrganizationMemberResponse | null = null;
+			let currentMember: AppOrganizationMemberResponse | null = null;
 			try {
 				const members =
-					await authulaClient.organizations.listOrganizationMembers(
+					(await authulaClient.organizations.listOrganizationMembers(
 						activeOrg.id,
-					);
+					)) as AppOrganizationMemberResponse[] | null;
 				currentMember =
 					members?.find((m) => m.user.id === userResponse.user.id) ?? null;
 			} catch {
@@ -125,7 +123,7 @@ function DashboardRoute() {
 	const ctx = Route.useRouteContext();
 
 	useEffect(() => {
-		useUserStore.getState().setUser(ctx.user.id);
+		useUserStore.getState().setUser(ctx.user.id, ctx.user.name, ctx.user.email);
 		if (ctx.activeOrg) {
 			useOrgStore
 				.getState()
@@ -135,15 +133,24 @@ function DashboardRoute() {
 		if (ctx.currentMember) {
 			useOrgStore.getState().setCurrentMember(ctx.currentMember);
 		}
-	}, [ctx.user.id, ctx.orgs, ctx.activeOrg, ctx.currentMember]);
+	}, [
+		ctx.user.id,
+		ctx.orgs,
+		ctx.activeOrg,
+		ctx.currentMember,
+		ctx.user.email,
+		ctx.user.name,
+	]);
 
 	// Hydrate org store during SSR so data is available immediately on first render
+	if (import.meta.env.SSR) {
+		useUserStore.getState().setUser(ctx.user.id, ctx.user.name, ctx.user.email);
+	}
+
 	if (import.meta.env.SSR && ctx.activeOrg) {
-		useOrgStore.getState().setOrg(
-			ctx.activeOrg.id,
-			ctx.activeOrg.name,
-			ctx.activeOrg.ownerId,
-		);
+		useOrgStore
+			.getState()
+			.setOrg(ctx.activeOrg.id, ctx.activeOrg.name, ctx.activeOrg.ownerId);
 		useOrgStore.getState().setOrganizations(ctx.orgs);
 		if (ctx.currentMember) {
 			useOrgStore.getState().setCurrentMember(ctx.currentMember);

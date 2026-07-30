@@ -39,9 +39,11 @@ func guidesInitial() authulamigrations.Migration {
 				);`,
 				`CREATE INDEX idx_guides_creator_id ON guides (creator_id);`,
 				`CREATE INDEX idx_guides_status ON guides (status);`,
+				`CREATE INDEX idx_guides_visibility ON guides (visibility);`,
 				`CREATE INDEX idx_guides_deleted_at ON guides (deleted_at);`,
 				`CREATE INDEX idx_guides_purge_requested_at ON guides (purge_requested_at);`,
 				`CREATE INDEX idx_guides_team_status_deleted ON guides (team_id, status, deleted_at);`,
+				`CREATE INDEX idx_guides_team_updated_at ON guides (team_id, updated_at DESC) WHERE deleted_at IS NULL;`,
 				`DROP TRIGGER IF EXISTS update_guides_updated_at_trigger ON guides;`,
 				`CREATE TRIGGER update_guides_updated_at_trigger
 					BEFORE UPDATE ON guides

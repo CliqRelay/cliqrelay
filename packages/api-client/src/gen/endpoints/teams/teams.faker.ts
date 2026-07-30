@@ -7,11 +7,7 @@
  */
 import { faker } from "@faker-js/faker";
 
-import type {
-	GetAllTeamsResponse,
-	GetTeamMembershipsResponse,
-	UpdateTeamMembershipsResponse,
-} from "../../models";
+import type { GetAllTeamsResponse } from "../../models";
 
 export const getGetTeamsResponseMock = (
 	overrideResponse: Partial<Extract<GetAllTeamsResponse, object>> = {},
@@ -27,34 +23,5 @@ export const getGetTeamsResponseMock = (
 		ownerId: faker.string.alpha({ length: { min: 10, max: 20 } }),
 		updatedAt: faker.string.alpha({ length: { min: 10, max: 20 } }),
 	})),
-	...overrideResponse,
-});
-
-export const getGetTeamMembershipsResponseMock = (
-	overrideResponse: Partial<Extract<GetTeamMembershipsResponse, object>> = {},
-): GetTeamMembershipsResponse => ({
-	teamIds: Array.from(
-		{ length: faker.number.int({ min: 1, max: 10 }) },
-		(_, i) => i + 1,
-	).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
-	...overrideResponse,
-});
-
-export const getUpdateTeamMembershipsResponseMock = (
-	overrideResponse: Partial<
-		Extract<UpdateTeamMembershipsResponse, object>
-	> = {},
-): UpdateTeamMembershipsResponse => ({
-	errors: faker.helpers.arrayElement([
-		Array.from(
-			{ length: faker.number.int({ min: 1, max: 10 }) },
-			(_, i) => i + 1,
-		).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
-		undefined,
-	]),
-	teamIds: Array.from(
-		{ length: faker.number.int({ min: 1, max: 10 }) },
-		(_, i) => i + 1,
-	).map(() => faker.string.alpha({ length: { min: 10, max: 20 } })),
 	...overrideResponse,
 });

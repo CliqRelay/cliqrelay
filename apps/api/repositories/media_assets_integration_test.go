@@ -31,7 +31,7 @@ func seedSimpleStep(t *testing.T, db bun.IDB) (uuid.UUID, uuid.UUID) {
 	guide := &models.Guide{
 		ID:        uuid.New(),
 		TeamID:    teamID,
-		CreatorID: userID,
+		CreatorID: new(userID),
 		Title:     "test guide",
 		Status:    models.StatusDraft,
 	}

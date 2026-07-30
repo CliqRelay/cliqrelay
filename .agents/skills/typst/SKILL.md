@@ -1,120 +1,137 @@
 ---
 name: typst
-description: |
-  Use this skill to write and generate documents using Typst, a markup-based
-  typesetting system. Provides structured access to Typst's full reference
-  documentation: tutorial chapters, language reference modules, and standalone
-  pages for syntax, scripting, styling, and context.
+description: 'Typst document creation and package development. Use when: (1) Working with .typ files, (2) User mentions typst, typst.toml, or typst-cli, (3) Creating or using Typst packages, (4) Developing document templates, (5) Converting Markdown/LaTeX to Typst'
 ---
 
-# Typst Documentation Map
+# Typst
 
-All paths are relative to `docs/`.
+This skill targets Typst 0.15+ by default. For Typst 0.14.2, use the
+`typst-0.14.2` repository tag for the previous skill snapshot, `typst query`
+for CLI introspection, or `--channel 0.14.2` with API search.
 
-## Tutorial
+## Compilation
 
-| Chapter | File |
-|---|---|
-| Introduction & getting started | `tutorial/intro.md` |
-| Writing in Typst | `tutorial/writing-in-typst.md` |
-| Formatting | `tutorial/formatting.md` |
-| Advanced Styling | `tutorial/advanced-styling.md` |
-| Making a Template | `tutorial/making-a-template.md` |
+```bash
+typst compile document.typ              # compile once → PDF
+typst compile document.typ output.pdf   # explicit output path
+typst compile document.typ -f png       # export as PNG image
+typst compile src/main.typ --root .     # set project root for /path imports
+typst watch document.typ                # recompile on change
+typst eval --in document.typ 'query(heading).len()'  # Typst 0.15+ introspection
+```
 
-## Reference Modules
+For command options beyond this quick reference, see [cli.md](cli.md).
 
-Each module has an intro (if listed), then per-feature files. Files are listed by
-their stem (e.g. `align` → `reference/layout/align.md`).
+Agent verification — choose by what you need to check (see [debug.md](debug.md) for details):
 
-### Foundations — Core types & built-in functions
+| Method      | Command                                                                 | Best for                                  |
+| ----------- | ----------------------------------------------------------------------- | ----------------------------------------- |
+| HTML export | `typst compile doc.typ /dev/stdout -f html --features html 2>/dev/null` | Text content, structure, headings, tables |
+| PNG export  | `typst compile doc.typ page-{p}.png -f png`                             | Visual layout, alignment, spacing, fonts  |
+| pdftotext   | `typst compile doc.typ && pdftotext doc.pdf -`                          | Fallback for page-specific content        |
 
-Intro: `reference/foundations/intro.md`
+## Minimal Document
 
-`arguments`, `array`, `assert`, `auto`, `bool`, `bytes`, `calculation`, `content`,
-`datetime`, `decimal`, `dictionary`, `duration`, `eval`, `float`, `function`, `int`,
-`label`, `module`, `none`, `panic`, `path`, `plugin`, `regex`, `repr`, `selector`,
-`std`, `string`, `symbol`, `system`, `target`, `type`, `version`
+```typst
+#set page(paper: "a4", margin: 2cm)
+#set text(size: 11pt)
 
-### Layout — Page arrangement, spacing, transforms
+= Title
 
-Intro: `reference/layout/intro.md`
+Content goes here.
+```
 
-`align`, `alignment`, `angle`, `block`, `box`, `colbreak`, `columns`, `direction`,
-`fraction`, `grid`, `h`, `hide`, `layout`, `length`, `measure`, `move`, `pad`,
-`page`, `pagebreak`, `place`, `ratio`, `relative`, `repeat`, `rotate`, `scale`,
-`skew`, `stack`, `v`, `visualize`
+## Writing Documents
 
-### Text — Fonts, styling, raw code, case transforms
+**Starting a new document?** Copy the closest recipe from [Examples](#examples) below — it's faster than starting blank and each row names the docs to read next.
 
-`highlight`, `linebreak`, `lorem`, `lower`, `overline`, `raw`, `smallcaps`,
-`smartquote`, `strike`, `sub`, `super`, `text`, `underline`, `upper`
+| When you need to...                                | Read                           |
+| -------------------------------------------------- | ------------------------------ |
+| Learn syntax, imports, functions, control flow     | [basics.md](basics.md)         |
+| Learn data types, operators, string/array methods  | [types.md](types.md)           |
+| Style pages, headings, figures, layout             | [styling.md](styling.md)       |
+| Tables, grids, cell spans, borders, data tables    | [tables.md](tables.md)         |
+| Academic papers, bibliography, theorems, equations | [academic.md](academic.md)     |
+| Convert from Markdown or LaTeX                     | [conversion.md](conversion.md) |
+| Use Typst CLI commands and build options           | [cli.md](cli.md)               |
+| Extract data from documents, multi-pass builds     | [query.md](query.md)           |
 
-### Math — Formulas, equations, math notation
+## Developing Packages and Templates
 
-Intro: `reference/math/intro.md`
+| When you need to...                            | Read                       |
+| ---------------------------------------------- | -------------------------- |
+| State, counters, in-document `query()`, XML    | [advanced.md](advanced.md) |
+| CLI introspection, metadata export, multi-pass | [query.md](query.md)       |
+| Create a reusable template function            | [template.md](template.md) |
+| Create or publish a package                    | [package.md](package.md)   |
+| Verify output (HTML/PNG/pdftotext, repr)       | [debug.md](debug.md)       |
+| Profile performance (--timings, hotspots)      | [perf.md](perf.md)         |
 
-`accent`, `attach`, `binom`, `cancel`, `cases`, `class`, `equation`, `frac`,
-`leftright`, `matrix`, `op`, `primes`, `roots`, `sizes`, `stretch`, `styles`,
-`underover`, `variants`, `vector`
+[basics.md](basics.md) and [types.md](types.md) are also the foundation for developers.
 
-### Models — Document structures (headings, lists, tables, citations)
+## Finding Packages
 
-Intro: `reference/models/intro.md`
+Search the embedded index of Typst Universe packages (updated weekly):
 
-`asset`, `bibliography`, `cite`, `divider`, `document`, `emph`, `enum`, `figure`,
-`footnote`, `heading`, `link`, `list`, `numbering`, `outline`, `par`, `parbreak`,
-`quote`, `ref`, `strong`, `table`, `terms`, `text`, `title`
+```bash
+python3 scripts/search-packages.py "what you need"
+python3 scripts/search-packages.py "chart" --category visualization
+python3 scripts/search-packages.py --category cv --top 5
+python3 scripts/search-packages.py --list-categories
+```
 
-### Visualize — Shapes, colors, gradients, images
+## Common Errors
 
-`circle`, `color`, `curve`, `ellipse`, `gradient`, `image`, `line`, `polygon`,
-`rect`, `square`, `stroke`, `tiling`
+| Error                                            | Cause                        | Fix                                                  |
+| ------------------------------------------------ | ---------------------------- | ---------------------------------------------------- |
+| "unknown variable"                               | Undefined identifier         | Check spelling, ensure `#let` before use             |
+| "expected X, found Y"                            | Type mismatch                | Check function signature in docs                     |
+| "file not found"                                 | Bad import path              | Paths resolve relative to current file               |
+| "unknown font"                                   | Font not installed           | Use system fonts or web-safe alternatives            |
+| "maximum function call depth exceeded"           | Deep recursion               | Use iteration instead                                |
+| "can only be used when context is known"         | Missing `context` wrapper    | Wrap in `context { ... }`                            |
+| "unexpected argument"                            | `=` instead of `:` for args  | Named args use `:` syntax: `func(name: value)`       |
+| "variables from outside are read-only"           | Mutating captured variable   | Use loop accumulation or `state()` — see advanced.md |
+| "expected content, found string" (or vice versa) | Content/string type mismatch | Use `[#str-var]` to embed string in content          |
+| set/show rule has no effect                      | Rule placed after content    | Place set/show rules before the content they target  |
 
-### Introspection — Counters, state, queries, metadata
+## Examples
 
-Intro: `reference/introspection/intro.md`
+Copy the closest starter, adjust, compile. For CVs, letters, or slides, search packages: `python3 scripts/search-packages.py --category cv` (or `letter`, `presentation`).
 
-`counter`, `here`, `locate`, `location`, `metadata`, `query`, `state`
+| Example                                             | Start here when you want...              | Next read                                        |
+| --------------------------------------------------- | ---------------------------------------- | ------------------------------------------------ |
+| [basic-document.typ](examples/basic-document.typ)   | A short note or memo                     | [basics.md](basics.md), [styling.md](styling.md) |
+| [styled-document.typ](examples/styled-document.typ) | A multi-section report with page styling | [styling.md](styling.md), [tables.md](tables.md) |
+| [template-report.typ](examples/template-report.typ) | A reusable template for a series         | [template.md](template.md)                       |
+| [tables-showcase.typ](examples/tables-showcase.typ) | A data-heavy doc (tables, CSV/JSON)      | [tables.md](tables.md), [types.md](types.md)     |
+| [academic-paper.typ](examples/academic-paper.typ)   | A paper with citations, theorems, math   | [academic.md](academic.md)                       |
+| [query-export.typ](examples/query-export.typ)       | Metadata export or multi-pass builds     | [query.md](query.md)                             |
+| [package-example/](examples/package-example/)       | A publishable package                    | [package.md](package.md)                         |
 
-### Data Loading — Reading external files
+## Dependencies
 
-Intro: `reference/data-loading/intro.md`
+- **typst CLI 0.15+ recommended**: Install from https://typst.app or via package manager
+  - macOS: `brew install typst`
+  - Linux: `cargo install typst-cli`
+  - Windows: `winget install typst`
+- **pdftotext** (optional): For text-level output verification
+- **Python 3.10+** (optional): For package search and validation scripts
+- **jq** (optional): For parsing JSON output from `typst eval` or `typst query` in shell scripts
 
-`cbor`, `csv`, `json`, `read`, `toml`, `xml`, `yaml`
+## API Reference Search
 
-### Export — Output formats
+Search the embedded index of Typst API functions, methods, and constructors:
 
-**PDF** — intro: `reference/export/pdf/intro.md`
-`artifact`, `attach`, `data-cell`, `header-cell`, `table-summary`
+```bash
+python3 scripts/search-api.py "image width fit"
+python3 scripts/search-api.py "color lighten" --kind method
+python3 scripts/search-api.py --name str.position -v
+python3 scripts/search-api.py "rightarrow" --kind symbol   # LaTeX names work
+python3 scripts/search-api.py "path" --channel 0.14.2      # legacy Typst 0.14 API
+python3 scripts/search-api.py --list-categories
+```
 
-**HTML** — intro: `reference/export/html/intro.md`
-`elem`, `frame`, `typed`
+## Ecosystem Tools
 
-**Other:** `bundle` (reference/export/bundle.md), `png`, `svg`
-
-### Symbols — Emoji & special characters
-
-Intro: `reference/symbols/intro.md`
-
-`emoji`, `general-symbols`
-
-## Standalone Reference Pages
-
-These are top-level files covering cross-cutting language concepts:
-
-| Topic | File |
-|---|---|
-| Syntax (markup/math/code modes) | `reference/syntax.md` |
-| Scripting (expressions, blocks, closures) | `reference/scripting.md` |
-| Styling (set rules, show rules) | `reference/styling.md` |
-| Context (contextual queries, style access) | `reference/context.md` |
-
-## Quick Guide for the Agent
-
-- **New to Typst?** Start with the tutorial files for a step-by-step intro.
-- **Need a specific function?** Find its module above, then read `<module>/<name>.md`.
-- **Set/show rules?** See `reference/styling.md`.
-- **Scripting (variables, loops, functions)?** See `reference/scripting.md`.
-- **Context-dependent values (counter, state, layout)?** See `reference/context.md`.
-- **Output to PDF/HTML/PNG/SVG?** See `reference/export/`.
-- **Math notation?** See `reference/math/`.
+Ecosystem tools: **tinymist** (LSP/editor), **typstyle** (formatter), **typst-package-check** (package validator), **tytanic** (visual test runner). For package tooling details, see [package.md](package.md).

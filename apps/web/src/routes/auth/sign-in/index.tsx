@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
 import { authulaClient } from "@/lib/authula-client";
+import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute("/auth/sign-in")({
 	component: SignInPage,
@@ -46,15 +46,13 @@ function SignInPage() {
 			try {
 				await authulaClient.emailPassword.signIn(value);
 
-				toast({
-					title: "Success",
+				toast("Success", {
 					description: "Signed in successfully.",
 				});
 
 				navigate({ to: "/dashboard" });
 			} catch (error: any) {
-				toast({
-					title: "Sign in failed",
+				toast("Sign in failed", {
 					description: error?.message || "An unknown error occurred",
 				});
 			}
@@ -84,7 +82,12 @@ function SignInPage() {
 							validators={{ onChange: signInSchema.shape.email }}
 						>
 							{(field) => (
-								<Field data-invalid={field.state.meta.errors.length > 0}>
+								<Field
+									data-invalid={
+										field.state.meta.isTouched &&
+										field.state.meta.errors.length > 0
+									}
+								>
 									<FieldLabel htmlFor={field.name}>Email</FieldLabel>
 									<div className="relative">
 										<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -92,11 +95,15 @@ function SignInPage() {
 											id={field.name}
 											type="email"
 											value={field.state.value}
-											onChange={(e) => field.handleChange(e.target.value)}
 											className="pl-10"
+											onChange={(e) => field.handleChange(e.target.value)}
 										/>
 									</div>
-									<FieldError errors={field.state.meta.errors} />
+									<FieldError
+										errors={
+											field.state.meta.isTouched ? field.state.meta.errors : []
+										}
+									/>
 								</Field>
 							)}
 						</form.Field>
@@ -107,7 +114,12 @@ function SignInPage() {
 							validators={{ onChange: signInSchema.shape.password }}
 						>
 							{(field) => (
-								<Field data-invalid={field.state.meta.errors.length > 0}>
+								<Field
+									data-invalid={
+										field.state.meta.isTouched &&
+										field.state.meta.errors.length > 0
+									}
+								>
 									<div className="flex items-center justify-between">
 										<FieldLabel htmlFor={field.name}>Password</FieldLabel>
 										<Link
@@ -125,7 +137,6 @@ function SignInPage() {
 											type={showPassword ? "text" : "password"}
 											value={field.state.value}
 											onChange={(e) => field.handleChange(e.target.value)}
-											placeholder="••••••••"
 											className="pl-10 pr-10"
 										/>
 
@@ -138,7 +149,11 @@ function SignInPage() {
 										</button>
 									</div>
 
-									<FieldError errors={field.state.meta.errors} />
+									<FieldError
+										errors={
+											field.state.meta.isTouched ? field.state.meta.errors : []
+										}
+									/>
 								</Field>
 							)}
 						</form.Field>

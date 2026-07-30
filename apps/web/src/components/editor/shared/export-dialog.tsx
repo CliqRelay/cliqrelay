@@ -4,6 +4,8 @@ import { Code, File, Loader2 } from "lucide-react";
 
 import { api, type ExportGuideFormat } from "@repo/api-client";
 
+import SoonBadge from "@/components/shared/coming-soon-badge";
+import ProBadge from "@/components/shared/pro-badge";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -13,9 +15,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import ProBadge from "@/components/shared/ProBadge";
-import SoonBadge from "@/components/shared/ComingSoonBadge";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 const POLL_INTERVAL = 2000;
@@ -51,11 +51,12 @@ export function ExportDialog({
 	open,
 	onOpenChange,
 }: Props) {
+	const startTimeRef = useRef<number>(0);
+	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 	const [selectedFormat, setSelectedFormat] =
 		useState<ExportGuideFormat>("pdf");
 	const [exportId, setExportId] = useState<string | null>(null);
-	const startTimeRef = useRef<number>(0);
-	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const clearTimeoutRef = useCallback(() => {
 		if (timeoutRef.current) {
@@ -71,11 +72,9 @@ export function ExportDialog({
 				startTimeRef.current = Date.now();
 			},
 			onError: (error) => {
-				toast({
-					title: "Export failed",
+				toast.error("Export failed", {
 					description:
 						error instanceof Error ? error.message : "Failed to start export",
-					variant: "destructive",
 				});
 			},
 		},
@@ -110,10 +109,8 @@ export function ExportDialog({
 		const elapsed = Date.now() - startTimeRef.current;
 		if (elapsed >= MAX_POLL_TIME && statusQuery.isFetched) {
 			resetExport();
-			toast({
-				title: "Export timed out",
+			toast.error("Export timed out", {
 				description: "The export took too long. Please try again.",
-				variant: "destructive",
 			});
 			return;
 		}
@@ -128,17 +125,14 @@ export function ExportDialog({
 			if (result.downloadUrl) {
 				window.open(result.downloadUrl, "_blank");
 			}
-			toast({
-				title: "Export ready",
+			toast("Export ready", {
 				description: `${selectedFormat.toUpperCase()} export completed successfully`,
 			});
 			onOpenChange(false);
 		} else if (result.status === "failed") {
 			resetExport();
-			toast({
-				title: "Export failed",
+			toast.error("Export failed", {
 				description: result.errorMessage ?? "An error occurred during export",
-				variant: "destructive",
 			});
 		}
 	}, [

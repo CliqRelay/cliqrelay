@@ -1,6 +1,6 @@
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { useInlineEditField } from "@/hooks/useInlineEditField";
+import { cn } from "@/lib/utils";
 
 type Props = {
 	description: string | null;

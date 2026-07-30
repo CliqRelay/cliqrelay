@@ -12,9 +12,8 @@ import {
 
 import type { Step } from "@repo/api-client";
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import type { StepTypeOption } from "@/models";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -22,8 +21,9 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { StepListItem } from "./step-list-item";
+import type { StepTypeOption } from "@/models";
 import { StepItemForm } from "./step-item-form";
+import { StepListItem } from "./step-list-item";
 import { StepTypeDock } from "./step-type-dock";
 
 type EditableStepItemActions = {
@@ -85,7 +85,7 @@ export function StepEditCard({
 						<Button
 							variant="outline"
 							size="sm"
-							className="w-full border-dashed text-muted-foreground hover:text-foreground"
+							className="w-full border-dashed text-muted-foreground hover:text-foreground bg-background"
 						>
 							<PlusIcon className="mr-1 h-4 w-4" />
 							Add Step
@@ -103,7 +103,6 @@ export function StepEditCard({
 					className="mt-3 opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-grab touch-none"
 					{...attributes}
 					{...listeners}
-					aria-label="Drag to reorder"
 				>
 					<GripVerticalIcon className="h-4 w-4 text-muted-foreground" />
 				</div>

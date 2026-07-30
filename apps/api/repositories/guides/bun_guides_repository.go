@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -51,11 +52,18 @@ func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuide
 	return guide, err
 }
 
-func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, error) {
+func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error) {
 	var rows []*types.GuideWithStarred
 	query := r.db.NewSelect().
 		ColumnExpr("g.*").
-		TableExpr("guides g")
+		ColumnExpr("u.id AS cr_id").
+		ColumnExpr("u.name AS cr_name").
+		ColumnExpr("u.email AS cr_email").
+		ColumnExpr("u.image AS cr_image").
+		ColumnExpr("u.metadata AS cr_metadata").
+		ColumnExpr("COUNT(*) OVER() AS total_count").
+		TableExpr("guides g").
+		Join("LEFT JOIN users u ON u.id = g.creator_id")
 
 	if filter != nil {
 		if filter.ViewerUserID != nil {
@@ -69,8 +77,8 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 		if filter.TeamID != nil {
 			query = query.Where("g.team_id = ?", *filter.TeamID)
 		}
-		if filter.CreatorID != nil {
-			query = query.Where("g.creator_id = ?", *filter.CreatorID)
+		if filter.AccessibleOnly && filter.ViewerUserID != nil {
+			query = query.Where("(g.creator_id = ? OR g.visibility IN (?))", *filter.ViewerUserID, bun.List([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
 		}
 		if filter.Status != nil {
 			query = query.Where("g.status = ?", *filter.Status)
@@ -83,6 +91,8 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 				query = query.Where("g.status = ?", models.StatusPublished)
 			} else if filter.ArchivedOnly {
 				query = query.Where("g.status = ?", models.StatusArchived.ToString())
+			} else if filter.ExcludeArchived {
+				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()}))
 			} else {
 				query = query.Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString(), models.StatusArchived.ToString()}))
 			}
@@ -108,32 +118,82 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 			Where("g.status IN (?)", bun.List([]string{models.StatusDraft.ToString(), models.StatusPublished.ToString()}))
 	}
 
-	err := query.Order("g.updated_at DESC").Scan(ctx, &rows)
+	if filter != nil && filter.SortBy != "" {
+		order := "ASC"
+		if filter.SortDesc {
+			order = "DESC"
+		}
+		query = query.Order(fmt.Sprintf("g.%s %s", filter.SortBy, order))
+	} else {
+		query = query.Order("g.updated_at DESC")
+	}
+
+	err := query.Scan(ctx, &rows)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	total := 0
+	if len(rows) > 0 {
+		total = rows[0].TotalCount
 	}
 
 	guides := make([]*models.Guide, len(rows))
 	for i, row := range rows {
 		guides[i] = &row.Guide
 		guides[i].IsStarred = row.IsStarred
+		if row.CrID != nil {
+			guides[i].Creator = &models.GuideCreator{
+				ID:       *row.CrID,
+				Name:     row.CrName,
+				Email:    row.CrEmail,
+				Image:    row.CrImage,
+				Metadata: row.CrMetadata,
+			}
+		}
 	}
 
-	return guides, nil
+	return guides, total, nil
 }
 
 func (r *BunGuidesRepository) GetByID(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
+	type guideWithCreator struct {
+		models.Guide
+		CrID       *string        `bun:"cr_id"`
+		CrName     string         `bun:"cr_name"`
+		CrEmail    string         `bun:"cr_email"`
+		CrImage    *string        `bun:"cr_image"`
+		CrMetadata map[string]any `bun:"cr_metadata"`
+	}
 
+	var row guideWithCreator
 	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Scan(ctx)
+		ColumnExpr("g.*").
+		ColumnExpr("u.id AS cr_id").
+		ColumnExpr("u.name AS cr_name").
+		ColumnExpr("u.email AS cr_email").
+		ColumnExpr("u.image AS cr_image").
+		ColumnExpr("u.metadata AS cr_metadata").
+		TableExpr("guides g").
+		Join("LEFT JOIN users u ON u.id = g.creator_id").
+		Where("g.id = ?", id).
+		Scan(ctx, &row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
+	}
+
+	guide := &row.Guide
+	if row.CrID != nil {
+		guide.Creator = &models.GuideCreator{
+			ID:       *row.CrID,
+			Name:     row.CrName,
+			Email:    row.CrEmail,
+			Image:    row.CrImage,
+			Metadata: row.CrMetadata,
+		}
 	}
 
 	return guide, nil
@@ -159,6 +219,9 @@ func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuid
 	}
 	if data.Description != nil {
 		guide.Description = data.Description
+	}
+	if data.Visibility != nil {
+		guide.Visibility = *data.Visibility
 	}
 
 	_, err = r.db.NewUpdate().
@@ -228,6 +291,7 @@ func (r *BunGuidesRepository) Publish(ctx context.Context, id string) (*models.G
 	}
 
 	guide.Status = models.StatusPublished
+	guide.Visibility = models.VisibilityTeam
 	now := time.Now()
 	guide.PublishedAt = &now
 	guide.ArchivedAt = nil
@@ -377,8 +441,8 @@ func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideF
 		if filter.TeamID != nil {
 			query = query.Where("team_id = ?", *filter.TeamID)
 		}
-		if filter.CreatorID != nil {
-			query = query.Where("creator_id = ?", *filter.CreatorID)
+		if filter.AccessibleOnly && filter.ViewerUserID != nil {
+			query = query.Where("(creator_id = ? OR visibility IN (?))", *filter.ViewerUserID, bun.List([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
 		}
 	}
 
@@ -427,6 +491,80 @@ func (r *BunGuidesRepository) UpdateDuration(ctx context.Context, id string, dur
 	}
 
 	return guide, nil
+}
+
+func (r *BunGuidesRepository) BulkDelete(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error) {
+	now := time.Now()
+	query := r.db.NewUpdate().
+		Model((*models.Guide)(nil)).
+		Set("status = ?", models.StatusDeleted).
+		Set("deleted_at = ?", now).
+		Set("published_at = NULL").
+		Set("archived_at = NULL").
+		Set("restored_at = NULL").
+		Set("updated_at = ?", now).
+		Where("id IN (?)", bun.List(ids)).
+		Where("team_id = ?", teamID).
+		Where("deleted_at IS NULL").
+		Where("(creator_id = ? OR (? AND visibility IN (?)))", actorID, isAdmin, bun.List([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
+
+	res, err := query.Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	return rowsAffected, nil
+}
+
+func (r *BunGuidesRepository) BulkRestore(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error) {
+	now := time.Now()
+	query := r.db.NewUpdate().
+		Model((*models.Guide)(nil)).
+		Set("status = ?", models.StatusDraft).
+		Set("deleted_at = NULL").
+		Set("restored_at = ?", now).
+		Set("archived_at = NULL").
+		Set("published_at = NULL").
+		Set("updated_at = ?", now).
+		Where("id IN (?)", bun.List(ids)).
+		Where("team_id = ?", teamID).
+		Where("deleted_at IS NOT NULL").
+		Where("(creator_id = ? OR (? AND visibility IN (?)))", actorID, isAdmin, bun.List([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
+
+	res, err := query.Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	return rowsAffected, nil
+}
+
+func (r *BunGuidesRepository) BulkPermanentlyDelete(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error) {
+	now := time.Now()
+	query := r.db.NewUpdate().
+		Model((*models.Guide)(nil)).
+		Set("purge_requested_at = ?", now).
+		Set("updated_at = ?", now).
+		Where("id IN (?)", bun.List(ids)).
+		Where("team_id = ?", teamID).
+		Where("deleted_at IS NOT NULL").
+		Where("(creator_id = ? OR (? AND visibility IN (?)))", actorID, isAdmin, bun.List([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
+
+	res, err := query.Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	return rowsAffected, nil
 }
 
 func (r *BunGuidesRepository) GetPendingPurge(ctx context.Context) ([]uuid.UUID, error) {

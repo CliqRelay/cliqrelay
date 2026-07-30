@@ -50,7 +50,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -91,7 +91,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -117,7 +117,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			maSvc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
 			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
-			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewMediaAssetsUseCase(mockAuthz, maSvc, stepsSvc, guidesSvc)
 			handler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, uc)
 

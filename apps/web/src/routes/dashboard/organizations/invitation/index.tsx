@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { authulaClient } from "@/lib/authula-client";
 import { authulaBrowserClient } from "@/lib/authula-client-browser";
+import { toast } from "@/lib/toast";
 
 const invitationSearchSchema = z.object({
 	organization_id: z.string().optional(),

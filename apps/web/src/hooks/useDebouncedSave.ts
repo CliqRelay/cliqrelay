@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
-import { debounce, type DebouncedFunction } from "es-toolkit";
+import { type DebouncedFunction, debounce } from "es-toolkit";
 
 export function useDebouncedSave(
 	id: string | undefined | null,

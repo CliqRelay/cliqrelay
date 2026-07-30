@@ -20,7 +20,7 @@ export const authulaServerClient = createClient({
 			if (!ctx) {
 				return {
 					getAll: () => [],
-					set: () => { },
+					set: () => {},
 				};
 			}
 
@@ -35,19 +35,19 @@ export const authulaServerClient = createClient({
 
 			return {
 				getAll: () => cookies,
-				set: () => { },
+				set: () => {},
 			};
 		} catch {
 			return {
 				getAll: () => [],
-				set: () => { },
+				set: () => {},
 			};
 		}
 	},
 	plugins: [
 		new CSRFPlugin({
 			cookieName: COOKIE_CONSTANTS.csrf.name,
-			headerName: HEADER_CONSTANTS.csrfToken
+			headerName: HEADER_CONSTANTS.csrfToken,
 		}),
 		new CorePlugin(),
 		new EmailPasswordPlugin(),

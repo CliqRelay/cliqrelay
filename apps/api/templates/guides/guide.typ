@@ -38,17 +38,19 @@
   )
 })
 
-// -------- Guide Header --------
-#align(center, logo-img)
-#v(8pt)
-#align(center, text(size: 18pt, weight: "bold", g.title))
-#if g.description != none {
-  v(4pt)
-  align(center, text(size: 10pt, fill: muted-fg, g.description))
-}
-#v(4pt)
-#align(center, text(size: 9pt, fill: muted-fg, "Duration: " + g.duration + "  ·  " + g.created_at))
-#v(16pt)
+// -------- Guide Header (centred on first page) --------
+#align(center + horizon, [
+  #logo-img
+  #v(8pt)
+  #text(size: 18pt, weight: "bold", g.title)
+  #if g.description != none {
+    v(4pt)
+    text(size: 10pt, fill: muted-fg, g.description)
+  }
+  #v(4pt)
+  #text(size: 9pt, fill: muted-fg, "Steps: " + str(g.step_count) + "  ·  Duration: " + g.duration + "  ·  Created on: " + g.created_at)
+])
+#pagebreak()
 
 // -------- Helper Functions --------
 
@@ -86,7 +88,7 @@
 
 #let canvas-header(heading) = {
   align(center, text(size: 14pt, weight: "bold", fill: muted-fg, heading))
-  v(8pt)
+  v(4pt)
 }
 
 #let canvas-alert(type, heading, body, media) = {
@@ -96,27 +98,29 @@
     else if type == "alert" { ("\u{26A0}", alert-bg, alert-border, alert-fg) }
     else { ("", white, border-color, foreground) }
   }
-  block(width: 100%, fill: bg, stroke: (left: 4pt + border), radius: 4pt,
-    inset: (top: 10pt, bottom: 10pt, left: 12pt, right: 10pt))[
-    #grid(columns: (auto, 1fr), gutter: 8pt,
-      { set text(fill: fg, size: 22pt); icon },
-      [
-        #if heading != none {
-          set text(fill: fg, size: 11pt, weight: "bold")
-          heading
-        }
-        #if body != none {
-          v(2pt)
-          set text(fill: fg, size: 10pt)
-          body
-        }
-      ],
-    )
+  block(breakable: false)[
+    #block(width: 100%, fill: bg, stroke: (left: 4pt + border), radius: 4pt,
+      inset: (top: 10pt, bottom: 10pt, left: 12pt, right: 10pt))[
+      #grid(columns: (auto, 1fr), gutter: 8pt,
+        { set text(fill: fg, size: 22pt); icon },
+        [
+          #if heading != none {
+            set text(fill: fg, size: 11pt, weight: "bold")
+            heading
+          }
+          #if body != none {
+            v(2pt)
+            set text(fill: fg, size: 10pt)
+            body
+          }
+        ],
+      )
+    ]
+    #if media != none {
+      v(2pt)
+      screenshot-block(media, none)
+    }
   ]
-  if media != none {
-    v(4pt)
-    screenshot-block(media, none)
-  }
 }
 
 #let step-card(n, step) = {
@@ -130,10 +134,10 @@
         )
       ],
     )
-    #v(8pt)
+    #v(2pt)
     #screenshot-block(step.media, step.target_element)
     #if step.notes != none {
-      v(8pt)
+      v(2pt)
       notes-block(step.notes)
     }
   ]
@@ -154,7 +158,7 @@
 }
 #let step-num = 0
 #for step in steps {
-  v(12pt)
+  v(8pt)
   if step.type == "interaction" {
     step-num = step-num + 1
     step-card(step-num, step)

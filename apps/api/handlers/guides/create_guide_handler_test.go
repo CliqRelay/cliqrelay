@@ -42,7 +42,7 @@ func TestCreateGuideHandler(t *testing.T) {
 				mockRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -92,7 +92,7 @@ func TestCreateGuideHandler(t *testing.T) {
 			tt.setup(mockRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanCreateGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
 			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := handlersguides.NewCreateGuideHandler(appConfig, uc)
 

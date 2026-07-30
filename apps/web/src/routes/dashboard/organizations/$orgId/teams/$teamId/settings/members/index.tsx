@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
-import { TeamSettingsMembersFallback } from "@/components/settings/team-settings-members-fallback";
+import { TeamSettingsMembersFallback } from "@/components/pro/team-settings-members-fallback";
 
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/teams/$teamId/settings/members",

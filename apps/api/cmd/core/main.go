@@ -92,7 +92,6 @@ func main() {
 	bunMediaAssetsRepo := bunMediaAssets.NewBunMediaAssetsRepository(appConfig.DB)
 	bunGuideExportsRepo := bunGuideExports.NewBunGuideExportsRepository(appConfig.DB)
 
-	guidesCache := guidesservice.NewRedisGuidesCache(appConfig.RedisClient)
 	storageService := storage.NewS3StorageService(appConfig.S3Client)
 	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
 
@@ -103,7 +102,7 @@ func main() {
 	stepHooks := (*interfaces.StepHooks)(nil)
 	mediaHooks := (*interfaces.MediaAssetHooks)(nil)
 
-	guidesService := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, guidesCache, bunStepsRepo, appConfig.RedisClient, guideHooks)
+	guidesService := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, bunStepsRepo, appConfig.RedisClient, guideHooks)
 	starredService := starredguidesservice.NewStarredGuidesService(bunStarredGuidesRepo, bunGuidesRepo)
 	stepsService := stepsservice.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignService, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger, stepHooks)
 	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, mediaHooks)

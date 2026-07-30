@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
-import { OrgSettingsBrandingFallback } from "@/components/settings/org-settings-branding-fallback";
+import { OrgSettingsBrandingFallback } from "@/components/pro/org-settings-branding-fallback";
 
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/settings/branding",

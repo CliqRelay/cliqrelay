@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/swaggest/jsonschema-go"
 
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/validator"
@@ -37,9 +38,14 @@ func (r *TeamIDQueryParam) Validate() error {
 	return validator.Validate.Struct(r)
 }
 
-type GuideQueryParams struct {
-	Status *models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
-	TeamID string              `query:"team_id" validate:"omitempty,uuid" nullable:"true"`
+type GetAllGuidesQueryParams struct {
+	TeamID          string              `query:"team_id" validate:"required,uuid"`
+	Status          *models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
+	ExcludeArchived bool                `query:"exclude_archived" nullable:"true"`
+	Page            int                 `query:"page" validate:"omitempty,gt=0" nullable:"true"`
+	Limit           int                 `query:"limit" validate:"omitempty,gt=0" nullable:"true"`
+	SortBy          *GuideSortField     `query:"sort_by" validate:"omitempty" nullable:"true"`
+	SortDir         *string             `query:"sort_dir" validate:"omitempty,oneof=asc desc" nullable:"true"`
 }
 
 func (r *GuideStatus) Validate() error {
@@ -53,27 +59,45 @@ const (
 	GuideSortUpdatedAt GuideSortField = "updated_at"
 )
 
+func (GuideSortField) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithType(jsonschema.String.Type())
+	schema.Enum = []any{
+		string(GuideSortCreatedAt),
+		string(GuideSortUpdatedAt),
+	}
+	schema.WithDescription("The field to sort guides by")
+	return nil
+}
+
 type GuideWithStarred struct {
 	models.Guide `json:",inline"`
-	IsStarred    bool `json:"is_starred"`
+	IsStarred    bool           `json:"is_starred"`
+	CrID         *string        `bun:"cr_id"`
+	CrName       string         `bun:"cr_name"`
+	CrEmail      string         `bun:"cr_email"`
+	CrImage      *string        `bun:"cr_image"`
+	CrMetadata   map[string]any `bun:"cr_metadata"`
+	TotalCount   int            `json:"-" bun:"total_count"`
 }
 
 type GuideFilter struct {
-	IDs           []uuid.UUID
-	TeamID        *uuid.UUID
-	CreatorID     *string
-	ViewerUserID  *string
-	Status        *models.GuideStatus
-	Search        *string
-	DeletedOnly   bool
-	ArchivedOnly  bool
-	PublishedOnly bool
-	CreatedAfter  *time.Time
-	CreatedBefore *time.Time
-	Limit         int
-	Offset        int
-	SortBy        GuideSortField
-	SortDesc      bool
+	IDs             []uuid.UUID
+	TeamID          *uuid.UUID
+	CreatorID       *string
+	ViewerUserID    *string
+	Status          *models.GuideStatus
+	Search          *string
+	DeletedOnly     bool
+	ArchivedOnly    bool
+	PublishedOnly   bool
+	ExcludeArchived bool
+	AccessibleOnly  bool
+	CreatedAfter    *time.Time
+	CreatedBefore   *time.Time
+	Limit           int
+	Offset          int
+	SortBy          GuideSortField
+	SortDesc        bool
 }
 
 type CreateGuideRequest struct {
@@ -91,7 +115,7 @@ func (r *CreateGuideRequest) Validate() error {
 
 type CreateGuideDTO struct {
 	TeamID      uuid.UUID `json:"team_id" validate:"required"`
-	CreatorID   string    `json:"-"`
+	CreatorID   *string   `json:"-"`
 	Title       string    `json:"title" required:"true" validate:"required,lte=255"`
 	Description *string   `json:"description,omitempty"`
 }
@@ -105,7 +129,23 @@ type CreateGuideResponse struct {
 }
 
 type GetAllGuidesResponse struct {
-	Guides []*models.Guide `json:"guides" required:"true" nullable:"false"`
+	Data  []*models.Guide `json:"data" required:"true" nullable:"false"`
+	Total int             `json:"total" required:"true" nullable:"false"`
+	Page  int             `json:"page" required:"true" nullable:"false"`
+	Limit int             `json:"limit" required:"true" nullable:"false"`
+}
+
+type GetStarredGuidesQueryParams struct {
+	TeamID string `query:"team_id" validate:"required,uuid"`
+	Page   int    `query:"page" validate:"omitempty,gt=0" nullable:"true"`
+	Limit  int    `query:"limit" validate:"omitempty,gt=0" nullable:"true"`
+}
+
+type GetStarredGuidesResponse struct {
+	Data  []*models.Guide `json:"data" required:"true" nullable:"false"`
+	Total int             `json:"total" required:"true" nullable:"false"`
+	Page  int             `json:"page" required:"true" nullable:"false"`
+	Limit int             `json:"limit" required:"true" nullable:"false"`
 }
 
 type GetGuideByIDResponse struct {
@@ -113,8 +153,9 @@ type GetGuideByIDResponse struct {
 }
 
 type UpdateGuideRequest struct {
-	Title       *string `json:"title,omitempty" validate:"omitempty,gt=0,lte=255" nullable:"true"`
-	Description *string `json:"description,omitempty" validate:"omitempty,gt=0" nullable:"true"`
+	Title       *string            `json:"title,omitempty" validate:"omitempty,gt=0,lte=255" nullable:"true"`
+	Description *string            `json:"description,omitempty" validate:"omitempty,gt=0" nullable:"true"`
+	Visibility  *models.Visibility `json:"visibility,omitempty" validate:"omitempty,oneof=private team public" nullable:"true"`
 }
 
 func (r *UpdateGuideRequest) Validate() error {
@@ -126,10 +167,11 @@ func (r *UpdateGuideRequest) Validate() error {
 }
 
 type UpdateGuideDTO struct {
-	ID          uuid.UUID `json:"id" required:"true" validate:"required"`
-	TeamID      uuid.UUID `json:"team_id" validate:"required"`
-	Title       *string   `json:"title,omitempty" validate:"omitempty,lte=255" nullable:"true"`
-	Description *string   `json:"description,omitempty" nullable:"true"`
+	ID          uuid.UUID          `json:"id" required:"true" validate:"required"`
+	TeamID      uuid.UUID          `json:"team_id" validate:"required"`
+	Title       *string            `json:"title,omitempty" validate:"omitempty,lte=255" nullable:"true"`
+	Description *string            `json:"description,omitempty" nullable:"true"`
+	Visibility  *models.Visibility `json:"visibility,omitempty" nullable:"true"`
 }
 
 func (r *UpdateGuideDTO) Validate() error {
@@ -166,6 +208,27 @@ type RestoreGuideResponse struct {
 
 type PermanentlyDeleteGuideResponse struct {
 	Guide *models.Guide `json:"guide" required:"true" nullable:"false"`
+}
+
+type BulkGuidesActionQuery struct {
+	Action string `query:"action" validate:"required,oneof=delete restore permanently-delete"`
+}
+
+func (r *BulkGuidesActionQuery) Validate() error {
+	return validator.Validate.Struct(r)
+}
+
+type BulkGuidesRequest struct {
+	TeamID string   `json:"team_id" validate:"required,uuid"`
+	IDs    []string `json:"ids" validate:"required,min=1,max=100,dive,uuid"`
+}
+
+func (r *BulkGuidesRequest) Validate() error {
+	return validator.Validate.Struct(r)
+}
+
+type BulkGuidesResponse struct {
+	Message string `json:"message" required:"true" nullable:"false"`
 }
 
 type GetGuidesCountResponse struct {

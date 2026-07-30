@@ -7,7 +7,7 @@ import {
 	type UpdateStepRequest,
 } from "@repo/api-client";
 
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import type { StepTypeOption } from "@/models";
 import { STEP_TYPE_CONFIG } from "@/models";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
@@ -25,11 +25,9 @@ export function useGuideStepMutations(guideId: string) {
 		mutation: {
 			onSuccess: invalidateSteps,
 			onError: (error) => {
-				toast({
-					title: "Error",
+				toast.error("Error", {
 					description:
 						error instanceof Error ? error.message : "Failed to create step",
-					variant: "destructive" as const,
 				});
 			},
 		},
@@ -37,7 +35,7 @@ export function useGuideStepMutations(guideId: string) {
 			credentials: "include",
 			headers: {
 				...getCsrfTokenHeader(),
-			}
+			},
 		},
 	});
 
@@ -45,11 +43,9 @@ export function useGuideStepMutations(guideId: string) {
 		mutation: {
 			onSuccess: invalidateSteps,
 			onError: (error) => {
-				toast({
-					title: "Error",
+				toast.error("Error", {
 					description:
 						error instanceof Error ? error.message : "Failed to update step",
-					variant: "destructive" as const,
 				});
 			},
 		},
@@ -57,7 +53,7 @@ export function useGuideStepMutations(guideId: string) {
 			credentials: "include",
 			headers: {
 				...getCsrfTokenHeader(),
-			}
+			},
 		},
 	});
 
@@ -65,11 +61,9 @@ export function useGuideStepMutations(guideId: string) {
 		mutation: {
 			onSuccess: invalidateSteps,
 			onError: (error) => {
-				toast({
-					title: "Error",
+				toast.error("Error", {
 					description:
 						error instanceof Error ? error.message : "Failed to delete step",
-					variant: "destructive" as const,
 				});
 			},
 		},
@@ -82,11 +76,9 @@ export function useGuideStepMutations(guideId: string) {
 		mutation: {
 			onSuccess: () => invalidateSteps(),
 			onError: (error) => {
-				toast({
-					title: "Error",
+				toast.error("Error", {
 					description:
 						error instanceof Error ? error.message : "Failed to duplicate step",
-					variant: "destructive" as const,
 				});
 			},
 		},
@@ -94,7 +86,7 @@ export function useGuideStepMutations(guideId: string) {
 			credentials: "include",
 			headers: {
 				...getCsrfTokenHeader(),
-			}
+			},
 		},
 	});
 
@@ -157,11 +149,9 @@ export function useGuideStepMutations(guideId: string) {
 				if (context?.previousSteps) {
 					queryClient.setQueryData(queryKey, context.previousSteps);
 				}
-				toast({
-					title: "Error",
+				toast.error("Error", {
 					description:
 						error instanceof Error ? error.message : "Failed to reorder steps",
-					variant: "destructive" as const,
 				});
 			},
 			onSettled: () => {
@@ -172,7 +162,7 @@ export function useGuideStepMutations(guideId: string) {
 			credentials: "include",
 			headers: {
 				...getCsrfTokenHeader(),
-			}
+			},
 		},
 	});
 
@@ -187,12 +177,12 @@ export function useGuideStepMutations(guideId: string) {
 			type: config.type,
 			...(config.canvasType
 				? {
-					canvasContent: {
-						type: config.canvasType,
-						headingText: "",
-						bodyText: "",
-					},
-				}
+						canvasContent: {
+							type: config.canvasType,
+							headingText: "",
+							bodyText: "",
+						},
+					}
 				: {}),
 			...(insertBeforeStepId ? { insertBeforeStepId } : {}),
 		};

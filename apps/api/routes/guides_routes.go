@@ -32,6 +32,7 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 	starGuideHandler := guides.NewStarGuideHandler(appConfig, guidesUseCase)
 	unstarGuideHandler := guides.NewUnstarGuideHandler(appConfig, guidesUseCase)
 	recalculateDurationHandler := guides.NewRecalculateDurationHandler(appConfig, guidesUseCase)
+	bulkGuideActionHandler := guides.NewBulkGuideActionHandler(appConfig, guidesUseCase)
 	exportGuideHandler := guides.NewExportGuideHandler(appConfig, exportSvc)
 	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportSvc)
 
@@ -146,6 +147,12 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 		},
 		{
 			Method:     "POST",
+			Path:       fmt.Sprintf("%s/guides/bulk", base),
+			Middleware: authMiddleware,
+			Handler:    bulkGuideActionHandler.Handle(),
+		},
+		{
+			Method:     "POST",
 			Path:       fmt.Sprintf("%s/guides/{id}/export", base),
 			Middleware: authMiddleware,
 			Handler:    exportGuideHandler.Handle(),
@@ -189,7 +196,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get all guides"),
 		openapi.WithDescription("Get all guides for a user"),
 		openapi.WithTags("Guides"),
-		openapi.WithRequest(&types.GuideQueryParams{}),
+		openapi.WithRequest(&types.GetAllGuidesQueryParams{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllGuidesResponse{}),
 	)
 
@@ -322,8 +329,8 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithSummary("Get starred guides"),
 		openapi.WithDescription("Get all guides starred by the current user"),
 		openapi.WithTags("Guides"),
-		openapi.WithRequest(types.TeamIDQueryParam{}),
-		openapi.WithResponseStatus(http.StatusOK, &types.GetAllGuidesResponse{}),
+		openapi.WithRequest(&types.GetStarredGuidesQueryParams{}),
+		openapi.WithResponseStatus(http.StatusOK, &types.GetStarredGuidesResponse{}),
 	)
 
 	svc.AddOperation(
@@ -346,6 +353,18 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithTags("Guides"),
 		openapi.WithRequest(&types.GuideID{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.UnstarGuideResponse{}),
+	)
+
+	svc.AddOperation(
+		http.MethodPost,
+		fmt.Sprintf("%s/guides/bulk", basePath),
+		openapi.WithOperationID("bulkGuidesAction"),
+		openapi.WithSummary("Bulk action on guides"),
+		openapi.WithDescription("Performs a bulk action (delete, restore, permanently-delete) on multiple guides"),
+		openapi.WithTags("Guides"),
+		openapi.WithRequest(&types.BulkGuidesActionQuery{}),
+		openapi.WithRequest(&types.BulkGuidesRequest{}),
+		openapi.WithResponseStatus(http.StatusOK, &types.BulkGuidesResponse{}),
 	)
 
 	svc.AddOperation(

@@ -1,6 +1,6 @@
 import { extensionRegistry } from "@repo/extensions-sdk";
 
-import { CreateTeamFallback } from "./teams/create-team-fallback";
+import { CreateTeamFallback } from "../pro/create-team-fallback";
 
 type Props = {
 	open: boolean;
@@ -12,7 +12,7 @@ export function CreateTeamDialogSlot({ open, onOpenChange }: Props) {
 
 	if (slot) {
 		const Component = slot.component;
-		return <Component />;
+		return <Component open={open} onOpenChange={onOpenChange} />;
 	}
 
 	return (

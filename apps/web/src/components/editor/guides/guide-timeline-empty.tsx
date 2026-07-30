@@ -11,7 +11,7 @@ type Props = {
 export function GuideTimelineEmpty({ onAddStepWithType }: Props) {
 	return (
 		<div className="mx-auto mt-8 max-w-lg">
-			<div className="flex flex-col items-center justify-center gap-6 rounded-xl border border-dashed bg-muted/20 px-8 py-20 text-center">
+			<div className="flex flex-col items-center justify-center gap-6 rounded-xl border border-dashed surface-card px-8 py-20 text-center">
 				<div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted shadow-xs">
 					<FileTextIcon className="h-7 w-7 text-muted-foreground" />
 				</div>

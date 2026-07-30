@@ -16,7 +16,7 @@ export const exportGuide = createServerFn({ method: "POST" })
 				{
 					headers: {
 						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? "")
+						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
 					},
 				},
 			);

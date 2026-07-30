@@ -37,9 +37,9 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
-						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Guide 1", Status: models.StatusDraft},
-						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Guide 2", Status: models.StatusDraft},
-					}, nil).
+						{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Guide 1", Status: models.StatusDraft},
+						{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Guide 2", Status: models.StatusDraft},
+					}, 2, nil).
 					Once()
 			},
 			expectedStatus: http.StatusOK,
@@ -50,7 +50,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			path: "/api/v1/guides",
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return([]*models.Guide{}, nil).
+					Return([]*models.Guide{}, 0, nil).
 					Once()
 			},
 			expectedStatus: http.StatusOK,
@@ -61,7 +61,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			path: "/api/v1/guides",
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return([]*models.Guide{}, assert.AnError).
+					Return([]*models.Guide{}, 0, assert.AnError).
 					Once()
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -73,8 +73,8 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
-						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Archived Guide", Status: models.StatusArchived},
-					}, nil).
+						{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Archived Guide", Status: models.StatusArchived},
+					}, 1, nil).
 					Once()
 			},
 			expectedStatus: http.StatusOK,
@@ -86,8 +86,8 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
-						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Deleted Guide", Status: models.StatusDeleted},
-					}, nil).
+						{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Deleted Guide", Status: models.StatusDeleted},
+					}, 1, nil).
 					Once()
 			},
 			expectedStatus: http.StatusOK,
@@ -112,7 +112,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			tt.setup(mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
-			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, (*interfaces.GuideHooks)(nil))
 			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := handlersguides.NewGetAllGuidesHandler(appConfig, uc)
 
@@ -128,7 +128,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			if tt.expectedStatus == http.StatusOK {
 				var resp types.GetAllGuidesResponse
 				tests.DecodeResponsePayload(t, req.ReqCtx, &resp)
-				assert.Len(t, resp.Guides, tt.expectedLen)
+				assert.Len(t, resp.Data, tt.expectedLen)
 			} else {
 				tests.AssertResponseMessage(t, req.ReqCtx, tt.expectedMsg)
 			}

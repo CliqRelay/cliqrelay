@@ -18,6 +18,8 @@ import (
 	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
+const testPageSize = 10
+
 func TestGetStarredGuidesHandler(t *testing.T) {
 	t.Parallel()
 
@@ -34,9 +36,9 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*types.GuideWithStarred{
-						{Guide: models.Guide{ID: uuid.New(), CreatorID: "test-user-123", Title: "Starred Guide 1", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
-						{Guide: models.Guide{ID: uuid.New(), CreatorID: "test-user-123", Title: "Starred Guide 2", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
-					}, nil).
+						{Guide: models.Guide{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Starred Guide 1", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
+						{Guide: models.Guide{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Starred Guide 2", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
+					}, 2, nil).
 					Once()
 			},
 			expectedStatus: http.StatusOK,
@@ -46,7 +48,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			name: "empty list",
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return([]*types.GuideWithStarred{}, nil).
+					Return([]*types.GuideWithStarred{}, 0, nil).
 					Once()
 			},
 			expectedStatus: http.StatusOK,
@@ -56,7 +58,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			name: "service error",
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
-					Return([]*types.GuideWithStarred{}, assert.AnError).
+					Return([]*types.GuideWithStarred{}, 0, assert.AnError).
 					Once()
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -73,13 +75,15 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
 			starredSvc := starredguidesservice.NewStarredGuidesService(mockRepo, mockGuidesRepo)
-			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockRepo, nil, nil, nil, nil)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockRepo, nil, nil, nil)
 			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
 			handler := handlersguides.NewGetStarredGuidesHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/starred", nil)
 			q := req.Req.URL.Query()
 			q.Set("team_id", uuid.New().String())
+			q.Set("page", "1")
+			q.Set("limit", "10")
 			req.Req.URL.RawQuery = q.Encode()
 
 			handler.Handle()(req.W, req.Req)
@@ -87,9 +91,12 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)
 
 			if tt.expectedStatus == http.StatusOK {
-				var resp types.GetAllGuidesResponse
+				var resp types.GetStarredGuidesResponse
 				tests.DecodeResponsePayload(t, req.ReqCtx, &resp)
-				assert.Len(t, resp.Guides, tt.expectedLen)
+				assert.Len(t, resp.Data, tt.expectedLen)
+				assert.Equal(t, tt.expectedLen, resp.Total)
+				assert.Equal(t, 1, resp.Page)
+				assert.Equal(t, 10, resp.Limit)
 			} else {
 				tests.AssertResponseMessage(t, req.ReqCtx, assert.AnError.Error())
 			}

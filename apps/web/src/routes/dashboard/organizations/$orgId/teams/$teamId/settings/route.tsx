@@ -1,5 +1,5 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { TeamSettingsSidebar } from "@/components/settings/team-settings-sidebar";
 import { authulaClient } from "@/lib/authula-client";
@@ -14,7 +14,12 @@ export const Route = createFileRoute(
 
 		const orgs = (
 			context as {
-				orgs?: Array<{ id: string; name: string; slug: string; ownerId: string }>;
+				orgs?: Array<{
+					id: string;
+					name: string;
+					slug: string;
+					ownerId: string;
+				}>;
 			}
 		).orgs;
 		if (!orgs?.some((o) => o.id === orgId)) {

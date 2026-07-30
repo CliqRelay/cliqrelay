@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
-import { OrgSettingsIntegrationsFallback } from "@/components/settings/org-settings-integrations-fallback";
+import { OrgSettingsIntegrationsFallback } from "@/components/pro/org-settings-integrations-fallback";
 
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/settings/integrations",

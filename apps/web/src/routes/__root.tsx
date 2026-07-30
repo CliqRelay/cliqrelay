@@ -68,13 +68,20 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-			{ title: "CliqRelay" },
+			{ title: "Dashboard — CliqRelay" },
 			{
 				name: "description",
 				content:
-					"CliqRelay is an open-source platform that transforms page clicks and interactions into beautiful, step-by-step visual documentation. " +
-					"Capture and refine workflows instantly to help your teams perform at their best.",
+					"Capture, document and share step-by-step workflows with your team from one calm, premium workspace.",
 			},
+			{ property: "og:title", content: "Dashboard — CliqRelay" },
+			{
+				property: "og:description",
+				content:
+					"Your CliqRelay workspace at a glance — recent guides, activity and quick capture.",
+			},
+			{ property: "og:type", content: "website" },
+			{ name: "twitter:card", content: "summary_large_image" },
 		],
 		links: [
 			{
@@ -82,8 +89,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				href: appCss,
 			},
 			{
-				rel: "favicon",
+				rel: "icon",
 				href: "/favicon.ico",
+				type: "image/x-icon",
 			},
 		],
 	}),

@@ -1,5 +1,5 @@
-import { create } from "zustand";
 import type { OrganizationMemberResponse } from "authula";
+import { create } from "zustand";
 
 interface Organization {
 	id: string;

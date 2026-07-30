@@ -22,7 +22,6 @@ import (
 type GuidesService struct {
 	guidesRepo        interfaces.GuidesRepository
 	starredGuidesRepo interfaces.StarredGuidesRepository
-	guidesCache       interfaces.GuidesCacheService
 	stepsRepo         interfaces.StepsRepository
 	redisClient       *redis.Client
 	hooks             *interfaces.GuideHooks
@@ -31,7 +30,6 @@ type GuidesService struct {
 func NewGuidesService(
 	guidesRepo interfaces.GuidesRepository,
 	starredGuidesRepo interfaces.StarredGuidesRepository,
-	guidesCache interfaces.GuidesCacheService,
 	stepsRepo interfaces.StepsRepository,
 	redisClient *redis.Client,
 	hooks *interfaces.GuideHooks,
@@ -39,7 +37,6 @@ func NewGuidesService(
 	return &GuidesService{
 		guidesRepo:        guidesRepo,
 		starredGuidesRepo: starredGuidesRepo,
-		guidesCache:       guidesCache,
 		stepsRepo:         stepsRepo,
 		redisClient:       redisClient,
 		hooks:             hooks,
@@ -60,7 +57,7 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 
 	guideCreated, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
 		TeamID:      parsedTeamID,
-		CreatorID:   actor.ID,
+		CreatorID:   new(actor.ID),
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -85,7 +82,7 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 
 	guide, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
 		TeamID:      parsedTeamID,
-		CreatorID:   actor.ID,
+		CreatorID:   new(actor.ID),
 		Title:       "Getting Started with CliqRelay",
 		Description: new("A sample guide to show you how CliqRelay works"),
 	})
@@ -135,15 +132,19 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 	return guideID, nil
 }
 
-func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *string, viewerUserID *string) ([]*models.Guide, error) {
+func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *string, viewerUserID *string, excludeArchived bool, page, limit int, sortBy, sortDir string) ([]*models.Guide, int, error) {
 	filter := &types.GuideFilter{}
 
 	parsedTeamID, err := uuid.Parse(teamID)
 	if err != nil {
-		return nil, constants.ErrTeamNotFound
+		return nil, 0, constants.ErrTeamNotFound
 	}
 	filter.TeamID = &parsedTeamID
 	filter.ViewerUserID = viewerUserID
+	if viewerUserID != nil {
+		filter.AccessibleOnly = true
+	}
+	filter.ExcludeArchived = excludeArchived
 
 	if status != nil {
 		if !slices.Contains([]string{
@@ -152,7 +153,7 @@ func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *strin
 			models.StatusArchived.ToString(),
 			models.StatusDeleted.ToString(),
 		}, *status) {
-			return nil, fmt.Errorf("invalid status: %s", *status)
+			return nil, 0, fmt.Errorf("invalid status: %s", *status)
 		}
 		statusVal := models.GuideStatus(*status)
 		filter.Status = &statusVal
@@ -166,22 +167,33 @@ func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *strin
 		}
 	}
 
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	filter.Offset = (page - 1) * limit
+	filter.Limit = limit
+
+	if sortBy != "" {
+		switch sortBy {
+		case string(types.GuideSortCreatedAt):
+			filter.SortBy = types.GuideSortCreatedAt
+		case string(types.GuideSortUpdatedAt):
+			filter.SortBy = types.GuideSortUpdatedAt
+		default:
+			return nil, 0, fmt.Errorf("invalid sort_by: %s (must be created_at or updated_at)", sortBy)
+		}
+		filter.SortDesc = sortDir != "asc"
+	}
+
 	return s.guidesRepo.GetAll(ctx, filter)
 }
 
 func (s *GuidesService) GetByID(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
-	}
-
-	if s.guidesCache != nil {
-		cached, err := s.guidesCache.Get(ctx, guideID)
-		if err == nil && cached != nil {
-			if cached.Status == models.StatusDeleted {
-				return nil, constants.ErrGuideNotFound
-			}
-			return cached, nil
-		}
 	}
 
 	guide, err := s.guidesRepo.GetByID(ctx, guideID)
@@ -191,10 +203,6 @@ func (s *GuidesService) GetByID(ctx context.Context, guideID string) (*models.Gu
 
 	if guide == nil || guide.Status == models.StatusDeleted {
 		return nil, constants.ErrGuideNotFound
-	}
-
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Set(ctx, guide)
 	}
 
 	return guide, nil
@@ -246,13 +254,10 @@ func (s *GuidesService) Update(ctx context.Context, guideID string, req *types.U
 		TeamID:      existing.TeamID,
 		Title:       req.Title,
 		Description: req.Description,
+		Visibility:  req.Visibility,
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
 	if s.hooks != nil && s.hooks.AfterUpdate != nil {
@@ -290,10 +295,6 @@ func (s *GuidesService) Delete(ctx context.Context, guideID string) (*models.Gui
 
 	if deleted == nil {
 		return nil, constants.ErrGuideNotFound
-	}
-
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
 	if s.hooks != nil && s.hooks.AfterDelete != nil {
@@ -355,10 +356,6 @@ func (s *GuidesService) Publish(ctx context.Context, guideID string) (*models.Gu
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
-	}
-
 	if s.hooks != nil && s.hooks.AfterPublish != nil {
 		if err := s.hooks.AfterPublish(ctx, published); err != nil {
 			return nil, err
@@ -398,10 +395,6 @@ func (s *GuidesService) Unpublish(ctx context.Context, guideID string) (*models.
 
 	if unpublished == nil {
 		return nil, constants.ErrGuideNotFound
-	}
-
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
 	if s.hooks != nil && s.hooks.AfterUnpublish != nil {
@@ -445,10 +438,6 @@ func (s *GuidesService) Archive(ctx context.Context, guideID string) (*models.Gu
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
-	}
-
 	if s.hooks != nil && s.hooks.AfterArchive != nil {
 		if err := s.hooks.AfterArchive(ctx, archived); err != nil {
 			return nil, err
@@ -490,10 +479,6 @@ func (s *GuidesService) Unarchive(ctx context.Context, guideID string) (*models.
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
-	}
-
 	if s.hooks != nil && s.hooks.AfterUnarchive != nil {
 		if err := s.hooks.AfterUnarchive(ctx, unarchived); err != nil {
 			return nil, err
@@ -525,10 +510,6 @@ func (s *GuidesService) Restore(ctx context.Context, guideID string) (*models.Gu
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
-	}
-
 	return restored, nil
 }
 
@@ -540,7 +521,10 @@ func (s *GuidesService) GetCount(ctx context.Context, teamID string, viewerUserI
 		return 0, constants.ErrTeamNotFound
 	}
 	filter.TeamID = &parsedTeamID
-	filter.CreatorID = viewerUserID
+	filter.ViewerUserID = viewerUserID
+	if viewerUserID != nil {
+		filter.AccessibleOnly = true
+	}
 
 	count, err := s.guidesRepo.GetCount(ctx, filter)
 	if err != nil {
@@ -572,15 +556,97 @@ func (s *GuidesService) PermanentlyDelete(ctx context.Context, guideID string) (
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
-	}
-
 	if err := s.publishPurgeEvent(ctx, guideID); err != nil {
 		slog.Error("failed to publish purge event", "guide_id", guideID, "err", err)
 	}
 
 	return deleted, nil
+}
+
+func (s *GuidesService) BulkDelete(ctx context.Context, guideIDs []string, teamID string, actorID string, isAdmin bool) (int64, error) {
+	if len(guideIDs) == 0 {
+		return 0, constants.ErrInvalidGuideID
+	}
+
+	if len(guideIDs) > 100 {
+		return 0, fmt.Errorf("cannot delete more than 100 guides at once")
+	}
+
+	parsedTeamID, err := uuid.Parse(teamID)
+	if err != nil {
+		return 0, constants.ErrTeamNotFound
+	}
+
+	parsedIDs := make([]uuid.UUID, len(guideIDs))
+	for i, id := range guideIDs {
+		parsedIDs[i], err = uuid.Parse(id)
+		if err != nil {
+			return 0, constants.ErrInvalidGuideID
+		}
+	}
+
+	return s.guidesRepo.BulkDelete(ctx, parsedIDs, parsedTeamID, actorID, isAdmin)
+}
+
+func (s *GuidesService) BulkRestore(ctx context.Context, guideIDs []string, teamID string, actorID string, isAdmin bool) (int64, error) {
+	if len(guideIDs) == 0 {
+		return 0, constants.ErrInvalidGuideID
+	}
+
+	if len(guideIDs) > 100 {
+		return 0, fmt.Errorf("cannot restore more than 100 guides at once")
+	}
+
+	parsedTeamID, err := uuid.Parse(teamID)
+	if err != nil {
+		return 0, constants.ErrTeamNotFound
+	}
+
+	parsedIDs := make([]uuid.UUID, len(guideIDs))
+	for i, id := range guideIDs {
+		parsedIDs[i], err = uuid.Parse(id)
+		if err != nil {
+			return 0, constants.ErrInvalidGuideID
+		}
+	}
+
+	return s.guidesRepo.BulkRestore(ctx, parsedIDs, parsedTeamID, actorID, isAdmin)
+}
+
+func (s *GuidesService) BulkPermanentlyDelete(ctx context.Context, guideIDs []string, teamID string, actorID string, isAdmin bool) (int64, error) {
+	if len(guideIDs) == 0 {
+		return 0, constants.ErrInvalidGuideID
+	}
+
+	if len(guideIDs) > 100 {
+		return 0, fmt.Errorf("cannot permanently delete more than 100 guides at once")
+	}
+
+	parsedTeamID, err := uuid.Parse(teamID)
+	if err != nil {
+		return 0, constants.ErrTeamNotFound
+	}
+
+	parsedIDs := make([]uuid.UUID, len(guideIDs))
+	for i, id := range guideIDs {
+		parsedIDs[i], err = uuid.Parse(id)
+		if err != nil {
+			return 0, constants.ErrInvalidGuideID
+		}
+	}
+
+	count, err := s.guidesRepo.BulkPermanentlyDelete(ctx, parsedIDs, parsedTeamID, actorID, isAdmin)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, guideID := range guideIDs {
+		if pubErr := s.publishPurgeEvent(ctx, guideID); pubErr != nil {
+			slog.Error("failed to publish purge event", "guide_id", guideID, "err", pubErr)
+		}
+	}
+
+	return count, nil
 }
 
 func (s *GuidesService) publishPurgeEvent(ctx context.Context, guideID string) error {
@@ -609,10 +675,6 @@ func (s *GuidesService) RecalculateDuration(ctx context.Context, guideID string)
 	updated, err := s.guidesRepo.GetByID(ctx, guideID)
 	if err != nil {
 		return nil, err
-	}
-
-	if s.guidesCache != nil {
-		_ = s.guidesCache.Invalidate(ctx, guideID)
 	}
 
 	return updated, nil

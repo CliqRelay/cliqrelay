@@ -41,7 +41,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -63,7 +63,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -82,7 +82,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -124,7 +124,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -149,7 +149,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
-			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil, nil)
+			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
 			handler := handlerssteps.NewGetAllStepsHandler(appConfig, uc)
 

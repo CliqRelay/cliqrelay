@@ -9,6 +9,7 @@ import { faker } from "@faker-js/faker";
 
 import type {
 	ArchiveGuideResponse,
+	BulkGuidesResponse,
 	CreateDemoGuideResponse,
 	CreateGuideResponse,
 	DeleteGuideResponse,
@@ -17,6 +18,7 @@ import type {
 	GetExportStatusResponse,
 	GetGuideByIDResponse,
 	GetGuidesCountResponse,
+	GetStarredGuidesResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
@@ -71,7 +73,7 @@ export const getGetExportStatusResponseMock = (
 export const getGetAllGuidesResponseMock = (
 	overrideResponse: Partial<Extract<GetAllGuidesResponse, object>> = {},
 ): GetAllGuidesResponse => ({
-	guides: Array.from(
+	data: Array.from(
 		{ length: faker.number.int({ min: 1, max: 10 }) },
 		(_, i) => i + 1,
 	).map(() => ({
@@ -83,7 +85,37 @@ export const getGetAllGuidesResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -128,6 +160,9 @@ export const getGetAllGuidesResponseMock = (
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
 		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	})),
+	limit: faker.number.int(),
+	page: faker.number.int(),
+	total: faker.number.int(),
 	...overrideResponse,
 });
 
@@ -143,7 +178,37 @@ export const getCreateGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -191,6 +256,13 @@ export const getCreateGuideResponseMock = (
 	...overrideResponse,
 });
 
+export const getBulkGuidesActionResponseMock = (
+	overrideResponse: Partial<Extract<BulkGuidesResponse, object>> = {},
+): BulkGuidesResponse => ({
+	message: faker.string.alpha({ length: { min: 10, max: 20 } }),
+	...overrideResponse,
+});
+
 export const getGetGuidesCountResponseMock = (
 	overrideResponse: Partial<Extract<GetGuidesCountResponse, object>> = {},
 ): GetGuidesCountResponse => ({
@@ -206,9 +278,9 @@ export const getCreateDemoGuideResponseMock = (
 });
 
 export const getGetStarredGuidesResponseMock = (
-	overrideResponse: Partial<Extract<GetAllGuidesResponse, object>> = {},
-): GetAllGuidesResponse => ({
-	guides: Array.from(
+	overrideResponse: Partial<Extract<GetStarredGuidesResponse, object>> = {},
+): GetStarredGuidesResponse => ({
+	data: Array.from(
 		{ length: faker.number.int({ min: 1, max: 10 }) },
 		(_, i) => i + 1,
 	).map(() => ({
@@ -220,7 +292,37 @@ export const getGetStarredGuidesResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -265,6 +367,9 @@ export const getGetStarredGuidesResponseMock = (
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
 		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	})),
+	limit: faker.number.int(),
+	page: faker.number.int(),
+	total: faker.number.int(),
 	...overrideResponse,
 });
 
@@ -282,7 +387,37 @@ export const getGetGuideByIdResponseMock = (
 				undefined,
 			]),
 			createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-			creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+			creator: faker.helpers.arrayElement([
+				faker.helpers.arrayElement([
+					null,
+					{
+						email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+						id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+						image: faker.helpers.arrayElement([
+							faker.helpers.arrayElement([
+								faker.string.alpha({ length: { min: 10, max: 20 } }),
+								null,
+							]),
+							undefined,
+						]),
+						metadata: faker.helpers.arrayElement([
+							faker.helpers.arrayElement([
+								{
+									[faker.string.alphanumeric(5)]: {},
+								},
+								null,
+							]),
+							undefined,
+						]),
+						name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					},
+				]),
+				undefined,
+			]),
+			creatorId: faker.helpers.arrayElement([
+				faker.string.alpha({ length: { min: 10, max: 20 } }),
+				null,
+			]),
 			deletedAt: faker.helpers.arrayElement([
 				faker.helpers.arrayElement([
 					faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -343,7 +478,37 @@ export const getDeleteGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -403,7 +568,37 @@ export const getUpdateGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -463,7 +658,37 @@ export const getArchiveGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -533,7 +758,37 @@ export const getPermanentlyDeleteGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -593,7 +848,37 @@ export const getPublishGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -653,7 +938,37 @@ export const getRecalculateGuideDurationResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -713,7 +1028,37 @@ export const getRestoreGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -787,7 +1132,37 @@ export const getUnarchiveGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",
@@ -847,7 +1222,37 @@ export const getUnpublishGuideResponseMock = (
 			undefined,
 		]),
 		createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-		creatorId: faker.string.alpha({ length: { min: 10, max: 20 } }),
+		creator: faker.helpers.arrayElement([
+			faker.helpers.arrayElement([
+				null,
+				{
+					email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					id: faker.string.alpha({ length: { min: 10, max: 20 } }),
+					image: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							faker.string.alpha({ length: { min: 10, max: 20 } }),
+							null,
+						]),
+						undefined,
+					]),
+					metadata: faker.helpers.arrayElement([
+						faker.helpers.arrayElement([
+							{
+								[faker.string.alphanumeric(5)]: {},
+							},
+							null,
+						]),
+						undefined,
+					]),
+					name: faker.string.alpha({ length: { min: 10, max: 20 } }),
+				},
+			]),
+			undefined,
+		]),
+		creatorId: faker.helpers.arrayElement([
+			faker.string.alpha({ length: { min: 10, max: 20 } }),
+			null,
+		]),
 		deletedAt: faker.helpers.arrayElement([
 			faker.helpers.arrayElement([
 				faker.date.past().toISOString().slice(0, 19) + "Z",

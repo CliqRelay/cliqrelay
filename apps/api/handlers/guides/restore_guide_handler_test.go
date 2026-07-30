@@ -55,7 +55,7 @@ func TestRestoreGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Deleted Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -63,7 +63,7 @@ func TestRestoreGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Deleted Guide",
 						Status:    models.StatusDeleted,
 					}, nil).
@@ -71,7 +71,7 @@ func TestRestoreGuideHandler(t *testing.T) {
 				mockRepo.On("Restore", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Restored Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -81,7 +81,7 @@ func TestRestoreGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Deleted Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -89,7 +89,7 @@ func TestRestoreGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Deleted Guide",
 						Status:    models.StatusDeleted,
 					}, nil).
@@ -100,7 +100,7 @@ func TestRestoreGuideHandler(t *testing.T) {
 				mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
 
-			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
 			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := NewRestoreGuideHandler(appConfig, uc)
 

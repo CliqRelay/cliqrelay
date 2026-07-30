@@ -71,10 +71,9 @@ export function StepMedia({ step }: Props) {
 										alt=""
 										aria-hidden
 										className={cn(
-											"absolute inset-0 h-full w-full object-contain transition-opacity duration-500",
+											"absolute inset-0 h-full w-full object-contain transition-opacity duration-500 blur-md",
 											loaded ? "opacity-0" : "opacity-100",
 										)}
-										style={{ filter: "blur(12px)" }}
 									/>
 								)}
 								<img
@@ -134,10 +133,9 @@ export function StepMedia({ step }: Props) {
 									alt=""
 									aria-hidden
 									className={cn(
-										"w-full object-contain transition-opacity duration-500",
+										"w-full object-contain transition-opacity duration-500 blur-md",
 										loaded ? "hidden" : "block",
 									)}
-									style={{ filter: "blur(12px)" }}
 								/>
 							)}
 							<img

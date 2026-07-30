@@ -25,6 +25,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { customFetch } from "../../../mutators/custom-fetch";
 import type {
 	ArchiveGuideResponse,
+	BulkGuidesActionParams,
+	BulkGuidesRequest,
+	BulkGuidesResponse,
 	CreateDemoGuideRequest,
 	CreateDemoGuideResponse,
 	CreateGuideRequest,
@@ -39,6 +42,7 @@ import type {
 	GetGuidesCountParams,
 	GetGuidesCountResponse,
 	GetStarredGuidesParams,
+	GetStarredGuidesResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
@@ -488,6 +492,105 @@ export const useCreateGuide = <TError = unknown, TContext = unknown>(
 > => {
 	return useMutation(getCreateGuideMutationOptions(options), queryClient);
 };
+export const getBulkGuidesActionUrl = (params?: BulkGuidesActionParams) => {
+	const normalizedParams = new URLSearchParams();
+
+	Object.entries(params || {}).forEach(([key, value]) => {
+		if (value !== undefined) {
+			normalizedParams.append(key, value === null ? "null" : String(value));
+		}
+	});
+
+	const stringifiedParams = normalizedParams.toString();
+
+	return stringifiedParams.length > 0
+		? `${import.meta.env.VITE_API_URL}/api/v1/guides/bulk?${stringifiedParams}`
+		: `${import.meta.env.VITE_API_URL}/api/v1/guides/bulk`;
+};
+
+/**
+ * Performs a bulk action (delete, restore, permanently-delete) on multiple guides
+ * @summary Bulk action on guides
+ */
+export const bulkGuidesAction = async (
+	bulkGuidesRequest?: BulkGuidesRequest,
+	params?: BulkGuidesActionParams,
+	options?: Parameters<typeof customFetch>[1],
+): Promise<BulkGuidesResponse> => {
+	return customFetch<BulkGuidesResponse>(getBulkGuidesActionUrl(params), {
+		...options,
+		method: "POST",
+		headers: { "Content-Type": "application/json", ...options?.headers },
+		body: JSON.stringify(bulkGuidesRequest),
+	});
+};
+
+export const getBulkGuidesActionMutationOptions = <
+	TError = unknown,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof bulkGuidesAction>>,
+		TError,
+		{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
+		TContext
+	>;
+	request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof bulkGuidesAction>>,
+	TError,
+	{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
+	TContext
+> => {
+	const mutationKey = ["bulkGuidesAction"];
+	const { mutation: mutationOptions, request: requestOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, request: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof bulkGuidesAction>>,
+		{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams }
+	> = (props) => {
+		const { data, params } = props ?? {};
+
+		return bulkGuidesAction(data, params, requestOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type BulkGuidesActionMutationResult = NonNullable<
+	Awaited<ReturnType<typeof bulkGuidesAction>>
+>;
+export type BulkGuidesActionMutationBody = BulkGuidesRequest | undefined;
+export type BulkGuidesActionMutationError = unknown;
+
+/**
+ * @summary Bulk action on guides
+ */
+export const useBulkGuidesAction = <TError = unknown, TContext = unknown>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof bulkGuidesAction>>,
+			TError,
+			{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
+			TContext
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof bulkGuidesAction>>,
+	TError,
+	{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
+	TContext
+> => {
+	return useMutation(getBulkGuidesActionMutationOptions(options), queryClient);
+};
 export const getGetGuidesCountUrl = (params?: GetGuidesCountParams) => {
 	const normalizedParams = new URLSearchParams();
 
@@ -756,8 +859,8 @@ export const getGetStarredGuidesUrl = (params?: GetStarredGuidesParams) => {
 export const getStarredGuides = async (
 	params?: GetStarredGuidesParams,
 	options?: Parameters<typeof customFetch>[1],
-): Promise<GetAllGuidesResponse> => {
-	return customFetch<GetAllGuidesResponse>(getGetStarredGuidesUrl(params), {
+): Promise<GetStarredGuidesResponse> => {
+	return customFetch<GetStarredGuidesResponse>(getGetStarredGuidesUrl(params), {
 		...options,
 		method: "GET",
 	});

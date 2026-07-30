@@ -11,6 +11,7 @@ import { HttpResponse, http } from "msw";
 
 import type {
 	ArchiveGuideResponse,
+	BulkGuidesResponse,
 	CreateDemoGuideResponse,
 	CreateGuideResponse,
 	DeleteGuideResponse,
@@ -19,6 +20,7 @@ import type {
 	GetExportStatusResponse,
 	GetGuideByIDResponse,
 	GetGuidesCountResponse,
+	GetStarredGuidesResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
@@ -31,6 +33,7 @@ import type {
 } from "../../models";
 import {
 	getArchiveGuideResponseMock,
+	getBulkGuidesActionResponseMock,
 	getCreateDemoGuideResponseMock,
 	getCreateGuideResponseMock,
 	getDeleteGuideResponseMock,
@@ -53,6 +56,7 @@ import {
 
 export {
 	getArchiveGuideResponseMock,
+	getBulkGuidesActionResponseMock,
 	getCreateDemoGuideResponseMock,
 	getCreateGuideResponseMock,
 	getDeleteGuideResponseMock,
@@ -145,6 +149,30 @@ export const getCreateGuideMockHandler = (
 	);
 };
 
+export const getBulkGuidesActionMockHandler = (
+	overrideResponse?:
+		| BulkGuidesResponse
+		| ((
+				info: Parameters<Parameters<typeof http.post>[1]>[0],
+		  ) => Promise<BulkGuidesResponse> | BulkGuidesResponse),
+	options?: RequestHandlerOptions,
+) => {
+	return http.post(
+		"*/api/v1/guides/bulk",
+		async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+			return HttpResponse.json(
+				overrideResponse !== undefined
+					? typeof overrideResponse === "function"
+						? await overrideResponse(info)
+						: overrideResponse
+					: getBulkGuidesActionResponseMock(),
+				{ status: 200 },
+			);
+		},
+		options,
+	);
+};
+
 export const getGetGuidesCountMockHandler = (
 	overrideResponse?:
 		| GetGuidesCountResponse
@@ -195,10 +223,10 @@ export const getCreateDemoGuideMockHandler = (
 
 export const getGetStarredGuidesMockHandler = (
 	overrideResponse?:
-		| GetAllGuidesResponse
+		| GetStarredGuidesResponse
 		| ((
 				info: Parameters<Parameters<typeof http.get>[1]>[0],
-		  ) => Promise<GetAllGuidesResponse> | GetAllGuidesResponse),
+		  ) => Promise<GetStarredGuidesResponse> | GetStarredGuidesResponse),
 	options?: RequestHandlerOptions,
 ) => {
 	return http.get(
@@ -534,6 +562,7 @@ export const getGuidesMock = () => [
 	getGetExportStatusMockHandler(),
 	getGetAllGuidesMockHandler(),
 	getCreateGuideMockHandler(),
+	getBulkGuidesActionMockHandler(),
 	getGetGuidesCountMockHandler(),
 	getCreateDemoGuideMockHandler(),
 	getGetStarredGuidesMockHandler(),

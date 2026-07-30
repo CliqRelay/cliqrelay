@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus, Settings, Users } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -12,14 +13,17 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { setActiveTeamCookie } from "@/lib/team-cookie";
 import { cn } from "@/lib/utils";
 import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
 import { CreateTeamDialogSlot } from "./create-team-dialog-slot";
 
-export function TeamsDropdown() {
+type Props = {
+	collapsed?: boolean;
+};
+
+export function TeamsDropdown({ collapsed }: Props) {
 	const navigate = useNavigate();
 
 	const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false);
@@ -41,25 +45,39 @@ export function TeamsDropdown() {
 		navigate({ to: "/dashboard" });
 	};
 
+	const initial = activeTeam?.name?.charAt(0)?.toUpperCase() ?? "?";
+
 	return (
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<SidebarMenuButton
-						tooltip="Switch Team"
-						className="rounded-lg text-sm px-3 py-2 h-10 w-full justify-start border border-sidebar-border/40 hover:border-sidebar-border hover:bg-sidebar-accent/50 data-[state=open]:border-sidebar-border data-[state=open]:bg-sidebar-accent transition-all duration-200 gap-2.5"
-					>
-						<div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
-							{activeTeam?.name?.charAt(0)?.toUpperCase() ?? "?"}
-						</div>
-						<span className="flex-1 truncate text-left text-sm font-medium">
-							{activeTeam?.name ?? "Select Team"}
-						</span>
-						<ChevronsUpDown
-							size={14}
-							className="shrink-0 text-muted-foreground/50"
-						/>
-					</SidebarMenuButton>
+					{collapsed ? (
+						<Button
+							variant="ghost"
+							className="flex size-9 items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-sidebar-accent/50 data-[state=open]:bg-sidebar-accent transition-all duration-200"
+							aria-label={activeTeam?.name ?? "Select Team"}
+						>
+							<div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
+								{initial}
+							</div>
+						</Button>
+					) : (
+						<Button
+							variant="ghost"
+							className="rounded-lg text-sm px-3 py-2 h-10 w-full justify-start border border-sidebar-border hover:border-sidebar-border hover:bg-sidebar-accent/50 data-[state=open]:border-sidebar-border data-[state=open]:bg-sidebar-accent transition-all duration-200 gap-2.5"
+						>
+							<div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
+								{initial}
+							</div>
+							<span className="flex-1 truncate text-left text-sm font-medium">
+								{activeTeam?.name ?? "Select Team"}
+							</span>
+							<ChevronsUpDown
+								size={14}
+								className="shrink-0 text-muted-foreground/50"
+							/>
+						</Button>
+					)}
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
 					align="start"

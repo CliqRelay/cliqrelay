@@ -8,6 +8,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type UnpublishGuideHandler struct {
@@ -29,7 +30,7 @@ func (h *UnpublishGuideHandler) Handle() http.HandlerFunc {
 
 		guide, err := h.guidesUseCase.Unpublish(ctx, actor, guideID)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}

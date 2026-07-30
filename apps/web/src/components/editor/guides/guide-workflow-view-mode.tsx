@@ -2,8 +2,8 @@ import { FileTextIcon } from "lucide-react";
 
 import type { Step } from "@repo/api-client";
 
-import { GuideTimelineSkeleton } from "./guide-timeline-skeleton";
 import { GuideWorkflowViewStep } from "../steps/step-view-card";
+import { GuideTimelineSkeleton } from "./guide-timeline-skeleton";
 
 type Props = {
 	steps: Step[];

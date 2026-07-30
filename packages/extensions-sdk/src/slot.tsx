@@ -4,10 +4,13 @@ import { extensionRegistry } from "./registry";
 
 type ExtensionSlotProps = {
 	name: string;
-	fallback?: ComponentType<Record<string, unknown>>;
+	fallback?: ComponentType<any>;
 };
 
-export function ExtensionSlot({ name, fallback: Fallback }: ExtensionSlotProps) {
+export function ExtensionSlot({
+	name,
+	fallback: Fallback,
+}: ExtensionSlotProps) {
 	const slot = extensionRegistry.getSlot(name);
 
 	if (slot) {
