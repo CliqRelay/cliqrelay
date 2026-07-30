@@ -111,8 +111,8 @@ func main() {
 	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, mediaHooks)
 	exportService := export.NewExportService(bunGuideExportsRepo, bunGuidesRepo, bunStepsRepo, storageService, presignService, appConfig.RedisClient, appConfig.S3Bucket)
 	uploadsService := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, appConfig.S3Bucket)
-	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, appConfig.S3Bucket)
 	guideViewsService := guideviewsservice.NewGuideViewsService(bunGuideViewsRepo, appConfig.RedisClient)
+	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, guideViewsService, appConfig.S3Bucket)
 
 	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, guidesService, starredService, guideViewsService)
 	stepsUseCase := usecases.NewStepsUseCase(authorizationService, stepsService, guidesService)

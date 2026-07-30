@@ -20,6 +20,7 @@ import (
 	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
 	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
 	"github.com/CliqRelay/cliqrelay/services/export"
+	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
 	"github.com/CliqRelay/cliqrelay/services/presign"
 	"github.com/CliqRelay/cliqrelay/services/purge"
 	"github.com/CliqRelay/cliqrelay/services/storage"
@@ -50,7 +51,8 @@ func main() {
 	guideViewsRepo := bunGuideViews.NewBunGuideViewsRepository(db)
 	storageService := storage.NewS3StorageService(infraCfg.S3Client)
 	presignService := presign.NewAWSPresignService(infraCfg.S3Client, 24*time.Hour)
-	purgeService := purge.NewPurgeService(guidesRepo, storageService, infraCfg.S3Bucket)
+	guideViewsService := guideviewsservice.NewGuideViewsService(guideViewsRepo, infraCfg.RedisClient)
+	purgeService := purge.NewPurgeService(guidesRepo, storageService, guideViewsService, infraCfg.S3Bucket)
 
 	stepsRepo := bunSteps.NewBunStepsRepository(db)
 

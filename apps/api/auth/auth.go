@@ -303,6 +303,7 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 		ratelimitplugin.New(ratelimitplugintypes.RateLimitPluginConfig{
 			Enabled:  true,
 			Provider: ratelimitplugintypes.RateLimitProviderRedis,
+			Prefix:   "authula:",
 			Window:   time.Minute,
 			Max:      200,
 			CustomRules: map[string]ratelimitplugintypes.RateLimitRule{
