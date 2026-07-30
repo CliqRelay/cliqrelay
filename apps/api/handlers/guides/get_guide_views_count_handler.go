@@ -14,12 +14,12 @@ import (
 )
 
 type GetGuideViewsCountHandler struct {
-	appConfig     *config.AppConfig
-	guidesUseCase interfaces.GuidesUseCase
+	appConfig         *config.AppConfig
+	guideViewsUseCase interfaces.GuideViewsUseCase
 }
 
-func NewGetGuideViewsCountHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *GetGuideViewsCountHandler {
-	return &GetGuideViewsCountHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewGetGuideViewsCountHandler(appConfig *config.AppConfig, guideViewsUseCase interfaces.GuideViewsUseCase) *GetGuideViewsCountHandler {
+	return &GetGuideViewsCountHandler{appConfig: appConfig, guideViewsUseCase: guideViewsUseCase}
 }
 
 func (h *GetGuideViewsCountHandler) Handle() http.HandlerFunc {
@@ -35,7 +35,7 @@ func (h *GetGuideViewsCountHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		count, err := h.guidesUseCase.GetViewCount(ctx, actor, teamID)
+		count, err := h.guideViewsUseCase.GetViewCount(ctx, actor, teamID)
 		if err != nil {
 			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

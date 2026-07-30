@@ -7,7 +7,7 @@ import { COOKIE_CONSTANTS } from "@repo/data-commons";
 import { authMiddleware } from "@/middleware/auth.middleware";
 import { getCsrfTokenHeader } from "../utils/http.utils";
 
-export const createGuide = createServerFn({ method: "POST" })
+export const createGuide = createServerFn({ method: "POST", strict: false })
 	.validator(
 		(input: { title: string; description?: string; teamId: string }) => input,
 	)
@@ -37,6 +37,7 @@ export const createGuide = createServerFn({ method: "POST" })
 
 export const getAllGuides = createServerFn({
 	method: "GET",
+	strict: false,
 })
 	.validator((input?: { teamId?: string }) => input)
 	.middleware([authMiddleware])
@@ -63,6 +64,7 @@ export const getAllGuides = createServerFn({
 
 export const getGuideById = createServerFn({
 	method: "GET",
+	strict: false,
 })
 	.validator((guideId: string) => guideId)
 	.middleware([authMiddleware])
@@ -80,7 +82,7 @@ export const getGuideById = createServerFn({
 		}
 	});
 
-export const updateGuide = createServerFn({ method: "POST" })
+export const updateGuide = createServerFn({ method: "POST", strict: false })
 	.validator(
 		(input: { guideId: string; input: Record<string, unknown> }) => input,
 	)
@@ -104,7 +106,7 @@ export const updateGuide = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateGuideVisibility = createServerFn({ method: "POST" })
+export const updateGuideVisibility = createServerFn({ method: "POST", strict: false })
 	.validator(
 		(input: { guideId: string; visibility: Visibility }) => input,
 	)
@@ -123,7 +125,7 @@ export const updateGuideVisibility = createServerFn({ method: "POST" })
 		return response.guide;
 	});
 
-export const deleteGuide = createServerFn({ method: "POST" })
+export const deleteGuide = createServerFn({ method: "POST", strict: false })
 	.validator((input: { guideId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -140,7 +142,7 @@ export const deleteGuide = createServerFn({ method: "POST" })
 		}
 	});
 
-export const publishGuide = createServerFn({ method: "POST" })
+export const publishGuide = createServerFn({ method: "POST", strict: false })
 	.validator((input: { guideId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -161,7 +163,7 @@ export const publishGuide = createServerFn({ method: "POST" })
 		}
 	});
 
-export const unpublishGuide = createServerFn({ method: "POST" })
+export const unpublishGuide = createServerFn({ method: "POST", strict: false })
 	.validator((input: { guideId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -182,7 +184,7 @@ export const unpublishGuide = createServerFn({ method: "POST" })
 		}
 	});
 
-export const archiveGuide = createServerFn({ method: "POST" })
+export const archiveGuide = createServerFn({ method: "POST", strict: false })
 	.validator((input: { guideId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -203,7 +205,7 @@ export const archiveGuide = createServerFn({ method: "POST" })
 		}
 	});
 
-export const unarchiveGuide = createServerFn({ method: "POST" })
+export const unarchiveGuide = createServerFn({ method: "POST", strict: false })
 	.validator((input: { guideId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -224,7 +226,7 @@ export const unarchiveGuide = createServerFn({ method: "POST" })
 		}
 	});
 
-export const restoreGuide = createServerFn({ method: "POST" })
+export const restoreGuide = createServerFn({ method: "POST", strict: false })
 	.validator((input: { guideId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -245,7 +247,7 @@ export const restoreGuide = createServerFn({ method: "POST" })
 		}
 	});
 
-export const permanentlyDeleteGuide = createServerFn({ method: "POST" })
+export const permanentlyDeleteGuide = createServerFn({ method: "POST", strict: false })
 	.validator((input: { guideId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -263,7 +265,7 @@ export const permanentlyDeleteGuide = createServerFn({ method: "POST" })
 		}
 	});
 
-export const getStepsByGuideId = createServerFn({ method: "GET" })
+export const getStepsByGuideId = createServerFn({ method: "GET", strict: false })
 	.validator((guideId: string) => guideId)
 	.middleware([authMiddleware])
 	.handler(async ({ data: guideId, context }) => {
@@ -279,7 +281,7 @@ export const getStepsByGuideId = createServerFn({ method: "GET" })
 		}
 	});
 
-export const getTrashGuides = createServerFn({ method: "GET" })
+export const getTrashGuides = createServerFn({ method: "GET", strict: false })
 	.validator((input?: { teamId?: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -301,7 +303,7 @@ export const getTrashGuides = createServerFn({ method: "GET" })
 		}
 	});
 
-export const createDemoGuide = createServerFn({ method: "POST" })
+export const createDemoGuide = createServerFn({ method: "POST", strict: false })
 	.validator((input?: { teamId?: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {

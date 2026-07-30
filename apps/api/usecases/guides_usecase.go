@@ -20,23 +20,20 @@ func uuidParse(s string) (uuid.UUID, error) {
 }
 
 type GuidesUseCase struct {
-	authzService      interfaces.AuthorizationService
-	guidesService     interfaces.GuidesService
-	starredService    interfaces.StarredGuidesService
-	guideViewsService interfaces.GuideViewsService
+	authzService   interfaces.AuthorizationService
+	guidesService  interfaces.GuidesService
+	starredService interfaces.StarredGuidesService
 }
 
 func NewGuidesUseCase(
 	authzService interfaces.AuthorizationService,
 	guidesService interfaces.GuidesService,
 	starredService interfaces.StarredGuidesService,
-	guideViewsService interfaces.GuideViewsService,
 ) *GuidesUseCase {
 	return &GuidesUseCase{
-		authzService:      authzService,
-		guidesService:     guidesService,
-		starredService:    starredService,
-		guideViewsService: guideViewsService,
+		authzService:   authzService,
+		guidesService:  guidesService,
+		starredService: starredService,
 	}
 }
 
@@ -300,31 +297,4 @@ func (uc *GuidesUseCase) GetStarred(ctx context.Context, actor *authulamodels.Ac
 	filter.Limit = limit
 
 	return uc.starredService.GetStarredGuides(ctx, filter)
-}
-
-func (uc *GuidesUseCase) RecordView(ctx context.Context, actor *authulamodels.Actor, guideID uuid.UUID, ipHash, userAgent, viewedAt string) error {
-	guide, err := uc.guidesService.GetByID(ctx, guideID.String())
-	if err != nil {
-		return err
-	}
-
-	teamID := guide.TeamID
-	if err := uc.authzService.CanReadGuide(ctx, actor, teamID.String(), guide); err != nil {
-		return err
-	}
-
-	var viewerID *uuid.UUID
-	if parsed, err := uuid.Parse(actor.ID); err == nil {
-		viewerID = &parsed
-	}
-
-	return uc.guideViewsService.RecordView(ctx, teamID, guideID, viewerID, ipHash, userAgent, viewedAt)
-}
-
-func (uc *GuidesUseCase) GetViewCount(ctx context.Context, actor *authulamodels.Actor, teamID uuid.UUID) (int, error) {
-	if _, err := uc.authzService.GuideListFilter(ctx, actor, teamID.String()); err != nil {
-		return 0, err
-	}
-
-	return uc.guideViewsService.GetCountByTeam(ctx, teamID, nil)
 }

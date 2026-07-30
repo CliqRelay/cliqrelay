@@ -112,7 +112,7 @@ func TestUpdateGuideHandler(t *testing.T) {
 			}
 
 			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
-			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := handlersguides.NewUpdateGuideHandler(appConfig, uc)
 
 			var req tests.HandlerTestRequest

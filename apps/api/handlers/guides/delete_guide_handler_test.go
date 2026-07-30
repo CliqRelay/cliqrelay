@@ -86,7 +86,7 @@ func TestDeleteGuideHandler(t *testing.T) {
 			}
 
 			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
-			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := handlersguides.NewDeleteGuideHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodDelete, path, nil)

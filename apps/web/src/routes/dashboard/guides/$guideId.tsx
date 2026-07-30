@@ -22,7 +22,9 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/lib/toast";
 import { getGuideById, updateGuide } from "@/server-fns/guides";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
+import { useOrgStore } from "@/stores/org-store";
 import { useUserStore } from "@/stores/user-store";
+import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 export const Route = createFileRoute("/dashboard/guides/$guideId")({
 	component: GuideDetailPage,
@@ -77,22 +79,36 @@ function GuideDetailPage() {
 	const [currentGuide, setCurrentGuide] = useState(guide);
 	const hasTrackedView = useRef(false);
 	const currentUserId = useUserStore((s) => s.userId);
+	const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
+	const canEdit = !!currentMemberRole && currentMemberRole !== "viewer";
 
 	const recordViewMutation = api.guides.useRecordGuideView({
-		request: { credentials: "include" },
+		request: {
+			credentials: "include",
+			headers: {
+				...getCsrfTokenHeader(),
+			},
+		},
 	});
 
 	useEffect(() => {
 		if (
 			mode === "view" &&
 			currentGuide.status === "published" &&
-			currentGuide.creator_id !== currentUserId &&
+			currentGuide.creatorId !== currentUserId &&
 			!hasTrackedView.current
 		) {
 			hasTrackedView.current = true;
 			recordViewMutation.mutate({ id: currentGuide.id });
 		}
-	}, [mode, currentGuide.status, currentGuide.creator_id, currentUserId, currentGuide.id, recordViewMutation]);
+	}, [
+		mode,
+		currentGuide.status,
+		currentGuide.creatorId,
+		currentUserId,
+		currentGuide.id,
+		recordViewMutation,
+	]);
 
 	useEffect(() => {
 		setCurrentGuide(guide);
@@ -186,29 +202,33 @@ function GuideDetailPage() {
 						/>
 					</div>
 
-					{/* Mode toggle */}
-					<ToggleGroup
-						type="single"
-						value={mode}
-						onValueChange={(value) => {
-							if (value === "view" || value === "edit") {
-								setMode(value);
-							}
-						}}
-						variant="outline"
-						size="sm"
-					>
-						<ToggleGroupItem value="view" className="gap-1.5">
-							<Eye className="h-3.5 w-3.5" />
-							View
-						</ToggleGroupItem>
-						<ToggleGroupItem value="edit" className="gap-1.5">
-							<PenLine className="h-3.5 w-3.5" />
-							Edit
-						</ToggleGroupItem>
-					</ToggleGroup>
+					{canEdit && (
+						<>
+							{/* Mode toggle */}
+							<ToggleGroup
+								type="single"
+								value={mode}
+								onValueChange={(value) => {
+									if (value === "view" || value === "edit") {
+										setMode(value);
+									}
+								}}
+								variant="outline"
+								size="sm"
+							>
+								<ToggleGroupItem value="view" className="gap-1.5">
+									<Eye className="h-3.5 w-3.5" />
+									View
+								</ToggleGroupItem>
+								<ToggleGroupItem value="edit" className="gap-1.5">
+									<PenLine className="h-3.5 w-3.5" />
+									Edit
+								</ToggleGroupItem>
+							</ToggleGroup>
 
-					<GuideActionsDropdown guide={guide} />
+							<GuideActionsDropdown guide={guide} />
+						</>
+					)}
 				</div>
 			</header>
 

@@ -85,7 +85,7 @@ func TestUnarchiveGuideHandler(t *testing.T) {
 			}
 
 			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
-			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := NewUnarchiveGuideHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)

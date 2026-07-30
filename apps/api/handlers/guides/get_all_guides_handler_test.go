@@ -113,7 +113,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
 			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, (*interfaces.GuideHooks)(nil))
-			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
 			handler := handlersguides.NewGetAllGuidesHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, tt.path, nil)

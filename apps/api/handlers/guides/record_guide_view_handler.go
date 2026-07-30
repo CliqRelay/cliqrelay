@@ -11,17 +11,16 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
-	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type RecordGuideViewHandler struct {
-	appConfig     *config.AppConfig
-	guidesUseCase interfaces.GuidesUseCase
+	appConfig         *config.AppConfig
+	guideViewsUseCase interfaces.GuideViewsUseCase
 }
 
-func NewRecordGuideViewHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *RecordGuideViewHandler {
-	return &RecordGuideViewHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewRecordGuideViewHandler(appConfig *config.AppConfig, guideViewsUseCase interfaces.GuideViewsUseCase) *RecordGuideViewHandler {
+	return &RecordGuideViewHandler{appConfig: appConfig, guideViewsUseCase: guideViewsUseCase}
 }
 
 func (h *RecordGuideViewHandler) Handle() http.HandlerFunc {
@@ -41,14 +40,12 @@ func (h *RecordGuideViewHandler) Handle() http.HandlerFunc {
 		userAgent := r.UserAgent()
 		viewedAt := time.Now().UTC().Format(time.RFC3339)
 
-		if err := h.guidesUseCase.RecordView(ctx, actor, guideID, ipHash, userAgent, viewedAt); err != nil {
+		if err := h.guideViewsUseCase.RecordView(ctx, actor, guideID, ipHash, userAgent, viewedAt); err != nil {
 			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}
 
-		reqCtx.SetJSONResponse(http.StatusOK, &types.RecordGuideViewResponse{
-			Message: "ok",
-		})
+		reqCtx.SetJSONResponse(http.StatusNoContent, "")
 	}
 }

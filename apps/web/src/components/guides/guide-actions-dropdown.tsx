@@ -33,6 +33,7 @@ import {
 	unarchiveGuide,
 	unpublishGuide,
 } from "@/server-fns/guides";
+import { useOrgStore } from "@/stores/org-store";
 
 type Props = {
 	guide: Pick<Guide, "id" | "title" | "status">;
@@ -49,6 +50,8 @@ export function GuideActionsDropdown({
 }: Props) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
+
+	const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
 
 	const [publishDialogOpen, setPublishDialogOpen] = useState<boolean>(false);
 	const [archiveDialogOpen, setArchiveDialogOpen] = useState<boolean>(false);
@@ -181,22 +184,28 @@ export function GuideActionsDropdown({
 							Unarchive
 						</DropdownMenuItem>
 					)}
-					<DropdownMenuItem onSelect={() => setMoveToTeamOpen(true)}>
-						<Shuffle className="mr-2 h-4 w-4" />
-						Move to Team
-					</DropdownMenuItem>
+					{currentMemberRole === "admin" && (
+						<DropdownMenuItem onSelect={() => setMoveToTeamOpen(true)}>
+							<Shuffle className="mr-2 h-4 w-4" />
+							Move to Team
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuItem onSelect={() => setExportDialogOpen(true)}>
 						<Download className="mr-2 h-4 w-4" />
 						Export
 					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						className="text-destructive focus:text-destructive"
-						onSelect={() => setDeleteDialogOpen(true)}
-					>
-						<Trash2 className="mr-2 h-4 w-4" />
-						Delete
-					</DropdownMenuItem>
+					{currentMemberRole === "admin" && (
+						<>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								className="text-destructive focus:text-destructive"
+								onSelect={() => setDeleteDialogOpen(true)}
+							>
+								<Trash2 className="mr-2 h-4 w-4" />
+								Delete
+							</DropdownMenuItem>
+						</>
+					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
 

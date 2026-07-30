@@ -3,8 +3,6 @@ package interfaces
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	authulamodels "github.com/Authula/authula/models"
 
 	"github.com/CliqRelay/cliqrelay/models"
@@ -30,6 +28,4 @@ type GuidesUseCase interface {
 	Star(ctx context.Context, actor *authulamodels.Actor, guideID string) error
 	Unstar(ctx context.Context, actor *authulamodels.Actor, guideID string) error
 	GetStarred(ctx context.Context, actor *authulamodels.Actor, teamID string, page, limit int) ([]*models.Guide, int, error)
-	RecordView(ctx context.Context, actor *authulamodels.Actor, guideID uuid.UUID, ipHash, userAgent, viewedAt string) error
-	GetViewCount(ctx context.Context, actor *authulamodels.Actor, teamID uuid.UUID) (int, error)
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
+func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase, guideViewsUseCase interfaces.GuideViewsUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
 	createHandler := guides.NewCreateGuideHandler(appConfig, guidesUseCase)
 	createDemoGuideHandler := guides.NewCreateDemoGuideHandler(appConfig, guidesUseCase)
 	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesUseCase)
@@ -35,8 +35,8 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 	bulkGuideActionHandler := guides.NewBulkGuideActionHandler(appConfig, guidesUseCase)
 	exportGuideHandler := guides.NewExportGuideHandler(appConfig, exportSvc)
 	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportSvc)
-	recordGuideViewHandler := guides.NewRecordGuideViewHandler(appConfig, guidesUseCase)
-	getGuideViewsCountHandler := guides.NewGetGuideViewsCountHandler(appConfig, guidesUseCase)
+	recordGuideViewHandler := guides.NewRecordGuideViewHandler(appConfig, guideViewsUseCase)
+	getGuideViewsCountHandler := guides.NewGetGuideViewsCountHandler(appConfig, guideViewsUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),

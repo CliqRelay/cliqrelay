@@ -114,13 +114,15 @@ func main() {
 	guideViewsService := guideviewsservice.NewGuideViewsService(bunGuideViewsRepo, appConfig.RedisClient)
 	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, guideViewsService, appConfig.S3Bucket)
 
-	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, guidesService, starredService, guideViewsService)
+	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, guidesService, starredService)
+	guideViewsUseCase := usecases.NewGuideViewsUseCase(authorizationService, guidesService, guideViewsService)
 	stepsUseCase := usecases.NewStepsUseCase(authorizationService, stepsService, guidesService)
 	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, mediaAssetsService, stepsService, guidesService)
 	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, uploadsService, guidesService, stepsService)
 
 	svcs := &interfaces.DomainUseCases{
 		GuidesUseCase:      guidesUseCase,
+		GuideViewsUseCase:  guideViewsUseCase,
 		StepsUseCase:       stepsUseCase,
 		MediaAssetsUseCase: mediaAssetsUseCase,
 		ExportService:      exportService,

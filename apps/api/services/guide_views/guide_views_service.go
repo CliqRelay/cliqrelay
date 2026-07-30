@@ -8,8 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/models"
 )
 
 const dedupTTL = 24 * time.Hour
@@ -31,9 +33,13 @@ func NewGuideViewsService(repo interfaces.GuideViewsRepository, redisClient *red
 	return &GuideViewsService{repo: repo, redisClient: redisClient}
 }
 
-func (s *GuideViewsService) RecordView(ctx context.Context, teamID, guideID uuid.UUID, viewerID *uuid.UUID, ipHash, userAgent, viewedAt string) error {
+func (s *GuideViewsService) RecordView(ctx context.Context, teamID uuid.UUID, guide *models.Guide, viewerID *uuid.UUID, ipHash, userAgent, viewedAt string) error {
+	if guide.Status != models.StatusPublished {
+		return constants.ErrGuideNotPublished
+	}
+
 	if viewerID != nil {
-		dedupKey := dedupUserKey(guideID, *viewerID)
+		dedupKey := dedupUserKey(guide.ID, *viewerID)
 
 		exists, err := s.redisClient.Exists(ctx, dedupKey).Result()
 		if err == nil && exists > 0 {
@@ -56,7 +62,7 @@ func (s *GuideViewsService) RecordView(ctx context.Context, teamID, guideID uuid
 
 	if err := events.Publish(ctx, s.redisClient, events.TopicGuideViews, events.EventTypeGuideViewed, &events.GuideViewPayload{
 		TeamID:    teamID,
-		GuideID:   guideID,
+		GuideID:   guide.ID,
 		ViewerID:  viewerID,
 		IPHash:    ipHashPtr,
 		UserAgent: userAgentPtr,

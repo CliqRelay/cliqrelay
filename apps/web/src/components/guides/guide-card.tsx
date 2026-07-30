@@ -54,6 +54,7 @@ import { GuideStatusBadge } from "./guide-status-badge";
 import { MoveToTeamSlot } from "./move-to-team-slot";
 import { StarButton } from "./star-button";
 import { cn } from "@/lib/utils";
+import { useOrgStore } from "@/stores/org-store";
 
 type Props = {
 	guide: Guide;
@@ -96,6 +97,7 @@ export function GuideCard({
 	const teamName = teams.find((t) => t.id === guide.teamId)?.name;
 	const userId = useUserStore((s) => s.userId);
 	const isCreator = guide.creatorId !== null && userId === guide.creatorId;
+	const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
 
 	const [moveToTeamOpen, setMoveToTeamOpen] = useState<boolean>(false);
 	const [visibilityDialogOpen, setVisibilityDialogOpen] =
@@ -224,7 +226,7 @@ export function GuideCard({
 												Restore
 											</DropdownMenuItem>
 										)}
-										{onDeletePermanently && (
+										{currentMemberRole === "admin" && onDeletePermanently && (
 											<>
 												<DropdownMenuSeparator className="my-1" />
 												<DropdownMenuItem
@@ -297,26 +299,30 @@ export function GuideCard({
 											<Eye className="mr-2 size-3.5" />
 											Change Visibility
 										</DropdownMenuItem>
-										<DropdownMenuItem
-											onClick={(e) => {
-												e.stopPropagation();
-												setMoveToTeamOpen(true);
-											}}
-										>
-											<Shuffle className="mr-2 size-3.5" />
-											Move to Team
-										</DropdownMenuItem>
-										<DropdownMenuSeparator />
-										<DropdownMenuItem
-											className="text-destructive focus:text-destructive"
-											onClick={(e) => {
-												e.stopPropagation();
-												onDelete?.(guide.id);
-											}}
-										>
-											<Trash2 className="mr-2 size-3.5" />
-											Delete
-										</DropdownMenuItem>
+										{currentMemberRole === "admin" && (
+											<>
+												<DropdownMenuItem
+													onClick={(e) => {
+														e.stopPropagation();
+														setMoveToTeamOpen(true);
+													}}
+												>
+													<Shuffle className="mr-2 size-3.5" />
+													Move to Team
+												</DropdownMenuItem>
+												<DropdownMenuSeparator />
+												<DropdownMenuItem
+													className="text-destructive focus:text-destructive"
+													onClick={(e) => {
+														e.stopPropagation();
+														onDelete?.(guide.id);
+													}}
+												>
+													<Trash2 className="mr-2 size-3.5" />
+													Delete
+												</DropdownMenuItem>
+											</>
+										)}
 									</>
 								)}
 							</DropdownMenuContent>
