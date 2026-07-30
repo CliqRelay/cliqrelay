@@ -1,7 +1,7 @@
-import { Clock, FileText } from "lucide-react";
+import { Clock, Eye, FileText } from "lucide-react";
 
 import { api } from "@repo/api-client";
-import { formatTimeSaved } from "@repo/data-commons";
+import { formatCompactNumber, formatTimeSaved } from "@repo/data-commons";
 
 export function StatsCards({ teamId }: { teamId?: string }) {
 	const guidesCountQuery = api.guides.useGetGuidesCount(
@@ -12,8 +12,17 @@ export function StatsCards({ teamId }: { teamId?: string }) {
 		},
 	);
 
+	const guideViewsQuery = api.guides.useGetGuideViewsCount(
+		{ team_id: teamId },
+		{
+			query: { enabled: !!teamId },
+			request: { credentials: "include" },
+		},
+	);
+
 	const count = guidesCountQuery.data?.count ?? 0;
 	const timeSaved = count ? formatTimeSaved(count * 15) : "N/A";
+	const viewCount = guideViewsQuery.data?.count ?? 0;
 
 	const stats = [
 		{
@@ -28,10 +37,16 @@ export function StatsCards({ teamId }: { teamId?: string }) {
 			icon: Clock,
 			isLoading: guidesCountQuery.isLoading,
 		},
+		{
+			label: "Guide Views",
+			value: formatCompactNumber(viewCount),
+			icon: Eye,
+			isLoading: guideViewsQuery.isLoading,
+		},
 	];
 
 	return (
-		<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+		<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
 			{stats.map((stat) => {
 				const Icon = stat.icon;
 				return (

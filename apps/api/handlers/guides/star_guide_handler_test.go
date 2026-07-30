@@ -89,7 +89,7 @@ func TestStarGuideHandler(t *testing.T) {
 
 			starredSvc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo)
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil)
-			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
+			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc, nil)
 			handler := handlersguides.NewStarGuideHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)

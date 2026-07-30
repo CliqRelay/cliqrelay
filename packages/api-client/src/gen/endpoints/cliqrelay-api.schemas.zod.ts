@@ -411,6 +411,17 @@ export type GetGuideByIDResponseOutput = zod.output<
 	typeof GetGuideByIDResponse
 >;
 
+export const GetGuideViewsCountResponse = zod.object({
+	count: zod.int(),
+});
+
+export type GetGuideViewsCountResponse = zod.input<
+	typeof GetGuideViewsCountResponse
+>;
+export type GetGuideViewsCountResponseOutput = zod.output<
+	typeof GetGuideViewsCountResponse
+>;
+
 export const GetGuidesCountResponse = zod.object({
 	count: zod.int(),
 });
@@ -515,6 +526,15 @@ export type RecalculateDurationResponse = zod.input<
 >;
 export type RecalculateDurationResponseOutput = zod.output<
 	typeof RecalculateDurationResponse
+>;
+
+export const RecordGuideViewResponse = zod.object({
+	message: zod.string(),
+});
+
+export type RecordGuideViewResponse = zod.input<typeof RecordGuideViewResponse>;
+export type RecordGuideViewResponseOutput = zod.output<
+	typeof RecordGuideViewResponse
 >;
 
 export const ReorderStepsRequest = zod.object({

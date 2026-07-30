@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -22,6 +22,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/lib/toast";
 import { getGuideById, updateGuide } from "@/server-fns/guides";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
+import { useUserStore } from "@/stores/user-store";
 
 export const Route = createFileRoute("/dashboard/guides/$guideId")({
 	component: GuideDetailPage,
@@ -74,6 +75,24 @@ function GuideDetailPage() {
 
 	const [mode, setMode] = useState<"view" | "edit">("view");
 	const [currentGuide, setCurrentGuide] = useState(guide);
+	const hasTrackedView = useRef(false);
+	const currentUserId = useUserStore((s) => s.userId);
+
+	const recordViewMutation = api.guides.useRecordGuideView({
+		request: { credentials: "include" },
+	});
+
+	useEffect(() => {
+		if (
+			mode === "view" &&
+			currentGuide.status === "published" &&
+			currentGuide.creator_id !== currentUserId &&
+			!hasTrackedView.current
+		) {
+			hasTrackedView.current = true;
+			recordViewMutation.mutate({ id: currentGuide.id });
+		}
+	}, [mode, currentGuide.status, currentGuide.creator_id, currentUserId, currentGuide.id, recordViewMutation]);
 
 	useEffect(() => {
 		setCurrentGuide(guide);

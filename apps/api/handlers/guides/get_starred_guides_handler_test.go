@@ -76,7 +76,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
 			starredSvc := starredguidesservice.NewStarredGuidesService(mockRepo, mockGuidesRepo)
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockRepo, nil, nil, nil)
-			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
+			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc, nil)
 			handler := handlersguides.NewGetStarredGuidesHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/starred", nil)

@@ -21,6 +21,7 @@ import {
 	GetAllGuidesResponse,
 	GetExportStatusResponse,
 	GetGuideByIDResponse,
+	GetGuideViewsCountResponse,
 	GetGuidesCountResponse,
 	GetStarredGuidesResponse,
 	GuideSortField,
@@ -28,6 +29,7 @@ import {
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
+	RecordGuideViewResponse,
 	RestoreGuideResponse,
 	StarGuideResponse,
 	UnarchiveGuideResponse,
@@ -112,6 +114,16 @@ export const GetStarredGuidesQueryParams = zod.object({
 });
 
 export const GetStarredGuidesResponseSchema = GetStarredGuidesResponse;
+
+/**
+ * Returns the total count of guide views for a team
+ * @summary Get guide views count
+ */
+export const GetGuideViewsCountQueryParams = zod.object({
+	team_id: zod.string(),
+});
+
+export const GetGuideViewsCountResponseSchema = GetGuideViewsCountResponse;
 
 /**
  * Retrieves a single guide by its ID
@@ -247,3 +259,13 @@ export const UnpublishGuideParams = zod.object({
 });
 
 export const UnpublishGuideResponseSchema = UnpublishGuideResponse;
+
+/**
+ * Records a view of a guide asynchronously via Redis Stream
+ * @summary Record guide view
+ */
+export const RecordGuideViewParams = zod.object({
+	id: zod.string(),
+});
+
+export const RecordGuideViewResponseSchema = RecordGuideViewResponse;

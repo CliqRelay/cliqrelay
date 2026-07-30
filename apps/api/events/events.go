@@ -11,15 +11,18 @@ import (
 const TopicMediaAssets = "streams:media-assets"
 const TopicGuides = "streams:guides"
 const TopicGuideExports = "streams:guide-exports"
+const TopicGuideViews = "streams:guide-views"
 
 const EventTypeMediaAssetDeleted = "media-asset.deleted"
 const EventTypeGuidePurge = "guide.purge"
 const EventTypeGuideExport = "guide.export"
+const EventTypeGuideViewed = "guide.viewed"
 
 var streamMaxlens = map[string]int64{
 	TopicMediaAssets:  100_000,
 	TopicGuides:       10_000,
 	TopicGuideExports: 10_000,
+	TopicGuideViews:   500_000,
 }
 
 type Event struct {
@@ -102,4 +105,13 @@ type GuideExportPayload struct {
 	GuideID  string `json:"guide_id"`
 	UserID   string `json:"user_id"`
 	Format   string `json:"format"`
+}
+
+type GuideViewPayload struct {
+	TeamID    uuid.UUID  `json:"team_id"`
+	GuideID   uuid.UUID  `json:"guide_id"`
+	ViewerID  *uuid.UUID `json:"viewer_id"`
+	IPHash    *string    `json:"ip_hash"`
+	UserAgent *string    `json:"user_agent"`
+	ViewedAt  string     `json:"viewed_at"`
 }

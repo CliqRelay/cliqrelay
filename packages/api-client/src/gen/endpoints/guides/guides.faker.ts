@@ -18,10 +18,12 @@ import type {
 	GetExportStatusResponse,
 	GetGuideByIDResponse,
 	GetGuidesCountResponse,
+	GetGuideViewsCountResponse,
 	GetStarredGuidesResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
+	RecordGuideViewResponse,
 	RestoreGuideResponse,
 	StarGuideResponse,
 	UnarchiveGuideResponse,
@@ -370,6 +372,13 @@ export const getGetStarredGuidesResponseMock = (
 	limit: faker.number.int(),
 	page: faker.number.int(),
 	total: faker.number.int(),
+	...overrideResponse,
+});
+
+export const getGetGuideViewsCountResponseMock = (
+	overrideResponse: Partial<Extract<GetGuideViewsCountResponse, object>> = {},
+): GetGuideViewsCountResponse => ({
+	count: faker.number.int(),
 	...overrideResponse,
 });
 
@@ -1297,5 +1306,12 @@ export const getUnpublishGuideResponseMock = (
 		updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
 		visibility: faker.helpers.arrayElement(Object.values(Visibility)),
 	},
+	...overrideResponse,
+});
+
+export const getRecordGuideViewResponseMock = (
+	overrideResponse: Partial<Extract<RecordGuideViewResponse, object>> = {},
+): RecordGuideViewResponse => ({
+	message: faker.string.alpha({ length: { min: 10, max: 20 } }),
 	...overrideResponse,
 });

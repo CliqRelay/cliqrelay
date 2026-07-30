@@ -85,7 +85,7 @@ func TestArchiveGuideHandler(t *testing.T) {
 			}
 
 			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
-			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil, nil)
 			handler := NewArchiveGuideHandler(appConfig, uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)
