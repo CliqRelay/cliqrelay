@@ -20,5 +20,5 @@ export const formatTimeSaved = (totalMinutes: number): string => {
 	const hours = totalMinutes / 60;
 	// If it's a whole number, don't show decimals. If it has decimals, round to 1 decimal place.
 	const formattedHours = hours % 1 === 0 ? hours.toFixed(0) : hours.toFixed(1);
-	return `${formattedHours} Hours`;
+	return `${formattedHours} Hour${Number(formattedHours) > 1 ? "s" : ""}`;
 };
