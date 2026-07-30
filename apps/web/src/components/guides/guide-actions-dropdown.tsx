@@ -29,6 +29,7 @@ import {
 import { toast } from "@/lib/toast";
 import {
 	archiveGuide,
+	deleteGuide,
 	publishGuide,
 	unarchiveGuide,
 	unpublishGuide,
@@ -39,14 +40,12 @@ type Props = {
 	guide: Pick<Guide, "id" | "title" | "status">;
 	isUpgradeAvailable?: boolean;
 	onUpgrade?: () => Promise<void>;
-	onDelete?: (guideId: string) => void;
 };
 
 export function GuideActionsDropdown({
 	guide,
 	isUpgradeAvailable,
 	onUpgrade,
-	onDelete,
 }: Props) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -140,9 +139,27 @@ export function GuideActionsDropdown({
 		}
 	};
 
-	const handleDelete = () => {
-		onDelete?.(guide.id);
-		setDeleteDialogOpen(false);
+	const handleDelete = async () => {
+		try {
+			await deleteGuide({ data: { guideId: guide.id } });
+			setDeleteDialogOpen(false);
+			toast("Deleted", { description: "Guide moved to trash" });
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetAllGuidesQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetStarredGuidesQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetGuidesCountQueryKey(),
+			});
+			router.navigate({ to: "/dashboard/guides" });
+		} catch (error) {
+			toast.error("Error", {
+				description:
+					error instanceof Error ? error.message : "Failed to delete",
+			});
+		}
 	};
 
 	return (
