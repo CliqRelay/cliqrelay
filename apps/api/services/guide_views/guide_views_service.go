@@ -15,11 +15,11 @@ import (
 const dedupTTL = 24 * time.Hour
 
 func dedupUserKey(guideID, userID uuid.UUID) string {
-	return fmt.Sprintf("cliqrelay:dedupe:guide-views:{%s}:user:%s", guideID.String(), userID.String())
+	return fmt.Sprintf("dedupe:guide-views:{%s}:user:%s", guideID.String(), userID.String())
 }
 
 func dedupPatternByGuide(guideID uuid.UUID) string {
-	return fmt.Sprintf("cliqrelay:dedupe:guide-views:{%s}:*", guideID.String())
+	return fmt.Sprintf("dedupe:guide-views:{%s}:*", guideID.String())
 }
 
 type GuideViewsService struct {
