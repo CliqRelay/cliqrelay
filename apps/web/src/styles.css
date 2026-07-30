@@ -148,7 +148,7 @@
   --elevated: #0E1B30;
 
   --foreground: oklch(0.97 0.01 240);
-  --muted-foreground: oklch(0.55 0.015 240);
+  --muted-foreground: oklch(0.62 0.015 240);
   --card: var(--surface-1);
   --card-foreground: var(--foreground);
   --popover: var(--elevated);

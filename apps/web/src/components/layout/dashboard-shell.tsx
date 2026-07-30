@@ -53,7 +53,7 @@ export function DashboardShell({
 	const toggleCollapse = useCallback(() => setCollapsed((prev) => !prev), []);
 
 	return (
-		<div className="min-h-screen flex text-foreground bg-cover bg-center bg-no-repeat bg-[url(/dashboard-light-bg.png)] dark:bg-[linear-gradient(rgba(0,0,0,0.3),rgba(0,0,0,0.3)),url(/dashboard-dark-bg.png)]">
+		<div className="min-h-screen flex text-foreground bg-cover bg-center bg-no-repeat bg-fixed bg-[url(/dashboard-light-bg.png)] dark:bg-[linear-gradient(rgba(0,0,0,0.3),rgba(0,0,0,0.3)),url(/dashboard-dark-bg.png)]">
 			<AppSidebar collapsed={collapsed} onToggleCollapse={toggleCollapse} />
 			<div className="flex-1 min-w-0 flex flex-col">
 				{!hideTopBar && (

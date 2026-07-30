@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface TrashPageHeaderProps {
@@ -54,25 +55,22 @@ export function TrashPageHeader({
 
 				{selectedCount > 0 && (
 					<>
-						<button
-							type="button"
+						<Button
+							variant="outline"
+							size="lg"
 							onClick={onRestore}
-							className="group relative flex h-10 items-center gap-2 rounded-[14px] px-5 text-[13.5px] font-semibold text-muted-foreground overflow-hidden transition-all duration-200 ease-out hover:text-foreground hover:-translate-y-px"
+							className="font-semibold"
 						>
-							<span className="absolute inset-0 rounded-[14px] transition-all duration-200 ease-out bg-surface-1 border border-border" />
-							<span className="absolute inset-0 rounded-[14px] opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 bg-surface-2 border border-border-strong" />
-							<span className="relative z-10">Restore ({selectedCount})</span>
-						</button>
-
-						<button
-							type="button"
-							className="group relative flex h-10 items-center gap-2 rounded-[14px] px-5 text-[13.5px] font-semibold text-white overflow-hidden transition-all duration-200 ease-out hover:-translate-y-px"
+							Restore ({selectedCount})
+						</Button>
+						<Button
+							variant="destructive"
+							size="lg"
 							onClick={onDeletePermanently}
+							className="font-semibold"
 						>
-							<span className="absolute inset-0 rounded-[14px] transition-all duration-200 ease-out border" />
-							<span className="absolute inset-0 rounded-[14px] opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 border" />
-							<span className="relative z-10">Delete Permanently</span>
-						</button>
+							Delete Permanently
+						</Button>
 					</>
 				)}
 			</div>

@@ -22,7 +22,7 @@ import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
 
 export const Route = createFileRoute("/dashboard/")({
-	component: DashboardPage,
+	component: DashboardPageComponent,
 });
 
 function NoTeamsView({
@@ -89,7 +89,10 @@ function DashboardSkeleton() {
 						</div>
 					</div>
 					{Array.from({ length: 3 }).map((_, i) => (
-						<div key={i} className="rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card">
+						<div
+							key={i}
+							className="rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card"
+						>
 							<div className="flex items-start justify-between">
 								<Skeleton className="size-11 rounded-2xl" />
 							</div>
@@ -125,7 +128,10 @@ function DashboardSkeleton() {
 						</div>
 						<div className="mt-2 flex flex-col gap-2">
 							{Array.from({ length: 4 }).map((_, i) => (
-								<div key={i} className="w-full px-4 py-3 rounded-md border border-border">
+								<div
+									key={i}
+									className="w-full px-4 py-3 rounded-md border border-border"
+								>
 									<Skeleton className="h-4 w-48" />
 									<div className="mt-1 flex items-center gap-1.5">
 										<Skeleton className="h-5 w-14 rounded-md" />
@@ -169,7 +175,7 @@ function DashboardSkeleton() {
 	);
 }
 
-function DashboardPage() {
+function DashboardPageComponent() {
 	const navigate = useNavigate();
 	const teams = useTeamStore((s) => s.teams);
 	const loaded = useTeamStore((s) => s.loaded);

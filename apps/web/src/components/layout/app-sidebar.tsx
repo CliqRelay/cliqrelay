@@ -213,7 +213,7 @@ export function SidebarContent({
 					collapsed ? "px-3 items-center" : "px-3",
 				)}
 			>
-				{!collapsed && (
+				{!collapsed && teamLoaded && (
 					<div className="px-3 mb-1.5">
 						<span className="text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
 							Pro
