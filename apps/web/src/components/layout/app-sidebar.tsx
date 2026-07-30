@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ComponentType, useState } from "react";
 
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
@@ -31,12 +31,51 @@ import { ProFeatureDialog } from "../pro/pro-feature-dialog";
 import { SidebarTooltip } from "./sidebar-tooltip";
 import { TeamsDropdown } from "./teams-dropdown";
 
+type DialogType = "analytics" | "webhooks" | "api-keys";
+
 const nav = [
 	{ label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
 	{ label: "Guides", to: "/dashboard/guides", icon: FileText },
 	{ label: "Starred", to: "/dashboard/starred", icon: Star },
 	{ label: "Trash", to: "/dashboard/trash", icon: Trash },
 ] as const;
+
+type ProItem = {
+	label: string;
+	icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+	dialog: DialogType;
+	slotName: string;
+	fallback: ComponentType<{
+		isUpgradeAvailable: boolean;
+		onUpgrade?: () => Promise<void>;
+		open: boolean;
+		onOpenChange: (open: boolean) => void;
+	}>;
+};
+
+const proItems: ProItem[] = [
+	{
+		label: "Analytics",
+		icon: BarChart3,
+		dialog: "analytics",
+		slotName: "dashboard-sidebar-analytics",
+		fallback: AnalyticsFallback,
+	},
+	{
+		label: "Webhooks",
+		icon: Webhook,
+		dialog: "webhooks",
+		slotName: "dashboard-sidebar-webhooks",
+		fallback: WebhooksFallback,
+	},
+	{
+		label: "API Keys",
+		icon: KeyRound,
+		dialog: "api-keys",
+		slotName: "dashboard-sidebar-api-keys",
+		fallback: ApiKeysFallback,
+	},
+];
 
 interface SidebarContentProps {
 	user?: AppUser | null;
@@ -45,15 +84,26 @@ interface SidebarContentProps {
 	onToggleCollapse: () => void;
 }
 
-function ProNavSkeleton({ collapsed }: { collapsed: boolean }) {
+function SectionLabel({ collapsed, label }: { collapsed: boolean; label: string }) {
+	if (collapsed) return null;
+	return (
+		<div className="px-3 mb-1.5">
+			<span className="text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
+				{label}
+			</span>
+		</div>
+	);
+}
+
+function NavSkeleton({ collapsed, count }: { collapsed: boolean; count: number }) {
 	return (
 		<nav className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
-			{Array.from({ length: 2 }).map((_, i) => (
+			{Array.from({ length: count }).map((_, i) => (
 				<div
 					key={i}
 					className={cn(
 						"flex items-center rounded-lg",
-						collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
+						collapsed ? "size-9 justify-center" : "h-10 p-3 gap-3",
 					)}
 				>
 					<Skeleton className="shrink-0 size-4.25 rounded-md bg-sidebar-foreground/10" />
@@ -63,6 +113,86 @@ function ProNavSkeleton({ collapsed }: { collapsed: boolean }) {
 				</div>
 			))}
 		</nav>
+	);
+}
+
+function NavLink({
+	collapsed,
+	to,
+	label,
+	icon: Icon,
+	active,
+	onClick,
+}: {
+	collapsed: boolean;
+	to: string;
+	label: string;
+	icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+	active: boolean;
+	onClick?: () => void;
+}) {
+	return (
+		<SidebarTooltip collapsed={collapsed} label={label}>
+			<Link
+				to={to}
+				aria-label={collapsed ? label : undefined}
+				className={cn(
+					"group relative flex items-center rounded-lg text-[13.5px] transition-premium",
+					collapsed ? "size-9 justify-center" : "h-10 p-3 gap-3",
+					active
+						? "text-foreground"
+						: "text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
+				)}
+				onClick={onClick}
+			>
+				{active && (
+					<span className="absolute inset-0 rounded-lg bg-linear-to-r from-primary/20 via-primary/10 to-transparent ring-1 ring-inset ring-primary/20" />
+				)}
+				<Icon
+					className={cn(
+						"relative shrink-0",
+						collapsed ? "size-4.5" : "size-4.25",
+						active ? "text-primary" : "",
+					)}
+					strokeWidth={active ? 2.25 : 1.9}
+				/>
+				{!collapsed && (
+					<span className="relative font-medium">{label}</span>
+				)}
+			</Link>
+		</SidebarTooltip>
+	);
+}
+
+function ProNavButton({
+	collapsed,
+	label,
+	icon: Icon,
+	onClick,
+}: {
+	collapsed: boolean;
+	label: string;
+	icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+	onClick: () => void;
+}) {
+	return (
+		<SidebarTooltip collapsed={collapsed} label={label}>
+			<button
+				type="button"
+				aria-label={collapsed ? label : undefined}
+				className={cn(
+					"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
+					collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
+					"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
+				)}
+				onClick={onClick}
+			>
+				<Icon className="relative shrink-0 size-4.25" strokeWidth={1.9} />
+				{!collapsed && (
+					<span className="relative font-medium">{label}</span>
+				)}
+			</button>
+		</SidebarTooltip>
 	);
 }
 
@@ -76,9 +206,7 @@ export function SidebarContent({
 	const orgId = useOrgStore((s) => s.orgId);
 	const teams = useTeamStore((s) => s.teams);
 	const hasTeamsInOrg = teams.some((t) => t.organizationId === orgId);
-	const [activeDialog, setActiveDialog] = useState<
-		"analytics" | "webhooks" | "api-keys" | null
-	>(null);
+	const [activeDialog, setActiveDialog] = useState<DialogType | null>(null);
 
 	return (
 		<TooltipProvider delayDuration={0}>
@@ -116,79 +244,33 @@ export function SidebarContent({
 					collapsed ? "px-3 items-center" : "px-3",
 				)}
 			>
-				{!teamLoaded
-					? nav.map((item) => (
-							<div
-								key={item.to}
-								className={cn(
-									"flex items-center rounded-lg",
-									collapsed ? "size-9 justify-center" : "h-10 p-3 gap-3",
-								)}
-							>
-								<Skeleton
-									className={cn(
-										"shrink-0 rounded-md bg-sidebar-foreground/10",
-										collapsed ? "size-4.5" : "size-4.25",
-									)}
-								/>
-								{!collapsed && (
-									<Skeleton className="h-3.5 w-20 rounded-md bg-sidebar-foreground/10" />
-								)}
-							</div>
-						))
-					: nav.map((item) => {
-							const active = pathname === item.to;
-							const Icon = item.icon;
-							return (
-								<SidebarTooltip
-									key={item.to}
-									collapsed={collapsed}
-									label={item.label}
-								>
-									<Link
-										to={item.to}
-										aria-label={collapsed ? item.label : undefined}
-										className={cn(
-											"group relative flex items-center rounded-lg text-[13.5px] transition-premium",
-											collapsed ? "size-9 justify-center" : "h-10 p-3 gap-3",
-											active
-												? "text-foreground"
-												: "text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
-										)}
-										onClick={onNavigate}
-									>
-										{active && (
-											<span className="absolute inset-0 rounded-lg bg-linear-to-r from-primary/20 via-primary/10 to-transparent ring-1 ring-inset ring-primary/20" />
-										)}
-										<Icon
-											className={cn(
-												"relative shrink-0",
-												collapsed ? "size-4.5" : "size-4.25",
-												active ? "text-primary" : "",
-											)}
-											strokeWidth={active ? 2.25 : 1.9}
-										/>
-										{!collapsed && (
-											<span className="relative font-medium">{item.label}</span>
-										)}
-									</Link>
-								</SidebarTooltip>
-							);
-						})}
+				{!teamLoaded ? (
+					<NavSkeleton collapsed={collapsed} count={nav.length} />
+				) : (
+					nav.map((item) => (
+						<NavLink
+							key={item.to}
+							collapsed={collapsed}
+							to={item.to}
+							label={item.label}
+							icon={item.icon}
+							active={pathname === item.to}
+							onClick={onNavigate}
+						/>
+					))
+				)}
 			</nav>
 
 			{/* Teams Section */}
 			<div className={cn("mt-3 shrink-0", collapsed ? "px-3" : "px-3")}>
-				{!collapsed && (
+				{!collapsed && hasTeamsInOrg && (
 					<div className="flex items-center justify-between px-3 mb-1.5">
 						<span className="text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
-							{!teamLoaded ? "" : hasTeamsInOrg && "Teams"}
+							Teams
 						</span>
 					</div>
 				)}
-				<div
-					className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
-				>
+				<div className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
 					{!teamLoaded ? (
 						<div className={cn(collapsed ? "" : "px-1")}>
 							<Skeleton
@@ -215,79 +297,20 @@ export function SidebarContent({
 					collapsed ? "px-3 items-center" : "px-3",
 				)}
 			>
-				{!collapsed && teamLoaded && (
-					<div className="px-3 mb-1.5">
-						<span className="text-[10.5px] font-semibold tracking-[0.12em] text-muted-foreground/80 uppercase">
-							Pro
-						</span>
-					</div>
-				)}
+				{teamLoaded && <SectionLabel collapsed={collapsed} label="Pro" />}
 				{!teamLoaded ? (
-					<ProNavSkeleton collapsed={collapsed} />
+					<NavSkeleton collapsed={collapsed} count={proItems.length} />
 				) : (
-					<nav
-						className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
-					>
-						<SidebarTooltip collapsed={collapsed} label="Analytics">
-							<button
-								type="button"
-								aria-label={collapsed ? "Analytics" : undefined}
-								className={cn(
-									"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
-									collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
-									"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
-								)}
-								onClick={() => setActiveDialog("analytics")}
-							>
-								<BarChart3
-									className="relative shrink-0 size-4.25"
-									strokeWidth={1.9}
-								/>
-								{!collapsed && (
-									<span className="relative font-medium">Analytics</span>
-								)}
-							</button>
-						</SidebarTooltip>
-						<SidebarTooltip collapsed={collapsed} label="Webhooks">
-							<button
-								type="button"
-								aria-label={collapsed ? "Webhooks" : undefined}
-								className={cn(
-									"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
-									collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
-									"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
-								)}
-								onClick={() => setActiveDialog("webhooks")}
-							>
-								<Webhook
-									className="relative shrink-0 size-4.25"
-									strokeWidth={1.9}
-								/>
-								{!collapsed && (
-									<span className="relative font-medium">Webhooks</span>
-								)}
-							</button>
-						</SidebarTooltip>
-						<SidebarTooltip collapsed={collapsed} label="API Keys">
-							<button
-								type="button"
-								aria-label={collapsed ? "API Keys" : undefined}
-								className={cn(
-									"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
-									collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
-									"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
-								)}
-								onClick={() => setActiveDialog("api-keys")}
-							>
-								<KeyRound
-									className="relative shrink-0 size-4.25"
-									strokeWidth={1.9}
-								/>
-								{!collapsed && (
-									<span className="relative font-medium">API Keys</span>
-								)}
-							</button>
-						</SidebarTooltip>
+					<nav className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
+						{proItems.map((item) => (
+							<ProNavButton
+								key={item.dialog}
+								collapsed={collapsed}
+								label={item.label}
+								icon={item.icon}
+								onClick={() => setActiveDialog(item.dialog)}
+							/>
+						))}
 					</nav>
 				)}
 			</div>
@@ -320,24 +343,15 @@ export function SidebarContent({
 			</div>
 
 			{/* Pro feature dialogs */}
-			<ProFeatureDialog
-				slotName="dashboard-sidebar-analytics"
-				open={activeDialog === "analytics"}
-				onOpenChange={(o) => !o && setActiveDialog(null)}
-				FallbackComponent={AnalyticsFallback}
-			/>
-			<ProFeatureDialog
-				slotName="dashboard-sidebar-webhooks"
-				open={activeDialog === "webhooks"}
-				onOpenChange={(o) => !o && setActiveDialog(null)}
-				FallbackComponent={WebhooksFallback}
-			/>
-			<ProFeatureDialog
-				slotName="dashboard-sidebar-api-keys"
-				open={activeDialog === "api-keys"}
-				onOpenChange={(o) => !o && setActiveDialog(null)}
-				FallbackComponent={ApiKeysFallback}
-			/>
+			{proItems.map((item) => (
+				<ProFeatureDialog
+					key={item.dialog}
+					slotName={item.slotName}
+					open={activeDialog === item.dialog}
+					onOpenChange={(o) => !o && setActiveDialog(null)}
+					FallbackComponent={item.fallback}
+				/>
+			))}
 		</TooltipProvider>
 	);
 }
