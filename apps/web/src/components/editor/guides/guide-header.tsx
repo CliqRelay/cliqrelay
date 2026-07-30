@@ -2,13 +2,11 @@ import { useState } from "react";
 
 import type { Guide } from "@repo/api-client";
 
-import type { AppUser } from "@/models/auth";
 import { GuideEditableDescription } from "./guide-editable-description";
 import { GuideEditableTitle } from "./guide-editable-title";
 import { GuideMetadataCard } from "./guide-metadata-card";
 
 type Props = {
-	user: AppUser;
 	guide: Guide;
 	isEditMode: boolean;
 	stepCount: number;
@@ -19,7 +17,6 @@ type Props = {
 };
 
 export function GuideHeader({
-	user,
 	guide,
 	isEditMode,
 	stepCount,
@@ -49,7 +46,7 @@ export function GuideHeader({
 				onStopEditing={() => setEditingGuideField(null)}
 			/>
 
-			<GuideMetadataCard user={user} guide={guide} stepCount={stepCount} />
+			<GuideMetadataCard guide={guide} stepCount={stepCount} />
 		</div>
 	);
 }

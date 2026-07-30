@@ -60,7 +60,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
-						CreatorID: creatorUserID,
+						CreatorID: new(creatorUserID),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).

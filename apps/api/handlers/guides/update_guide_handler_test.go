@@ -82,7 +82,7 @@ func TestUpdateGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Draft Title",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -90,7 +90,7 @@ func TestUpdateGuideHandler(t *testing.T) {
 				mockRepo.On("Update", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Updated Title",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -100,7 +100,7 @@ func TestUpdateGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Draft Title",
 						Status:    models.StatusDraft,
 					}, nil).

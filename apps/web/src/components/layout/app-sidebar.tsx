@@ -1,23 +1,18 @@
 import { useState } from "react";
 
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import {
 	ChevronLeft,
 	ChevronRight,
 	FileText,
 	KeyRound,
 	LayoutDashboard,
-	Sparkles,
 	Star,
 	Trash,
 	Webhook,
 } from "lucide-react";
 
-import {
-	ExtensionSlot,
-	extensionRegistry,
-	type NavItem,
-} from "@repo/extensions-sdk";
+import { ExtensionSlot } from "@repo/extensions-sdk";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,11 +23,11 @@ import { useTeamStore } from "@/stores/team-store";
 import { Logo } from "./logo";
 import { ApiKeysFallback } from "../pro/api-keys-fallback";
 import { WebhooksFallback } from "../pro/webhooks-fallback";
-import { ProFallback } from "../pro/pro-fallback";
+import { LearAboutProCollapsedFallback } from "../pro/learn-about-pro-collapsed-fallback";
+import { LearnAboutProFallback } from "../pro/learn-about-pro-fallback";
 import { ProFeatureDialog } from "../pro/pro-feature-dialog";
 import { SidebarTooltip } from "./sidebar-tooltip";
 import { TeamsDropdown } from "./teams-dropdown";
-import { Separator } from "../ui/separator";
 
 const nav = [
 	{ label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
@@ -79,7 +74,6 @@ export function SidebarContent({
 	const orgId = useOrgStore((s) => s.orgId);
 	const teams = useTeamStore((s) => s.teams);
 	const hasTeamsInOrg = teams.some((t) => t.organizationId === orgId);
-	const extNavItems = extensionRegistry.getNavItems();
 	const [activeDialog, setActiveDialog] = useState<
 		"webhooks" | "api-keys" | null
 	>(null);
@@ -283,38 +277,35 @@ export function SidebarContent({
 					collapsed ? "px-2 pb-3 items-center" : "px-3 pb-3",
 				)}
 			>
-				{/* Extension slot */}
-				<ExtensionSlot name="dashboard-sidebar-bottom" />
-
-				{/* Upgrade */}
 				{teamLoaded &&
 					(collapsed ? (
-						<SidebarTooltip collapsed={collapsed} label="Upgrade to Pro">
-							<button
-								type="button"
-								className="flex size-9 items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-colors"
-								aria-label="Upgrade to Pro"
-							>
-								<Sparkles className="size-4.5" />
-							</button>
-						</SidebarTooltip>
+						<>
+							<ExtensionSlot
+								name="dashboard-sidebar-learn-about-pro-upgrade-collapsed"
+								fallback={LearAboutProCollapsedFallback}
+							/>
+							<ExtensionSlot name="dashboard-sidebar-stats-collapsed" />
+						</>
 					) : (
-						<ExtensionSlot
-							name="dashboard-sidebar-pro"
-							fallback={ProFallback}
-						/>
+						<>
+							<ExtensionSlot
+								name="dashboard-sidebar-learn-about-pro-upgrade"
+								fallback={LearnAboutProFallback}
+							/>
+							<ExtensionSlot name="dashboard-sidebar-stats" />
+						</>
 					))}
 			</div>
 
 			{/* Pro feature dialogs */}
 			<ProFeatureDialog
-				slotName="sidebar-webhooks"
+				slotName="dashboard-sidebar-webhooks"
 				open={activeDialog === "webhooks"}
 				onOpenChange={(o) => !o && setActiveDialog(null)}
 				FallbackComponent={WebhooksFallback}
 			/>
 			<ProFeatureDialog
-				slotName="sidebar-api-keys"
+				slotName="dashboard-sidebar-api-keys"
 				open={activeDialog === "api-keys"}
 				onOpenChange={(o) => !o && setActiveDialog(null)}
 				FallbackComponent={ApiKeysFallback}
@@ -332,7 +323,7 @@ export function AppSidebar({ collapsed, onToggleCollapse }: AppSidebarProps) {
 	return (
 		<aside
 			className={cn(
-				"hidden md:flex h-screen sticky top-0 shrink-0 flex-col overflow-hidden bg-sidebar shadow-soft transition-[width] duration-250 ease-in-out",
+				"hidden md:flex h-screen sticky top-0 shrink-0 flex-col overflow-hidden bg-sidebar transition-[width] duration-250 ease-in-out border-r",
 				collapsed ? "w-18" : "w-70",
 			)}
 		>

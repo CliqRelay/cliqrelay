@@ -57,7 +57,7 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 
 	guideCreated, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
 		TeamID:      parsedTeamID,
-		CreatorID:   actor.ID,
+		CreatorID:   new(actor.ID),
 		Title:       req.Title,
 		Description: req.Description,
 	})
@@ -82,7 +82,7 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 
 	guide, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
 		TeamID:      parsedTeamID,
-		CreatorID:   actor.ID,
+		CreatorID:   new(actor.ID),
 		Title:       "Getting Started with CliqRelay",
 		Description: new("A sample guide to show you how CliqRelay works"),
 	})
@@ -141,6 +141,9 @@ func (s *GuidesService) GetAll(ctx context.Context, teamID string, status *strin
 	}
 	filter.TeamID = &parsedTeamID
 	filter.ViewerUserID = viewerUserID
+	if viewerUserID != nil {
+		filter.AccessibleOnly = true
+	}
 	filter.ExcludeArchived = excludeArchived
 
 	if status != nil {

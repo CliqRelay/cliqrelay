@@ -26,17 +26,67 @@ export const Route = createFileRoute("/dashboard/guides")({
 
 function GuidesSkeleton() {
 	return (
-		<div className="w-full p-8 space-y-4">
-			<div className="h-8 w-48 animate-pulse rounded bg-muted" />
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-				{Array.from({ length: 4 }).map((_, i) => (
-					<div
-						key={i}
-						className="h-30 animate-pulse rounded-[20px] bg-muted/50"
-					/>
-				))}
+		<div className="dashboard-page__wrapper">
+			<div className="relative mb-6 flex items-start justify-between">
+				<div>
+					<div className="flex items-center gap-3">
+						<div className="size-6 animate-pulse rounded bg-muted" />
+						<div className="h-8 w-24 animate-pulse rounded bg-muted" />
+					</div>
+					<div className="mt-1.5 h-4 w-64 animate-pulse rounded bg-muted/50" />
+				</div>
 			</div>
-			<div className="h-64 animate-pulse rounded-[20px] bg-muted/30" />
+
+			<div className="flex gap-6">
+				<div className="flex-1 flex flex-col justify-between">
+					<div className="space-y-4">
+						<div className="flex gap-1 p-1 border border-muted-background rounded-lg w-[360px]">
+							{Array.from({ length: 4 }).map((_, i) => (
+								<div
+									key={i}
+									className="h-8 flex-1 animate-pulse rounded-md bg-muted"
+								/>
+							))}
+						</div>
+
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+							{Array.from({ length: 6 }).map((_, i) => (
+								<div
+									key={i}
+									className="rounded-2xl surface-card p-4 space-y-3"
+								>
+									<div className="flex items-start justify-between gap-2">
+										<div className="flex items-center gap-1.5">
+											<div className="h-5 w-16 animate-pulse rounded-md bg-muted" />
+											<div className="h-5 w-20 animate-pulse rounded-md bg-muted/50" />
+										</div>
+										<div className="size-5 animate-pulse rounded bg-muted" />
+									</div>
+									<div className="space-y-2">
+										<div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
+										<div className="h-4 w-full animate-pulse rounded bg-muted/50" />
+									</div>
+									<div className="flex items-center gap-2 pt-1">
+										<div className="h-5 w-14 animate-pulse rounded-md bg-muted" />
+										<div className="h-4 w-16 animate-pulse rounded bg-muted/30" />
+										<div className="h-4 w-1 animate-pulse rounded bg-muted/20" />
+										<div className="h-4 w-20 animate-pulse rounded bg-muted/30" />
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+
+					<div className="mt-8 flex justify-center gap-1.5">
+						{Array.from({ length: 5 }).map((_, i) => (
+							<div
+								key={i}
+								className="h-9 w-9 animate-pulse rounded-[14px] bg-surface-1 border border-border"
+							/>
+						))}
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }

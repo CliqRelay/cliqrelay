@@ -71,8 +71,13 @@ func (GuideSortField) PrepareJSONSchema(schema *jsonschema.Schema) error {
 
 type GuideWithStarred struct {
 	models.Guide `json:",inline"`
-	IsStarred    bool `json:"is_starred"`
-	TotalCount   int  `json:"-" bun:"total_count"`
+	IsStarred    bool           `json:"is_starred"`
+	CrID         *string        `bun:"cr_id"`
+	CrName       string         `bun:"cr_name"`
+	CrEmail      string         `bun:"cr_email"`
+	CrImage      *string        `bun:"cr_image"`
+	CrMetadata   map[string]any `bun:"cr_metadata"`
+	TotalCount   int            `json:"-" bun:"total_count"`
 }
 
 type GuideFilter struct {
@@ -110,7 +115,7 @@ func (r *CreateGuideRequest) Validate() error {
 
 type CreateGuideDTO struct {
 	TeamID      uuid.UUID `json:"team_id" validate:"required"`
-	CreatorID   string    `json:"-"`
+	CreatorID   *string   `json:"-"`
 	Title       string    `json:"title" required:"true" validate:"required,lte=255"`
 	Description *string   `json:"description,omitempty"`
 }
@@ -148,8 +153,8 @@ type GetGuideByIDResponse struct {
 }
 
 type UpdateGuideRequest struct {
-	Title       *string           `json:"title,omitempty" validate:"omitempty,gt=0,lte=255" nullable:"true"`
-	Description *string           `json:"description,omitempty" validate:"omitempty,gt=0" nullable:"true"`
+	Title       *string            `json:"title,omitempty" validate:"omitempty,gt=0,lte=255" nullable:"true"`
+	Description *string            `json:"description,omitempty" validate:"omitempty,gt=0" nullable:"true"`
 	Visibility  *models.Visibility `json:"visibility,omitempty" validate:"omitempty,oneof=private team public" nullable:"true"`
 }
 

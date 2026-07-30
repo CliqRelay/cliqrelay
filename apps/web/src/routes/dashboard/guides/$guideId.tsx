@@ -14,7 +14,7 @@ import { api } from "@repo/api-client";
 
 import { GuideEditor } from "@/components/editor/guides/guide-editor";
 import { GuideActionsDropdown } from "@/components/guides/guide-actions-dropdown";
-import { GuideStatus } from "@/components/guides/guide-status";
+import { GuideStatusBadge } from "@/components/guides/guide-status-badge";
 import { StarButton } from "@/components/guides/star-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -68,7 +68,6 @@ function GuideNotFound() {
 }
 
 function GuideDetailPage() {
-	const { user } = Route.useRouteContext();
 	const { guide } = Route.useLoaderData();
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -161,7 +160,7 @@ function GuideDetailPage() {
 					{/* Title */}
 					<div className="flex flex-1 items-center gap-3">
 						<h1 className="truncate text-lg font-bold">{currentGuide.title}</h1>
-						<GuideStatus status={currentGuide.status} />
+						<GuideStatusBadge status={currentGuide.status} />
 						<StarButton
 							isStarred={currentGuide.isStarred}
 							onToggle={handleStarToggle}
@@ -195,17 +194,14 @@ function GuideDetailPage() {
 			</header>
 
 			{/* Main content */}
-			{user && (
-				<div className="p-6">
-					<GuideEditor
-						user={user}
-						guide={currentGuide}
-						mode={mode}
-						onModeChange={setMode}
-						onUpdateGuide={handleUpdateGuide}
-					/>
-				</div>
-			)}
+			<div className="p-6">
+				<GuideEditor
+					guide={currentGuide}
+					mode={mode}
+					onModeChange={setMode}
+					onUpdateGuide={handleUpdateGuide}
+				/>
+			</div>
 		</div>
 	);
 }

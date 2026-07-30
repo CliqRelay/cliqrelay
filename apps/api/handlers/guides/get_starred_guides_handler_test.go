@@ -36,8 +36,8 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			setup: func(mockRepo *tests.MockStarredGuidesRepository) {
 				mockRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*types.GuideWithStarred{
-						{Guide: models.Guide{ID: uuid.New(), CreatorID: "test-user-123", Title: "Starred Guide 1", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
-						{Guide: models.Guide{ID: uuid.New(), CreatorID: "test-user-123", Title: "Starred Guide 2", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
+						{Guide: models.Guide{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Starred Guide 1", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
+						{Guide: models.Guide{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Starred Guide 2", Status: models.StatusDraft, IsStarred: true}, IsStarred: true},
 					}, 2, nil).
 					Once()
 			},

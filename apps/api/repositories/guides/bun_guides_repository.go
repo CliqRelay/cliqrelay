@@ -56,8 +56,14 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 	var rows []*types.GuideWithStarred
 	query := r.db.NewSelect().
 		ColumnExpr("g.*").
+		ColumnExpr("u.id AS cr_id").
+		ColumnExpr("u.name AS cr_name").
+		ColumnExpr("u.email AS cr_email").
+		ColumnExpr("u.image AS cr_image").
+		ColumnExpr("u.metadata AS cr_metadata").
 		ColumnExpr("COUNT(*) OVER() AS total_count").
-		TableExpr("guides g")
+		TableExpr("guides g").
+		Join("LEFT JOIN users u ON u.id = g.creator_id")
 
 	if filter != nil {
 		if filter.ViewerUserID != nil {
@@ -136,23 +142,58 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 	for i, row := range rows {
 		guides[i] = &row.Guide
 		guides[i].IsStarred = row.IsStarred
+		if row.CrID != nil {
+			guides[i].Creator = &models.GuideCreator{
+				ID:       *row.CrID,
+				Name:     row.CrName,
+				Email:    row.CrEmail,
+				Image:    row.CrImage,
+				Metadata: row.CrMetadata,
+			}
+		}
 	}
 
 	return guides, total, nil
 }
 
 func (r *BunGuidesRepository) GetByID(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
+	type guideWithCreator struct {
+		models.Guide
+		CrID       *string        `bun:"cr_id"`
+		CrName     string         `bun:"cr_name"`
+		CrEmail    string         `bun:"cr_email"`
+		CrImage    *string        `bun:"cr_image"`
+		CrMetadata map[string]any `bun:"cr_metadata"`
+	}
 
+	var row guideWithCreator
 	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Scan(ctx)
+		ColumnExpr("g.*").
+		ColumnExpr("u.id AS cr_id").
+		ColumnExpr("u.name AS cr_name").
+		ColumnExpr("u.email AS cr_email").
+		ColumnExpr("u.image AS cr_image").
+		ColumnExpr("u.metadata AS cr_metadata").
+		TableExpr("guides g").
+		Join("LEFT JOIN users u ON u.id = g.creator_id").
+		Where("g.id = ?", id).
+		Scan(ctx, &row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
+	}
+
+	guide := &row.Guide
+	if row.CrID != nil {
+		guide.Creator = &models.GuideCreator{
+			ID:       *row.CrID,
+			Name:     row.CrName,
+			Email:    row.CrEmail,
+			Image:    row.CrImage,
+			Metadata: row.CrMetadata,
+		}
 	}
 
 	return guide, nil
@@ -284,7 +325,6 @@ func (r *BunGuidesRepository) Unpublish(ctx context.Context, id string) (*models
 	}
 
 	guide.Status = models.StatusDraft
-	guide.Visibility = models.VisibilityPrivate
 	guide.PublishedAt = nil
 	guide.ArchivedAt = nil
 	guide.DeletedAt = nil
@@ -489,10 +529,10 @@ func (r *BunGuidesRepository) BulkRestore(ctx context.Context, ids []uuid.UUID, 
 		Set("archived_at = NULL").
 		Set("published_at = NULL").
 		Set("updated_at = ?", now).
-		Where("id IN (?)", bun.In(ids)).
+		Where("id IN (?)", bun.List(ids)).
 		Where("team_id = ?", teamID).
 		Where("deleted_at IS NOT NULL").
-		Where("(creator_id = ? OR (? AND visibility IN (?)))", actorID, isAdmin, bun.In([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
+		Where("(creator_id = ? OR (? AND visibility IN (?)))", actorID, isAdmin, bun.List([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
 
 	res, err := query.Exec(ctx)
 	if err != nil {
@@ -511,10 +551,10 @@ func (r *BunGuidesRepository) BulkPermanentlyDelete(ctx context.Context, ids []u
 		Model((*models.Guide)(nil)).
 		Set("purge_requested_at = ?", now).
 		Set("updated_at = ?", now).
-		Where("id IN (?)", bun.In(ids)).
+		Where("id IN (?)", bun.List(ids)).
 		Where("team_id = ?", teamID).
 		Where("deleted_at IS NOT NULL").
-		Where("(creator_id = ? OR (? AND visibility IN (?)))", actorID, isAdmin, bun.In([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
+		Where("(creator_id = ? OR (? AND visibility IN (?)))", actorID, isAdmin, bun.List([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
 
 	res, err := query.Exec(ctx)
 	if err != nil {

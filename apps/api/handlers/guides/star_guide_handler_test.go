@@ -63,7 +63,7 @@ func TestStarGuideHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Guide Title",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -76,7 +76,7 @@ func TestStarGuideHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Guide Title",
 						Status:    models.StatusDraft,
 					}, nil).

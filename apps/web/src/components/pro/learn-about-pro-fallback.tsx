@@ -9,7 +9,10 @@ type Props = {
 	onUpgrade?: () => Promise<void>;
 };
 
-export function ProFallback({ isUpgradeAvailable = false, onUpgrade }: Props) {
+export function LearnAboutProFallback({
+	isUpgradeAvailable = false,
+	onUpgrade,
+}: Props) {
 	return (
 		<div className="rounded-xl p-3.5 bg-linear-to-b from-primary/5 to-transparent border border-primary/8">
 			<div className="flex items-center gap-1.5 mb-1">

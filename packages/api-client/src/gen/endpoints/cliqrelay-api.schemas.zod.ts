@@ -5,6 +5,17 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+export const GuideCreator = zod.object({
+	email: zod.string(),
+	id: zod.string(),
+	image: zod.string().nullish(),
+	metadata: zod.record(zod.string(), zod.unknown()).nullish(),
+	name: zod.string(),
+});
+
+export type GuideCreator = zod.input<typeof GuideCreator>;
+export type GuideCreatorOutput = zod.output<typeof GuideCreator>;
+
 export const Uuid = zod.uuid();
 
 export type Uuid = zod.input<typeof Uuid>;
@@ -27,7 +38,8 @@ export type VisibilityOutput = zod.output<typeof Visibility>;
 export const Guide = zod.object({
 	archivedAt: zod.iso.datetime({ offset: true }).nullish(),
 	createdAt: zod.iso.datetime({ offset: true }),
-	creatorId: zod.string(),
+	creator: zod.union([zod.null(), GuideCreator]).optional(),
+	creatorId: zod.string().nullable(),
 	deletedAt: zod.iso.datetime({ offset: true }).nullish(),
 	description: zod.string().nullish(),
 	durationSeconds: zod.int(),

@@ -29,7 +29,7 @@ func seedTeamWithGuide(t *testing.T, db bun.IDB, userID, title string) (*models.
 	guide := &models.Guide{
 		ID:        uuid.New(),
 		TeamID:    teamID,
-		CreatorID: userID,
+		CreatorID: new(userID),
 		Title:     title,
 		Status:    models.StatusDraft,
 	}

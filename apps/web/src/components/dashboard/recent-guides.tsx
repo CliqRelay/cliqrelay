@@ -3,7 +3,7 @@ import { FileText, Star } from "lucide-react";
 
 import { api } from "@repo/api-client";
 
-import { GuideStatus } from "@/components/guides/guide-status";
+import { GuideStatusBadge } from "@/components/guides/guide-status-badge";
 import {
 	Empty,
 	EmptyDescription,
@@ -93,7 +93,7 @@ export function RecentGuides({ teamId }: { teamId?: string }) {
 								{g.title}
 							</div>
 							<div className="mt-1 flex items-center gap-1.5">
-								<GuideStatus status={g.status} />
+								<GuideStatusBadge status={g.status} />
 								<span className="text-[11px] text-muted-foreground">
 									Updated {timeAgo(g.updatedAt)}
 								</span>

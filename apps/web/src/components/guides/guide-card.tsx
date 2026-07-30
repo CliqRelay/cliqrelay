@@ -14,6 +14,7 @@ import {
 	Shuffle,
 	Trash2,
 	Undo2,
+	UserRound,
 	Users,
 } from "lucide-react";
 
@@ -40,9 +41,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTeamStore } from "@/stores/team-store";
 import { useUserStore } from "@/stores/user-store";
 import { formatDuration, timeAgo } from "@/utils/time.utils";
-import { GuideStatus } from "./guide-status";
+import { GuideStatusBadge } from "./guide-status-badge";
 import { MoveToTeamSlot } from "./move-to-team-slot";
 import { StarButton } from "./star-button";
+import { cn } from "@/lib/utils";
 
 type Props = {
 	guide: Guide;
@@ -84,7 +86,7 @@ export function GuideCard({
 	const teams = useTeamStore((s) => s.teams);
 	const teamName = teams.find((t) => t.id === guide.teamId)?.name;
 	const userId = useUserStore((s) => s.userId);
-	const isCreator = userId === guide.creatorId;
+	const isCreator = guide.creatorId !== null && userId === guide.creatorId;
 
 	const [moveToTeamOpen, setMoveToTeamOpen] = useState<boolean>(false);
 	const [visibilityDialogOpen, setVisibilityDialogOpen] =
@@ -99,7 +101,10 @@ export function GuideCard({
 			<div
 				role="button"
 				tabIndex={0}
-				className={`group relative flex flex-col rounded-2xl surface-card surface-card-hover transition-all duration-200 cursor-pointer mx-auto w-full max-w-sm ${selectable && selected ? "ring-2 ring-primary" : ""}`}
+				className={cn(
+					"group relative flex flex-col rounded-2xl surface-card surface-card-hover transition-all duration-200 cursor-pointer mx-auto w-full max-w-sm",
+					selectable && selected && "ring-2 ring-primary",
+				)}
 				onClick={() => {
 					if (selectable && guide.status === "deleted") return;
 					navigate({
@@ -163,17 +168,32 @@ export function GuideCard({
 					</div>
 
 					<div className="mt-auto flex items-center gap-2 pt-1">
-						<GuideStatus status={guide.status} />
+						{guide.creator?.name && (
+							<>
+								<div className="flex items-center gap-1 text-[11px] text-muted-foreground/60">
+									<UserRound className="size-3" />
+									<span>{guide.creator.name}</span>
+								</div>
+								<span className="text-[11px] text-muted-foreground/40 mx-0.5">
+									|
+								</span>
+							</>
+						)}
+
 						<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/50">
 							<Clock className="size-3" />
 							<span>{formatDuration(guide.durationSeconds)}</span>
 						</div>
 						<span className="text-[11px] text-muted-foreground/40 mx-0.5">
-							·
+							|
 						</span>
 						<span className="text-[11px] text-muted-foreground/50">
 							{timeAgo(guide.updatedAt)}
 						</span>
+						<span className="text-[11px] text-muted-foreground/40 mx-0.5">
+							|
+						</span>
+						<GuideStatusBadge status={guide.status} />
 						<div className="ml-auto">
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
@@ -194,7 +214,6 @@ export function GuideCard({
 													className="text-[13px] gap-2.5 rounded-lg px-3 py-2 cursor-pointer"
 													onClick={(e) => {
 														e.stopPropagation();
-														e.preventDefault();
 														onRestore(guide.id);
 													}}
 												>
@@ -209,7 +228,6 @@ export function GuideCard({
 														className="text-[13px] gap-2.5 rounded-lg px-3 py-2 text-destructive focus:text-destructive cursor-pointer"
 														onClick={(e) => {
 															e.stopPropagation();
-															e.preventDefault();
 															onDeletePermanently(guide.id);
 														}}
 													>
@@ -225,7 +243,6 @@ export function GuideCard({
 												<DropdownMenuItem
 													onClick={(e) => {
 														e.stopPropagation();
-														e.preventDefault();
 														onPublish(guide.id);
 													}}
 												>
@@ -237,7 +254,6 @@ export function GuideCard({
 												<DropdownMenuItem
 													onClick={(e) => {
 														e.stopPropagation();
-														e.preventDefault();
 														onUnpublish(guide.id);
 													}}
 												>
@@ -250,7 +266,6 @@ export function GuideCard({
 												<DropdownMenuItem
 													onClick={(e) => {
 														e.stopPropagation();
-														e.preventDefault();
 														onArchive?.(guide.id);
 													}}
 												>
@@ -262,7 +277,6 @@ export function GuideCard({
 												<DropdownMenuItem
 													onClick={(e) => {
 														e.stopPropagation();
-														e.preventDefault();
 														onUnarchive(guide.id);
 													}}
 												>
@@ -273,7 +287,6 @@ export function GuideCard({
 											<DropdownMenuItem
 												onClick={(e) => {
 													e.stopPropagation();
-													e.preventDefault();
 													setSelectedVisibility(guide.visibility);
 													setVisibilityDialogOpen(true);
 												}}
@@ -284,7 +297,6 @@ export function GuideCard({
 											<DropdownMenuItem
 												onClick={(e) => {
 													e.stopPropagation();
-													e.preventDefault();
 													setMoveToTeamOpen(true);
 												}}
 											>
@@ -296,7 +308,6 @@ export function GuideCard({
 												className="text-destructive focus:text-destructive"
 												onClick={(e) => {
 													e.stopPropagation();
-													e.preventDefault();
 													onDelete?.(guide.id);
 												}}
 											>

@@ -89,6 +89,15 @@ func (s *StarredGuidesService) GetStarredGuides(ctx context.Context, filter *typ
 	for i, row := range rows {
 		guides[i] = &row.Guide
 		guides[i].IsStarred = true
+		if row.CrID != nil {
+			guides[i].Creator = &models.GuideCreator{
+				ID:       *row.CrID,
+				Name:     row.CrName,
+				Email:    row.CrEmail,
+				Image:    row.CrImage,
+				Metadata: row.CrMetadata,
+			}
+		}
 	}
 
 	return guides, total, nil

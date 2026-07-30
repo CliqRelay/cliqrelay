@@ -37,8 +37,8 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
-						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Guide 1", Status: models.StatusDraft},
-						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Guide 2", Status: models.StatusDraft},
+						{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Guide 1", Status: models.StatusDraft},
+						{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Guide 2", Status: models.StatusDraft},
 					}, 2, nil).
 					Once()
 			},
@@ -73,7 +73,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
-						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Archived Guide", Status: models.StatusArchived},
+						{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Archived Guide", Status: models.StatusArchived},
 					}, 1, nil).
 					Once()
 			},
@@ -86,7 +86,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository) {
 				mockGuidesRepo.On("GetAll", mock.Anything, mock.Anything).
 					Return([]*models.Guide{
-						{ID: uuid.New(), CreatorID: "test-user-123", Title: "Deleted Guide", Status: models.StatusDeleted},
+						{ID: uuid.New(), CreatorID: new("test-user-123"), Title: "Deleted Guide", Status: models.StatusDeleted},
 					}, 1, nil).
 					Once()
 			},

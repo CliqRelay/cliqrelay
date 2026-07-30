@@ -72,9 +72,11 @@ func (uc *GuidesUseCase) Get(ctx context.Context, actor *authulamodels.Actor, gu
 		return nil, err
 	}
 
-	starred, err := uc.starredService.IsStarred(ctx, guideID, actor.ID)
-	if err == nil {
-		guide.IsStarred = starred
+	if uc.starredService != nil {
+		starred, err := uc.starredService.IsStarred(ctx, guideID, actor.ID)
+		if err == nil {
+			guide.IsStarred = starred
+		}
 	}
 
 	return guide, nil
@@ -91,7 +93,7 @@ func (uc *GuidesUseCase) Update(ctx context.Context, actor *authulamodels.Actor,
 		return nil, err
 	}
 
-	if req.Visibility != nil && *req.Visibility == models.VisibilityPrivate && guide.CreatorID != actor.ID {
+	if req.Visibility != nil && *req.Visibility == models.VisibilityPrivate && (guide.CreatorID == nil || *guide.CreatorID != actor.ID) {
 		return nil, constants.ErrCannotSetGuideToPrivate
 	}
 

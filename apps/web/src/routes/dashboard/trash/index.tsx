@@ -9,7 +9,6 @@ import { api } from "@repo/api-client";
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
 import { GuidesList } from "@/components/guides/guides-list";
 import { TrashPageHeader } from "@/components/trash/trash-page-header";
-import { TrashSidebar } from "@/components/trash/trash-sidebar";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { useTeamStore } from "@/stores/team-store";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
@@ -53,15 +52,6 @@ function TrashSkeleton() {
 								</div>
 							</div>
 						))}
-					</div>
-				</div>
-				<div className="hidden xl:block w-72 shrink-0">
-					<div className="rounded-[20px] p-6 bg-surface-1 border border-(--trash-card-border)">
-						<div className="flex flex-col items-center gap-3">
-							<div className="size-14 rounded-full animate-pulse bg-muted/30" />
-							<div className="w-16 h-10 rounded animate-pulse bg-muted/50" />
-							<div className="w-24 h-4 rounded animate-pulse bg-muted/30" />
-						</div>
 					</div>
 				</div>
 			</div>
@@ -267,9 +257,6 @@ function TrashGuides() {
 							setSelectedIds([]);
 						}}
 					/>
-				</div>
-				<div className="hidden xl:block w-72 shrink-0">
-					<TrashSidebar guideCount={total} />
 				</div>
 			</div>
 

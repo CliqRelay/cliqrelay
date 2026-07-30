@@ -50,7 +50,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -91,7 +91,7 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).

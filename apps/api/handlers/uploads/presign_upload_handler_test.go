@@ -44,7 +44,7 @@ func TestPresignUploadHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -116,7 +116,7 @@ func TestPresignUploadHandler(t *testing.T) {
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(&models.Guide{
 						ID:        guideID,
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).

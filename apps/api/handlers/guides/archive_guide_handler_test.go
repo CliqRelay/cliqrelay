@@ -55,7 +55,7 @@ func TestArchiveGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Published Guide",
 						Status:    models.StatusPublished,
 					}, nil).
@@ -63,7 +63,7 @@ func TestArchiveGuideHandler(t *testing.T) {
 				mockRepo.On("Archive", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Archived Guide",
 						Status:    models.StatusArchived,
 					}, nil).
@@ -73,7 +73,7 @@ func TestArchiveGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Published Guide",
 						Status:    models.StatusPublished,
 					}, nil).

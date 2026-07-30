@@ -27,10 +27,16 @@ func (r *BunStarredGuidesRepository) GetAll(ctx context.Context, filter *types.G
 
 	query := r.db.NewSelect().
 		ColumnExpr("g.*").
+		ColumnExpr("u.id AS cr_id").
+		ColumnExpr("u.name AS cr_name").
+		ColumnExpr("u.email AS cr_email").
+		ColumnExpr("u.image AS cr_image").
+		ColumnExpr("u.metadata AS cr_metadata").
 		ColumnExpr("true AS is_starred").
 		ColumnExpr("COUNT(*) OVER() AS total_count").
 		TableExpr("starred_guides sg").
 		Join("INNER JOIN guides g ON g.id = sg.guide_id").
+		Join("LEFT JOIN users u ON u.id = g.creator_id").
 		Where("sg.user_id = ?", *filter.ViewerUserID)
 
 	if filter.Status != nil {

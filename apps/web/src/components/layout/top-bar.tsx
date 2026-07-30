@@ -17,7 +17,7 @@ export function TopBar({
 	const teamLoaded = useTeamStore((s) => s.loaded);
 
 	return (
-		<header className="sticky top-0 z-30 h-14 flex items-center gap-2 px-6 border-b backdrop-blur-md">
+		<header className="sticky top-0 z-30 h-14 flex items-center gap-2 px-6 border-b bg-background">
 			{onMenuToggle && (
 				<button
 					type="button"

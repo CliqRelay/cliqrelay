@@ -78,7 +78,7 @@ func runCleanups(cleanups []func()) {
 	}
 }
 
-func createTestOrgTeam(ctx context.Context, db *bun.DB, t *testing.T) (uuid.UUID, string) {
+func createTestOrgTeam(ctx context.Context, db bun.IDB, t *testing.T) (uuid.UUID, string) {
 	t.Helper()
 	orgID := uuid.New().String()
 	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(ctx)

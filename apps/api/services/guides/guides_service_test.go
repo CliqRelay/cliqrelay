@@ -30,7 +30,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 
 	draftGuide := &models.Guide{
 		ID:        uuid.New(),
-		CreatorID: uuid.New().String(),
+		CreatorID: new(uuid.New().String()),
 		Title:     "Draft Guide",
 		Status:    models.StatusDraft,
 	}
@@ -55,7 +55,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 				mockRepo.On("UpdateDuration", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -63,7 +63,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 				mockRepo.On("Publish", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:          uuid.New(),
-						CreatorID:   uuid.New().String(),
+						CreatorID:   new(uuid.New().String()),
 						Title:       "Guide",
 						Status:      models.StatusPublished,
 						PublishedAt: &future,
@@ -95,7 +95,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Published Guide",
 						Status:    models.StatusPublished,
 					}, nil).
@@ -116,7 +116,7 @@ func TestGuidesService_PublishGuide(t *testing.T) {
 				mockRepo.On("UpdateDuration", mock.Anything, mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -158,7 +158,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 
 	publishedGuide := &models.Guide{
 		ID:        uuid.New(),
-		CreatorID: uuid.New().String(),
+		CreatorID: new(uuid.New().String()),
 		Title:     "Published Guide",
 		Status:    models.StatusPublished,
 	}
@@ -179,7 +179,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 				mockRepo.On("Unpublish", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -209,7 +209,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Draft Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -224,7 +224,7 @@ func TestGuidesService_UnpublishGuide(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Archived Guide",
 						Status:    models.StatusArchived,
 					}, nil).
@@ -275,7 +275,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 
 	publishedGuide := &models.Guide{
 		ID:        uuid.New(),
-		CreatorID: uuid.New().String(),
+		CreatorID: new(uuid.New().String()),
 		Title:     "Published Guide",
 		Status:    models.StatusPublished,
 	}
@@ -297,7 +297,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 				mockRepo.On("Archive", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:         uuid.New(),
-						CreatorID:  uuid.New().String(),
+						CreatorID:  new(uuid.New().String()),
 						Title:      "Guide",
 						Status:     models.StatusArchived,
 						ArchivedAt: &future,
@@ -311,7 +311,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				draftGuide := &models.Guide{
 					ID:        uuid.New(),
-					CreatorID: uuid.New().String(),
+					CreatorID: new(uuid.New().String()),
 					Title:     "Draft Guide",
 					Status:    models.StatusDraft,
 				}
@@ -322,7 +322,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 				mockRepo.On("Archive", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:         uuid.New(),
-						CreatorID:  uuid.New().String(),
+						CreatorID:  new(uuid.New().String()),
 						Title:      "Guide",
 						Status:     models.StatusArchived,
 						ArchivedAt: &future,
@@ -353,7 +353,7 @@ func TestGuidesService_ArchiveGuide(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Archived Guide",
 						Status:    models.StatusArchived,
 					}, nil).
@@ -414,7 +414,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				deletedGuide := &models.Guide{
 					ID:        uuid.New(),
-					CreatorID: "test-user-123",
+					CreatorID: new("test-user-123"),
 					Title:     "Deleted Guide",
 					Status:    models.StatusDeleted,
 				}
@@ -425,7 +425,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 				mockRepo.On("Restore", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:         uuid.New(),
-						CreatorID:  uuid.New().String(),
+						CreatorID:  new(uuid.New().String()),
 						Title:      "Guide",
 						Status:     models.StatusDraft,
 						RestoredAt: &future,
@@ -455,7 +455,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				guide := &models.Guide{
 					ID:        uuid.New(),
-					CreatorID: "test-user-123",
+					CreatorID: new("test-user-123"),
 					Title:     "Active Guide",
 					Status:    models.StatusDraft,
 				}
@@ -474,7 +474,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				deletedGuide := &models.Guide{
 					ID:        uuid.New(),
-					CreatorID: "test-user-123",
+					CreatorID: new("test-user-123"),
 					Title:     "Deleted Guide",
 					Status:    models.StatusDeleted,
 				}
@@ -517,7 +517,7 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 
 	archivedGuide := &models.Guide{
 		ID:        uuid.New(),
-		CreatorID: uuid.New().String(),
+		CreatorID: new(uuid.New().String()),
 		Title:     "Archived Guide",
 		Status:    models.StatusArchived,
 	}
@@ -539,7 +539,7 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 				mockRepo.On("Unarchive", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:         uuid.New(),
-						CreatorID:  uuid.New().String(),
+						CreatorID:  new(uuid.New().String()),
 						Title:      "Guide",
 						Status:     models.StatusDraft,
 						RestoredAt: &future,
@@ -570,7 +570,7 @@ func TestGuidesService_UnarchiveGuide(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Draft Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -637,7 +637,7 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 				mockRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
-						CreatorID: uuid.New().String(),
+						CreatorID: new(uuid.New().String()),
 						Title:     "Test Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -689,8 +689,8 @@ func TestGuidesService_GetAll(t *testing.T) {
 
 	userID := uuid.New().String()
 	guides := []*models.Guide{
-		{ID: uuid.New(), CreatorID: userID, Title: "Guide 1", Status: models.StatusDraft},
-		{ID: uuid.New(), CreatorID: userID, Title: "Guide 2", Status: models.StatusPublished},
+		{ID: uuid.New(), CreatorID: &userID, Title: "Guide 1", Status: models.StatusDraft},
+		{ID: uuid.New(), CreatorID: &userID, Title: "Guide 2", Status: models.StatusPublished},
 	}
 
 	cases := []struct {

@@ -26,7 +26,7 @@ func RunTestMigrations(ctx context.Context, db *bun.DB) error {
 					RETURN NEW;
 				END;
 				$$ LANGUAGE plpgsql`,
-			`CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY)`,
+			`CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY, name TEXT, email TEXT, image TEXT, metadata JSONB)`,
 			`CREATE TABLE IF NOT EXISTS organizations (id UUID PRIMARY KEY)`,
 			`CREATE TABLE IF NOT EXISTS organization_teams (id UUID PRIMARY KEY, organization_id UUID, name TEXT, slug TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP)`,
 		)

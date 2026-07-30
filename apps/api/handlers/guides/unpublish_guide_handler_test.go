@@ -56,7 +56,7 @@ func TestUnpublishGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Published Guide",
 						Status:    models.StatusPublished,
 					}, nil).
@@ -64,7 +64,7 @@ func TestUnpublishGuideHandler(t *testing.T) {
 				mockRepo.On("Unpublish", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Unpublished Guide",
 						Status:    models.StatusDraft,
 					}, nil).
@@ -74,7 +74,7 @@ func TestUnpublishGuideHandler(t *testing.T) {
 				mockRepo.On("GetByID", mock.Anything, guideID).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
-						CreatorID: "test-user-123",
+						CreatorID: new("test-user-123"),
 						Title:     "Published Guide",
 						Status:    models.StatusPublished,
 					}, nil).

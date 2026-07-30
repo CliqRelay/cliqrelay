@@ -1815,8 +1815,21 @@
             "format": "date-time",
             "type": "string"
           },
+          "creator": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GuideCreator"
+              }
+            ]
+          },
           "creator_id": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "deleted_at": {
             "format": "date-time",
@@ -1889,6 +1902,38 @@
           "is_starred",
           "created_at",
           "updated_at"
+        ],
+        "type": "object"
+      },
+      "GuideCreator": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "image": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metadata": {
+            "additionalProperties": {},
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
         ],
         "type": "object"
       },

@@ -4,13 +4,11 @@ import type { Guide } from "@repo/api-client";
 
 import { useGuideStepMutations } from "@/hooks/useGuideStepMutations";
 import { useStepEditor } from "@/hooks/useStepEditor";
-import type { AppUser } from "@/models/auth";
 import { GuideHeader } from "./guide-header";
 import { GuideWorkflowEditMode } from "./guide-workflow-edit-mode";
 import { GuideWorkflowViewMode } from "./guide-workflow-view-mode";
 
 type Props = {
-	user: AppUser;
 	guide: Guide;
 	mode: "view" | "edit";
 	onModeChange?: (mode: "view" | "edit") => void;
@@ -20,7 +18,7 @@ type Props = {
 	}) => void;
 };
 
-export function GuideEditor({ user, guide, mode, onUpdateGuide }: Props) {
+export function GuideEditor({ guide, mode, onUpdateGuide }: Props) {
 	const {
 		steps,
 		selectedStepId,
@@ -39,7 +37,6 @@ export function GuideEditor({ user, guide, mode, onUpdateGuide }: Props) {
 	return (
 		<div className="w-full max-w-4xl mx-auto flex flex-col gap-4">
 			<GuideHeader
-				user={user}
 				guide={guide}
 				isEditMode={mode === "edit"}
 				stepCount={steps.length}

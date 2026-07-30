@@ -135,27 +135,9 @@
   --scrollbar-thumb: rgba(15, 23, 42, 0.12);
   --scrollbar-thumb-hover: rgba(15, 23, 42, 0.20);
 
-  --trash-row-border: rgba(15, 23, 42, 0.04);
-  --trash-row-hover: rgba(15, 23, 42, 0.02);
-  --trash-row-glow: rgba(3, 160, 236, 0.08);
-
   --icon-subtle: rgba(15, 23, 42, 0.03);
   --icon-dots: rgba(15, 23, 42, 0.08);
   --card-border-faint: rgba(15, 23, 42, 0.05);
-
-  --trash-card-border: rgba(15, 23, 42, 0.05);
-  --trash-card-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 0 0 0.5px rgba(15, 23, 42, 0.03);
-  --trash-dropdown-shadow: 0 12px 40px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.04);
-  --trash-checkbox-border: rgba(15, 23, 42, 0.18);
-  --trash-restore-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --trash-delete-base-bg: #C94B57;
-  --trash-delete-base-border: rgba(201, 75, 87, 0.2);
-  --trash-delete-base-shadow: 0 4px 16px -4px rgba(201, 75, 87, 0.25), 0 1px 3px rgba(201, 75, 87, 0.15);
-  --trash-delete-hover-bg: #D45560;
-  --trash-delete-hover-border: rgba(201, 75, 87, 0.3);
-  --trash-delete-hover-shadow: 0 8px 28px -4px rgba(201, 75, 87, 0.35), 0 2px 6px rgba(201, 75, 87, 0.2);
-  --trash-purple-ambient: rgba(139, 92, 246, 0.07);
-  --trash-purple-glow: rgba(139, 92, 246, 0.2);
 }
 
 .dark {
@@ -221,27 +203,9 @@
   --scrollbar-thumb: rgba(255, 255, 255, 0.06);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.12);
 
-  --trash-row-border: rgba(255, 255, 255, 0.03);
-  --trash-row-hover: rgba(255, 255, 255, 0.02);
-  --trash-row-glow: rgba(3, 160, 236, 0.08);
-
   --icon-subtle: rgba(255, 255, 255, 0.02);
   --icon-dots: rgba(255, 255, 255, 0.06);
   --card-border-faint: rgba(255, 255, 255, 0.04);
-
-  --trash-card-border: rgba(255, 255, 255, 0.04);
-  --trash-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(255, 255, 255, 0.03);
-  --trash-dropdown-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  --trash-checkbox-border: rgba(255, 255, 255, 0.12);
-  --trash-restore-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --trash-delete-base-bg: oklch(0.48 0.14 25);
-  --trash-delete-base-border: rgba(201, 75, 87, 0.2);
-  --trash-delete-base-shadow: 0 4px 16px -4px rgba(201, 75, 87, 0.25), 0 1px 3px rgba(201, 75, 87, 0.15);
-  --trash-delete-hover-bg: oklch(0.53 0.14 25);
-  --trash-delete-hover-border: rgba(201, 75, 87, 0.3);
-  --trash-delete-hover-shadow: 0 8px 28px -4px rgba(201, 75, 87, 0.35), 0 2px 6px rgba(201, 75, 87, 0.2);
-  --trash-purple-ambient: rgba(139, 92, 246, 0.07);
-  --trash-purple-glow: rgba(139, 92, 246, 0.2);
 }
 
 @layer base {
@@ -323,27 +287,6 @@
   transition-property: transform, background-color, border-color, box-shadow, opacity;
   transition-duration: 220ms;
   transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-@utility trash-row {
-  border-bottom: 1px solid var(--trash-row-border);
-  transition:
-    background-color 180ms ease-out,
-    box-shadow 180ms ease-out,
-    border-color 180ms ease-out;
-
-  &:hover {
-    background-color: var(--trash-row-hover);
-    box-shadow:
-      0 0 0 1px var(--trash-row-glow),
-      0 2px 8px var(--shadow-soft);
-  }
-}
-
-@utility trash-table {
-  box-shadow:
-    var(--shadow-soft),
-    0 0 0 0.5px var(--border);
 }
 
 .dashboard-page__wrapper {

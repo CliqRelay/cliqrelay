@@ -99,7 +99,7 @@ func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *a
 		return constants.ErrGuideAccessDenied
 	}
 
-	if guide.Visibility == models.VisibilityPrivate && actor.ID != guide.CreatorID {
+	if guide.Visibility == models.VisibilityPrivate && (guide.CreatorID == nil || *guide.CreatorID != actor.ID) {
 		return constants.ErrGuideReadDenied
 	}
 
@@ -116,7 +116,7 @@ func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *a
 		return constants.ErrGuideEditDenied
 	}
 
-	if guide.Visibility == models.VisibilityPrivate && actor.ID != guide.CreatorID {
+	if guide.Visibility == models.VisibilityPrivate && (guide.CreatorID == nil || *guide.CreatorID != actor.ID) {
 		return constants.ErrGuideEditDenied
 	}
 
@@ -133,7 +133,7 @@ func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor 
 		return constants.ErrGuideDeleteDenied
 	}
 
-	if actor.ID == guide.CreatorID {
+	if guide.CreatorID != nil && *guide.CreatorID == actor.ID {
 		return nil
 	}
 

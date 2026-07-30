@@ -5,6 +5,7 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import type { GuideCreator } from "./guide-creator";
 import type { GuideStatus } from "./guide-status";
 import type { Uuid } from "./uuid";
 import type { Visibility } from "./visibility";
@@ -13,7 +14,9 @@ export type Guide = {
 	/** @nullable */
 	archivedAt?: string | null;
 	createdAt: string;
-	creatorId: string;
+	creator?: null | GuideCreator;
+	/** @nullable */
+	creatorId: string | null;
 	/** @nullable */
 	deletedAt?: string | null;
 	/** @nullable */

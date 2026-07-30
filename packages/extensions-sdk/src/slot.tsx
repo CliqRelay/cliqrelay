@@ -7,7 +7,10 @@ type ExtensionSlotProps = {
 	fallback?: ComponentType<any>;
 };
 
-export function ExtensionSlot({ name, fallback: Fallback }: ExtensionSlotProps) {
+export function ExtensionSlot({
+	name,
+	fallback: Fallback,
+}: ExtensionSlotProps) {
 	const slot = extensionRegistry.getSlot(name);
 
 	if (slot) {

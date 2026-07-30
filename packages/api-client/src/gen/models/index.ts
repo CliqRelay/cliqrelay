@@ -45,6 +45,8 @@ export * from "./get-starred-guides-params";
 export * from "./get-starred-guides-response";
 export * from "./get-step-by-id-response";
 export * from "./guide";
+export * from "./guide-creator";
+export * from "./guide-creator-metadata";
 export * from "./guide-export";
 export * from "./guide-sort-field";
 export * from "./guide-status";
