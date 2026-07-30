@@ -1,7 +1,8 @@
 import { useState } from "react";
 
-import { Link, Navigate, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
+	BarChart3,
 	ChevronLeft,
 	ChevronRight,
 	FileText,
@@ -21,6 +22,7 @@ import type { AppUser } from "@/models/auth";
 import { useOrgStore } from "@/stores/org-store";
 import { useTeamStore } from "@/stores/team-store";
 import { Logo } from "./logo";
+import { AnalyticsFallback } from "../pro/analytics-fallback";
 import { ApiKeysFallback } from "../pro/api-keys-fallback";
 import { WebhooksFallback } from "../pro/webhooks-fallback";
 import { LearAboutProCollapsedFallback } from "../pro/learn-about-pro-collapsed-fallback";
@@ -75,7 +77,7 @@ export function SidebarContent({
 	const teams = useTeamStore((s) => s.teams);
 	const hasTeamsInOrg = teams.some((t) => t.organizationId === orgId);
 	const [activeDialog, setActiveDialog] = useState<
-		"webhooks" | "api-keys" | null
+		"analytics" | "webhooks" | "api-keys" | null
 	>(null);
 
 	return (
@@ -226,6 +228,26 @@ export function SidebarContent({
 					<nav
 						className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
 					>
+						<SidebarTooltip collapsed={collapsed} label="Analytics">
+							<button
+								type="button"
+								aria-label={collapsed ? "Analytics" : undefined}
+								className={cn(
+									"group relative flex items-center rounded-lg text-[13.5px] transition-premium cursor-pointer",
+									collapsed ? "size-9 justify-center" : "h-8 px-3 gap-3",
+									"text-muted-foreground/70 hover:text-foreground hover:bg-surface-hover",
+								)}
+								onClick={() => setActiveDialog("analytics")}
+							>
+								<BarChart3
+									className="relative shrink-0 size-4.25"
+									strokeWidth={1.9}
+								/>
+								{!collapsed && (
+									<span className="relative font-medium">Analytics</span>
+								)}
+							</button>
+						</SidebarTooltip>
 						<SidebarTooltip collapsed={collapsed} label="Webhooks">
 							<button
 								type="button"
@@ -298,6 +320,12 @@ export function SidebarContent({
 			</div>
 
 			{/* Pro feature dialogs */}
+			<ProFeatureDialog
+				slotName="dashboard-sidebar-analytics"
+				open={activeDialog === "analytics"}
+				onOpenChange={(o) => !o && setActiveDialog(null)}
+				FallbackComponent={AnalyticsFallback}
+			/>
 			<ProFeatureDialog
 				slotName="dashboard-sidebar-webhooks"
 				open={activeDialog === "webhooks"}
