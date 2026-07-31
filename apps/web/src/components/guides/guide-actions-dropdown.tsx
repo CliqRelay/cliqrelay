@@ -73,6 +73,9 @@ export function GuideActionsDropdown({
 			queryClient.invalidateQueries({
 				queryKey: api.guides.getGetStarredGuidesQueryKey(),
 			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetGuideByIdQueryKey(guide.id),
+			});
 		} catch (error) {
 			toast.error("Error", {
 				description:
@@ -84,6 +87,7 @@ export function GuideActionsDropdown({
 	const handleUnpublish = async () => {
 		try {
 			await unpublishGuide({ data: { guideId: guide.id } });
+			setUnpublishDialogOpen(false);
 			toast("Unpublished", { description: "Guide returned to draft" });
 			router.invalidate();
 			queryClient.invalidateQueries({
@@ -91,6 +95,9 @@ export function GuideActionsDropdown({
 			});
 			queryClient.invalidateQueries({
 				queryKey: api.guides.getGetStarredGuidesQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetGuideByIdQueryKey(guide.id),
 			});
 		} catch (error) {
 			toast.error("Error", {
@@ -103,6 +110,7 @@ export function GuideActionsDropdown({
 	const handleArchive = async () => {
 		try {
 			await archiveGuide({ data: { guideId: guide.id } });
+			setArchiveDialogOpen(false);
 			toast("Archived", { description: "Guide archived" });
 			router.invalidate();
 			queryClient.invalidateQueries({
@@ -110,6 +118,9 @@ export function GuideActionsDropdown({
 			});
 			queryClient.invalidateQueries({
 				queryKey: api.guides.getGetStarredGuidesQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetGuideByIdQueryKey(guide.id),
 			});
 		} catch (error) {
 			toast.error("Error", {
@@ -122,6 +133,7 @@ export function GuideActionsDropdown({
 	const handleUnarchive = async () => {
 		try {
 			await unarchiveGuide({ data: { guideId: guide.id } });
+			setUnarchiveDialogOpen(false);
 			toast("Unarchived", { description: "Guide returned to draft" });
 			router.invalidate();
 			queryClient.invalidateQueries({
@@ -129,6 +141,9 @@ export function GuideActionsDropdown({
 			});
 			queryClient.invalidateQueries({
 				queryKey: api.guides.getGetStarredGuidesQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetGuideByIdQueryKey(guide.id),
 			});
 		} catch (error) {
 			toast.error("Error", {
