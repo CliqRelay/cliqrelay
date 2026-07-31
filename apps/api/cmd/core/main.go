@@ -60,7 +60,7 @@ func main() {
 	}
 
 	if envConfig.StandaloneMode == "true" {
-		wk, err := bootstrap.NewWorker(
+		worker, err := bootstrap.NewWorker(
 			bootstrap.WithEnvConfig(envConfig),
 			bootstrap.WithInfra(infraCfg),
 			bootstrap.WithDB(authulaAuth.DB()),
@@ -71,8 +71,8 @@ func main() {
 		}
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		wk.Start(ctx)
-		defer wk.Shutdown()
+		worker.Start(ctx)
+		defer worker.Shutdown()
 	}
 
 	if err := app.Run(); err != nil {

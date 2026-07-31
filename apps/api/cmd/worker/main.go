@@ -35,7 +35,7 @@ func main() {
 
 	db := bun.NewDB(sqlDB, pgdialect.New())
 
-	wk, err := bootstrap.NewWorker(
+	worker, err := bootstrap.NewWorker(
 		bootstrap.WithEnvConfig(envConfig),
 		bootstrap.WithInfra(infraCfg),
 		bootstrap.WithDB(db),
@@ -45,8 +45,8 @@ func main() {
 		log.Fatal("Error initializing worker: ", err)
 	}
 
-	wk.Start(ctx)
-	defer wk.Shutdown()
+	worker.Start(ctx)
+	defer worker.Shutdown()
 
 	<-ctx.Done()
 }
