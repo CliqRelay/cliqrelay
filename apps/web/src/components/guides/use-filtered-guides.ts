@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import type { Guide } from "@repo/api-client";
 
-import { useGuidesStore } from "@/store/guides-store";
+import { useGuidesStore } from "@/stores";
 
 export function useFilteredGuides(guides: Guide[]) {
 	const filter = useGuidesStore((state) => state.filter);

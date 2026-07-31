@@ -2,7 +2,7 @@ import type { PropsWithChildren } from "react";
 
 import { type AppUserRole, hasMinimumRole } from "@repo/data-commons";
 
-import { useOrgStore } from "@/stores/org-store";
+import { useOrgStore } from "@/stores";
 
 type RoleGuardProps = {
 	minRole: AppUserRole;

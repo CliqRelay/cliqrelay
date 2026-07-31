@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { setActiveTeamCookie } from "@/lib/team-cookie";
 import { cn } from "@/lib/utils";
-import { useOrgStore } from "@/stores/org-store";
-import { useTeamStore } from "@/stores/team-store";
+import { useOrgStore, useTeamStore } from "@/stores";
 import { CreateTeamDialogSlot } from "./create-team-dialog-slot";
 
 type Props = {

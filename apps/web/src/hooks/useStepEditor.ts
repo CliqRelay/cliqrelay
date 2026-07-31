@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, type Step, type UpdateStepRequest } from "@repo/api-client";
 
 import { toast } from "@/lib/toast";
-import { useEditorStore } from "@/store/editor-store";
+import { useEditorStore } from "@/stores";
 
 export function useStepEditor(guideId: string) {
 	const queryClient = useQueryClient();

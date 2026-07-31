@@ -9,10 +9,9 @@ import {
 
 import { authulaClient } from "@/lib/authula-client";
 import { getActiveOrgCookie, setActiveOrgCookie } from "@/lib/org-cookie";
-import { useOrgStore } from "@/stores/org-store";
-import { useUserStore } from "@/stores/user-store";
+import { useOrgStore, useUserStore } from "@/stores";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import type { AppUser, AppOrganizationMemberResponse } from "@/models";
+import type { AppOrganizationMemberResponse, AppUser } from "@/models";
 
 type OrgInfo = {
 	id: string;

@@ -48,8 +48,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useTeamStore } from "@/stores/team-store";
-import { useUserStore } from "@/stores/user-store";
+import { useTeamStore, useUserStore } from "@/stores";
 import { formatDuration, timeAgo } from "@/utils/time.utils";
 import { GuideStatusBadge } from "./guide-status-badge";
 import { MoveToTeamSlot } from "./move-to-team-slot";

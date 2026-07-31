@@ -19,8 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { AppUser } from "@/models/auth";
-import { useOrgStore } from "@/stores/org-store";
-import { useTeamStore } from "@/stores/team-store";
+import { useOrgStore, useTeamStore } from "@/stores";
 import { Logo } from "./logo";
 import { AnalyticsFallback } from "../pro/analytics-fallback";
 import { ApiKeysFallback } from "../pro/api-keys-fallback";
@@ -84,7 +83,13 @@ interface SidebarContentProps {
 	onToggleCollapse: () => void;
 }
 
-function SectionLabel({ collapsed, label }: { collapsed: boolean; label: string }) {
+function SectionLabel({
+	collapsed,
+	label,
+}: {
+	collapsed: boolean;
+	label: string;
+}) {
 	if (collapsed) return null;
 	return (
 		<div className="px-3 mb-1.5">
@@ -95,7 +100,13 @@ function SectionLabel({ collapsed, label }: { collapsed: boolean; label: string 
 	);
 }
 
-function NavSkeleton({ collapsed, count }: { collapsed: boolean; count: number }) {
+function NavSkeleton({
+	collapsed,
+	count,
+}: {
+	collapsed: boolean;
+	count: number;
+}) {
 	return (
 		<nav className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
 			{Array.from({ length: count }).map((_, i) => (
@@ -156,9 +167,7 @@ function NavLink({
 					)}
 					strokeWidth={active ? 2.25 : 1.9}
 				/>
-				{!collapsed && (
-					<span className="relative font-medium">{label}</span>
-				)}
+				{!collapsed && <span className="relative font-medium">{label}</span>}
 			</Link>
 		</SidebarTooltip>
 	);
@@ -188,9 +197,7 @@ function ProNavButton({
 				onClick={onClick}
 			>
 				<Icon className="relative shrink-0 size-4.25" strokeWidth={1.9} />
-				{!collapsed && (
-					<span className="relative font-medium">{label}</span>
-				)}
+				{!collapsed && <span className="relative font-medium">{label}</span>}
 			</button>
 		</SidebarTooltip>
 	);
@@ -270,7 +277,9 @@ export function SidebarContent({
 						</span>
 					</div>
 				)}
-				<div className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
+				<div
+					className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
+				>
 					{!teamLoaded ? (
 						<div className={cn(collapsed ? "" : "px-1")}>
 							<Skeleton
@@ -301,7 +310,9 @@ export function SidebarContent({
 				{!teamLoaded ? (
 					<NavSkeleton collapsed={collapsed} count={proItems.length} />
 				) : (
-					<nav className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
+					<nav
+						className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
+					>
 						{proItems.map((item) => (
 							<ProNavButton
 								key={item.dialog}

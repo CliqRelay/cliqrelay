@@ -12,7 +12,7 @@ import { TrashPageHeader } from "@/components/trash/trash-page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { toast } from "@/lib/toast";
-import { useTeamStore } from "@/stores/team-store";
+import { useTeamStore } from "@/stores";
 import {
 	invalidateGetAllGuides,
 	invalidateGuidesCount,

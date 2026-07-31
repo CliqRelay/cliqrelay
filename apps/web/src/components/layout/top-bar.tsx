@@ -1,9 +1,9 @@
-import { Activity, Bell, Menu, UserRound } from "lucide-react";
+import { Menu, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { AppUser } from "@/models/auth";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
-import { useTeamStore } from "@/stores/team-store";
+import { useTeamStore } from "@/stores";
 import { OrgDropdown } from "./org-dropdown";
 import UserDropdown from "./user-dropdown";
 

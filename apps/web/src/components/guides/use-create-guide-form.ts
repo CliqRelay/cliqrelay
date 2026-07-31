@@ -2,7 +2,7 @@ import { useForm, useStore } from "@tanstack/react-form";
 
 import { toast } from "@/lib/toast";
 import { createGuide } from "@/server-fns/guides";
-import { useTeamStore } from "@/stores/team-store";
+import { useTeamStore } from "@/stores";
 
 type UseCreateGuideFormOptions = {
 	onSuccess?: (guideId: string) => void;

@@ -17,7 +17,7 @@ import { envClient } from "@/constants/env-client";
 import useExtensionRuntime from "@/hooks/use-extension-runtime";
 import { toast } from "@/lib/toast";
 import { createGuide } from "@/server-fns/guides";
-import { useTeamStore } from "@/stores/team-store";
+import { useTeamStore } from "@/stores";
 
 type QuickActionItem = {
 	label: string;

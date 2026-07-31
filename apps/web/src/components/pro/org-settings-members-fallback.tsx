@@ -9,7 +9,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
-import { useOrgStore } from "@/stores/org-store";
+import { useOrgStore } from "@/stores";
 import { Separator } from "../ui/separator";
 
 type Props = {

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authulaClient } from "@/lib/authula-client";
 import { toast } from "@/lib/toast";
-import { useTeamStore } from "@/stores/team-store";
+import { useTeamStore } from "@/stores";
 
 const formSchema = z.object({
 	name: z.string().trim().min(1, "Team name is required"),

@@ -14,8 +14,7 @@ import { useGuideActions } from "@/components/guides/use-guide-actions";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
 import { updateGuideVisibility } from "@/server-fns/guides";
-import { useGuidesStore } from "@/store/guides-store";
-import { useTeamStore } from "@/stores/team-store";
+import { useGuidesStore, useTeamStore } from "@/stores";
 
 const PAGE_SIZE = 12;
 
@@ -51,10 +50,7 @@ function GuidesSkeleton() {
 
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 							{Array.from({ length: 6 }).map((_, i) => (
-								<div
-									key={i}
-									className="rounded-2xl surface-card p-4 space-y-3"
-								>
+								<div key={i} className="rounded-2xl surface-card p-4 space-y-3">
 									<div className="flex items-start justify-between gap-2">
 										<div className="flex items-center gap-1.5">
 											<div className="h-5 w-16 animate-pulse rounded-md bg-muted" />

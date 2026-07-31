@@ -4,7 +4,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { TeamSettingsSidebar } from "@/components/settings/team-settings-sidebar";
 import { authulaClient } from "@/lib/authula-client";
 import { setActiveTeamCookie } from "@/lib/team-cookie";
-import { useTeamStore } from "@/stores/team-store";
+import { useTeamStore } from "@/stores";
 
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/teams/$teamId/settings",

@@ -1,4 +1,4 @@
-import { useUserStore } from "@/stores/user-store";
+import { useUserStore } from "@/stores";
 
 export function DashboardHero() {
 	const userName = useUserStore((s) => s.userName);

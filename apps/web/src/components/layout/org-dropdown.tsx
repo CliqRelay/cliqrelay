@@ -15,8 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { setActiveOrgCookie } from "@/lib/org-cookie";
 import { clearActiveTeamCookie } from "@/lib/team-cookie";
 import { cn } from "@/lib/utils";
-import { useOrgStore } from "@/stores/org-store";
-import { useTeamStore } from "@/stores/team-store";
+import { useOrgStore, useTeamStore } from "@/stores";
 
 export function OrgDropdown() {
 	const orgId = useOrgStore((state) => state.orgId);

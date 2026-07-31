@@ -18,8 +18,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useOrgStore } from "@/stores/org-store";
-import { useTeamStore } from "@/stores/team-store";
+import { useOrgStore, useTeamStore } from "@/stores";
 
 export const Route = createFileRoute("/dashboard/")({
 	component: DashboardPage,

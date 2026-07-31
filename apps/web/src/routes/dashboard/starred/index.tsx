@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
 import { updateGuideVisibility } from "@/server-fns/guides";
-import { useTeamStore } from "@/stores/team-store";
+import { useTeamStore } from "@/stores";
 
 const PAGE_SIZE = 10;
 

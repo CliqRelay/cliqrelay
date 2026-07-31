@@ -17,8 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/lib/toast";
 import { updateGuide } from "@/server-fns/guides";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
-import { useOrgStore } from "@/stores/org-store";
-import { useUserStore } from "@/stores/user-store";
+import { useOrgStore, useUserStore } from "@/stores";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 export const Route = createFileRoute("/dashboard/guides/$guideId")({

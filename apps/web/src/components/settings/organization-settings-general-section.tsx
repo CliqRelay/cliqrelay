@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authulaClient } from "@/lib/authula-client";
 import { toast } from "@/lib/toast";
-import { useOrgStore } from "@/stores/org-store";
+import { useOrgStore } from "@/stores";
 
 const formSchema = z.object({
 	name: z.string().trim().min(1, "Organization name is required"),

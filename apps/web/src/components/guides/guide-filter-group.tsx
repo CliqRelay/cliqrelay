@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { FilterOption } from "@/store/guides-store";
+import type { FilterOption } from "@/stores";
 
 interface GuideFilterGroupProps {
 	filter: FilterOption;

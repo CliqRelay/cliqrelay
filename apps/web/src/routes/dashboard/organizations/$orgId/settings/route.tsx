@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { authulaClient } from "@/lib/authula-client";
-import { useOrgStore } from "@/stores/org-store";
+import { useOrgStore } from "@/stores";
 
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/settings",

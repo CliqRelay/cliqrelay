@@ -18,7 +18,7 @@ import { getActiveOrgCookie } from "@/lib/org-cookie";
 import { getActiveTeamCookie, setActiveTeamCookie } from "@/lib/team-cookie";
 import type { MyRouterContext } from "@/router";
 import { getTeams } from "@/server-fns/teams";
-import { useTeamStore } from "@/stores/team-store";
+import { useTeamStore } from "@/stores";
 import TanStackQueryDevtools from "../integrations/tanstack-query/Devtools";
 import appCss from "../styles.css?url";
 

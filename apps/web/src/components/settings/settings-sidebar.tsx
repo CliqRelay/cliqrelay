@@ -8,10 +8,8 @@ import {
 	Users,
 } from "lucide-react";
 
-import { ExtensionSlot } from "@repo/extensions-sdk";
-
 import { cn } from "@/lib/utils";
-import { useOrgStore } from "@/stores/org-store";
+import { useOrgStore } from "@/stores";
 
 const allSections = [
 	{
