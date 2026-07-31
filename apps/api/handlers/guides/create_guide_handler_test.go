@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -20,8 +19,6 @@ import (
 
 func TestCreateGuideHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 
 	cases := []struct {
 		name           string
@@ -94,7 +91,7 @@ func TestCreateGuideHandler(t *testing.T) {
 			mockAuthz.On("CanCreateGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
 			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
-			handler := handlersguides.NewCreateGuideHandler(appConfig, uc)
+			handler := handlersguides.NewCreateGuideHandler(uc)
 
 			var req tests.HandlerTestRequest
 			if tt.rawBody != nil {

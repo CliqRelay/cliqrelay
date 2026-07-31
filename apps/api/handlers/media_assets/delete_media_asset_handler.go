@@ -5,18 +5,16 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type DeleteMediaAssetHandler struct {
-	appConfig          *config.AppConfig
 	mediaAssetsUseCase interfaces.MediaAssetsUseCase
 }
 
-func NewDeleteMediaAssetHandler(appConfig *config.AppConfig, mediaAssetsUseCase interfaces.MediaAssetsUseCase) *DeleteMediaAssetHandler {
-	return &DeleteMediaAssetHandler{appConfig: appConfig, mediaAssetsUseCase: mediaAssetsUseCase}
+func NewDeleteMediaAssetHandler(mediaAssetsUseCase interfaces.MediaAssetsUseCase) *DeleteMediaAssetHandler {
+	return &DeleteMediaAssetHandler{mediaAssetsUseCase: mediaAssetsUseCase}
 }
 
 func (h *DeleteMediaAssetHandler) Handle() http.HandlerFunc {

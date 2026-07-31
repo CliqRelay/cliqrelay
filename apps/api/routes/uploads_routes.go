@@ -14,15 +14,15 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func UploadRoutes(appConfig *config.AppConfig, uploadUseCase interfaces.UploadsUseCase) []authulamodels.Route {
-	presignUploadHandler := handlersuploads.NewPresignUploadHandler(appConfig, uploadUseCase)
-	completeUploadHandler := handlersuploads.NewCompleteUploadHandler(appConfig, uploadUseCase)
+func UploadRoutes(cfg *config.HTTPConfig, uploadUseCase interfaces.UploadsUseCase) []authulamodels.Route {
+	presignUploadHandler := handlersuploads.NewPresignUploadHandler(uploadUseCase)
+	completeUploadHandler := handlersuploads.NewCompleteUploadHandler(uploadUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
-	base := appConfig.BasePath
+	base := cfg.BasePath
 
 	return []authulamodels.Route{
 		{

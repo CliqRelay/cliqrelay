@@ -6,25 +6,14 @@ import (
 	"log"
 	"os/signal"
 	"syscall"
-	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
+	"github.com/CliqRelay/cliqrelay/bootstrap"
 	"github.com/CliqRelay/cliqrelay/constants"
-	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/infra"
-	bunGuideExports "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
-	bunGuideViews "github.com/CliqRelay/cliqrelay/repositories/guide_views"
-	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
-	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
-	"github.com/CliqRelay/cliqrelay/services/export"
-	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
-	"github.com/CliqRelay/cliqrelay/services/presign"
-	"github.com/CliqRelay/cliqrelay/services/purge"
-	"github.com/CliqRelay/cliqrelay/services/storage"
-	"github.com/CliqRelay/cliqrelay/worker"
 )
 
 func main() {
@@ -46,44 +35,18 @@ func main() {
 
 	db := bun.NewDB(sqlDB, pgdialect.New())
 
-	guidesRepo := bunGuides.NewBunGuidesRepository(db)
-	guideExportsRepo := bunGuideExports.NewBunGuideExportsRepository(db)
-	guideViewsRepo := bunGuideViews.NewBunGuideViewsRepository(db)
-	storageService := storage.NewS3StorageService(infraCfg.S3Client)
-	presignService := presign.NewAWSPresignService(infraCfg.S3Client, 24*time.Hour)
-	guideViewsService := guideviewsservice.NewGuideViewsService(guideViewsRepo, infraCfg.RedisClient)
-	purgeService := purge.NewPurgeService(guidesRepo, storageService, guideViewsService, infraCfg.S3Bucket)
-
-	stepsRepo := bunSteps.NewBunStepsRepository(db)
-
-	exportService := export.NewExportService(
-		guideExportsRepo,
-		guidesRepo,
-		stepsRepo,
-		storageService,
-		presignService,
-		infraCfg.RedisClient,
-		infraCfg.S3Bucket,
+	worker, err := bootstrap.NewWorker(
+		bootstrap.WithEnvConfig(envConfig),
+		bootstrap.WithInfra(infraCfg),
+		bootstrap.WithDB(db),
+		bootstrap.WithConsumerGroup("cliqrelay-worker-consumer-group"),
 	)
-
-	consumer := worker.NewStreamConsumer(infraCfg.RedisClient, "cliqrelay-worker-consumer-group", 5, worker.WithConcurrency(5))
-	consumer.RegisterHandler(events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, worker.HandleMediaAssetsEvent(storageService, infraCfg.S3Bucket))
-	consumer.RegisterHandler(events.TopicGuides, events.EventTypeGuidePurge, worker.HandleGuidePurgeEvent(purgeService))
-	consumer.RegisterHandler(events.TopicGuideExports, events.EventTypeGuideExport, worker.HandleGuideExportEvent(exportService))
-	consumer.RegisterHandler(events.TopicGuideViews, events.EventTypeGuideViewed, worker.HandleGuideViewEvent(guideViewsRepo))
-	consumer.Start(ctx)
-
-	cronService, err := worker.NewCronService()
 	if err != nil {
-		log.Fatal("Error creating cron service: ", err)
+		log.Fatal("Error initializing worker: ", err)
 	}
 
-	if err := worker.RegisterGuidePurgeCron(cronService.Scheduler(), guidesRepo, infraCfg.RedisClient); err != nil {
-		log.Fatal("Error registering guide purge cron: ", err)
-	}
-
-	cronService.Start()
+	worker.Start(ctx)
+	defer worker.Shutdown()
 
 	<-ctx.Done()
-	consumer.Shutdown()
 }

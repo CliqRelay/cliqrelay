@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type UnarchiveGuideHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewUnarchiveGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *UnarchiveGuideHandler {
-	return &UnarchiveGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewUnarchiveGuideHandler(guidesUseCase interfaces.GuidesUseCase) *UnarchiveGuideHandler {
+	return &UnarchiveGuideHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *UnarchiveGuideHandler) Handle() http.HandlerFunc {

@@ -7,13 +7,7 @@ import (
 	"github.com/Authula/authula/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CliqRelay/cliqrelay/config"
 )
-
-func NewTestAppConfig() *config.AppConfig {
-	return &config.AppConfig{}
-}
 
 func AssertResponseStatus(t *testing.T, reqCtx *models.RequestContext, expectedStatus int) {
 	t.Helper()

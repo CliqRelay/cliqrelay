@@ -14,20 +14,20 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func StepsRoutes(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) []authulamodels.Route {
-	createHandler := steps.NewCreateStepHandler(appConfig, stepsUseCase)
-	getAllHandler := steps.NewGetAllStepsHandler(appConfig, stepsUseCase)
-	getByIDHandler := steps.NewGetStepByIDHandler(appConfig, stepsUseCase)
-	updateHandler := steps.NewUpdateStepHandler(appConfig, stepsUseCase)
-	deleteHandler := steps.NewDeleteStepHandler(appConfig, stepsUseCase)
-	reorderHandler := steps.NewReorderStepsHandler(appConfig, stepsUseCase)
-	duplicateHandler := steps.NewDuplicateStepHandler(appConfig, stepsUseCase)
+func StepsRoutes(cfg *config.HTTPConfig, stepsUseCase interfaces.StepsUseCase) []authulamodels.Route {
+	createHandler := steps.NewCreateStepHandler(stepsUseCase)
+	getAllHandler := steps.NewGetAllStepsHandler(stepsUseCase)
+	getByIDHandler := steps.NewGetStepByIDHandler(stepsUseCase)
+	updateHandler := steps.NewUpdateStepHandler(stepsUseCase)
+	deleteHandler := steps.NewDeleteStepHandler(stepsUseCase)
+	reorderHandler := steps.NewReorderStepsHandler(stepsUseCase)
+	duplicateHandler := steps.NewDuplicateStepHandler(stepsUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
-	base := appConfig.BasePath
+	base := cfg.BasePath
 
 	return []authulamodels.Route{
 		{

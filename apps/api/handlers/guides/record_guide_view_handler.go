@@ -9,18 +9,16 @@ import (
 	authulamodels "github.com/Authula/authula/models"
 	"github.com/Authula/authula/util"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type RecordGuideViewHandler struct {
-	appConfig         *config.AppConfig
 	guideViewsUseCase interfaces.GuideViewsUseCase
 }
 
-func NewRecordGuideViewHandler(appConfig *config.AppConfig, guideViewsUseCase interfaces.GuideViewsUseCase) *RecordGuideViewHandler {
-	return &RecordGuideViewHandler{appConfig: appConfig, guideViewsUseCase: guideViewsUseCase}
+func NewRecordGuideViewHandler(guideViewsUseCase interfaces.GuideViewsUseCase) *RecordGuideViewHandler {
+	return &RecordGuideViewHandler{guideViewsUseCase: guideViewsUseCase}
 }
 
 func (h *RecordGuideViewHandler) Handle() http.HandlerFunc {

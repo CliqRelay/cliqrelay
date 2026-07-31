@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type ArchiveGuideHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewArchiveGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *ArchiveGuideHandler {
-	return &ArchiveGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewArchiveGuideHandler(guidesUseCase interfaces.GuidesUseCase) *ArchiveGuideHandler {
+	return &ArchiveGuideHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *ArchiveGuideHandler) Handle() http.HandlerFunc {

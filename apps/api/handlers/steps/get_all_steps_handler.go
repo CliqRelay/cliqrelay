@@ -5,18 +5,16 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type GetAllStepsHandler struct {
-	appConfig    *config.AppConfig
 	stepsUseCase interfaces.StepsUseCase
 }
 
-func NewGetAllStepsHandler(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) *GetAllStepsHandler {
-	return &GetAllStepsHandler{appConfig: appConfig, stepsUseCase: stepsUseCase}
+func NewGetAllStepsHandler(stepsUseCase interfaces.StepsUseCase) *GetAllStepsHandler {
+	return &GetAllStepsHandler{stepsUseCase: stepsUseCase}
 }
 
 func (h *GetAllStepsHandler) Handle() http.HandlerFunc {

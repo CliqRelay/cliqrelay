@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -20,8 +19,6 @@ import (
 
 func TestGetAllGuidesHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 
 	cases := []struct {
 		name           string
@@ -114,7 +111,7 @@ func TestGetAllGuidesHandler(t *testing.T) {
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
 			svc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, (*interfaces.GuideHooks)(nil))
 			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
-			handler := handlersguides.NewGetAllGuidesHandler(appConfig, uc)
+			handler := handlersguides.NewGetAllGuidesHandler(uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, tt.path, nil)
 

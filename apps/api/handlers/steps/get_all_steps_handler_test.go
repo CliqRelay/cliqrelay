@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlerssteps "github.com/CliqRelay/cliqrelay/handlers/steps"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -24,8 +23,6 @@ import (
 
 func TestGetAllStepsHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 
 	cases := []struct {
 		name           string
@@ -151,7 +148,7 @@ func TestGetAllStepsHandler(t *testing.T) {
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
-			handler := handlerssteps.NewGetAllStepsHandler(appConfig, uc)
+			handler := handlerssteps.NewGetAllStepsHandler(uc)
 
 			path := "/api/v1/steps?guide_id=" + tt.guideID
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)

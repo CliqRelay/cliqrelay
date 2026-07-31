@@ -10,14 +10,14 @@ import (
 	"github.com/CliqRelay/cliqrelay/openapi"
 )
 
-func InitRoutes(appConfig *config.AppConfig, services *interfaces.DomainUseCases, extraRoutes ...[]authulamodels.Route) []authulamodels.Route {
+func InitRoutes(cfg *config.HTTPConfig, useCases *interfaces.DomainUseCases, services *interfaces.DomainServices, extraRoutes ...[]authulamodels.Route) []authulamodels.Route {
 	routes := []authulamodels.Route{}
-	routes = append(routes, HealthRoutes(appConfig)...)
-	routes = append(routes, TeamsRoutes(appConfig)...)
-	routes = append(routes, GuidesRoutes(appConfig, services.GuidesUseCase, services.GuideViewsUseCase, services.ExportService)...)
-	routes = append(routes, StepsRoutes(appConfig, services.StepsUseCase)...)
-	routes = append(routes, MediaAssetsRoutes(appConfig, services.MediaAssetsUseCase)...)
-	routes = append(routes, UploadRoutes(appConfig, services.UploadsUseCase)...)
+	routes = append(routes, HealthRoutes(cfg)...)
+	routes = append(routes, TeamsRoutes(cfg)...)
+	routes = append(routes, GuidesRoutes(cfg, useCases.GuidesUseCase, useCases.GuideViewsUseCase, services.ExportService)...)
+	routes = append(routes, StepsRoutes(cfg, useCases.StepsUseCase)...)
+	routes = append(routes, MediaAssetsRoutes(cfg, useCases.MediaAssetsUseCase)...)
+	routes = append(routes, UploadRoutes(cfg, useCases.UploadsUseCase)...)
 
 	for _, extra := range extraRoutes {
 		routes = append(routes, extra...)
@@ -25,12 +25,12 @@ func InitRoutes(appConfig *config.AppConfig, services *interfaces.DomainUseCases
 
 	routes = append(routes, authulamodels.Route{
 		Method:  "GET",
-		Path:    fmt.Sprintf("%s/openapi.json", appConfig.BasePath),
-		Handler: openapi.NewOpenAPISpecHandler(appConfig.OpenAPIService),
+		Path:    fmt.Sprintf("%s/openapi.json", cfg.BasePath),
+		Handler: openapi.NewOpenAPISpecHandler(cfg.OpenAPIService),
 	})
 
 	for _, route := range routes {
-		appConfig.AuthulaInstance.RegisterCustomRoute(route)
+		cfg.AuthulaInstance.RegisterCustomRoute(route)
 	}
 
 	return routes

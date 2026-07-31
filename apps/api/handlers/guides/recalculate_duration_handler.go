@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type RecalculateDurationHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewRecalculateDurationHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *RecalculateDurationHandler {
-	return &RecalculateDurationHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewRecalculateDurationHandler(guidesUseCase interfaces.GuidesUseCase) *RecalculateDurationHandler {
+	return &RecalculateDurationHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *RecalculateDurationHandler) Handle() http.HandlerFunc {

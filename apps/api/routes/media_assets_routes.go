@@ -14,18 +14,18 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func MediaAssetsRoutes(appConfig *config.AppConfig, mediaUseCase interfaces.MediaAssetsUseCase) []authulamodels.Route {
-	createHandler := handlersmediaassets.NewCreateMediaAssetHandler(appConfig, mediaUseCase)
-	getAllHandler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, mediaUseCase)
-	getByIDHandler := handlersmediaassets.NewGetMediaAssetByIDHandler(appConfig, mediaUseCase)
-	updateHandler := handlersmediaassets.NewUpdateMediaAssetHandler(appConfig, mediaUseCase)
-	deleteHandler := handlersmediaassets.NewDeleteMediaAssetHandler(appConfig, mediaUseCase)
+func MediaAssetsRoutes(cfg *config.HTTPConfig, mediaUseCase interfaces.MediaAssetsUseCase) []authulamodels.Route {
+	createHandler := handlersmediaassets.NewCreateMediaAssetHandler(mediaUseCase)
+	getAllHandler := handlersmediaassets.NewGetAllMediaAssetsHandler(mediaUseCase)
+	getByIDHandler := handlersmediaassets.NewGetMediaAssetByIDHandler(mediaUseCase)
+	updateHandler := handlersmediaassets.NewUpdateMediaAssetHandler(mediaUseCase)
+	deleteHandler := handlersmediaassets.NewDeleteMediaAssetHandler(mediaUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
-	base := appConfig.BasePath
+	base := cfg.BasePath
 
 	return []authulamodels.Route{
 		{

@@ -5,18 +5,16 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type DeleteStepHandler struct {
-	appConfig    *config.AppConfig
 	stepsUseCase interfaces.StepsUseCase
 }
 
-func NewDeleteStepHandler(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) *DeleteStepHandler {
-	return &DeleteStepHandler{appConfig: appConfig, stepsUseCase: stepsUseCase}
+func NewDeleteStepHandler(stepsUseCase interfaces.StepsUseCase) *DeleteStepHandler {
+	return &DeleteStepHandler{stepsUseCase: stepsUseCase}
 }
 
 func (h *DeleteStepHandler) Handle() http.HandlerFunc {

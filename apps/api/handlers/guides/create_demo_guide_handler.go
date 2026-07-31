@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type CreateDemoGuideHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewCreateDemoGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *CreateDemoGuideHandler {
-	return &CreateDemoGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewCreateDemoGuideHandler(guidesUseCase interfaces.GuidesUseCase) *CreateDemoGuideHandler {
+	return &CreateDemoGuideHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *CreateDemoGuideHandler) Handle() http.HandlerFunc {

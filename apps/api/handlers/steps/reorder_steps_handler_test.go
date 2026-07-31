@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlerssteps "github.com/CliqRelay/cliqrelay/handlers/steps"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -23,8 +22,6 @@ import (
 
 func TestReorderStepsHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 
 	cases := []struct {
 		name           string
@@ -131,7 +128,7 @@ func TestReorderStepsHandler(t *testing.T) {
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewStepsUseCase(mockAuthz, svc, guidesSvc)
-			handler := handlerssteps.NewReorderStepsHandler(appConfig, uc)
+			handler := handlerssteps.NewReorderStepsHandler(uc)
 
 			var req tests.HandlerTestRequest
 			if tt.rawBody != nil {

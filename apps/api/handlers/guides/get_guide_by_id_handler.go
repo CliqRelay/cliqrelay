@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type GetGuideByIDHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewGetGuideByIDHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *GetGuideByIDHandler {
-	return &GetGuideByIDHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewGetGuideByIDHandler(guidesUseCase interfaces.GuidesUseCase) *GetGuideByIDHandler {
+	return &GetGuideByIDHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *GetGuideByIDHandler) Handle() http.HandlerFunc {

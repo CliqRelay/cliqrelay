@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	"github.com/CliqRelay/cliqrelay/models"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
@@ -22,8 +21,6 @@ const testPageSize = 10
 
 func TestGetStarredGuidesHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 
 	cases := []struct {
 		name           string
@@ -77,7 +74,7 @@ func TestGetStarredGuidesHandler(t *testing.T) {
 			starredSvc := starredguidesservice.NewStarredGuidesService(mockRepo, mockGuidesRepo)
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockRepo, nil, nil, nil)
 			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
-			handler := handlersguides.NewGetStarredGuidesHandler(appConfig, uc)
+			handler := handlersguides.NewGetStarredGuidesHandler(uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/starred", nil)
 			q := req.Req.URL.Query()

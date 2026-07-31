@@ -12,13 +12,13 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func HealthRoutes(appConfig *config.AppConfig) []authulamodels.Route {
-	healthHandler := health.NewHealthHandler(appConfig)
+func HealthRoutes(cfg *config.HTTPConfig) []authulamodels.Route {
+	healthHandler := health.NewHealthHandler()
 
 	return []authulamodels.Route{
 		{
 			Method:  "GET",
-			Path:    fmt.Sprintf("%s/health", appConfig.BasePath),
+			Path:    fmt.Sprintf("%s/health", cfg.BasePath),
 			Handler: healthHandler.Handler(),
 		},
 	}

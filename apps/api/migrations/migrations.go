@@ -4,31 +4,64 @@ import (
 	"context"
 	"time"
 
+	"github.com/Authula/authula"
 	authulamigrations "github.com/Authula/authula/migrations"
-
-	"github.com/CliqRelay/cliqrelay/config"
 )
 
 const PluginCliqRelay = "cliqrelay"
 
-func RunMigrations(appConfig *config.AppConfig) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+type Option func(*migrationOptions)
+
+type migrationOptions struct {
+	guideViewsMigrationEnabled bool
+}
+
+func defaultMigrationOptions() *migrationOptions {
+	return &migrationOptions{
+		guideViewsMigrationEnabled: true,
+	}
+}
+
+func (o *migrationOptions) apply(opts ...Option) {
+	for _, opt := range opts {
+		if opt != nil {
+			opt(o)
+		}
+	}
+}
+
+func WithGuideViewsMigration(enabled bool) Option {
+	return func(o *migrationOptions) { o.guideViewsMigrationEnabled = enabled }
+}
+
+func RunMigrations(ctx context.Context, auth *authula.Auth, opts ...Option) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	migrator := appConfig.AuthulaInstance.Migrator()
+	o := defaultMigrationOptions()
+	o.apply(opts...)
+
+	migrations := []authulamigrations.Migration{
+		guidesInitial(),
+		stepsInitial(),
+		mediaAssetsInitial(),
+		starredGuidesInitial(),
+		guideExportsInitial(),
+	}
+	if o.guideViewsMigrationEnabled {
+		migrations = append(migrations, guideViewsInitial())
+	}
+
 	migrationSet := []authulamigrations.MigrationSet{
 		{
-			PluginID: PluginCliqRelay,
-			Migrations: []authulamigrations.Migration{
-				guidesInitial(),
-				stepsInitial(),
-				mediaAssetsInitial(),
-				starredGuidesInitial(),
-				guideExportsInitial(),
-				guideViewsInitial(),
-			},
+			PluginID:   PluginCliqRelay,
+			Migrations: migrations,
 		},
 	}
 
+	migrator := auth.Migrator()
 	return migrator.Migrate(ctx, migrationSet)
 }

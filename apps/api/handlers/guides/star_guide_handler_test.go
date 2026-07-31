@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	"github.com/CliqRelay/cliqrelay/models"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
@@ -19,8 +18,6 @@ import (
 
 func TestStarGuideHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 
 	cases := []struct {
 		name           string
@@ -90,7 +87,7 @@ func TestStarGuideHandler(t *testing.T) {
 			starredSvc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockGuidesRepo)
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, mockStarredRepo, nil, nil, nil)
 			uc := usecases.NewGuidesUseCase(mockAuthz, guidesSvc, starredSvc)
-			handler := handlersguides.NewStarGuideHandler(appConfig, uc)
+			handler := handlersguides.NewStarGuideHandler(uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, nil)
 			req.Req.SetPathValue("id", guideID)
