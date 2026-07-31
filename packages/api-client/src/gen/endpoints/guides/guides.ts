@@ -41,10 +41,12 @@ import type {
 	GetGuideByIDResponse,
 	GetGuidesCountParams,
 	GetGuidesCountResponse,
+	GetGuidesTimeSavedParams,
 	GetGuideViewsCountParams,
 	GetGuideViewsCountResponse,
 	GetStarredGuidesParams,
 	GetStarredGuidesResponse,
+	GetTimeSavedResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
@@ -1012,6 +1014,188 @@ export function useGetStarredGuides<
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
 	const queryOptions = getGetStarredGuidesQueryOptions(params, options);
+
+	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+		TData,
+		TError
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetGuidesTimeSavedUrl = (params?: GetGuidesTimeSavedParams) => {
+	const normalizedParams = new URLSearchParams();
+
+	Object.entries(params || {}).forEach(([key, value]) => {
+		if (value !== undefined) {
+			normalizedParams.append(key, value === null ? "null" : String(value));
+		}
+	});
+
+	const stringifiedParams = normalizedParams.toString();
+
+	return stringifiedParams.length > 0
+		? `${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved?${stringifiedParams}`
+		: `${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved`;
+};
+
+/**
+ * Returns the total time saved from guide views for a team
+ * @summary Get guides time saved
+ */
+export const getGuidesTimeSaved = async (
+	params?: GetGuidesTimeSavedParams,
+	options?: Parameters<typeof customFetch>[1],
+): Promise<GetTimeSavedResponse> => {
+	return customFetch<GetTimeSavedResponse>(getGetGuidesTimeSavedUrl(params), {
+		...options,
+		method: "GET",
+	});
+};
+
+export const getGetGuidesTimeSavedQueryKey = (
+	params?: GetGuidesTimeSavedParams,
+) => {
+	return [
+		`${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetGuidesTimeSavedQueryOptions = <
+	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+	TError = unknown,
+>(
+	params?: GetGuidesTimeSavedParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+) => {
+	const { query: queryOptions, request: requestOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetGuidesTimeSavedQueryKey(params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getGuidesTimeSaved>>
+	> = ({ signal }) => getGuidesTimeSaved(params, { signal, ...requestOptions });
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetGuidesTimeSavedQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getGuidesTimeSaved>>
+>;
+export type GetGuidesTimeSavedQueryError = unknown;
+
+export function useGetGuidesTimeSaved<
+	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+	TError = unknown,
+>(
+	params: undefined | GetGuidesTimeSavedParams,
+	options: {
+		query: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				DefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+					TError,
+					Awaited<ReturnType<typeof getGuidesTimeSaved>>
+				>,
+				"initialData"
+			>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetGuidesTimeSaved<
+	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+	TError = unknown,
+>(
+	params?: GetGuidesTimeSavedParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				UndefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+					TError,
+					Awaited<ReturnType<typeof getGuidesTimeSaved>>
+				>,
+				"initialData"
+			>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetGuidesTimeSaved<
+	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+	TError = unknown,
+>(
+	params?: GetGuidesTimeSavedParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get guides time saved
+ */
+
+export function useGetGuidesTimeSaved<
+	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+	TError = unknown,
+>(
+	params?: GetGuidesTimeSavedParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+} {
+	const queryOptions = getGetGuidesTimeSavedQueryOptions(params, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,

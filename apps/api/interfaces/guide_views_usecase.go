@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -11,4 +12,5 @@ import (
 type GuideViewsUseCase interface {
 	RecordView(ctx context.Context, actor *authulamodels.Actor, guideID uuid.UUID, ipHash, userAgent, viewedAt string) error
 	GetViewCount(ctx context.Context, actor *authulamodels.Actor, teamID uuid.UUID) (int, error)
+	GetTimeSaved(ctx context.Context, actor *authulamodels.Actor, teamID uuid.UUID, since *time.Time) (int, error)
 }

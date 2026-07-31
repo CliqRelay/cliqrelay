@@ -20,8 +20,17 @@ export function StatsCards({ teamId }: { teamId?: string }) {
 		},
 	);
 
+	const timeSavedQuery = api.guides.useGetGuidesTimeSaved(
+		teamId ? { team_id: teamId } : undefined,
+		{
+			query: { enabled: !!teamId },
+			request: { credentials: "include" },
+		},
+	);
+
 	const count = guidesCountQuery.data?.count ?? 0;
-	const timeSaved = count ? formatTimeSaved(count * 15) : 0;
+	const timeSavedSeconds = timeSavedQuery.data?.timeSavedSeconds ?? 0;
+	const timeSaved = formatTimeSaved(Math.round(timeSavedSeconds / 60));
 	const viewCount = guideViewsQuery.data?.count ?? 0;
 
 	const stats = [
@@ -35,7 +44,7 @@ export function StatsCards({ teamId }: { teamId?: string }) {
 			label: "Time Saved",
 			value: timeSaved,
 			icon: Clock,
-			isLoading: guidesCountQuery.isLoading,
+			isLoading: timeSavedQuery.isLoading,
 		},
 		{
 			label: "Guide Views",

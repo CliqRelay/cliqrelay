@@ -47,3 +47,25 @@ func (r *BunGuideViewsRepository) GetCountByTeam(ctx context.Context, teamID uui
 	}
 	return q.Count(ctx)
 }
+
+func (r *BunGuideViewsRepository) GetTimeSavedByTeam(ctx context.Context, teamID uuid.UUID, since *time.Time) ([]*types.GuideViewStats, error) {
+	q := r.db.NewSelect().
+		ColumnExpr("gv.guide_id AS guide_id").
+		ColumnExpr("COUNT(gv.id) AS view_count").
+		ColumnExpr("MAX(g.duration_seconds) AS duration_seconds").
+		TableExpr("guide_views AS gv").
+		Join("JOIN guides AS g ON g.id = gv.guide_id").
+		Where("gv.team_id = ?", teamID).
+		Where("g.deleted_at IS NULL").
+		GroupExpr("gv.guide_id")
+
+	if since != nil {
+		q = q.Where("gv.viewed_at >= ?", *since)
+	}
+
+	var stats []*types.GuideViewStats
+	if err := q.Scan(ctx, &stats); err != nil {
+		return nil, err
+	}
+	return stats, nil
+}

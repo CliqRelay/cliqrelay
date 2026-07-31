@@ -20,6 +20,7 @@ import type {
 	GetGuidesCountResponse,
 	GetGuideViewsCountResponse,
 	GetStarredGuidesResponse,
+	GetTimeSavedResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
@@ -372,6 +373,14 @@ export const getGetStarredGuidesResponseMock = (
 	limit: faker.number.int(),
 	page: faker.number.int(),
 	total: faker.number.int(),
+	...overrideResponse,
+});
+
+export const getGetGuidesTimeSavedResponseMock = (
+	overrideResponse: Partial<Extract<GetTimeSavedResponse, object>> = {},
+): GetTimeSavedResponse => ({
+	timeSavedHours: faker.number.float({ fractionDigits: 2 }),
+	timeSavedSeconds: faker.number.int(),
 	...overrideResponse,
 });
 

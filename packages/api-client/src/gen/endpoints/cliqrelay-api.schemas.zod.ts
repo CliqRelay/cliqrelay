@@ -463,6 +463,16 @@ export const GetStepByIDResponse = zod.object({
 export type GetStepByIDResponse = zod.input<typeof GetStepByIDResponse>;
 export type GetStepByIDResponseOutput = zod.output<typeof GetStepByIDResponse>;
 
+export const GetTimeSavedResponse = zod.object({
+	timeSavedHours: zod.number(),
+	timeSavedSeconds: zod.int(),
+});
+
+export type GetTimeSavedResponse = zod.input<typeof GetTimeSavedResponse>;
+export type GetTimeSavedResponseOutput = zod.output<
+	typeof GetTimeSavedResponse
+>;
+
 export const GuideSortField = zod
 	.enum(["created_at", "updated_at"])
 	.describe("The field to sort guides by");

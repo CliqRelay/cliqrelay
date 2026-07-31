@@ -22,6 +22,7 @@ import type {
 	GetGuidesCountResponse,
 	GetGuideViewsCountResponse,
 	GetStarredGuidesResponse,
+	GetTimeSavedResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
@@ -44,6 +45,7 @@ import {
 	getGetExportStatusResponseMock,
 	getGetGuideByIdResponseMock,
 	getGetGuidesCountResponseMock,
+	getGetGuidesTimeSavedResponseMock,
 	getGetGuideViewsCountResponseMock,
 	getGetStarredGuidesResponseMock,
 	getPermanentlyDeleteGuideResponseMock,
@@ -69,6 +71,7 @@ export {
 	getGetExportStatusResponseMock,
 	getGetGuideByIdResponseMock,
 	getGetGuidesCountResponseMock,
+	getGetGuidesTimeSavedResponseMock,
 	getGetGuideViewsCountResponseMock,
 	getGetStarredGuidesResponseMock,
 	getPermanentlyDeleteGuideResponseMock,
@@ -244,6 +247,30 @@ export const getGetStarredGuidesMockHandler = (
 						? await overrideResponse(info)
 						: overrideResponse
 					: getGetStarredGuidesResponseMock(),
+				{ status: 200 },
+			);
+		},
+		options,
+	);
+};
+
+export const getGetGuidesTimeSavedMockHandler = (
+	overrideResponse?:
+		| GetTimeSavedResponse
+		| ((
+				info: Parameters<Parameters<typeof http.get>[1]>[0],
+		  ) => Promise<GetTimeSavedResponse> | GetTimeSavedResponse),
+	options?: RequestHandlerOptions,
+) => {
+	return http.get(
+		"*/api/v1/guides/time-saved",
+		async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+			return HttpResponse.json(
+				overrideResponse !== undefined
+					? typeof overrideResponse === "function"
+						? await overrideResponse(info)
+						: overrideResponse
+					: getGetGuidesTimeSavedResponseMock(),
 				{ status: 200 },
 			);
 		},
@@ -620,6 +647,7 @@ export const getGuidesMock = () => [
 	getGetGuidesCountMockHandler(),
 	getCreateDemoGuideMockHandler(),
 	getGetStarredGuidesMockHandler(),
+	getGetGuidesTimeSavedMockHandler(),
 	getGetGuideViewsCountMockHandler(),
 	getGetGuideByIdMockHandler(),
 	getDeleteGuideMockHandler(),

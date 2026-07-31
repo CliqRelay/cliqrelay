@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -53,4 +54,12 @@ func (uc *GuideViewsUseCase) GetViewCount(ctx context.Context, actor *authulamod
 	}
 
 	return uc.guideViewsService.GetCountByTeam(ctx, teamID, nil)
+}
+
+func (uc *GuideViewsUseCase) GetTimeSaved(ctx context.Context, actor *authulamodels.Actor, teamID uuid.UUID, since *time.Time) (int, error) {
+	if _, err := uc.authzService.GuideListFilter(ctx, actor, teamID.String()); err != nil {
+		return 0, err
+	}
+
+	return uc.guideViewsService.GetTimeSavedByTeam(ctx, teamID, since)
 }

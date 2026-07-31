@@ -23,3 +23,8 @@ func (m *MockGuideViewsRepository) GetCountByTeam(ctx context.Context, teamID uu
 	args := m.Called(ctx, teamID, since)
 	return args.Int(0), args.Error(1)
 }
+
+func (m *MockGuideViewsRepository) GetTimeSavedByTeam(ctx context.Context, teamID uuid.UUID, since *time.Time) ([]*types.GuideViewStats, error) {
+	args := m.Called(ctx, teamID, since)
+	return args.Get(0).([]*types.GuideViewStats), args.Error(1)
+}
