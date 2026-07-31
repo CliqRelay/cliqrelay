@@ -227,6 +227,7 @@ function TrashGuides() {
 		} finally {
 			setDeleteDialogGuideId(null);
 			invalidateGetAllGuides(queryClient);
+			invalidateGuidesCount(queryClient);
 		}
 	};
 

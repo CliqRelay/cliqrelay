@@ -141,6 +141,9 @@ function GuideDetailPage() {
 		) {
 			hasTrackedView.current = true;
 			recordViewMutation.mutate({ id: currentGuide.id });
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetGuideViewsCountQueryKey(),
+			});
 		}
 	}, [
 		mode,
