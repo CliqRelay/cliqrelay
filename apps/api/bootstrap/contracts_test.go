@@ -12,9 +12,7 @@ import (
 	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
 )
 
-// Compile-time contracts: the default bun implementations must satisfy their
-// domain interfaces so the option-override resolution in buildRepositories
-// can never produce a non-conforming repository graph.
+// Ensures at compile time that our Bun database repositories correctly implement all domain interfaces.
 var (
 	_ interfaces.GuidesRepository        = (*bunGuides.BunGuidesRepository)(nil)
 	_ interfaces.StarredGuidesRepository = (*bunStarredGuides.BunStarredGuidesRepository)(nil)
@@ -25,9 +23,7 @@ var (
 )
 
 func TestBuildRepositoriesDefaultsToBun(t *testing.T) {
-	// buildRepositories requires a database; exercising it with a nil option
-	// struct verifies the override-first resolution path compiles and errors
-	// cleanly when no DB is configured.
+	// Checks that missing a DB connection correctly triggers an error during default repository setup.
 	o := defaultOptions()
 	if _, err := buildRepositories(o); err == nil {
 		t.Fatal("expected error when no DB is configured")

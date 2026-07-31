@@ -13,12 +13,12 @@ const PluginCliqRelay = "cliqrelay"
 type Option func(*migrationOptions)
 
 type migrationOptions struct {
-	guideViews bool
+	guideViewsMigrationEnabled bool
 }
 
 func defaultMigrationOptions() *migrationOptions {
 	return &migrationOptions{
-		guideViews: true,
+		guideViewsMigrationEnabled: true,
 	}
 }
 
@@ -30,11 +30,8 @@ func (o *migrationOptions) apply(opts ...Option) {
 	}
 }
 
-// WithGuideViews controls whether the Postgres guide_views migration runs.
-// Disable it when guide views analytics is backed by an alternative store
-// (e.g. ClickHouse) instead of Postgres.
-func WithGuideViews(enabled bool) Option {
-	return func(o *migrationOptions) { o.guideViews = enabled }
+func WithGuideViewsMigration(enabled bool) Option {
+	return func(o *migrationOptions) { o.guideViewsMigrationEnabled = enabled }
 }
 
 func RunMigrations(ctx context.Context, auth *authula.Auth, opts ...Option) error {
@@ -54,7 +51,7 @@ func RunMigrations(ctx context.Context, auth *authula.Auth, opts ...Option) erro
 		starredGuidesInitial(),
 		guideExportsInitial(),
 	}
-	if o.guideViews {
+	if o.guideViewsMigrationEnabled {
 		migrations = append(migrations, guideViewsInitial())
 	}
 
