@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type RestoreGuideHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewRestoreGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *RestoreGuideHandler {
-	return &RestoreGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewRestoreGuideHandler(guidesUseCase interfaces.GuidesUseCase) *RestoreGuideHandler {
+	return &RestoreGuideHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *RestoreGuideHandler) Handle() http.HandlerFunc {

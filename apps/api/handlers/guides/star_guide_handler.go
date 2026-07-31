@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type StarGuideHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewStarGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *StarGuideHandler {
-	return &StarGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewStarGuideHandler(guidesUseCase interfaces.GuidesUseCase) *StarGuideHandler {
+	return &StarGuideHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *StarGuideHandler) Handle() http.HandlerFunc {

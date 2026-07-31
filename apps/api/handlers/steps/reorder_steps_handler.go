@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type ReorderStepsHandler struct {
-	appConfig    *config.AppConfig
 	stepsUseCase interfaces.StepsUseCase
 }
 
-func NewReorderStepsHandler(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) *ReorderStepsHandler {
-	return &ReorderStepsHandler{appConfig: appConfig, stepsUseCase: stepsUseCase}
+func NewReorderStepsHandler(stepsUseCase interfaces.StepsUseCase) *ReorderStepsHandler {
+	return &ReorderStepsHandler{stepsUseCase: stepsUseCase}
 }
 
 func (h *ReorderStepsHandler) Handle() http.HandlerFunc {

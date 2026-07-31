@@ -5,7 +5,6 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -13,12 +12,11 @@ import (
 )
 
 type PresignUploadHandler struct {
-	appConfig      *config.AppConfig
 	uploadsUseCase interfaces.UploadsUseCase
 }
 
-func NewPresignUploadHandler(appConfig *config.AppConfig, uploadsUseCase interfaces.UploadsUseCase) *PresignUploadHandler {
-	return &PresignUploadHandler{appConfig: appConfig, uploadsUseCase: uploadsUseCase}
+func NewPresignUploadHandler(uploadsUseCase interfaces.UploadsUseCase) *PresignUploadHandler {
+	return &PresignUploadHandler{uploadsUseCase: uploadsUseCase}
 }
 
 func (h *PresignUploadHandler) Handle() http.HandlerFunc {

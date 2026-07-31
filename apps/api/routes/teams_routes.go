@@ -13,8 +13,8 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func TeamsRoutes(appConfig *config.AppConfig) []authulamodels.Route {
-	teamsHandler := teams.NewGetTeamsHandler(appConfig)
+func TeamsRoutes(cfg *config.HTTPConfig) []authulamodels.Route {
+	teamsHandler := teams.NewGetTeamsHandler(cfg.AuthulaInstance)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
@@ -23,7 +23,7 @@ func TeamsRoutes(appConfig *config.AppConfig) []authulamodels.Route {
 	return []authulamodels.Route{
 		{
 			Method:     "GET",
-			Path:       fmt.Sprintf("%s/teams", appConfig.BasePath),
+			Path:       fmt.Sprintf("%s/teams", cfg.BasePath),
 			Middleware: authMiddleware,
 			Handler:    teamsHandler.Handle(),
 		},

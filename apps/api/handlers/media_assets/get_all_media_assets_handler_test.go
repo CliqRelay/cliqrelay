@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlersmediaassets "github.com/CliqRelay/cliqrelay/handlers/media_assets"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -22,8 +21,6 @@ import (
 
 func TestGetAllMediaAssetsHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 
 	cases := []struct {
 		name           string
@@ -114,7 +111,7 @@ func TestGetAllMediaAssetsHandler(t *testing.T) {
 			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewMediaAssetsUseCase(mockAuthz, maSvc, stepsSvc, guidesSvc)
-			handler := handlersmediaassets.NewGetAllMediaAssetsHandler(appConfig, uc)
+			handler := handlersmediaassets.NewGetAllMediaAssetsHandler(uc)
 
 			path := "/api/v1/media-assets?step_id=" + tt.stepID
 			req := tests.NewHandlerRequest(t, http.MethodGet, path, nil)

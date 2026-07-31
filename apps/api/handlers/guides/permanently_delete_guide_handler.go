@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type PermanentlyDeleteGuideHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewPermanentlyDeleteGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *PermanentlyDeleteGuideHandler {
-	return &PermanentlyDeleteGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewPermanentlyDeleteGuideHandler(guidesUseCase interfaces.GuidesUseCase) *PermanentlyDeleteGuideHandler {
+	return &PermanentlyDeleteGuideHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *PermanentlyDeleteGuideHandler) Handle() http.HandlerFunc {

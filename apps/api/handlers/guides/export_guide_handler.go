@@ -5,7 +5,6 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -13,12 +12,11 @@ import (
 )
 
 type ExportGuideHandler struct {
-	appConfig     *config.AppConfig
 	exportService interfaces.ExportService
 }
 
-func NewExportGuideHandler(appConfig *config.AppConfig, exportService interfaces.ExportService) *ExportGuideHandler {
-	return &ExportGuideHandler{appConfig: appConfig, exportService: exportService}
+func NewExportGuideHandler(exportService interfaces.ExportService) *ExportGuideHandler {
+	return &ExportGuideHandler{exportService: exportService}
 }
 
 func (h *ExportGuideHandler) Handle() http.HandlerFunc {

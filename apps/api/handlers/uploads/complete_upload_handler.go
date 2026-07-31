@@ -5,7 +5,6 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -13,12 +12,11 @@ import (
 )
 
 type CompleteUploadHandler struct {
-	appConfig      *config.AppConfig
 	uploadsUseCase interfaces.UploadsUseCase
 }
 
-func NewCompleteUploadHandler(appConfig *config.AppConfig, uploadsUseCase interfaces.UploadsUseCase) *CompleteUploadHandler {
-	return &CompleteUploadHandler{appConfig: appConfig, uploadsUseCase: uploadsUseCase}
+func NewCompleteUploadHandler(uploadsUseCase interfaces.UploadsUseCase) *CompleteUploadHandler {
+	return &CompleteUploadHandler{uploadsUseCase: uploadsUseCase}
 }
 
 func (h *CompleteUploadHandler) Handle() http.HandlerFunc {

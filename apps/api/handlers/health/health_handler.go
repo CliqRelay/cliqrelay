@@ -5,16 +5,14 @@ import (
 
 	"github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type HealthHandler struct {
-	appConfig *config.AppConfig
 }
 
-func NewHealthHandler(appConfig *config.AppConfig) *HealthHandler {
-	return &HealthHandler{appConfig: appConfig}
+func NewHealthHandler() *HealthHandler {
+	return &HealthHandler{}
 }
 
 func (h *HealthHandler) Handler() http.HandlerFunc {

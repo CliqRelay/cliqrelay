@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type GetGuidesCountHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewGetGuidesCountHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *GetGuidesCountHandler {
-	return &GetGuidesCountHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewGetGuidesCountHandler(guidesUseCase interfaces.GuidesUseCase) *GetGuidesCountHandler {
+	return &GetGuidesCountHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *GetGuidesCountHandler) Handle() http.HandlerFunc {

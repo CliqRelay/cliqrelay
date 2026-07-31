@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlersuploads "github.com/CliqRelay/cliqrelay/handlers/uploads"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -22,8 +21,6 @@ import (
 
 func TestCompleteUploadHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 	stepAction := models.StepActionClick
 	guideID := uuid.New()
 	stepID := uuid.New()
@@ -185,7 +182,7 @@ func TestCompleteUploadHandler(t *testing.T) {
 			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewUploadsUseCase(mockAuthz, svc, guidesSvc, stepsSvc)
-			handler := handlersuploads.NewCompleteUploadHandler(appConfig, uc)
+			handler := handlersuploads.NewCompleteUploadHandler(uc)
 
 			path := "/api/v1/uploads/complete"
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, tt.payload)

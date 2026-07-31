@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type PublishGuideHandler struct {
-	appConfig     *config.AppConfig
 	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewPublishGuideHandler(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase) *PublishGuideHandler {
-	return &PublishGuideHandler{appConfig: appConfig, guidesUseCase: guidesUseCase}
+func NewPublishGuideHandler(guidesUseCase interfaces.GuidesUseCase) *PublishGuideHandler {
+	return &PublishGuideHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *PublishGuideHandler) Handle() http.HandlerFunc {

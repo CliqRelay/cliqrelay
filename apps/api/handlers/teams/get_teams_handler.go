@@ -4,19 +4,18 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Authula/authula"
 	authulamodels "github.com/Authula/authula/models"
 	organizations "github.com/Authula/authula/plugins/organizations"
 	orgtypes "github.com/Authula/authula/plugins/organizations/types"
-
-	"github.com/CliqRelay/cliqrelay/config"
 )
 
 type GetTeamsHandler struct {
-	appConfig *config.AppConfig
+	auth *authula.Auth
 }
 
-func NewGetTeamsHandler(appConfig *config.AppConfig) *GetTeamsHandler {
-	return &GetTeamsHandler{appConfig: appConfig}
+func NewGetTeamsHandler(auth *authula.Auth) *GetTeamsHandler {
+	return &GetTeamsHandler{auth: auth}
 }
 
 type teamResponse struct {
@@ -37,7 +36,7 @@ func (h *GetTeamsHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := authulamodels.GetRequestContext(r.Context())
 		actor := reqCtx.Actor
 
-		plugin := h.appConfig.AuthulaInstance.PluginRegistry.GetPlugin("organizations")
+		plugin := h.auth.PluginRegistry.GetPlugin("organizations")
 		orgPlugin, ok := plugin.(*organizations.OrganizationsPlugin)
 		if !ok {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": "organizations plugin not found"})

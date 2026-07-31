@@ -8,19 +8,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type GetTimeSavedHandler struct {
-	appConfig         *config.AppConfig
 	guideViewsUseCase interfaces.GuideViewsUseCase
 }
 
-func NewGetTimeSavedHandler(appConfig *config.AppConfig, guideViewsUseCase interfaces.GuideViewsUseCase) *GetTimeSavedHandler {
-	return &GetTimeSavedHandler{appConfig: appConfig, guideViewsUseCase: guideViewsUseCase}
+func NewGetTimeSavedHandler(guideViewsUseCase interfaces.GuideViewsUseCase) *GetTimeSavedHandler {
+	return &GetTimeSavedHandler{guideViewsUseCase: guideViewsUseCase}
 }
 
 func (h *GetTimeSavedHandler) Handle() http.HandlerFunc {

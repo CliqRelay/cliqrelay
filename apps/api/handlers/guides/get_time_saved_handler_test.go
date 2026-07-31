@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
 	"github.com/CliqRelay/cliqrelay/tests"
@@ -18,8 +17,6 @@ import (
 
 func TestGetTimeSavedHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 
 	cases := []struct {
 		name           string
@@ -103,7 +100,7 @@ func TestGetTimeSavedHandler(t *testing.T) {
 			mockAuthz.On("GuideListFilter", mock.Anything, mock.Anything, mock.Anything).Return(&types.GuideFilter{}, nil)
 			svc := guideviewsservice.NewGuideViewsService(mockRepo, nil)
 			uc := usecases.NewGuideViewsUseCase(mockAuthz, nil, svc)
-			handler := handlersguides.NewGetTimeSavedHandler(appConfig, uc)
+			handler := handlersguides.NewGetTimeSavedHandler(uc)
 
 			req := tests.NewHandlerRequest(t, http.MethodGet, tt.path, nil)
 

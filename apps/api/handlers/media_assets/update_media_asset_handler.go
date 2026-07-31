@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type UpdateMediaAssetHandler struct {
-	appConfig          *config.AppConfig
 	mediaAssetsUseCase interfaces.MediaAssetsUseCase
 }
 
-func NewUpdateMediaAssetHandler(appConfig *config.AppConfig, mediaAssetsUseCase interfaces.MediaAssetsUseCase) *UpdateMediaAssetHandler {
-	return &UpdateMediaAssetHandler{appConfig: appConfig, mediaAssetsUseCase: mediaAssetsUseCase}
+func NewUpdateMediaAssetHandler(mediaAssetsUseCase interfaces.MediaAssetsUseCase) *UpdateMediaAssetHandler {
+	return &UpdateMediaAssetHandler{mediaAssetsUseCase: mediaAssetsUseCase}
 }
 
 func (h *UpdateMediaAssetHandler) Handle() http.HandlerFunc {

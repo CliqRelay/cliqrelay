@@ -2,44 +2,16 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"log/slog"
-	"net/http"
-	"time"
 
 	"github.com/Authula/authula"
-	authulamodels "github.com/Authula/authula/models"
-	organizationsplugin "github.com/Authula/authula/plugins/organizations"
 
 	"github.com/CliqRelay/cliqrelay/auth"
-	"github.com/CliqRelay/cliqrelay/config"
+	"github.com/CliqRelay/cliqrelay/bootstrap"
 	"github.com/CliqRelay/cliqrelay/constants"
-	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/infra"
-	"github.com/CliqRelay/cliqrelay/interfaces"
-	"github.com/CliqRelay/cliqrelay/migrations"
 	"github.com/CliqRelay/cliqrelay/openapi"
-	bunGuideExports "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
-	bunGuideViews "github.com/CliqRelay/cliqrelay/repositories/guide_views"
-	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
-	bunMediaAssets "github.com/CliqRelay/cliqrelay/repositories/media_assets"
-	bunStarredGuides "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
-	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
-	"github.com/CliqRelay/cliqrelay/routes"
-	authservice "github.com/CliqRelay/cliqrelay/services/auth"
-	"github.com/CliqRelay/cliqrelay/services/export"
-	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
-	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
-	mediaassetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
-	"github.com/CliqRelay/cliqrelay/services/presign"
-	"github.com/CliqRelay/cliqrelay/services/purge"
-	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
-	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
-	"github.com/CliqRelay/cliqrelay/services/storage"
-	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
-	"github.com/CliqRelay/cliqrelay/usecases"
-	"github.com/CliqRelay/cliqrelay/worker"
 )
 
 func main() {
@@ -68,97 +40,42 @@ func main() {
 		auth.InitAuthServiceHooks(func() *authula.Auth { return authulaAuth }),
 	)
 
-	appConfig := &config.AppConfig{
-		EnvConfig:       envConfig,
-		DB:              authulaAuth.DB(),
-		RedisClient:     infraCfg.RedisClient,
-		AuthulaInstance: authulaAuth,
-		Logger:          infraCfg.Logger,
-		OpenAPIService:  openAPISvc,
-		BasePath:        "/api/v1",
-		S3Client:        infraCfg.S3Client,
-		S3Bucket:        infraCfg.S3Bucket,
+	app, err := bootstrap.New(
+		bootstrap.WithEnvConfig(envConfig),
+		bootstrap.WithAuthula(authulaAuth),
+		bootstrap.WithInfra(infraCfg),
+		bootstrap.WithOpenAPIService(openAPISvc),
+		bootstrap.WithBasePath("/api/v1"),
+	)
+	if err != nil {
+		log.Fatal("Error initializing application: ", err)
 	}
 
-	if err := migrations.RunMigrations(appConfig); err != nil {
+	if err := app.Migrate(context.Background()); err != nil {
 		log.Fatal("Error initializing migrations: ", err)
 	}
 
-	if err := auth.SeedOrganizationRoles(context.Background(), appConfig.AuthulaInstance); err != nil {
+	if err := auth.SeedOrganizationRoles(context.Background(), authulaAuth); err != nil {
 		log.Fatal("Error seeding organization roles: ", err)
 	}
 
-	bunGuidesRepo := bunGuides.NewBunGuidesRepository(appConfig.DB)
-	bunStarredGuidesRepo := bunStarredGuides.NewBunStarredGuidesRepository(appConfig.DB)
-	bunStepsRepo := bunSteps.NewBunStepsRepository(appConfig.DB)
-	bunMediaAssetsRepo := bunMediaAssets.NewBunMediaAssetsRepository(appConfig.DB)
-	bunGuideExportsRepo := bunGuideExports.NewBunGuideExportsRepository(appConfig.DB)
-	bunGuideViewsRepo := bunGuideViews.NewBunGuideViewsRepository(appConfig.DB)
-
-	storageService := storage.NewS3StorageService(appConfig.S3Client)
-	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
-
-	orgPlugin := authulaAuth.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizationsplugin.OrganizationsPlugin)
-	authorizationService := authservice.NewDefaultAuthorizationService(*orgPlugin.Api)
-
-	guideHooks := (*interfaces.GuideHooks)(nil)
-	stepHooks := (*interfaces.StepHooks)(nil)
-	mediaHooks := (*interfaces.MediaAssetHooks)(nil)
-
-	guidesService := guidesservice.NewGuidesService(bunGuidesRepo, bunStarredGuidesRepo, bunStepsRepo, appConfig.RedisClient, guideHooks)
-	starredService := starredguidesservice.NewStarredGuidesService(bunStarredGuidesRepo, bunGuidesRepo)
-	stepsService := stepsservice.NewStepsService(appConfig.RedisClient, bunStepsRepo, bunGuidesRepo, presignService, storageService, bunMediaAssetsRepo, appConfig.S3Bucket, appConfig.Logger, stepHooks)
-	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, mediaHooks)
-	exportService := export.NewExportService(bunGuideExportsRepo, bunGuidesRepo, bunStepsRepo, storageService, presignService, appConfig.RedisClient, appConfig.S3Bucket)
-	uploadsService := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, appConfig.S3Bucket)
-	guideViewsService := guideviewsservice.NewGuideViewsService(bunGuideViewsRepo, appConfig.RedisClient)
-	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, guideViewsService, appConfig.S3Bucket)
-
-	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, guidesService, starredService)
-	guideViewsUseCase := usecases.NewGuideViewsUseCase(authorizationService, guidesService, guideViewsService)
-	stepsUseCase := usecases.NewStepsUseCase(authorizationService, stepsService, guidesService)
-	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, mediaAssetsService, stepsService, guidesService)
-	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, uploadsService, guidesService, stepsService)
-
-	svcs := &interfaces.DomainUseCases{
-		GuidesUseCase:      guidesUseCase,
-		GuideViewsUseCase:  guideViewsUseCase,
-		StepsUseCase:       stepsUseCase,
-		MediaAssetsUseCase: mediaAssetsUseCase,
-		ExportService:      exportService,
-		UploadsUseCase:     uploadsUseCase,
-		PurgeService:       purgeService,
-	}
-
-	routes.InitRoutes(appConfig, svcs)
-
 	if envConfig.StandaloneMode == "true" {
-		consumer := worker.NewStreamConsumer(infraCfg.RedisClient, "cliqrelay-standalone-consumer-group", 5, worker.WithConcurrency(5))
-		consumer.RegisterHandler(events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, worker.HandleMediaAssetsEvent(storageService, infraCfg.S3Bucket))
-		consumer.RegisterHandler(events.TopicGuides, events.EventTypeGuidePurge, worker.HandleGuidePurgeEvent(purgeService))
-		consumer.RegisterHandler(events.TopicGuideExports, events.EventTypeGuideExport, worker.HandleGuideExportEvent(exportService))
-		consumer.RegisterHandler(events.TopicGuideViews, events.EventTypeGuideViewed, worker.HandleGuideViewEvent(bunGuideViewsRepo))
-
+		wk, err := bootstrap.NewWorker(
+			bootstrap.WithEnvConfig(envConfig),
+			bootstrap.WithInfra(infraCfg),
+			bootstrap.WithDB(authulaAuth.DB()),
+			bootstrap.WithConsumerGroup("cliqrelay-standalone-consumer-group"),
+		)
+		if err != nil {
+			log.Fatal("Error initializing standalone worker: ", err)
+		}
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		consumer.Start(ctx)
-		defer consumer.Shutdown()
-
-		cronService, err := worker.NewCronService()
-		if err != nil {
-			log.Fatal("Error creating cron service: ", err)
-		}
-
-		if err := worker.RegisterGuidePurgeCron(cronService.Scheduler(), bunGuidesRepo, infraCfg.RedisClient); err != nil {
-			log.Fatal("Error registering guide purge cron: ", err)
-		}
-
-		cronService.Start()
+		wk.Start(ctx)
+		defer wk.Shutdown()
 	}
 
-	port := envConfig.Port
-	slog.Debug(fmt.Sprintf("Server running on http://localhost:%s", port))
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), appConfig.AuthulaInstance.Handler()); err != nil {
+	if err := app.Run(); err != nil {
 		slog.Error("Server error", "err", err)
 	}
 }

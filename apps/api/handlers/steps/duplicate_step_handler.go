@@ -5,19 +5,17 @@ import (
 
 	authulamodels "github.com/Authula/authula/models"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type DuplicateStepHandler struct {
-	appConfig    *config.AppConfig
 	stepsUseCase interfaces.StepsUseCase
 }
 
-func NewDuplicateStepHandler(appConfig *config.AppConfig, stepsUseCase interfaces.StepsUseCase) *DuplicateStepHandler {
-	return &DuplicateStepHandler{appConfig: appConfig, stepsUseCase: stepsUseCase}
+func NewDuplicateStepHandler(stepsUseCase interfaces.StepsUseCase) *DuplicateStepHandler {
+	return &DuplicateStepHandler{stepsUseCase: stepsUseCase}
 }
 
 func (h *DuplicateStepHandler) Handle() http.HandlerFunc {

@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/CliqRelay/cliqrelay/config"
 	handlersuploads "github.com/CliqRelay/cliqrelay/handlers/uploads"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -22,8 +21,6 @@ import (
 
 func TestPresignUploadHandler(t *testing.T) {
 	t.Parallel()
-
-	appConfig := &config.AppConfig{}
 	stepAction := models.StepActionClick
 	guideID := uuid.New()
 	stepID := uuid.New()
@@ -161,7 +158,7 @@ func TestPresignUploadHandler(t *testing.T) {
 			path := "/api/v1/uploads/presign"
 			req := tests.NewHandlerRequest(t, http.MethodPost, path, tt.payload)
 
-			handler := handlersuploads.NewPresignUploadHandler(appConfig, uc)
+			handler := handlersuploads.NewPresignUploadHandler(uc)
 
 			handler.Handle()(req.W, req.Req)
 

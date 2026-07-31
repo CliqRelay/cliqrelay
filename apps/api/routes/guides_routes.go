@@ -14,36 +14,36 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase, guideViewsUseCase interfaces.GuideViewsUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
-	createHandler := guides.NewCreateGuideHandler(appConfig, guidesUseCase)
-	createDemoGuideHandler := guides.NewCreateDemoGuideHandler(appConfig, guidesUseCase)
-	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesUseCase)
-	getByIDHandler := guides.NewGetGuideByIDHandler(appConfig, guidesUseCase)
-	updateHandler := guides.NewUpdateGuideHandler(appConfig, guidesUseCase)
-	deleteHandler := guides.NewDeleteGuideHandler(appConfig, guidesUseCase)
-	publishHandler := guides.NewPublishGuideHandler(appConfig, guidesUseCase)
-	unpublishHandler := guides.NewUnpublishGuideHandler(appConfig, guidesUseCase)
-	archiveHandler := guides.NewArchiveGuideHandler(appConfig, guidesUseCase)
-	unarchiveHandler := guides.NewUnarchiveGuideHandler(appConfig, guidesUseCase)
-	restoreHandler := guides.NewRestoreGuideHandler(appConfig, guidesUseCase)
-	permanentlyDeleteHandler := guides.NewPermanentlyDeleteGuideHandler(appConfig, guidesUseCase)
-	getGuidesCountHandler := guides.NewGetGuidesCountHandler(appConfig, guidesUseCase)
-	getStarredGuidesHandler := guides.NewGetStarredGuidesHandler(appConfig, guidesUseCase)
-	starGuideHandler := guides.NewStarGuideHandler(appConfig, guidesUseCase)
-	unstarGuideHandler := guides.NewUnstarGuideHandler(appConfig, guidesUseCase)
-	recalculateDurationHandler := guides.NewRecalculateDurationHandler(appConfig, guidesUseCase)
-	bulkGuideActionHandler := guides.NewBulkGuideActionHandler(appConfig, guidesUseCase)
-	exportGuideHandler := guides.NewExportGuideHandler(appConfig, exportSvc)
-	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportSvc)
-	recordGuideViewHandler := guides.NewRecordGuideViewHandler(appConfig, guideViewsUseCase)
-	getGuideViewsCountHandler := guides.NewGetGuideViewsCountHandler(appConfig, guideViewsUseCase)
-	getTimeSavedHandler := guides.NewGetTimeSavedHandler(appConfig, guideViewsUseCase)
+func GuidesRoutes(cfg *config.HTTPConfig, guidesUseCase interfaces.GuidesUseCase, guideViewsUseCase interfaces.GuideViewsUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
+	createHandler := guides.NewCreateGuideHandler(guidesUseCase)
+	createDemoGuideHandler := guides.NewCreateDemoGuideHandler(guidesUseCase)
+	getAllHandler := guides.NewGetAllGuidesHandler(guidesUseCase)
+	getByIDHandler := guides.NewGetGuideByIDHandler(guidesUseCase)
+	updateHandler := guides.NewUpdateGuideHandler(guidesUseCase)
+	deleteHandler := guides.NewDeleteGuideHandler(guidesUseCase)
+	publishHandler := guides.NewPublishGuideHandler(guidesUseCase)
+	unpublishHandler := guides.NewUnpublishGuideHandler(guidesUseCase)
+	archiveHandler := guides.NewArchiveGuideHandler(guidesUseCase)
+	unarchiveHandler := guides.NewUnarchiveGuideHandler(guidesUseCase)
+	restoreHandler := guides.NewRestoreGuideHandler(guidesUseCase)
+	permanentlyDeleteHandler := guides.NewPermanentlyDeleteGuideHandler(guidesUseCase)
+	getGuidesCountHandler := guides.NewGetGuidesCountHandler(guidesUseCase)
+	getStarredGuidesHandler := guides.NewGetStarredGuidesHandler(guidesUseCase)
+	starGuideHandler := guides.NewStarGuideHandler(guidesUseCase)
+	unstarGuideHandler := guides.NewUnstarGuideHandler(guidesUseCase)
+	recalculateDurationHandler := guides.NewRecalculateDurationHandler(guidesUseCase)
+	bulkGuideActionHandler := guides.NewBulkGuideActionHandler(guidesUseCase)
+	exportGuideHandler := guides.NewExportGuideHandler(exportSvc)
+	getExportStatusHandler := guides.NewGetExportStatusHandler(exportSvc)
+	recordGuideViewHandler := guides.NewRecordGuideViewHandler(guideViewsUseCase)
+	getGuideViewsCountHandler := guides.NewGetGuideViewsCountHandler(guideViewsUseCase)
+	getTimeSavedHandler := guides.NewGetTimeSavedHandler(guideViewsUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
-	base := appConfig.BasePath
+	base := cfg.BasePath
 
 	return []authulamodels.Route{
 		{
