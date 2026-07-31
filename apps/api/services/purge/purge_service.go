@@ -5,20 +5,24 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/google/uuid"
+
 	"github.com/CliqRelay/cliqrelay/interfaces"
 )
 
 type PurgeService struct {
-	guidesRepo     interfaces.GuidesRepository
-	storageService interfaces.StorageService
-	bucket         string
+	guidesRepo        interfaces.GuidesRepository
+	storageService    interfaces.StorageService
+	guideViewsService interfaces.GuideViewsService
+	bucket            string
 }
 
-func NewPurgeService(guidesRepo interfaces.GuidesRepository, storageService interfaces.StorageService, bucket string) *PurgeService {
+func NewPurgeService(guidesRepo interfaces.GuidesRepository, storageService interfaces.StorageService, guideViewsService interfaces.GuideViewsService, bucket string) *PurgeService {
 	return &PurgeService{
-		guidesRepo:     guidesRepo,
-		storageService: storageService,
-		bucket:         bucket,
+		guidesRepo:        guidesRepo,
+		storageService:    storageService,
+		guideViewsService: guideViewsService,
+		bucket:            bucket,
 	}
 }
 
@@ -49,6 +53,13 @@ func (s *PurgeService) PurgeGuide(ctx context.Context, guideID string) error {
 	if err := s.guidesRepo.HardDelete(ctx, guideID); err != nil {
 		slog.Error("failed to hard delete guide", "guide_id", guideID, "err", err)
 		return fmt.Errorf("hard delete guide: %w", err)
+	}
+
+	parsedGuideID, err := uuid.Parse(guideID)
+	if err == nil {
+		if err := s.guideViewsService.FlushGuideDedupeKeys(ctx, parsedGuideID); err != nil {
+			slog.Error("failed to flush guide view dedupe keys", "guide_id", guideID, "err", err)
+		}
 	}
 
 	return nil

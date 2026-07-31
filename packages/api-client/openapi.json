@@ -309,6 +309,37 @@
         }
       }
     },
+    "/api/v1/guides/views/count": {
+      "get": {
+        "tags": [
+          "Guides"
+        ],
+        "summary": "Get guide views count",
+        "description": "Returns the total count of guide views for a team",
+        "operationId": "getGuideViewsCount",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetGuideViewsCountResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/guides/{id}": {
       "get": {
         "tags": [
@@ -730,6 +761,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnpublishGuideResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/guides/{id}/view": {
+      "post": {
+        "tags": [
+          "Guides"
+        ],
+        "summary": "Record guide view",
+        "description": "Records a view of a guide.",
+        "operationId": "recordGuideView",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordGuideViewResponse"
                 }
               }
             }
@@ -1729,6 +1792,17 @@
         ],
         "type": "object"
       },
+      "GetGuideViewsCountResponse": {
+        "properties": {
+          "count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "type": "object"
+      },
       "GetGuidesCountResponse": {
         "properties": {
           "count": {
@@ -2148,6 +2222,17 @@
         },
         "required": [
           "guide"
+        ],
+        "type": "object"
+      },
+      "RecordGuideViewResponse": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
         ],
         "type": "object"
       },

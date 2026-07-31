@@ -21,6 +21,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/migrations"
 	"github.com/CliqRelay/cliqrelay/openapi"
 	bunGuideExports "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
+	bunGuideViews "github.com/CliqRelay/cliqrelay/repositories/guide_views"
 	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
 	bunMediaAssets "github.com/CliqRelay/cliqrelay/repositories/media_assets"
 	bunStarredGuides "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
@@ -28,6 +29,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/routes"
 	authservice "github.com/CliqRelay/cliqrelay/services/auth"
 	"github.com/CliqRelay/cliqrelay/services/export"
+	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	mediaassetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
 	"github.com/CliqRelay/cliqrelay/services/presign"
@@ -91,6 +93,7 @@ func main() {
 	bunStepsRepo := bunSteps.NewBunStepsRepository(appConfig.DB)
 	bunMediaAssetsRepo := bunMediaAssets.NewBunMediaAssetsRepository(appConfig.DB)
 	bunGuideExportsRepo := bunGuideExports.NewBunGuideExportsRepository(appConfig.DB)
+	bunGuideViewsRepo := bunGuideViews.NewBunGuideViewsRepository(appConfig.DB)
 
 	storageService := storage.NewS3StorageService(appConfig.S3Client)
 	presignService := presign.NewAWSPresignService(appConfig.S3Client, 24*time.Hour)
@@ -108,15 +111,18 @@ func main() {
 	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(bunMediaAssetsRepo, bunStepsRepo, bunGuidesRepo, mediaHooks)
 	exportService := export.NewExportService(bunGuideExportsRepo, bunGuidesRepo, bunStepsRepo, storageService, presignService, appConfig.RedisClient, appConfig.S3Bucket)
 	uploadsService := uploadsservice.NewUploadsService(bunGuidesRepo, bunStepsRepo, bunMediaAssetsRepo, presignService, appConfig.S3Bucket)
-	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, appConfig.S3Bucket)
+	guideViewsService := guideviewsservice.NewGuideViewsService(bunGuideViewsRepo, appConfig.RedisClient)
+	purgeService := purge.NewPurgeService(bunGuidesRepo, storageService, guideViewsService, appConfig.S3Bucket)
 
 	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, guidesService, starredService)
+	guideViewsUseCase := usecases.NewGuideViewsUseCase(authorizationService, guidesService, guideViewsService)
 	stepsUseCase := usecases.NewStepsUseCase(authorizationService, stepsService, guidesService)
 	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, mediaAssetsService, stepsService, guidesService)
 	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, uploadsService, guidesService, stepsService)
 
 	svcs := &interfaces.DomainUseCases{
 		GuidesUseCase:      guidesUseCase,
+		GuideViewsUseCase:  guideViewsUseCase,
 		StepsUseCase:       stepsUseCase,
 		MediaAssetsUseCase: mediaAssetsUseCase,
 		ExportService:      exportService,
@@ -131,6 +137,7 @@ func main() {
 		consumer.RegisterHandler(events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, worker.HandleMediaAssetsEvent(storageService, infraCfg.S3Bucket))
 		consumer.RegisterHandler(events.TopicGuides, events.EventTypeGuidePurge, worker.HandleGuidePurgeEvent(purgeService))
 		consumer.RegisterHandler(events.TopicGuideExports, events.EventTypeGuideExport, worker.HandleGuideExportEvent(exportService))
+		consumer.RegisterHandler(events.TopicGuideViews, events.EventTypeGuideViewed, worker.HandleGuideViewEvent(bunGuideViewsRepo))
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()

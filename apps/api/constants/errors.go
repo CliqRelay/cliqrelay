@@ -27,5 +27,6 @@ var (
 	ErrGuideEditDenied         = errors.New("you do not have permission to edit this guide")
 	ErrGuideReadDenied         = errors.New("you do not have permission to view this guide")
 	ErrGuideDeleteDenied       = errors.New("you do not have permission to delete this guide")
+	ErrGuideNotPublished       = errors.New("guide must be published to record views")
 	ErrCannotSetGuideToPrivate = errors.New("only the creator can set a guide to private")
 )

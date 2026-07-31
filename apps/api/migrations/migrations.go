@@ -25,6 +25,7 @@ func RunMigrations(appConfig *config.AppConfig) error {
 				mediaAssetsInitial(),
 				starredGuidesInitial(),
 				guideExportsInitial(),
+				guideViewsInitial(),
 			},
 		},
 	}

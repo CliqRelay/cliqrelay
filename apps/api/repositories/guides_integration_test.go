@@ -3,7 +3,6 @@ package repositories_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -88,7 +87,7 @@ func permanentlyDeleteGuide(t *testing.T, db bun.IDB, guideID uuid.UUID) {
 	_, err := db.NewUpdate().
 		Model((*models.Guide)(nil)).
 		Where("id = ?", guideID).
-		Set("deleted_at = ?", time.Unix(0, 0)).
+		Set("purge_requested_at = CURRENT_TIMESTAMP").
 		Exec(context.Background())
 	require.NoError(t, err)
 }
@@ -291,6 +290,15 @@ func TestBunGuidesRepository_GetAllByStatus(t *testing.T) {
 				guide := seedGuide(t, db, "", "PermDeleted")
 				softDeleteGuide(t, db, guide.ID)
 				permanentlyDeleteGuide(t, db, guide.ID)
+				return *guide.CreatorID, 0
+			},
+			wantLen: 0,
+		},
+		{
+			name: "keeps deleted guides pending purge",
+			setup: func(db bun.IDB) (string, int) {
+				guide := seedGuide(t, db, "", "StillDeleted")
+				softDeleteGuide(t, db, guide.ID)
 				return *guide.CreatorID, 1
 			},
 			wantLen: 1,
@@ -317,7 +325,7 @@ func TestBunGuidesRepository_GetAllByStatus(t *testing.T) {
 				status = models.StatusDraft
 			case "returns published guides":
 				status = models.StatusPublished
-			case "returns deleted guides", "filters out permanently deleted guides":
+			case "returns deleted guides", "filters out permanently deleted guides", "keeps deleted guides pending purge":
 				status = models.StatusDeleted
 			default:
 				status = models.StatusDraft

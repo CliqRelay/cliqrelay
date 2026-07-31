@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { api, type Guide } from "@repo/api-client";
+import { AppUserRole } from "@repo/data-commons";
 
 import { ExportDialog } from "@/components/editor/shared/export-dialog";
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
@@ -29,23 +30,23 @@ import {
 import { toast } from "@/lib/toast";
 import {
 	archiveGuide,
+	deleteGuide,
 	publishGuide,
 	unarchiveGuide,
 	unpublishGuide,
 } from "@/server-fns/guides";
+import { RoleGuard } from "../shared/role-guard";
 
 type Props = {
 	guide: Pick<Guide, "id" | "title" | "status">;
 	isUpgradeAvailable?: boolean;
 	onUpgrade?: () => Promise<void>;
-	onDelete?: (guideId: string) => void;
 };
 
 export function GuideActionsDropdown({
 	guide,
 	isUpgradeAvailable,
 	onUpgrade,
-	onDelete,
 }: Props) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -137,9 +138,27 @@ export function GuideActionsDropdown({
 		}
 	};
 
-	const handleDelete = () => {
-		onDelete?.(guide.id);
-		setDeleteDialogOpen(false);
+	const handleDelete = async () => {
+		try {
+			await deleteGuide({ data: { guideId: guide.id } });
+			setDeleteDialogOpen(false);
+			toast("Deleted", { description: "Guide moved to trash" });
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetAllGuidesQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetStarredGuidesQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetGuidesCountQueryKey(),
+			});
+			router.navigate({ to: "/dashboard/guides" });
+		} catch (error) {
+			toast.error("Error", {
+				description:
+					error instanceof Error ? error.message : "Failed to delete",
+			});
+		}
 	};
 
 	return (
@@ -181,22 +200,26 @@ export function GuideActionsDropdown({
 							Unarchive
 						</DropdownMenuItem>
 					)}
-					<DropdownMenuItem onSelect={() => setMoveToTeamOpen(true)}>
-						<Shuffle className="mr-2 h-4 w-4" />
-						Move to Team
-					</DropdownMenuItem>
+					<RoleGuard minRole={AppUserRole.ADMIN}>
+						<DropdownMenuItem onSelect={() => setMoveToTeamOpen(true)}>
+							<Shuffle className="mr-2 h-4 w-4" />
+							Move to Team
+						</DropdownMenuItem>
+					</RoleGuard>
 					<DropdownMenuItem onSelect={() => setExportDialogOpen(true)}>
 						<Download className="mr-2 h-4 w-4" />
 						Export
 					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						className="text-destructive focus:text-destructive"
-						onSelect={() => setDeleteDialogOpen(true)}
-					>
-						<Trash2 className="mr-2 h-4 w-4" />
-						Delete
-					</DropdownMenuItem>
+					<RoleGuard minRole={AppUserRole.ADMIN}>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							className="text-destructive focus:text-destructive"
+							onSelect={() => setDeleteDialogOpen(true)}
+						>
+							<Trash2 className="mr-2 h-4 w-4 text-destructive" />
+							Delete
+						</DropdownMenuItem>
+					</RoleGuard>
 				</DropdownMenuContent>
 			</DropdownMenu>
 

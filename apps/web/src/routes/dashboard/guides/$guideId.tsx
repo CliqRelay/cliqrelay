@@ -1,16 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import {
-	createFileRoute,
-	isRedirect,
-	Link,
-	redirect,
-	useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Eye, PenLine } from "lucide-react";
 
-import { api } from "@repo/api-client";
+import { api, type Guide } from "@repo/api-client";
 
 import { GuideEditor } from "@/components/editor/guides/guide-editor";
 import { GuideActionsDropdown } from "@/components/guides/guide-actions-dropdown";
@@ -18,30 +12,17 @@ import { GuideStatusBadge } from "@/components/guides/guide-status-badge";
 import { StarButton } from "@/components/guides/star-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/lib/toast";
-import { getGuideById, updateGuide } from "@/server-fns/guides";
+import { updateGuide } from "@/server-fns/guides";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
+import { useOrgStore } from "@/stores/org-store";
+import { useUserStore } from "@/stores/user-store";
+import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 export const Route = createFileRoute("/dashboard/guides/$guideId")({
 	component: GuideDetailPage,
-	loader: async ({ params, abortController }) => {
-		try {
-			const guide = await getGuideById({
-				data: params.guideId,
-				signal: abortController.signal,
-			});
-			if (!guide) {
-				throw redirect({ to: "/dashboard/guides" });
-			}
-			return { guide };
-		} catch (error: any) {
-			if (isRedirect(error)) {
-				throw error;
-			}
-			throw redirect({ to: "/dashboard/guides" });
-		}
-	},
 	beforeLoad: async () => {
 		return { hideSiteHeader: true };
 	},
@@ -67,39 +48,136 @@ function GuideNotFound() {
 	);
 }
 
+function GuideDetailSkeleton() {
+	return (
+		<div className="flex flex-col">
+			<header className="sticky top-0 z-10 flex flex-col bg-background border-b">
+				<div className="flex items-center gap-3 px-4 py-3">
+					<Skeleton className="h-8 w-20" />
+					<Separator orientation="vertical" className="h-5" />
+					<div className="flex flex-1 items-center gap-3">
+						<Skeleton className="h-6 w-64" />
+						<Skeleton className="h-5 w-16 rounded-full" />
+						<Skeleton className="h-5 w-5 rounded-full" />
+					</div>
+					<div className="flex items-center gap-2">
+						<Skeleton className="h-8 w-24 rounded-md" />
+						<Skeleton className="h-8 w-8 rounded-md" />
+					</div>
+				</div>
+			</header>
+			<div className="p-6">
+				<div className="w-full max-w-4xl mx-auto flex flex-col gap-4">
+					<div className="mb-6 space-y-4">
+						<Skeleton className="h-9 w-3/4" />
+						<Skeleton className="h-5 w-full" />
+						<div className="flex items-center gap-4 text-sm">
+							<Skeleton className="h-4 w-24" />
+							<Skeleton className="h-4 w-20" />
+							<Skeleton className="h-4 w-16" />
+						</div>
+					</div>
+					<div className="h-px bg-linear-to-r from-transparent via-slate-200 to-transparent" />
+					<div className="flex flex-col gap-6 mt-10">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<div key={i} className="rounded-lg border p-4 space-y-3">
+								<div className="flex items-center gap-3">
+									<Skeleton className="size-4" />
+									<Skeleton className="h-5 w-6 rounded-full" />
+									<Skeleton className="h-4 w-16" />
+									<Skeleton className="h-4 w-32" />
+								</div>
+								<Skeleton className="h-32 w-full rounded-md" />
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 function GuideDetailPage() {
-	const { guide } = Route.useLoaderData();
+	const { guideId } = Route.useParams();
 	const router = useRouter();
 	const queryClient = useQueryClient();
 
+	const currentUserId = useUserStore((s) => s.userId);
+	const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
+
+	const hasTrackedView = useRef<boolean>(false);
+
 	const [mode, setMode] = useState<"view" | "edit">("view");
-	const [currentGuide, setCurrentGuide] = useState(guide);
+	const canEdit = !!currentMemberRole && currentMemberRole !== "viewer";
+
+	const guideQuery = api.guides.useGetGuideById(guideId, {
+		request: { credentials: "include" },
+	});
+
+	const guide = guideQuery.data?.guide ?? null;
+	const [currentGuide, setCurrentGuide] = useState<Guide | null>(guide);
 
 	useEffect(() => {
-		setCurrentGuide(guide);
+		if (guide) {
+			setCurrentGuide(guide);
+		}
 	}, [guide]);
+
+	const recordViewMutation = api.guides.useRecordGuideView({
+		request: {
+			credentials: "include",
+			headers: {
+				...getCsrfTokenHeader(),
+			},
+		},
+	});
+
+	useEffect(() => {
+		if (
+			mode === "view" &&
+			currentGuide?.status === "published" &&
+			currentGuide.creatorId !== currentUserId &&
+			!hasTrackedView.current &&
+			currentGuide.id
+		) {
+			hasTrackedView.current = true;
+			recordViewMutation.mutate({ id: currentGuide.id });
+		}
+	}, [
+		mode,
+		currentGuide?.status,
+		currentGuide?.creatorId,
+		currentUserId,
+		currentGuide?.id,
+		recordViewMutation,
+	]);
 
 	const handleUpdateGuide = async (updates: {
 		title?: string;
 		description?: string | null;
 	}) => {
 		try {
-			if (!guide?.id) {
+			if (!currentGuide?.id) {
 				return;
 			}
 
 			await updateGuide({
 				data: {
-					guideId: guide.id,
+					guideId: currentGuide.id,
 					input: updates,
 				},
 			});
 			if (updates.title !== undefined || updates.description !== undefined) {
-				setCurrentGuide((prev) => ({
-					...prev,
-					title: updates.title ?? prev.title,
-					description: updates.description ?? prev.description,
-				}));
+				setCurrentGuide((prev) => {
+					if (!prev) {
+						return prev;
+					}
+					return {
+						...prev,
+						title: updates.title ?? prev.title,
+						description: updates.description ?? prev.description,
+					};
+				});
 			}
 			queryClient.invalidateQueries({
 				queryKey: api.guides.getGetAllGuidesQueryKey(),
@@ -117,16 +195,21 @@ function GuideDetailPage() {
 
 	const handleStarToggle = async () => {
 		try {
-			if (!guide?.id) {
+			if (!currentGuide?.id) {
 				return;
 			}
 
-			setCurrentGuide((prev) => ({ ...prev, isStarred: !prev.isStarred }));
+			setCurrentGuide((prev) => {
+				if (!prev) {
+					return prev;
+				}
+				return { ...prev, isStarred: !prev.isStarred };
+			});
 
 			if (currentGuide.isStarred) {
-				await unstarGuide({ data: { guideId: guide.id } });
+				await unstarGuide({ data: { guideId: currentGuide.id } });
 			} else {
-				await starGuide({ data: { guideId: guide.id } });
+				await starGuide({ data: { guideId: currentGuide.id } });
 			}
 			queryClient.invalidateQueries({
 				queryKey: api.guides.getGetAllGuidesQueryKey(),
@@ -135,7 +218,12 @@ function GuideDetailPage() {
 				queryKey: api.guides.getGetStarredGuidesQueryKey(),
 			});
 		} catch (error) {
-			setCurrentGuide((prev) => ({ ...prev, isStarred: !prev.isStarred }));
+			setCurrentGuide((prev) => {
+				if (!prev) {
+					return prev;
+				}
+				return { ...prev, isStarred: !prev.isStarred };
+			});
 			toast.error("Error", {
 				description:
 					error instanceof Error ? error.message : "Failed to update star",
@@ -143,9 +231,16 @@ function GuideDetailPage() {
 		}
 	};
 
+	if (guideQuery.isPending) {
+		return <GuideDetailSkeleton />;
+	}
+
+	if (!guide) {
+		return <GuideNotFound />;
+	}
+
 	return (
 		<div className="flex flex-col">
-			{/* Sticky header */}
 			<header className="sticky top-0 z-10 flex flex-col bg-background border-b">
 				<div className="flex items-center gap-3 px-4 py-3">
 					<Button asChild variant="ghost" size="sm">
@@ -157,50 +252,57 @@ function GuideDetailPage() {
 
 					<Separator orientation="vertical" className="h-5" />
 
-					{/* Title */}
 					<div className="flex flex-1 items-center gap-3">
-						<h1 className="truncate text-lg font-bold">{currentGuide.title}</h1>
-						<GuideStatusBadge status={currentGuide.status} />
-						<StarButton
-							isStarred={currentGuide.isStarred}
-							onToggle={handleStarToggle}
-						/>
+						<h1 className="truncate text-lg font-bold">
+							{currentGuide?.title}
+						</h1>
+						{currentGuide && <GuideStatusBadge status={currentGuide.status} />}
+						{currentGuide && (
+							<StarButton
+								isStarred={currentGuide.isStarred}
+								onToggle={handleStarToggle}
+							/>
+						)}
 					</div>
 
-					{/* Mode toggle */}
-					<ToggleGroup
-						type="single"
-						value={mode}
-						onValueChange={(value) => {
-							if (value === "view" || value === "edit") {
-								setMode(value);
-							}
-						}}
-						variant="outline"
-						size="sm"
-					>
-						<ToggleGroupItem value="view" className="gap-1.5">
-							<Eye className="h-3.5 w-3.5" />
-							View
-						</ToggleGroupItem>
-						<ToggleGroupItem value="edit" className="gap-1.5">
-							<PenLine className="h-3.5 w-3.5" />
-							Edit
-						</ToggleGroupItem>
-					</ToggleGroup>
+					{canEdit && currentGuide && (
+						<>
+							<ToggleGroup
+								type="single"
+								value={mode}
+								onValueChange={(value) => {
+									if (value === "view" || value === "edit") {
+										setMode(value);
+									}
+								}}
+								variant="outline"
+								size="sm"
+							>
+								<ToggleGroupItem value="view" className="gap-1.5">
+									<Eye className="h-3.5 w-3.5" />
+									View
+								</ToggleGroupItem>
+								<ToggleGroupItem value="edit" className="gap-1.5">
+									<PenLine className="h-3.5 w-3.5" />
+									Edit
+								</ToggleGroupItem>
+							</ToggleGroup>
 
-					<GuideActionsDropdown guide={guide} />
+							<GuideActionsDropdown guide={guide} />
+						</>
+					)}
 				</div>
 			</header>
 
-			{/* Main content */}
 			<div className="p-6">
-				<GuideEditor
-					guide={currentGuide}
-					mode={mode}
-					onModeChange={setMode}
-					onUpdateGuide={handleUpdateGuide}
-				/>
+				{currentGuide && (
+					<GuideEditor
+						guide={currentGuide}
+						mode={mode}
+						onModeChange={setMode}
+						onUpdateGuide={handleUpdateGuide}
+					/>
+				)}
 			</div>
 		</div>
 	);

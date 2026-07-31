@@ -14,7 +14,7 @@ func InitRoutes(appConfig *config.AppConfig, services *interfaces.DomainUseCases
 	routes := []authulamodels.Route{}
 	routes = append(routes, HealthRoutes(appConfig)...)
 	routes = append(routes, TeamsRoutes(appConfig)...)
-	routes = append(routes, GuidesRoutes(appConfig, services.GuidesUseCase, services.ExportService)...)
+	routes = append(routes, GuidesRoutes(appConfig, services.GuidesUseCase, services.GuideViewsUseCase, services.ExportService)...)
 	routes = append(routes, StepsRoutes(appConfig, services.StepsUseCase)...)
 	routes = append(routes, MediaAssetsRoutes(appConfig, services.MediaAssetsUseCase)...)
 	routes = append(routes, UploadRoutes(appConfig, services.UploadsUseCase)...)

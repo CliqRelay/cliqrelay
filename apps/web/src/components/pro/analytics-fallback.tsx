@@ -51,11 +51,11 @@ export function AnalyticsFallback({
 								Track guide views and engagement over time
 							</li>
 							<li className="flex items-center gap-2">
-								<Users size={14} className="shrink-0 text-muted-foreground/60" />
+								<span className="size-1.5 rounded-full bg-primary shrink-0" />
 								Understand your audience with visitor insights
 							</li>
 							<li className="flex items-center gap-2">
-								<Eye size={14} className="shrink-0 text-muted-foreground/60" />
+								<span className="size-1.5 rounded-full bg-primary shrink-0" />
 								Identify your most popular guides and content
 							</li>
 							<li className="flex items-center gap-2">

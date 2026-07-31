@@ -20,10 +20,12 @@ import type {
 	GetExportStatusResponse,
 	GetGuideByIDResponse,
 	GetGuidesCountResponse,
+	GetGuideViewsCountResponse,
 	GetStarredGuidesResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
+	RecordGuideViewResponse,
 	RestoreGuideResponse,
 	StarGuideResponse,
 	UnarchiveGuideResponse,
@@ -42,10 +44,12 @@ import {
 	getGetExportStatusResponseMock,
 	getGetGuideByIdResponseMock,
 	getGetGuidesCountResponseMock,
+	getGetGuideViewsCountResponseMock,
 	getGetStarredGuidesResponseMock,
 	getPermanentlyDeleteGuideResponseMock,
 	getPublishGuideResponseMock,
 	getRecalculateGuideDurationResponseMock,
+	getRecordGuideViewResponseMock,
 	getRestoreGuideResponseMock,
 	getStarGuideResponseMock,
 	getUnarchiveGuideResponseMock,
@@ -65,10 +69,12 @@ export {
 	getGetExportStatusResponseMock,
 	getGetGuideByIdResponseMock,
 	getGetGuidesCountResponseMock,
+	getGetGuideViewsCountResponseMock,
 	getGetStarredGuidesResponseMock,
 	getPermanentlyDeleteGuideResponseMock,
 	getPublishGuideResponseMock,
 	getRecalculateGuideDurationResponseMock,
+	getRecordGuideViewResponseMock,
 	getRestoreGuideResponseMock,
 	getStarGuideResponseMock,
 	getUnarchiveGuideResponseMock,
@@ -238,6 +244,30 @@ export const getGetStarredGuidesMockHandler = (
 						? await overrideResponse(info)
 						: overrideResponse
 					: getGetStarredGuidesResponseMock(),
+				{ status: 200 },
+			);
+		},
+		options,
+	);
+};
+
+export const getGetGuideViewsCountMockHandler = (
+	overrideResponse?:
+		| GetGuideViewsCountResponse
+		| ((
+				info: Parameters<Parameters<typeof http.get>[1]>[0],
+		  ) => Promise<GetGuideViewsCountResponse> | GetGuideViewsCountResponse),
+	options?: RequestHandlerOptions,
+) => {
+	return http.get(
+		"*/api/v1/guides/views/count",
+		async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+			return HttpResponse.json(
+				overrideResponse !== undefined
+					? typeof overrideResponse === "function"
+						? await overrideResponse(info)
+						: overrideResponse
+					: getGetGuideViewsCountResponseMock(),
 				{ status: 200 },
 			);
 		},
@@ -558,6 +588,30 @@ export const getUnpublishGuideMockHandler = (
 		options,
 	);
 };
+
+export const getRecordGuideViewMockHandler = (
+	overrideResponse?:
+		| RecordGuideViewResponse
+		| ((
+				info: Parameters<Parameters<typeof http.post>[1]>[0],
+		  ) => Promise<RecordGuideViewResponse> | RecordGuideViewResponse),
+	options?: RequestHandlerOptions,
+) => {
+	return http.post(
+		"*/api/v1/guides/:id/view",
+		async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+			return HttpResponse.json(
+				overrideResponse !== undefined
+					? typeof overrideResponse === "function"
+						? await overrideResponse(info)
+						: overrideResponse
+					: getRecordGuideViewResponseMock(),
+				{ status: 200 },
+			);
+		},
+		options,
+	);
+};
 export const getGuidesMock = () => [
 	getGetExportStatusMockHandler(),
 	getGetAllGuidesMockHandler(),
@@ -566,6 +620,7 @@ export const getGuidesMock = () => [
 	getGetGuidesCountMockHandler(),
 	getCreateDemoGuideMockHandler(),
 	getGetStarredGuidesMockHandler(),
+	getGetGuideViewsCountMockHandler(),
 	getGetGuideByIdMockHandler(),
 	getDeleteGuideMockHandler(),
 	getUpdateGuideMockHandler(),
@@ -579,4 +634,5 @@ export const getGuidesMock = () => [
 	getUnstarGuideMockHandler(),
 	getUnarchiveGuideMockHandler(),
 	getUnpublishGuideMockHandler(),
+	getRecordGuideViewMockHandler(),
 ];

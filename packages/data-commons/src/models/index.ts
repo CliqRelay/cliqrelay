@@ -3,3 +3,4 @@ export * from "./documents";
 export * from "./elements";
 export * from "./events";
 export * from "./shared";
+export * from "./rbac";

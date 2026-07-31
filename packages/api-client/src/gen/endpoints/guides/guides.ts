@@ -41,11 +41,14 @@ import type {
 	GetGuideByIDResponse,
 	GetGuidesCountParams,
 	GetGuidesCountResponse,
+	GetGuideViewsCountParams,
+	GetGuideViewsCountResponse,
 	GetStarredGuidesParams,
 	GetStarredGuidesResponse,
 	PermanentlyDeleteGuideResponse,
 	PublishGuideResponse,
 	RecalculateDurationResponse,
+	RecordGuideViewResponse,
 	RestoreGuideResponse,
 	StarGuideResponse,
 	UnarchiveGuideResponse,
@@ -1009,6 +1012,191 @@ export function useGetStarredGuides<
 	queryKey: DataTag<QueryKey, TData, TError>;
 } {
 	const queryOptions = getGetStarredGuidesQueryOptions(params, options);
+
+	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+		TData,
+		TError
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetGuideViewsCountUrl = (params?: GetGuideViewsCountParams) => {
+	const normalizedParams = new URLSearchParams();
+
+	Object.entries(params || {}).forEach(([key, value]) => {
+		if (value !== undefined) {
+			normalizedParams.append(key, value === null ? "null" : String(value));
+		}
+	});
+
+	const stringifiedParams = normalizedParams.toString();
+
+	return stringifiedParams.length > 0
+		? `${import.meta.env.VITE_API_URL}/api/v1/guides/views/count?${stringifiedParams}`
+		: `${import.meta.env.VITE_API_URL}/api/v1/guides/views/count`;
+};
+
+/**
+ * Returns the total count of guide views for a team
+ * @summary Get guide views count
+ */
+export const getGuideViewsCount = async (
+	params?: GetGuideViewsCountParams,
+	options?: Parameters<typeof customFetch>[1],
+): Promise<GetGuideViewsCountResponse> => {
+	return customFetch<GetGuideViewsCountResponse>(
+		getGetGuideViewsCountUrl(params),
+		{
+			...options,
+			method: "GET",
+		},
+	);
+};
+
+export const getGetGuideViewsCountQueryKey = (
+	params?: GetGuideViewsCountParams,
+) => {
+	return [
+		`${import.meta.env.VITE_API_URL}/api/v1/guides/views/count`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetGuideViewsCountQueryOptions = <
+	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+	TError = unknown,
+>(
+	params?: GetGuideViewsCountParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuideViewsCount>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+) => {
+	const { query: queryOptions, request: requestOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetGuideViewsCountQueryKey(params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getGuideViewsCount>>
+	> = ({ signal }) => getGuideViewsCount(params, { signal, ...requestOptions });
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getGuideViewsCount>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetGuideViewsCountQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getGuideViewsCount>>
+>;
+export type GetGuideViewsCountQueryError = unknown;
+
+export function useGetGuideViewsCount<
+	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+	TError = unknown,
+>(
+	params: undefined | GetGuideViewsCountParams,
+	options: {
+		query: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuideViewsCount>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				DefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getGuideViewsCount>>,
+					TError,
+					Awaited<ReturnType<typeof getGuideViewsCount>>
+				>,
+				"initialData"
+			>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetGuideViewsCount<
+	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+	TError = unknown,
+>(
+	params?: GetGuideViewsCountParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuideViewsCount>>,
+				TError,
+				TData
+			>
+		> &
+			Pick<
+				UndefinedInitialDataOptions<
+					Awaited<ReturnType<typeof getGuideViewsCount>>,
+					TError,
+					Awaited<ReturnType<typeof getGuideViewsCount>>
+				>,
+				"initialData"
+			>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetGuideViewsCount<
+	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+	TError = unknown,
+>(
+	params?: GetGuideViewsCountParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuideViewsCount>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get guide views count
+ */
+
+export function useGetGuideViewsCount<
+	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+	TError = unknown,
+>(
+	params?: GetGuideViewsCountParams,
+	options?: {
+		query?: Partial<
+			UseQueryOptions<
+				Awaited<ReturnType<typeof getGuideViewsCount>>,
+				TError,
+				TData
+			>
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+	queryKey: DataTag<QueryKey, TData, TError>;
+} {
+	const queryOptions = getGetGuideViewsCountQueryOptions(params, options);
 
 	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
 		TData,
@@ -2195,4 +2383,88 @@ export const useUnpublishGuide = <TError = unknown, TContext = unknown>(
 	TContext
 > => {
 	return useMutation(getUnpublishGuideMutationOptions(options), queryClient);
+};
+export const getRecordGuideViewUrl = (id: string) => {
+	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/view`;
+};
+
+/**
+ * Records a view of a guide.
+ * @summary Record guide view
+ */
+export const recordGuideView = async (
+	id: string,
+	options?: Parameters<typeof customFetch>[1],
+): Promise<RecordGuideViewResponse> => {
+	return customFetch<RecordGuideViewResponse>(getRecordGuideViewUrl(id), {
+		...options,
+		method: "POST",
+	});
+};
+
+export const getRecordGuideViewMutationOptions = <
+	TError = unknown,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof recordGuideView>>,
+		TError,
+		{ id: string },
+		TContext
+	>;
+	request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof recordGuideView>>,
+	TError,
+	{ id: string },
+	TContext
+> => {
+	const mutationKey = ["recordGuideView"];
+	const { mutation: mutationOptions, request: requestOptions } = options
+		? options.mutation &&
+			"mutationKey" in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey }, request: undefined };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof recordGuideView>>,
+		{ id: string }
+	> = (props) => {
+		const { id } = props ?? {};
+
+		return recordGuideView(id, requestOptions);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type RecordGuideViewMutationResult = NonNullable<
+	Awaited<ReturnType<typeof recordGuideView>>
+>;
+
+export type RecordGuideViewMutationError = unknown;
+
+/**
+ * @summary Record guide view
+ */
+export const useRecordGuideView = <TError = unknown, TContext = unknown>(
+	options?: {
+		mutation?: UseMutationOptions<
+			Awaited<ReturnType<typeof recordGuideView>>,
+			TError,
+			{ id: string },
+			TContext
+		>;
+		request?: SecondParameter<typeof customFetch>;
+	},
+	queryClient?: QueryClient,
+): UseMutationResult<
+	Awaited<ReturnType<typeof recordGuideView>>,
+	TError,
+	{ id: string },
+	TContext
+> => {
+	return useMutation(getRecordGuideViewMutationOptions(options), queryClient);
 };

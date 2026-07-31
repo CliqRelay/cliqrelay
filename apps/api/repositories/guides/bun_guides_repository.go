@@ -82,9 +82,13 @@ func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFil
 		}
 		if filter.Status != nil {
 			query = query.Where("g.status = ?", *filter.Status)
+			if *filter.Status == models.StatusDeleted {
+				query = query.Where("g.purge_requested_at IS NULL")
+			}
 		} else if filter.DeletedOnly {
 			query = query.Where("g.deleted_at IS NOT NULL")
 			query = query.Where("g.status = ?", models.StatusDeleted)
+			query = query.Where("g.purge_requested_at IS NULL")
 		} else {
 			query = query.Where("g.deleted_at IS NULL")
 			if filter.PublishedOnly {

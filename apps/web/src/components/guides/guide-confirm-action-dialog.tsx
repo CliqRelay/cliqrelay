@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -30,11 +32,19 @@ export function ConfirmActionDialog({
 	onConfirm,
 	onCancel,
 }: ConfirmActionDialogProps) {
+	const confirming = useRef<boolean>(false);
+
+	if (open) {
+		confirming.current = false;
+	}
+
 	return (
 		<AlertDialog
 			open={open}
 			onOpenChange={(nextOpen) => {
-				if (!nextOpen) onCancel();
+				if (!nextOpen && !confirming.current) {
+					onCancel();
+				}
 			}}
 		>
 			<AlertDialogContent>
@@ -54,6 +64,7 @@ export function ConfirmActionDialog({
 						disabled={loading}
 						onClick={(e) => {
 							e.stopPropagation();
+							confirming.current = true;
 							onConfirm();
 						}}
 					>

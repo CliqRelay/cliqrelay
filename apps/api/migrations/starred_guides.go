@@ -9,7 +9,7 @@ import (
 
 func starredGuidesInitial() authulamigrations.Migration {
 	return authulamigrations.Migration{
-		Version: "20260605000000_starred_guides",
+		Version: "20260605000000_starred_guides_initial",
 		Up: func(ctx context.Context, tx bun.Tx) error {
 			return authulamigrations.ExecStatements(
 				ctx,

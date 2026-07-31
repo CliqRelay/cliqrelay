@@ -14,7 +14,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
+func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUseCase, guideViewsUseCase interfaces.GuideViewsUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
 	createHandler := guides.NewCreateGuideHandler(appConfig, guidesUseCase)
 	createDemoGuideHandler := guides.NewCreateDemoGuideHandler(appConfig, guidesUseCase)
 	getAllHandler := guides.NewGetAllGuidesHandler(appConfig, guidesUseCase)
@@ -35,6 +35,8 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 	bulkGuideActionHandler := guides.NewBulkGuideActionHandler(appConfig, guidesUseCase)
 	exportGuideHandler := guides.NewExportGuideHandler(appConfig, exportSvc)
 	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportSvc)
+	recordGuideViewHandler := guides.NewRecordGuideViewHandler(appConfig, guideViewsUseCase)
+	getGuideViewsCountHandler := guides.NewGetGuideViewsCountHandler(appConfig, guideViewsUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
@@ -162,6 +164,18 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 			Path:       fmt.Sprintf("%s/guide-exports/{exportID}", base),
 			Middleware: authMiddleware,
 			Handler:    getExportStatusHandler.Handle(),
+		},
+		{
+			Method:     "POST",
+			Path:       fmt.Sprintf("%s/guides/{id}/view", base),
+			Middleware: authMiddleware,
+			Handler:    recordGuideViewHandler.Handle(),
+		},
+		{
+			Method:     "GET",
+			Path:       fmt.Sprintf("%s/guides/views/count", base),
+			Middleware: authMiddleware,
+			Handler:    getGuideViewsCountHandler.Handle(),
 		},
 	}
 }
@@ -388,5 +402,27 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithTags("Guides"),
 		openapi.WithRequest(&types.GuideExportID{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetExportStatusResponse{}),
+	)
+
+	svc.AddOperation(
+		http.MethodPost,
+		fmt.Sprintf("%s/guides/{id}/view", basePath),
+		openapi.WithOperationID("recordGuideView"),
+		openapi.WithSummary("Record guide view"),
+		openapi.WithDescription("Records a view of a guide."),
+		openapi.WithTags("Guides"),
+		openapi.WithRequest(&types.GuideID{}),
+		openapi.WithResponseStatus(http.StatusOK, &types.RecordGuideViewResponse{}),
+	)
+
+	svc.AddOperation(
+		http.MethodGet,
+		fmt.Sprintf("%s/guides/views/count", basePath),
+		openapi.WithOperationID("getGuideViewsCount"),
+		openapi.WithSummary("Get guide views count"),
+		openapi.WithDescription("Returns the total count of guide views for a team"),
+		openapi.WithTags("Guides"),
+		openapi.WithRequest(&types.GetGuideViewsCountQueryParams{}),
+		openapi.WithResponseStatus(http.StatusOK, &types.GetGuideViewsCountResponse{}),
 	)
 }

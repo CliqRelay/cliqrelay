@@ -104,8 +104,8 @@ function DashboardSkeleton() {
 					))}
 				</div>
 
-				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-					{Array.from({ length: 2 }).map((_, i) => (
+				<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+					{Array.from({ length: 3 }).map((_, i) => (
 						<div key={i} className="surface-card rounded-[20px] p-5">
 							<div className="flex items-center gap-2.5">
 								<Skeleton className="size-8 rounded-full" />

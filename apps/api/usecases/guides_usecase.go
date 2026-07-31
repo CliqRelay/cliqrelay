@@ -28,12 +28,12 @@ type GuidesUseCase struct {
 func NewGuidesUseCase(
 	authzService interfaces.AuthorizationService,
 	guidesService interfaces.GuidesService,
-	starredSvc interfaces.StarredGuidesService,
+	starredService interfaces.StarredGuidesService,
 ) *GuidesUseCase {
 	return &GuidesUseCase{
 		authzService:   authzService,
 		guidesService:  guidesService,
-		starredService: starredSvc,
+		starredService: starredService,
 	}
 }
 
