@@ -28,7 +28,7 @@ const actionMessages: Record<string, string> = {
 	unarchive: "Guide unarchived",
 	restore: "Guide restored",
 	duplicate: "Guide duplicated",
-	delete: "Guide deleted",
+	delete: "Guide moved to trash",
 	"permanently-delete": "Guide permanently deleted",
 };
 

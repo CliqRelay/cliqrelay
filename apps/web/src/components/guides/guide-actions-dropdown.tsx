@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { api, type Guide } from "@repo/api-client";
+import { AppUserRole } from "@repo/data-commons";
 
 import { ExportDialog } from "@/components/editor/shared/export-dialog";
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
@@ -34,7 +35,7 @@ import {
 	unarchiveGuide,
 	unpublishGuide,
 } from "@/server-fns/guides";
-import { useOrgStore } from "@/stores/org-store";
+import { RoleGuard } from "../shared/role-guard";
 
 type Props = {
 	guide: Pick<Guide, "id" | "title" | "status">;
@@ -49,8 +50,6 @@ export function GuideActionsDropdown({
 }: Props) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
-
-	const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
 
 	const [publishDialogOpen, setPublishDialogOpen] = useState<boolean>(false);
 	const [archiveDialogOpen, setArchiveDialogOpen] = useState<boolean>(false);
@@ -201,28 +200,26 @@ export function GuideActionsDropdown({
 							Unarchive
 						</DropdownMenuItem>
 					)}
-					{currentMemberRole === "admin" && (
+					<RoleGuard minRole={AppUserRole.ADMIN}>
 						<DropdownMenuItem onSelect={() => setMoveToTeamOpen(true)}>
 							<Shuffle className="mr-2 h-4 w-4" />
 							Move to Team
 						</DropdownMenuItem>
-					)}
+					</RoleGuard>
 					<DropdownMenuItem onSelect={() => setExportDialogOpen(true)}>
 						<Download className="mr-2 h-4 w-4" />
 						Export
 					</DropdownMenuItem>
-					{currentMemberRole === "admin" && (
-						<>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								className="text-destructive focus:text-destructive"
-								onSelect={() => setDeleteDialogOpen(true)}
-							>
-								<Trash2 className="mr-2 h-4 w-4" />
-								Delete
-							</DropdownMenuItem>
-						</>
-					)}
+					<RoleGuard minRole={AppUserRole.ADMIN}>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							className="text-destructive focus:text-destructive"
+							onSelect={() => setDeleteDialogOpen(true)}
+						>
+							<Trash2 className="mr-2 h-4 w-4 text-destructive" />
+							Delete
+						</DropdownMenuItem>
+					</RoleGuard>
 				</DropdownMenuContent>
 			</DropdownMenu>
 

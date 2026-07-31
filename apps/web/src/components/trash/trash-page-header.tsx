@@ -1,16 +1,20 @@
 import { Trash2 } from "lucide-react";
 
+import { AppUserRole } from "@repo/data-commons";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RoleGuard } from "../shared/role-guard";
 
-interface TrashPageHeaderProps {
+type Props = {
 	selectedCount: number;
 	totalCount?: number;
 	onRestore: () => void;
 	onDeletePermanently: () => void;
 	selectable?: boolean;
 	onSelectAll?: () => void;
-}
+};
 
 export function TrashPageHeader({
 	selectedCount,
@@ -19,15 +23,15 @@ export function TrashPageHeader({
 	onDeletePermanently,
 	selectable = false,
 	onSelectAll,
-}: TrashPageHeaderProps) {
+}: Props) {
 	const allSelected = totalCount > 0 && selectedCount === totalCount;
 	const someSelected = selectedCount > 0 && selectedCount < totalCount;
 
 	return (
-		<div className="relative mb-6 flex items-start justify-between">
-			<div>
+		<div className="relative mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+			<div className="min-w-0">
 				<div className="flex items-center gap-3">
-					<Trash2 className="size-6 text-primary" strokeWidth={1.8} />
+					<Trash2 className="size-6 shrink-0 text-primary" strokeWidth={1.8} />
 					<h1 className="text-[28px] font-semibold tracking-tight text-foreground leading-tight">
 						Trash
 					</h1>
@@ -37,41 +41,46 @@ export function TrashPageHeader({
 				</p>
 			</div>
 
-			<div className="flex items-center gap-3 pt-1">
+			<div className="flex flex-col items-end gap-3">
 				{selectable && onSelectAll && (
-					<label className="flex items-center gap-2 cursor-pointer">
-						<Checkbox
-							checked={
-								allSelected ? true : someSelected ? "indeterminate" : false
-							}
-							onCheckedChange={onSelectAll}
-							className="size-4 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-						/>
-						<span className="text-[13px] text-muted-foreground select-none">
-							{allSelected ? `${selectedCount} selected` : "Select All"}
-						</span>
-					</label>
+					<RoleGuard minRole={AppUserRole.EDITOR}>
+						<Label className="cursor-pointer whitespace-nowrap">
+							<Checkbox
+								checked={
+									allSelected ? true : someSelected ? "indeterminate" : false
+								}
+								onCheckedChange={onSelectAll}
+							/>
+							<span className="text-muted-foreground">
+								{allSelected ? `${selectedCount} selected` : "Select All"}
+							</span>
+						</Label>
+					</RoleGuard>
 				)}
 
 				{selectedCount > 0 && (
-					<>
-						<Button
-							variant="outline"
-							size="lg"
-							onClick={onRestore}
-							className="font-semibold"
-						>
-							Restore ({selectedCount})
-						</Button>
-						<Button
-							variant="destructive"
-							size="lg"
-							onClick={onDeletePermanently}
-							className="font-semibold"
-						>
-							Delete Permanently
-						</Button>
-					</>
+					<div className="flex items-center gap-3">
+						<RoleGuard minRole={AppUserRole.EDITOR}>
+							<Button
+								variant="outline"
+								size="lg"
+								onClick={onRestore}
+								className="font-semibold"
+							>
+								Restore ({selectedCount})
+							</Button>
+						</RoleGuard>
+						<RoleGuard minRole={AppUserRole.ADMIN}>
+							<Button
+								variant="destructive"
+								size="lg"
+								onClick={onDeletePermanently}
+								className="font-semibold"
+							>
+								Delete Permanently
+							</Button>
+						</RoleGuard>
+					</div>
 				)}
 			</div>
 		</div>

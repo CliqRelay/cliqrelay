@@ -4,16 +4,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
 
-import { type Guide, api } from "@repo/api-client";
-
-import { invalidateGuidesCount, updateGuidesCache } from "@/utils/guides-cache.utils";
+import { api, type Guide } from "@repo/api-client";
 
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
 import { GuidesList } from "@/components/guides/guides-list";
 import { TrashPageHeader } from "@/components/trash/trash-page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataPagination } from "@/components/ui/data-pagination";
+import { toast } from "@/lib/toast";
 import { useTeamStore } from "@/stores/team-store";
+import {
+	invalidateGetAllGuides,
+	invalidateGuidesCount,
+} from "@/utils/guides-cache.utils";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 const PAGE_SIZE = 12;
@@ -64,7 +67,9 @@ function TrashSkeleton() {
 
 function TrashGuides() {
 	const queryClient = useQueryClient();
+
 	const activeTeamId = useTeamStore((s) => s.activeTeamId);
+	const storeLoaded = useTeamStore((s) => s.loaded);
 
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -123,22 +128,24 @@ function TrashGuides() {
 	});
 
 	const handleRestore = async (guideId: string) => {
-		await restoreMutation.mutateAsync({ id: guideId });
-		setSelectedIds((prev) => prev.filter((id) => id !== guideId));
-		updateGuidesCache(queryClient, {
-			idsToRemove: [guideId],
-			teamId: activeTeamId ?? undefined,
-			currentPage,
-			pageSize: PAGE_SIZE,
-		});
-		const newTotalPages = Math.max(
-			1,
-			Math.ceil(Math.max(0, total - 1) / PAGE_SIZE),
-		);
-		if (currentPage > newTotalPages) {
-			setCurrentPage(newTotalPages);
+		try {
+			await restoreMutation.mutateAsync({ id: guideId });
+			setSelectedIds((prev) => prev.filter((id) => id !== guideId));
+			const newTotalPages = Math.max(
+				1,
+				Math.ceil(Math.max(0, total - 1) / PAGE_SIZE),
+			);
+			if (currentPage > newTotalPages) {
+				setCurrentPage(newTotalPages);
+			}
+			invalidateGetAllGuides(queryClient);
+			invalidateGuidesCount(queryClient);
+		} catch (error) {
+			toast.error("Error", {
+				description:
+					error instanceof Error ? error.message : "Failed to restore",
+			});
 		}
-		invalidateGuidesCount(queryClient);
 	};
 
 	const handleDeletePermanently = (guideId: string) => {
@@ -146,26 +153,30 @@ function TrashGuides() {
 	};
 
 	const handleBulkRestore = async () => {
-		if (!activeTeamId || selectedIds.length === 0) return;
-		await bulkMutation.mutateAsync({
-			data: { teamId: activeTeamId, ids: selectedIds },
-			params: { action: "restore" },
-		});
-		updateGuidesCache(queryClient, {
-			idsToRemove: selectedIds,
-			teamId: activeTeamId ?? undefined,
-			currentPage,
-			pageSize: PAGE_SIZE,
-		});
-		setSelectedIds([]);
-		const newTotalPages = Math.max(
-			1,
-			Math.ceil(Math.max(0, total - selectedIds.length) / PAGE_SIZE),
-		);
-		if (currentPage > newTotalPages) {
-			setCurrentPage(newTotalPages);
+		if (!activeTeamId || selectedIds.length === 0) {
+			return;
 		}
-		invalidateGuidesCount(queryClient);
+		try {
+			await bulkMutation.mutateAsync({
+				data: { teamId: activeTeamId, ids: selectedIds },
+				params: { action: "restore" },
+			});
+			setSelectedIds([]);
+			const newTotalPages = Math.max(
+				1,
+				Math.ceil(Math.max(0, total - selectedIds.length) / PAGE_SIZE),
+			);
+			if (currentPage > newTotalPages) {
+				setCurrentPage(newTotalPages);
+			}
+			invalidateGetAllGuides(queryClient);
+			invalidateGuidesCount(queryClient);
+		} catch (error) {
+			toast.error("Error", {
+				description:
+					error instanceof Error ? error.message : "Failed to restore",
+			});
+		}
 	};
 
 	const handleBulkDelete = () => {
@@ -180,50 +191,43 @@ function TrashGuides() {
 		const deletedCount =
 			deleteDialogGuideId === "__bulk__" ? selectedIds.length : 1;
 
-		const idsToRemove =
-			deleteDialogGuideId === "__bulk__" ? selectedIds : [deleteDialogGuideId];
-
-		if (deleteDialogGuideId === "__bulk__") {
-			if (!activeTeamId || selectedIds.length === 0) {
-				return;
+		try {
+			if (deleteDialogGuideId === "__bulk__") {
+				if (!activeTeamId || selectedIds.length === 0) {
+					return;
+				}
+				await bulkMutation.mutateAsync({
+					data: { teamId: activeTeamId, ids: selectedIds },
+					params: { action: "permanently-delete" },
+				});
+				setSelectedIds([]);
+			} else {
+				await permanentlyDeleteMutation.mutateAsync({
+					id: deleteDialogGuideId,
+				});
+				setSelectedIds((prev) =>
+					prev.filter((id) => id !== deleteDialogGuideId),
+				);
 			}
-			await bulkMutation.mutateAsync({
-				data: { teamId: activeTeamId, ids: selectedIds },
-				params: { action: "permanently-delete" },
-			});
-			setSelectedIds([]);
-		} else {
-			await permanentlyDeleteMutation.mutateAsync({
-				id: deleteDialogGuideId,
-			});
-			setSelectedIds((prev) => prev.filter((id) => id !== deleteDialogGuideId));
-		}
 
-		updateGuidesCache(queryClient, {
-			idsToRemove,
-			teamId: activeTeamId ?? undefined,
-			currentPage,
-			pageSize: PAGE_SIZE,
-		});
-		setDeleteDialogGuideId(null);
-		const newTotalPages = Math.max(
-			1,
-			Math.ceil(Math.max(0, total - deletedCount) / PAGE_SIZE),
-		);
-		if (currentPage > newTotalPages) {
-			setCurrentPage(newTotalPages);
+			const newTotalPages = Math.max(
+				1,
+				Math.ceil(Math.max(0, total - deletedCount) / PAGE_SIZE),
+			);
+			if (currentPage > newTotalPages) {
+				setCurrentPage(newTotalPages);
+			}
+		} catch (error) {
+			toast.error("Error", {
+				description:
+					error instanceof Error
+						? error.message
+						: "Failed to permanently delete",
+			});
+		} finally {
+			setDeleteDialogGuideId(null);
+			invalidateGetAllGuides(queryClient);
 		}
-		const countQueryKey = api.guides.getGetGuidesCountQueryKey({
-			team_id: activeTeamId ?? undefined,
-		});
-		queryClient.setQueryData<{ count: number }>(countQueryKey, (old) => {
-			if (!old) return old;
-			return {
-				...old,
-				count: Math.max(0, old.count - deletedCount),
-			};
-		});
-		invalidateGuidesCount(queryClient);
 	};
 
 	const cancelPermanentDelete = () => {
@@ -231,8 +235,6 @@ function TrashGuides() {
 	};
 
 	const isPerformingBulk = bulkMutation.isPending;
-
-	const storeLoaded = useTeamStore((s) => s.loaded);
 
 	if (!storeLoaded || guidesQuery.isLoading) {
 		return <TrashSkeleton />;
