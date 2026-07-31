@@ -10,6 +10,12 @@
 
 ---
 
+<br/>
+
+<p align="center">
+  <img src="./app-screenshot.png" width="700" alt="Project Banner"/>
+</p>
+
 ### Overview
 
 **CliqRelay** is an open-source platform that transforms page clicks and interactions into beautiful, step-by-step visual documentation. By coupling a native browser capture extension with a high-performance backend, CliqRelay tracks exact DOM interactions and contextual screenshots thereby instantly automating the heavy lifting of writing technical guides and docs. Capture and refine workflows instantly to help your teams perform at their best.
