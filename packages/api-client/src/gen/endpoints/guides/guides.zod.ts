@@ -24,6 +24,7 @@ import {
 	GetGuideViewsCountResponse,
 	GetGuidesCountResponse,
 	GetStarredGuidesResponse,
+	GetTimeSavedResponse,
 	GuideSortField,
 	GuideStatus,
 	PermanentlyDeleteGuideResponse,
@@ -114,6 +115,17 @@ export const GetStarredGuidesQueryParams = zod.object({
 });
 
 export const GetStarredGuidesResponseSchema = GetStarredGuidesResponse;
+
+/**
+ * Returns the total time saved from guide views for a team
+ * @summary Get guides time saved
+ */
+export const GetGuidesTimeSavedQueryParams = zod.object({
+	team_id: zod.uuid().optional(),
+	since: zod.iso.datetime({ offset: true }).nullish(),
+});
+
+export const GetGuidesTimeSavedResponse = GetTimeSavedResponse;
 
 /**
  * Returns the total count of guide views for a team

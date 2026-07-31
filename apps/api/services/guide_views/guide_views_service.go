@@ -12,6 +12,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 const dedupTTL = 24 * time.Hour
@@ -109,4 +110,17 @@ func (s *GuideViewsService) FlushGuideDedupeKeys(ctx context.Context, guideID uu
 
 func (s *GuideViewsService) GetCountByTeam(ctx context.Context, teamID uuid.UUID, since *time.Time) (int, error) {
 	return s.repo.GetCountByTeam(ctx, teamID, since)
+}
+
+func (s *GuideViewsService) GetTimeSavedByTeam(ctx context.Context, teamID uuid.UUID, since *time.Time) (int, error) {
+	stats, err := s.repo.GetTimeSavedByTeam(ctx, teamID, since)
+	if err != nil {
+		return 0, err
+	}
+
+	total := 0
+	for _, stat := range stats {
+		total += stat.ViewCount * utils.CalculateNetSecondsSaved(stat.DurationSeconds)
+	}
+	return total, nil
 }

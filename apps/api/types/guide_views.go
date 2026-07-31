@@ -44,3 +44,23 @@ func (r *GetGuideViewsCountQueryParams) Validate() error {
 type GetGuideViewsCountResponse struct {
 	Count int `json:"count" required:"true" nullable:"false"`
 }
+
+type GetTimeSavedQueryParams struct {
+	TeamID uuid.UUID  `query:"team_id" validate:"required,uuid"`
+	Since  *time.Time `query:"since" validate:"omitempty" nullable:"true"`
+}
+
+func (r *GetTimeSavedQueryParams) Validate() error {
+	return validator.Validate.Struct(r)
+}
+
+type GetTimeSavedResponse struct {
+	TimeSavedSeconds int     `json:"time_saved_seconds" required:"true" nullable:"false"`
+	TimeSavedHours   float64 `json:"time_saved_hours" required:"true" nullable:"false"`
+}
+
+type GuideViewStats struct {
+	GuideID         uuid.UUID `bun:"guide_id"`
+	ViewCount       int       `bun:"view_count"`
+	DurationSeconds int       `bun:"duration_seconds"`
+}

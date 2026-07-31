@@ -37,6 +37,7 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 	getExportStatusHandler := guides.NewGetExportStatusHandler(appConfig, exportSvc)
 	recordGuideViewHandler := guides.NewRecordGuideViewHandler(appConfig, guideViewsUseCase)
 	getGuideViewsCountHandler := guides.NewGetGuideViewsCountHandler(appConfig, guideViewsUseCase)
+	getTimeSavedHandler := guides.NewGetTimeSavedHandler(appConfig, guideViewsUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
@@ -176,6 +177,12 @@ func GuidesRoutes(appConfig *config.AppConfig, guidesUseCase interfaces.GuidesUs
 			Path:       fmt.Sprintf("%s/guides/views/count", base),
 			Middleware: authMiddleware,
 			Handler:    getGuideViewsCountHandler.Handle(),
+		},
+		{
+			Method:     "GET",
+			Path:       fmt.Sprintf("%s/guides/time-saved", base),
+			Middleware: authMiddleware,
+			Handler:    getTimeSavedHandler.Handle(),
 		},
 	}
 }
@@ -424,5 +431,16 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithTags("Guides"),
 		openapi.WithRequest(&types.GetGuideViewsCountQueryParams{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetGuideViewsCountResponse{}),
+	)
+
+	svc.AddOperation(
+		http.MethodGet,
+		fmt.Sprintf("%s/guides/time-saved", basePath),
+		openapi.WithOperationID("getGuidesTimeSaved"),
+		openapi.WithSummary("Get guides time saved"),
+		openapi.WithDescription("Returns the total time saved from guide views for a team"),
+		openapi.WithTags("Guides"),
+		openapi.WithRequest(&types.GetTimeSavedQueryParams{}),
+		openapi.WithResponseStatus(http.StatusOK, &types.GetTimeSavedResponse{}),
 	)
 }

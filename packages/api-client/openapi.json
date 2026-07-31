@@ -309,6 +309,48 @@
         }
       }
     },
+    "/api/v1/guides/time-saved": {
+      "get": {
+        "tags": [
+          "Guides"
+        ],
+        "summary": "Get guides time saved",
+        "description": "Returns the total time saved from guide views for a team",
+        "operationId": "getGuidesTimeSaved",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/UUID"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTimeSavedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/guides/views/count": {
       "get": {
         "tags": [
@@ -1873,6 +1915,22 @@
         },
         "required": [
           "step"
+        ],
+        "type": "object"
+      },
+      "GetTimeSavedResponse": {
+        "properties": {
+          "time_saved_hours": {
+            "format": "double",
+            "type": "number"
+          },
+          "time_saved_seconds": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "time_saved_seconds",
+          "time_saved_hours"
         ],
         "type": "object"
       },
