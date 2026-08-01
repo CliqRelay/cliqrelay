@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	authulamodels "github.com/Authula/authula/models"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
@@ -45,15 +44,13 @@ func NewExportService(
 	}
 }
 
-func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, guideID string, format cliqmodels.ExportGuideFormat) (*uuid.UUID, error) {
-	ctx := reqCtx.Request.Context()
-
+func (s *ExportService) RequestExport(ctx context.Context, actorID, guideID string, format cliqmodels.ExportGuideFormat) (*uuid.UUID, error) {
 	parsedGuideID, err := uuid.Parse(guideID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid guide ID: %w", err)
 	}
 
-	export, err := s.guideExportsRepo.Create(ctx, parsedGuideID, reqCtx.Actor.ID, format)
+	export, err := s.guideExportsRepo.Create(ctx, parsedGuideID, actorID, format)
 	if err != nil {
 		return nil, fmt.Errorf("create export: %w", err)
 	}
@@ -61,7 +58,7 @@ func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, guid
 	if err := events.Publish(ctx, s.redisClient, events.TopicGuideExports, events.EventTypeGuideExport, &events.GuideExportPayload{
 		ExportID: export.ID.String(),
 		GuideID:  guideID,
-		UserID:   reqCtx.Actor.ID,
+		UserID:   actorID,
 		Format:   format.ToString(),
 	}); err != nil {
 		return nil, fmt.Errorf("publish export event: %w", err)
@@ -70,15 +67,13 @@ func (s *ExportService) RequestExport(reqCtx *authulamodels.RequestContext, guid
 	return &export.ID, nil
 }
 
-func (s *ExportService) GetExportStatus(reqCtx *authulamodels.RequestContext, exportID string) (*cliqmodels.GuideExport, error) {
-	ctx := reqCtx.Request.Context()
-
+func (s *ExportService) GetExportStatus(ctx context.Context, actorID, exportID string) (*cliqmodels.GuideExport, error) {
 	parsedID, err := uuid.Parse(exportID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid export ID: %w", err)
 	}
 
-	export, err := s.guideExportsRepo.GetByID(ctx, parsedID, reqCtx.Actor.ID)
+	export, err := s.guideExportsRepo.GetByID(ctx, parsedID, actorID)
 	if err != nil {
 		return nil, fmt.Errorf("get export: %w", err)
 	}

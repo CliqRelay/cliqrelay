@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
-	"slices"
+	"strings"
 
 	authulamodels "github.com/Authula/authula/models"
 	organizationsplugin "github.com/Authula/authula/plugins/organizations"
@@ -80,13 +80,36 @@ func (s *DefaultAuthorizationService) CanReadTeam(ctx context.Context, actor *au
 	return s.isTeamMember(ctx, actor, orgID, teamID)
 }
 
+func hasScope(scopes []string, required string) bool {
+	for _, scope := range scopes {
+		if scope == required || scope == "*" {
+			return true
+		}
+		if before, ok := strings.CutSuffix(scope, "*"); ok {
+			prefix := before
+			if strings.HasPrefix(required, prefix) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
 	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
 	if err != nil {
 		return constants.ErrTeamAccessDenied
 	}
 
-	return s.isTeamMember(ctx, actor, orgID, teamID)
+	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+		return constants.ErrTeamAccessDenied
+	}
+
+	if !hasScope(actor.Scopes, constants.GuidesCreatePermission) {
+		return constants.ErrGuideCreateDenied
+	}
+
+	return nil
 }
 
 func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
@@ -96,6 +119,10 @@ func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *a
 	}
 
 	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+		return constants.ErrGuideAccessDenied
+	}
+
+	if !hasScope(actor.Scopes, constants.GuidesReadPermission) {
 		return constants.ErrGuideAccessDenied
 	}
 
@@ -113,6 +140,10 @@ func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *a
 	}
 
 	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+		return constants.ErrGuideEditDenied
+	}
+
+	if !hasScope(actor.Scopes, constants.GuidesEditPermission) {
 		return constants.ErrGuideEditDenied
 	}
 
@@ -137,13 +168,34 @@ func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor 
 		return nil
 	}
 
-	isAdmin := slices.Contains(actor.Scopes, orgconstants.All)
+	if !hasScope(actor.Scopes, constants.GuidesDeletePermission) {
+		return constants.ErrGuideDeleteDenied
+	}
+
+	isAdmin := hasScope(actor.Scopes, orgconstants.All)
 	if !isAdmin {
 		return constants.ErrGuideDeleteDenied
 	}
 
 	if guide.Visibility == models.VisibilityPrivate {
 		return constants.ErrGuideDeleteDenied
+	}
+
+	return nil
+}
+
+func (s *DefaultAuthorizationService) CanBulkGuideAction(ctx context.Context, actor *authulamodels.Actor, action string) error {
+	switch action {
+	case "restore":
+		if !hasScope(actor.Scopes, constants.GuidesEditPermission) {
+			return constants.ErrGuideEditDenied
+		}
+	case "delete", "permanently-delete":
+		if !hasScope(actor.Scopes, constants.GuidesDeletePermission) {
+			return constants.ErrGuideDeleteDenied
+		}
+	default:
+		return nil
 	}
 
 	return nil
@@ -156,7 +208,11 @@ func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor
 	}
 
 	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
-		return nil, constants.ErrTeamAccessDenied
+		return nil, constants.ErrGuideAccessDenied
+	}
+
+	if !hasScope(actor.Scopes, constants.GuidesReadPermission) {
+		return nil, constants.ErrGuideAccessDenied
 	}
 
 	return &types.GuideFilter{

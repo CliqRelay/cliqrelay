@@ -24,6 +24,7 @@ var (
 	ErrTeamAccessDenied = errors.New("team access denied")
 
 	ErrGuideAccessDenied       = errors.New("you do not have permission to access this guide")
+	ErrGuideCreateDenied       = errors.New("you do not have permission to create guides")
 	ErrGuideEditDenied         = errors.New("you do not have permission to edit this guide")
 	ErrGuideReadDenied         = errors.New("you do not have permission to view this guide")
 	ErrGuideDeleteDenied       = errors.New("you do not have permission to delete this guide")

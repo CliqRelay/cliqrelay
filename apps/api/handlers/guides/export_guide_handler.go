@@ -12,11 +12,11 @@ import (
 )
 
 type ExportGuideHandler struct {
-	exportService interfaces.ExportService
+	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewExportGuideHandler(exportService interfaces.ExportService) *ExportGuideHandler {
-	return &ExportGuideHandler{exportService: exportService}
+func NewExportGuideHandler(guidesUseCase interfaces.GuidesUseCase) *ExportGuideHandler {
+	return &ExportGuideHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *ExportGuideHandler) Handle() http.HandlerFunc {
@@ -43,7 +43,7 @@ func (h *ExportGuideHandler) Handle() http.HandlerFunc {
 			return
 		}
 
-		exportID, err := h.exportService.RequestExport(reqCtx, guideID, request.Format)
+		exportID, err := h.guidesUseCase.ExportGuide(ctx, reqCtx.Actor, guideID, request.Format)
 		if err != nil {
 			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

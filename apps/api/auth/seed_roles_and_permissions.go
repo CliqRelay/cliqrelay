@@ -11,9 +11,24 @@ import (
 	accesscontrolplugin "github.com/Authula/authula/plugins/access-control"
 	accesscontrolplugintypes "github.com/Authula/authula/plugins/access-control/types"
 	orgconstants "github.com/Authula/authula/plugins/organizations/constants"
+
+	"github.com/CliqRelay/cliqrelay/constants"
 )
 
-func SeedOrganizationRoles(ctx context.Context, authulaAuth *authula.Auth) error {
+type guidePermissionDef struct {
+	Key         string
+	Description string
+}
+
+var guidePermissions = []guidePermissionDef{
+	{Key: constants.GuidesReadPermission, Description: "Read guides"},
+	{Key: constants.GuidesCreatePermission, Description: "Create guides"},
+	{Key: constants.GuidesEditPermission, Description: "Edit guides"},
+	{Key: constants.GuidesDeletePermission, Description: "Delete guides"},
+	{Key: constants.GuidesAllPermission, Description: "Full access to guides"},
+}
+
+func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) error {
 	acPlugin, ok := authulaAuth.PluginRegistry.GetPlugin(authulamodels.PluginAccessControl.String()).(*accesscontrolplugin.AccessControlPlugin)
 	if !ok {
 		return fmt.Errorf("access control plugin not found")
@@ -23,6 +38,24 @@ func SeedOrganizationRoles(ctx context.Context, authulaAuth *authula.Auth) error
 		ID:     "system",
 		Type:   authulamodels.ActorMachine,
 		Scopes: []string{"*"},
+	}
+
+	for _, gp := range guidePermissions {
+		desc := gp.Description
+		perm, err := acPlugin.Api.GetPermissionByKey(ctx, systemActor, gp.Key)
+		if err != nil && !errors.Is(err, coreerrors.ErrNotFound) {
+			return fmt.Errorf("failed to check permission %q: %w", gp.Key, err)
+		}
+
+		if perm == nil {
+			if _, err := acPlugin.Api.CreatePermission(ctx, systemActor, accesscontrolplugintypes.CreatePermissionRequest{
+				Key:         gp.Key,
+				Description: &desc,
+				IsSystem:    false,
+			}); err != nil {
+				return fmt.Errorf("failed to create permission %q: %w", gp.Key, err)
+			}
+		}
 	}
 
 	type roleDef struct {
@@ -35,11 +68,18 @@ func SeedOrganizationRoles(ctx context.Context, authulaAuth *authula.Auth) error
 	orgRoles := []roleDef{
 		{
 			Name: "admin", Description: "Administrator with full access", Weight: 100,
-			Permissions: []string{orgconstants.All},
+			Permissions: []string{
+				// Organizations
+				orgconstants.All,
+
+				// Guides
+				constants.GuidesAllPermission,
+			},
 		},
 		{
 			Name: "editor", Description: "Editor with read and write access", Weight: 90,
 			Permissions: []string{
+				// Organizations
 				orgconstants.OrganizationsReadPermission,
 				orgconstants.OrganizationsInvitationsCreatePermission,
 				orgconstants.OrganizationsInvitationsListPermission,
@@ -56,11 +96,16 @@ func SeedOrganizationRoles(ctx context.Context, authulaAuth *authula.Auth) error
 				orgconstants.OrganizationsTeamMembersAddPermission,
 				orgconstants.OrganizationsTeamMembersListPermission,
 				orgconstants.OrganizationsTeamMembersReadPermission,
+				// Guides
+				constants.GuidesReadPermission,
+				constants.GuidesCreatePermission,
+				constants.GuidesEditPermission,
 			},
 		},
 		{
 			Name: "viewer", Description: "Viewer with read-only access", Weight: 80,
 			Permissions: []string{
+				// Organizations
 				orgconstants.OrganizationsReadPermission,
 				orgconstants.OrganizationsInvitationsListPermission,
 				orgconstants.OrganizationsInvitationsReadPermission,
@@ -70,6 +115,8 @@ func SeedOrganizationRoles(ctx context.Context, authulaAuth *authula.Auth) error
 				orgconstants.OrganizationsTeamsReadPermission,
 				orgconstants.OrganizationsTeamMembersListPermission,
 				orgconstants.OrganizationsTeamMembersReadPermission,
+				// Guides
+				constants.GuidesReadPermission,
 			},
 		},
 	}

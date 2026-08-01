@@ -10,14 +10,23 @@ import {
 } from "lucide-react";
 
 import { api } from "@repo/api-client";
-import { CliqRelayEvents } from "@repo/data-commons";
+import {
+	AppUserRole,
+	CliqRelayEvents,
+	hasMinimumRole,
+} from "@repo/data-commons";
 
 import SoonBadge from "@/components/shared/coming-soon-badge";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { envClient } from "@/constants/env-client";
 import useExtensionRuntime from "@/hooks/use-extension-runtime";
 import { toast } from "@/lib/toast";
 import { createGuide } from "@/server-fns/guides";
-import { useTeamStore } from "@/stores";
+import { useOrgStore, useTeamStore } from "@/stores";
 
 type QuickActionItem = {
 	label: string;
@@ -25,6 +34,7 @@ type QuickActionItem = {
 	icon: LucideIcon;
 	primary?: boolean;
 	comingSoon?: boolean;
+	disabled?: boolean;
 	onClick?: () => void;
 };
 
@@ -34,6 +44,11 @@ export function QuickActions() {
 
 	const runtime = useExtensionRuntime();
 	const teamId = useTeamStore((state) => state.activeTeamId);
+
+	const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
+	const canCreate =
+		!!currentMemberRole &&
+		hasMinimumRole(currentMemberRole as AppUserRole, AppUserRole.EDITOR);
 
 	const openSidePanel = async () => {
 		try {
@@ -123,6 +138,7 @@ export function QuickActions() {
 			label: "New Blank Guide",
 			sub: "Create manually without recording",
 			icon: FilePlus,
+			disabled: !canCreate,
 			onClick: handleNewBlankGuide,
 		},
 		{
@@ -176,6 +192,42 @@ export function QuickActions() {
 									<ChevronRight className="size-5 text-white" />
 								</span>
 							</button>
+						);
+					}
+					if (quickActionItem.disabled) {
+						return (
+							<Tooltip key={quickActionItem.label}>
+								<TooltipTrigger asChild>
+									<span className="flex-1 cursor-not-allowed">
+										<button
+											type="button"
+											disabled
+											className="flex-1 w-full group text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover opacity-50 cursor-not-allowed"
+										>
+											<div className="flex items-start justify-between">
+												<div className="size-11 rounded-2xl flex items-center justify-center bg-(--icon-subtle)">
+													<Icon
+														className="size-6 text-primary transition-colors"
+														strokeWidth={1.9}
+													/>
+												</div>
+												{quickActionItem.comingSoon && <SoonBadge />}
+											</div>
+											<div>
+												<div className="text-[14px] font-semibold text-foreground">
+													{quickActionItem.label}
+												</div>
+												<div className="text-[11.5px] text-muted-foreground mt-0.5">
+													{quickActionItem.sub}
+												</div>
+											</div>
+										</button>
+									</span>
+								</TooltipTrigger>
+								<TooltipContent>
+									Only Admins and Editors can create guides.
+								</TooltipContent>
+							</Tooltip>
 						);
 					}
 					return (

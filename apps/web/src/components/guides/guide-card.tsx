@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 import type { Guide, Visibility } from "@repo/api-client";
-import { AppUserRole } from "@repo/data-commons";
+import { AppUserRole, hasMinimumRole } from "@repo/data-commons";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -48,13 +48,13 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useTeamStore, useUserStore } from "@/stores";
+import { cn } from "@/lib/utils";
+import { useOrgStore, useTeamStore, useUserStore } from "@/stores";
 import { formatDuration, timeAgo } from "@/utils/time.utils";
+import { RoleGuard } from "../shared/role-guard";
 import { GuideStatusBadge } from "./guide-status-badge";
 import { MoveToTeamSlot } from "./move-to-team-slot";
 import { StarButton } from "./star-button";
-import { cn } from "@/lib/utils";
-import { RoleGuard } from "../shared/role-guard";
 
 type Props = {
 	guide: Guide;
@@ -97,6 +97,9 @@ export function GuideCard({
 	const teamName = teams.find((t) => t.id === guide.teamId)?.name;
 	const userId = useUserStore((s) => s.userId);
 	const isCreator = guide.creatorId !== null && userId === guide.creatorId;
+	const role = useOrgStore((s) => s.currentMember?.role);
+	const isEditor = hasMinimumRole(role as AppUserRole, AppUserRole.EDITOR);
+	const isAdmin = hasMinimumRole(role as AppUserRole, AppUserRole.ADMIN);
 
 	const [moveToTeamOpen, setMoveToTeamOpen] = useState<boolean>(false);
 	const [visibilityDialogOpen, setVisibilityDialogOpen] =
@@ -200,7 +203,7 @@ export function GuideCard({
 					</span>
 					<span className="text-[11px] text-muted-foreground/40">|</span>
 					<GuideStatusBadge status={guide.status} />
-					<RoleGuard minRole={AppUserRole.EDITOR}>
+					{isCreator || isEditor ? (
 						<div className="ml-auto">
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
@@ -217,19 +220,21 @@ export function GuideCard({
 									(onRestore || onDeletePermanently) ? (
 										<>
 											{onRestore && (
-												<DropdownMenuItem
-													className="text-[13px] gap-2.5 rounded-lg px-3 py-2 cursor-pointer"
-													onClick={(e) => {
-														e.stopPropagation();
-														onRestore(guide.id);
-													}}
-												>
-													<RotateCcw className="size-3.5 text-muted-foreground" />
-													Restore
-												</DropdownMenuItem>
+												<RoleGuard minRole={AppUserRole.EDITOR}>
+													<DropdownMenuItem
+														className="text-[13px] gap-2.5 rounded-lg px-3 py-2 cursor-pointer"
+														onClick={(e) => {
+															e.stopPropagation();
+															onRestore(guide.id);
+														}}
+													>
+														<RotateCcw className="size-3.5 text-muted-foreground" />
+														Restore
+													</DropdownMenuItem>
+												</RoleGuard>
 											)}
-											{onDeletePermanently && (
-												<RoleGuard minRole={AppUserRole.ADMIN}>
+											{onDeletePermanently && (isCreator || isAdmin) && (
+												<>
 													<DropdownMenuSeparator className="my-1" />
 													<DropdownMenuItem
 														className="text-[13px] gap-2.5 rounded-lg px-3 py-2 text-destructive focus:text-destructive cursor-pointer"
@@ -241,66 +246,68 @@ export function GuideCard({
 														<Trash2 className="size-3.5 text-destructive" />
 														Delete Permanently
 													</DropdownMenuItem>
-												</RoleGuard>
+												</>
 											)}
 										</>
 									) : (
 										<>
-											{guide.status === "draft" && onPublish && (
+											<RoleGuard minRole={AppUserRole.EDITOR}>
+												{guide.status === "draft" && onPublish && (
+													<DropdownMenuItem
+														onClick={(e) => {
+															e.stopPropagation();
+															onPublish(guide.id);
+														}}
+													>
+														<Send className="mr-2 size-3.5" />
+														Publish
+													</DropdownMenuItem>
+												)}
+												{guide.status === "published" && onUnpublish && (
+													<DropdownMenuItem
+														onClick={(e) => {
+															e.stopPropagation();
+															onUnpublish(guide.id);
+														}}
+													>
+														<Undo2 className="mr-2 size-3.5" />
+														Unpublish
+													</DropdownMenuItem>
+												)}
+												{(guide.status === "draft" ||
+													guide.status === "published") && (
+													<DropdownMenuItem
+														onClick={(e) => {
+															e.stopPropagation();
+															onArchive?.(guide.id);
+														}}
+													>
+														<Archive className="mr-2 size-3.5" />
+														Archive
+													</DropdownMenuItem>
+												)}
+												{guide.status === "archived" && onUnarchive && (
+													<DropdownMenuItem
+														onClick={(e) => {
+															e.stopPropagation();
+															onUnarchive(guide.id);
+														}}
+													>
+														<ArchiveRestore className="mr-2 size-3.5" />
+														Unarchive
+													</DropdownMenuItem>
+												)}
 												<DropdownMenuItem
 													onClick={(e) => {
 														e.stopPropagation();
-														onPublish(guide.id);
+														setSelectedVisibility(guide.visibility);
+														setVisibilityDialogOpen(true);
 													}}
 												>
-													<Send className="mr-2 size-3.5" />
-													Publish
+													<Eye className="mr-2 size-3.5" />
+													Change Visibility
 												</DropdownMenuItem>
-											)}
-											{guide.status === "published" && onUnpublish && (
-												<DropdownMenuItem
-													onClick={(e) => {
-														e.stopPropagation();
-														onUnpublish(guide.id);
-													}}
-												>
-													<Undo2 className="mr-2 size-3.5" />
-													Unpublish
-												</DropdownMenuItem>
-											)}
-											{(guide.status === "draft" ||
-												guide.status === "published") && (
-												<DropdownMenuItem
-													onClick={(e) => {
-														e.stopPropagation();
-														onArchive?.(guide.id);
-													}}
-												>
-													<Archive className="mr-2 size-3.5" />
-													Archive
-												</DropdownMenuItem>
-											)}
-											{guide.status === "archived" && onUnarchive && (
-												<DropdownMenuItem
-													onClick={(e) => {
-														e.stopPropagation();
-														onUnarchive(guide.id);
-													}}
-												>
-													<ArchiveRestore className="mr-2 size-3.5" />
-													Unarchive
-												</DropdownMenuItem>
-											)}
-											<DropdownMenuItem
-												onClick={(e) => {
-													e.stopPropagation();
-													setSelectedVisibility(guide.visibility);
-													setVisibilityDialogOpen(true);
-												}}
-											>
-												<Eye className="mr-2 size-3.5" />
-												Change Visibility
-											</DropdownMenuItem>
+											</RoleGuard>
 											<RoleGuard minRole={AppUserRole.ADMIN}>
 												<DropdownMenuItem
 													onClick={(e) => {
@@ -311,24 +318,28 @@ export function GuideCard({
 													<Shuffle className="mr-2 size-3.5" />
 													Move to Team
 												</DropdownMenuItem>
-												<DropdownMenuSeparator />
-												<DropdownMenuItem
-													className="text-destructive focus:text-destructive"
-													onClick={(e) => {
-														e.stopPropagation();
-														onDelete?.(guide.id);
-													}}
-												>
-													<Trash2 className="mr-2 size-3.5 text-destructive" />
-													Delete
-												</DropdownMenuItem>
 											</RoleGuard>
+											{(isCreator || isAdmin) && (
+												<>
+													<DropdownMenuSeparator />
+													<DropdownMenuItem
+														className="text-destructive focus:text-destructive"
+														onClick={(e) => {
+															e.stopPropagation();
+															onDelete?.(guide.id);
+														}}
+													>
+														<Trash2 className="mr-2 size-3.5 text-destructive" />
+														Delete
+													</DropdownMenuItem>
+												</>
+											)}
 										</>
 									)}
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</div>
-					</RoleGuard>
+					) : null}
 				</CardFooter>
 			</Card>
 			<MoveToTeamSlot

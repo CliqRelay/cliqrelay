@@ -11,11 +11,11 @@ import (
 )
 
 type GetExportStatusHandler struct {
-	exportService interfaces.ExportService
+	guidesUseCase interfaces.GuidesUseCase
 }
 
-func NewGetExportStatusHandler(exportService interfaces.ExportService) *GetExportStatusHandler {
-	return &GetExportStatusHandler{exportService: exportService}
+func NewGetExportStatusHandler(guidesUseCase interfaces.GuidesUseCase) *GetExportStatusHandler {
+	return &GetExportStatusHandler{guidesUseCase: guidesUseCase}
 }
 
 func (h *GetExportStatusHandler) Handle() http.HandlerFunc {
@@ -25,7 +25,7 @@ func (h *GetExportStatusHandler) Handle() http.HandlerFunc {
 
 		exportID := r.PathValue("exportID")
 
-		export, err := h.exportService.GetExportStatus(reqCtx, exportID)
+		export, err := h.guidesUseCase.GetExportStatus(ctx, reqCtx.Actor, exportID)
 		if err != nil {
 			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

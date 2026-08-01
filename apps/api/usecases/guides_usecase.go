@@ -23,17 +23,20 @@ type GuidesUseCase struct {
 	authzService   interfaces.AuthorizationService
 	guidesService  interfaces.GuidesService
 	starredService interfaces.StarredGuidesService
+	exportService  interfaces.ExportService
 }
 
 func NewGuidesUseCase(
 	authzService interfaces.AuthorizationService,
 	guidesService interfaces.GuidesService,
 	starredService interfaces.StarredGuidesService,
+	exportService interfaces.ExportService,
 ) *GuidesUseCase {
 	return &GuidesUseCase{
 		authzService:   authzService,
 		guidesService:  guidesService,
 		starredService: starredService,
+		exportService:  exportService,
 	}
 }
 
@@ -217,6 +220,10 @@ func (uc *GuidesUseCase) BulkAction(ctx context.Context, actor *authulamodels.Ac
 		return err
 	}
 
+	if err := uc.authzService.CanBulkGuideAction(ctx, actor, action); err != nil {
+		return err
+	}
+
 	isAdmin := slices.Contains(actor.Scopes, orgconstants.All)
 
 	var err error
@@ -245,6 +252,42 @@ func (uc *GuidesUseCase) RecalculateDuration(ctx context.Context, actor *authula
 	}
 
 	return uc.guidesService.RecalculateDuration(ctx, guideID)
+}
+
+func (uc *GuidesUseCase) ExportGuide(ctx context.Context, actor *authulamodels.Actor, guideID string, format models.ExportGuideFormat) (*uuid.UUID, error) {
+	guide, err := uc.guidesService.GetByID(ctx, guideID)
+	if err != nil {
+		return nil, err
+	}
+
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
+		return nil, err
+	}
+
+	return uc.exportService.RequestExport(ctx, actor.ID, guideID, format)
+}
+
+func (uc *GuidesUseCase) GetExportStatus(ctx context.Context, actor *authulamodels.Actor, exportID string) (*models.GuideExport, error) {
+	export, err := uc.exportService.GetExportStatus(ctx, actor.ID, exportID)
+	if err != nil {
+		return nil, err
+	}
+	if export == nil {
+		return nil, nil
+	}
+
+	guide, err := uc.guidesService.GetByID(ctx, export.GuideID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanReadGuide(ctx, actor, teamID, guide); err != nil {
+		return nil, err
+	}
+
+	return export, nil
 }
 
 func (uc *GuidesUseCase) Star(ctx context.Context, actor *authulamodels.Actor, guideID string) error {

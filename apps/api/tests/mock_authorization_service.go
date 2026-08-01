@@ -39,6 +39,11 @@ func (m *MockAuthorizationService) CanDeleteGuide(ctx context.Context, actor *au
 	return args.Error(0)
 }
 
+func (m *MockAuthorizationService) CanBulkGuideAction(ctx context.Context, actor *authulamodels.Actor, action string) error {
+	args := m.Called(ctx, actor, action)
+	return args.Error(0)
+}
+
 func (m *MockAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor, teamID string) (*types.GuideFilter, error) {
 	args := m.Called(ctx, actor, teamID)
 	if args.Get(0) == nil {

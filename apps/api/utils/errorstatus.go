@@ -17,6 +17,7 @@ func ErrorStatus(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, constants.ErrTeamAccessDenied),
 		errors.Is(err, constants.ErrGuideAccessDenied),
+		errors.Is(err, constants.ErrGuideCreateDenied),
 		errors.Is(err, constants.ErrGuideEditDenied),
 		errors.Is(err, constants.ErrGuideReadDenied),
 		errors.Is(err, constants.ErrGuideDeleteDenied),

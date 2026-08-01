@@ -4,6 +4,7 @@ import (
 	"context"
 
 	authulamodels "github.com/Authula/authula/models"
+	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -25,6 +26,8 @@ type GuidesUseCase interface {
 	PermanentlyDelete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	RecalculateDuration(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	BulkAction(ctx context.Context, actor *authulamodels.Actor, action string, req *types.BulkGuidesRequest) error
+	ExportGuide(ctx context.Context, actor *authulamodels.Actor, guideID string, format models.ExportGuideFormat) (*uuid.UUID, error)
+	GetExportStatus(ctx context.Context, actor *authulamodels.Actor, exportID string) (*models.GuideExport, error)
 	Star(ctx context.Context, actor *authulamodels.Actor, guideID string) error
 	Unstar(ctx context.Context, actor *authulamodels.Actor, guideID string) error
 	GetStarred(ctx context.Context, actor *authulamodels.Actor, teamID string, page, limit int) ([]*models.Guide, int, error)

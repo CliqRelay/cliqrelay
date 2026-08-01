@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { api, type Guide } from "@repo/api-client";
-import { AppUserRole } from "@repo/data-commons";
+import { AppUserRole, hasMinimumRole } from "@repo/data-commons";
 
 import { ExportDialog } from "@/components/editor/shared/export-dialog";
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
@@ -35,10 +35,11 @@ import {
 	unarchiveGuide,
 	unpublishGuide,
 } from "@/server-fns/guides";
+import { useOrgStore, useUserStore } from "@/stores";
 import { RoleGuard } from "../shared/role-guard";
 
 type Props = {
-	guide: Pick<Guide, "id" | "title" | "status">;
+	guide: Pick<Guide, "id" | "title" | "status" | "creatorId">;
 	isUpgradeAvailable?: boolean;
 	onUpgrade?: () => Promise<void>;
 };
@@ -50,6 +51,11 @@ export function GuideActionsDropdown({
 }: Props) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
+
+	const userId = useUserStore((s) => s.userId);
+	const isCreator = guide.creatorId !== null && userId === guide.creatorId;
+	const role = useOrgStore((s) => s.currentMember?.role);
+	const isAdmin = hasMinimumRole(role as AppUserRole, AppUserRole.ADMIN);
 
 	const [publishDialogOpen, setPublishDialogOpen] = useState<boolean>(false);
 	const [archiveDialogOpen, setArchiveDialogOpen] = useState<boolean>(false);
@@ -225,16 +231,18 @@ export function GuideActionsDropdown({
 						<Download className="mr-2 h-4 w-4" />
 						Export
 					</DropdownMenuItem>
-					<RoleGuard minRole={AppUserRole.ADMIN}>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							className="text-destructive focus:text-destructive"
-							onSelect={() => setDeleteDialogOpen(true)}
-						>
-							<Trash2 className="mr-2 h-4 w-4 text-destructive" />
-							Delete
-						</DropdownMenuItem>
-					</RoleGuard>
+					{(isCreator || isAdmin) && (
+						<>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								className="text-destructive focus:text-destructive"
+								onSelect={() => setDeleteDialogOpen(true)}
+							>
+								<Trash2 className="mr-2 h-4 w-4 text-destructive" />
+								Delete
+							</DropdownMenuItem>
+						</>
+					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
 

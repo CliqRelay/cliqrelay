@@ -90,7 +90,7 @@ func TestCreateGuideHandler(t *testing.T) {
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanCreateGuide", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
-			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil)
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, nil, nil)
 			handler := handlersguides.NewCreateGuideHandler(uc)
 
 			var req tests.HandlerTestRequest

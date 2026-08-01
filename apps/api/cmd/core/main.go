@@ -55,8 +55,8 @@ func main() {
 		log.Fatal("Error initializing migrations: ", err)
 	}
 
-	if err := auth.SeedOrganizationRoles(context.Background(), authulaAuth); err != nil {
-		log.Fatal("Error seeding organization roles: ", err)
+	if err := auth.SeedRolesAndPermissions(context.Background(), authulaAuth); err != nil {
+		log.Fatal("Error seeding roles and permissions: ", err)
 	}
 
 	if envConfig.StandaloneMode == "true" {

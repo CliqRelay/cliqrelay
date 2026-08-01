@@ -14,7 +14,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func GuidesRoutes(cfg *config.HTTPConfig, guidesUseCase interfaces.GuidesUseCase, guideViewsUseCase interfaces.GuideViewsUseCase, exportSvc interfaces.ExportService) []authulamodels.Route {
+func GuidesRoutes(cfg *config.HTTPConfig, guidesUseCase interfaces.GuidesUseCase, guideViewsUseCase interfaces.GuideViewsUseCase) []authulamodels.Route {
 	createHandler := guides.NewCreateGuideHandler(guidesUseCase)
 	createDemoGuideHandler := guides.NewCreateDemoGuideHandler(guidesUseCase)
 	getAllHandler := guides.NewGetAllGuidesHandler(guidesUseCase)
@@ -33,8 +33,8 @@ func GuidesRoutes(cfg *config.HTTPConfig, guidesUseCase interfaces.GuidesUseCase
 	unstarGuideHandler := guides.NewUnstarGuideHandler(guidesUseCase)
 	recalculateDurationHandler := guides.NewRecalculateDurationHandler(guidesUseCase)
 	bulkGuideActionHandler := guides.NewBulkGuideActionHandler(guidesUseCase)
-	exportGuideHandler := guides.NewExportGuideHandler(exportSvc)
-	getExportStatusHandler := guides.NewGetExportStatusHandler(exportSvc)
+	exportGuideHandler := guides.NewExportGuideHandler(guidesUseCase)
+	getExportStatusHandler := guides.NewGetExportStatusHandler(guidesUseCase)
 	recordGuideViewHandler := guides.NewRecordGuideViewHandler(guideViewsUseCase)
 	getGuideViewsCountHandler := guides.NewGetGuideViewsCountHandler(guideViewsUseCase)
 	getTimeSavedHandler := guides.NewGetTimeSavedHandler(guideViewsUseCase)
