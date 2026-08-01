@@ -54,16 +54,50 @@ func NewStepsService(
 	}
 }
 
+func runStepHooks(hooks []interfaces.StepHook, ctx context.Context, step *models.Step) error {
+	for _, hook := range hooks {
+		if err := hook(ctx, step); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func runCreateStepHooks(hooks []interfaces.CreateStepHook, ctx context.Context, req *types.CreateStepRequest) error {
+	for _, hook := range hooks {
+		if err := hook(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func runUpdateStepHooks(hooks []interfaces.UpdateStepHook, ctx context.Context, req *types.UpdateStepRequest) error {
+	for _, hook := range hooks {
+		if err := hook(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func runDeleteStepHooks(hooks []interfaces.DeleteStepHook, ctx context.Context, stepID string) error {
+	for _, hook := range hooks {
+		if err := hook(ctx, stepID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest) (*models.Step, error) {
 	guide, err := s.getGuideForStep(ctx, req.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, req); err != nil {
-			return nil, err
-		}
+	if err := runCreateStepHooks(s.hooks.BeforeCreateHooks(), ctx, req); err != nil {
+		return nil, err
 	}
 
 	step, err := s.stepsRepo.Create(ctx, &types.CreateStepDTO{
@@ -82,10 +116,8 @@ func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest)
 		return nil, err
 	}
 
-	if s.hooks != nil && s.hooks.AfterCreate != nil {
-		if err := s.hooks.AfterCreate(ctx, step); err != nil {
-			return nil, err
-		}
+	if err := runStepHooks(s.hooks.AfterCreateHooks(), ctx, step); err != nil {
+		return nil, err
 	}
 
 	return step, nil
@@ -142,10 +174,8 @@ func (s *StepsService) Update(ctx context.Context, stepID string, req *types.Upd
 		return nil, constants.ErrStepNotFound
 	}
 
-	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, req); err != nil {
-			return nil, err
-		}
+	if err := runUpdateStepHooks(s.hooks.BeforeUpdateHooks(), ctx, req); err != nil {
+		return nil, err
 	}
 
 	updated, err := s.stepsRepo.Update(ctx, &types.UpdateStepDTO{
@@ -167,10 +197,8 @@ func (s *StepsService) Update(ctx context.Context, stepID string, req *types.Upd
 
 	s.enrichMediaAssets(ctx, updated)
 
-	if s.hooks != nil && s.hooks.AfterUpdate != nil {
-		if err := s.hooks.AfterUpdate(ctx, updated); err != nil {
-			return nil, err
-		}
+	if err := runStepHooks(s.hooks.AfterUpdateHooks(), ctx, updated); err != nil {
+		return nil, err
 	}
 
 	return updated, nil
@@ -189,10 +217,8 @@ func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 		return constants.ErrStepNotFound
 	}
 
-	if s.hooks != nil && s.hooks.BeforeDelete != nil {
-		if err := s.hooks.BeforeDelete(ctx, step); err != nil {
-			return err
-		}
+	if err := runStepHooks(s.hooks.BeforeDeleteHooks(), ctx, step); err != nil {
+		return err
 	}
 
 	mediaAssets, err := s.mediaAssetsRepo.GetByStepID(ctx, stepID)
@@ -204,10 +230,8 @@ func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 		return err
 	}
 
-	if s.hooks != nil && s.hooks.AfterDelete != nil {
-		if err := s.hooks.AfterDelete(ctx, stepID); err != nil {
-			return err
-		}
+	if err := runDeleteStepHooks(s.hooks.AfterDeleteHooks(), ctx, stepID); err != nil {
+		return err
 	}
 
 	if len(mediaAssets) <= 0 {

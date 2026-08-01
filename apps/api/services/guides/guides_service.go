@@ -43,11 +43,36 @@ func NewGuidesService(
 	}
 }
 
-func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, teamID string, req *types.CreateGuideRequest) (*models.Guide, error) {
-	if s.hooks != nil && s.hooks.BeforeCreate != nil {
-		if err := s.hooks.BeforeCreate(ctx, actor, teamID, req); err != nil {
-			return nil, err
+func runGuideHooks(hooks []interfaces.GuideHook, ctx context.Context, actor *authulamodels.Actor, guide *models.Guide) error {
+	for _, hook := range hooks {
+		if err := hook(ctx, actor, guide); err != nil {
+			return err
 		}
+	}
+	return nil
+}
+
+func runCreateGuideHooks(hooks []interfaces.CreateGuideHook, ctx context.Context, actor *authulamodels.Actor, teamID string, req *types.CreateGuideRequest) error {
+	for _, hook := range hooks {
+		if err := hook(ctx, actor, teamID, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func runDeleteGuideHooks(hooks []interfaces.DeleteGuideHook, ctx context.Context, actor *authulamodels.Actor, guideID string) error {
+	for _, hook := range hooks {
+		if err := hook(ctx, actor, guideID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, teamID string, req *types.CreateGuideRequest) (*models.Guide, error) {
+	if err := runCreateGuideHooks(s.hooks.BeforeCreateHooks(), ctx, actor, teamID, req); err != nil {
+		return nil, err
 	}
 
 	parsedTeamID, err := uuid.Parse(teamID)
@@ -65,10 +90,8 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, err
 	}
 
-	if s.hooks != nil && s.hooks.AfterCreate != nil {
-		if err := s.hooks.AfterCreate(ctx, actor, guideCreated); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.AfterCreateHooks(), ctx, actor, guideCreated); err != nil {
+		return nil, err
 	}
 
 	return guideCreated, nil
@@ -243,10 +266,8 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.hooks != nil && s.hooks.BeforeUpdate != nil {
-		if err := s.hooks.BeforeUpdate(ctx, actor, existing); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.BeforeUpdateHooks(), ctx, actor, existing); err != nil {
+		return nil, err
 	}
 
 	updated, err := s.guidesRepo.Update(ctx, &types.UpdateGuideDTO{
@@ -260,10 +281,8 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, err
 	}
 
-	if s.hooks != nil && s.hooks.AfterUpdate != nil {
-		if err := s.hooks.AfterUpdate(ctx, actor, updated); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.AfterUpdateHooks(), ctx, actor, updated); err != nil {
+		return nil, err
 	}
 
 	return updated, nil
@@ -282,10 +301,8 @@ func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.hooks != nil && s.hooks.BeforeDelete != nil {
-		if err := s.hooks.BeforeDelete(ctx, actor, guideID); err != nil {
-			return nil, err
-		}
+	if err := runDeleteGuideHooks(s.hooks.BeforeDeleteHooks(), ctx, actor, guideID); err != nil {
+		return nil, err
 	}
 
 	deleted, err := s.guidesRepo.Delete(ctx, guideID)
@@ -297,10 +314,8 @@ func (s *GuidesService) Delete(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.hooks != nil && s.hooks.AfterDelete != nil {
-		if err := s.hooks.AfterDelete(ctx, actor, guideID); err != nil {
-			return nil, err
-		}
+	if err := runDeleteGuideHooks(s.hooks.AfterDeleteHooks(), ctx, actor, guideID); err != nil {
+		return nil, err
 	}
 
 	return deleted, nil
@@ -337,10 +352,8 @@ func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor,
 		return nil, fmt.Errorf("only guides in draft status can be published")
 	}
 
-	if s.hooks != nil && s.hooks.BeforePublish != nil {
-		if err := s.hooks.BeforePublish(ctx, actor, guide); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.BeforePublishHooks(), ctx, actor, guide); err != nil {
+		return nil, err
 	}
 
 	if err := s.recalculateDuration(ctx, guideID); err != nil {
@@ -356,10 +369,8 @@ func (s *GuidesService) Publish(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.hooks != nil && s.hooks.AfterPublish != nil {
-		if err := s.hooks.AfterPublish(ctx, actor, published); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.AfterPublishHooks(), ctx, actor, published); err != nil {
+		return nil, err
 	}
 
 	return published, nil
@@ -382,10 +393,8 @@ func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Acto
 		return nil, fmt.Errorf("only guides in published status can be unpublished")
 	}
 
-	if s.hooks != nil && s.hooks.BeforeUnpublish != nil {
-		if err := s.hooks.BeforeUnpublish(ctx, actor, guide); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.BeforeUnpublishHooks(), ctx, actor, guide); err != nil {
+		return nil, err
 	}
 
 	unpublished, err := s.guidesRepo.Unpublish(ctx, guideID)
@@ -397,10 +406,8 @@ func (s *GuidesService) Unpublish(ctx context.Context, actor *authulamodels.Acto
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.hooks != nil && s.hooks.AfterUnpublish != nil {
-		if err := s.hooks.AfterUnpublish(ctx, actor, unpublished); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.AfterUnpublishHooks(), ctx, actor, unpublished); err != nil {
+		return nil, err
 	}
 
 	return unpublished, nil
@@ -423,10 +430,8 @@ func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor,
 		return nil, fmt.Errorf("only guides in draft or published status can be archived")
 	}
 
-	if s.hooks != nil && s.hooks.BeforeArchive != nil {
-		if err := s.hooks.BeforeArchive(ctx, actor, guide); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.BeforeArchiveHooks(), ctx, actor, guide); err != nil {
+		return nil, err
 	}
 
 	archived, err := s.guidesRepo.Archive(ctx, guideID)
@@ -438,10 +443,8 @@ func (s *GuidesService) Archive(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.hooks != nil && s.hooks.AfterArchive != nil {
-		if err := s.hooks.AfterArchive(ctx, actor, archived); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.AfterArchiveHooks(), ctx, actor, archived); err != nil {
+		return nil, err
 	}
 
 	return archived, nil
@@ -464,10 +467,8 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 		return nil, fmt.Errorf("only guides in archived status can be unarchived")
 	}
 
-	if s.hooks != nil && s.hooks.BeforeUnarchive != nil {
-		if err := s.hooks.BeforeUnarchive(ctx, actor, guide); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.BeforeUnarchiveHooks(), ctx, actor, guide); err != nil {
+		return nil, err
 	}
 
 	unarchived, err := s.guidesRepo.Unarchive(ctx, guideID)
@@ -479,10 +480,8 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 		return nil, constants.ErrGuideNotFound
 	}
 
-	if s.hooks != nil && s.hooks.AfterUnarchive != nil {
-		if err := s.hooks.AfterUnarchive(ctx, actor, unarchived); err != nil {
-			return nil, err
-		}
+	if err := runGuideHooks(s.hooks.AfterUnarchiveHooks(), ctx, actor, unarchived); err != nil {
+		return nil, err
 	}
 
 	return unarchived, nil
