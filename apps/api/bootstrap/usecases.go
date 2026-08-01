@@ -16,11 +16,14 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 		return nil, nil, errors.New("bootstrap: WithAuthula is required")
 	}
 
-	orgPlugin, ok := o.authulaInstance.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizationsplugin.OrganizationsPlugin)
-	if !ok {
-		return nil, nil, errors.New("bootstrap: organizations plugin not found")
+	authorizationService := o.authorizationService
+	if authorizationService == nil {
+		orgPlugin, ok := o.authulaInstance.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizationsplugin.OrganizationsPlugin)
+		if !ok {
+			return nil, nil, errors.New("bootstrap: organizations plugin not found")
+		}
+		authorizationService = authservice.NewDefaultAuthorizationService(*orgPlugin.Api)
 	}
-	authorizationService := authservice.NewDefaultAuthorizationService(*orgPlugin.Api)
 
 	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.StarredGuidesService, svcs.Domain.ExportService)
 	guideViewsUseCase := usecases.NewGuideViewsUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.GuideViewsService)

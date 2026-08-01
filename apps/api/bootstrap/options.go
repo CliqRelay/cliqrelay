@@ -34,6 +34,8 @@ type options struct {
 	stepHooks  *interfaces.StepHooks
 	mediaHooks *interfaces.MediaAssetHooks
 
+	authorizationService interfaces.AuthorizationService
+
 	extraRoutes []authulamodels.Route
 
 	consumerGroup string
@@ -126,6 +128,10 @@ func WithStepsHooks(hooks *interfaces.StepHooks) Option {
 
 func WithMediaAssetHooks(hooks *interfaces.MediaAssetHooks) Option {
 	return func(o *options) { o.mediaHooks = hooks }
+}
+
+func WithAuthorizationService(svc interfaces.AuthorizationService) Option {
+	return func(o *options) { o.authorizationService = svc }
 }
 
 func WithExtraRoutes(routes ...authulamodels.Route) Option {
