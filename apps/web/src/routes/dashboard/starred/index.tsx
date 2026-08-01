@@ -28,6 +28,7 @@ export const Route = createFileRoute("/dashboard/starred")({
 function StarredGuidesSkeleton() {
 	return (
 		<div className="dashboard-page__wrapper space-y-4">
+			<FavoritesPageHeader />
 			<div className="h-8 w-48 animate-pulse rounded bg-muted" />
 			<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 				{Array.from({ length: 6 }).map((_, i) => (

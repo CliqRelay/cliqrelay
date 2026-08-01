@@ -26,20 +26,12 @@ export const Route = createFileRoute("/dashboard/guides")({
 function GuidesSkeleton() {
 	return (
 		<div className="dashboard-page__wrapper">
-			<div className="relative mb-6 flex items-start justify-between">
-				<div>
-					<div className="flex items-center gap-3">
-						<div className="size-6 animate-pulse rounded bg-muted" />
-						<div className="h-8 w-24 animate-pulse rounded bg-muted" />
-					</div>
-					<div className="mt-1.5 h-4 w-64 animate-pulse rounded bg-muted/50" />
-				</div>
-			</div>
+			<GuidePageHeader />
 
 			<div className="flex gap-6">
 				<div className="flex-1 flex flex-col justify-between">
 					<div className="space-y-4">
-						<div className="flex gap-1 p-1 border border-muted-background rounded-lg w-[360px]">
+						<div className="flex gap-1 p-1 border border-muted-background rounded-lg w-90">
 							{Array.from({ length: 4 }).map((_, i) => (
 								<div
 									key={i}

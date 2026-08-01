@@ -29,7 +29,14 @@ export const Route = createFileRoute("/dashboard/trash")({
 function TrashSkeleton() {
 	return (
 		<div className="dashboard-page__wrapper space-y-4">
-			<div className="h-8 w-48 animate-pulse rounded bg-muted" />
+			<TrashPageHeader
+				selectedCount={0}
+				totalCount={0}
+				selectable={false}
+				onSelectAll={() => {}}
+				onRestore={() => {}}
+				onDeletePermanently={() => {}}
+			/>
 			<div className="flex gap-6">
 				<div className="flex-1 min-w-0">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
