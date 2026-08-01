@@ -37,7 +37,7 @@ func main() {
 	var authulaAuth *authula.Auth
 	authulaAuth = auth.InitAuth(
 		envConfig,
-		auth.InitAuthServiceHooks(func() *authula.Auth { return authulaAuth }),
+		auth.InitAuthServiceHooks(),
 	)
 
 	app, err := bootstrap.New(
