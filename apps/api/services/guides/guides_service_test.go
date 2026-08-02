@@ -803,3 +803,90 @@ func TestGuidesService_GetAll(t *testing.T) {
 		})
 	}
 }
+
+func TestGuidesService_GetOrgCount(t *testing.T) {
+	orgID := uuid.New().String()
+	parsedOrgID := uuid.MustParse(orgID)
+
+	cases := []struct {
+		name       string
+		orgID      string
+		viewer     *string
+		setup      func(*tests.MockGuidesRepository)
+		wantCount  int
+		wantErr    bool
+		wantErrMsg string
+	}{
+		{
+			name:   "returns count for organization",
+			orgID:  orgID,
+			viewer: nil,
+			setup: func(mockRepo *tests.MockGuidesRepository) {
+				mockRepo.On("GetCount", mock.Anything, mock.MatchedBy(func(filter *types.GuideFilter) bool {
+					return filter.OrganizationID != nil && *filter.OrganizationID == parsedOrgID &&
+						filter.ViewerUserID == nil && !filter.AccessibleOnly
+				})).
+					Return(5, nil).
+					Once()
+			},
+			wantCount: 5,
+		},
+		{
+			name:   "sets accessibility filter when viewer provided",
+			orgID:  orgID,
+			viewer: new("user-1"),
+			setup: func(mockRepo *tests.MockGuidesRepository) {
+				mockRepo.On("GetCount", mock.Anything, mock.MatchedBy(func(filter *types.GuideFilter) bool {
+					return filter.OrganizationID != nil && *filter.OrganizationID == parsedOrgID &&
+						filter.ViewerUserID != nil && *filter.ViewerUserID == "user-1" && filter.AccessibleOnly
+				})).
+					Return(3, nil).
+					Once()
+			},
+			wantCount: 3,
+		},
+		{
+			name:   "returns error for invalid organization ID",
+			orgID:  "not-a-uuid",
+			viewer: nil,
+			setup: func(mockRepo *tests.MockGuidesRepository) {
+			},
+			wantErr:    true,
+			wantErrMsg: constants.ErrOrganizationNotFound.Error(),
+		},
+		{
+			name:   "propagates repository error",
+			orgID:  orgID,
+			viewer: nil,
+			setup: func(mockRepo *tests.MockGuidesRepository) {
+				mockRepo.On("GetCount", mock.Anything, mock.Anything).
+					Return(0, assert.AnError).
+					Once()
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+
+			mockRepo := new(tests.MockGuidesRepository)
+			tt.setup(mockRepo)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, testRedisClient(), (*interfaces.GuideHooks)(nil))
+
+			count, err := svc.GetOrgCount(context.Background(), tt.orgID, tt.viewer)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.wantErrMsg != "" {
+					assert.EqualError(t, err, tt.wantErrMsg)
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantCount, count)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

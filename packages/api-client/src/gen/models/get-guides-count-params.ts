@@ -8,4 +8,5 @@
 
 export type GetGuidesCountParams = {
 	team_id?: string;
+	organization_id?: string;
 };

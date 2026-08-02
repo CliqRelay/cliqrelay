@@ -220,3 +220,35 @@ func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor
 		AccessibleOnly: true,
 	}, nil
 }
+
+func (s *DefaultAuthorizationService) GuideListFilterByOrganization(ctx context.Context, actor *authulamodels.Actor, orgID string) (*types.GuideFilter, error) {
+	systemActor := &authulamodels.Actor{
+		ID:     actor.ID,
+		Type:   authulamodels.ActorMachine,
+		Scopes: []string{"*"},
+		Claims: map[string]any{
+			"organization_id": orgID,
+		},
+	}
+
+	org, err := s.organizationsApi.GetOrganizationByID(ctx, systemActor, orgID)
+	if err != nil || org == nil {
+		return nil, constants.ErrOrganizationNotFound
+	}
+
+	if org.OwnerID != actor.ID {
+		member, err := s.organizationsApi.GetMemberByUserID(ctx, systemActor, orgID, actor.ID)
+		if err != nil || member == nil {
+			return nil, constants.ErrOrganizationAccessDenied
+		}
+	}
+
+	if !hasScope(actor.Scopes, constants.GuidesReadPermission) {
+		return nil, constants.ErrGuideAccessDenied
+	}
+
+	return &types.GuideFilter{
+		ViewerUserID:   &actor.ID,
+		AccessibleOnly: true,
+	}, nil
+}

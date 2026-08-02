@@ -2,6 +2,7 @@ package repositories_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -39,6 +40,41 @@ func seedGuide(t *testing.T, db bun.IDB, userID, title string) *models.Guide {
 	}
 
 	_, err = db.NewInsert().Model(guide).Exec(context.Background())
+	require.NoError(t, err)
+
+	return guide
+}
+
+func createOrgWithTeams(t *testing.T, db bun.IDB, numTeams int) (string, []uuid.UUID) {
+	t.Helper()
+
+	orgID := uuid.New().String()
+	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
+	require.NoError(t, err)
+
+	teams := make([]uuid.UUID, 0, numTeams)
+	for i := 0; i < numTeams; i++ {
+		teamID := uuid.New()
+		_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, fmt.Sprintf("Team %d", i+1), fmt.Sprintf("team-%d", i+1)).Exec(context.Background())
+		require.NoError(t, err)
+		teams = append(teams, teamID)
+	}
+
+	return orgID, teams
+}
+
+func seedGuideForTeam(t *testing.T, db bun.IDB, userID, title string, teamID uuid.UUID) *models.Guide {
+	t.Helper()
+
+	guide := &models.Guide{
+		ID:        uuid.New(),
+		TeamID:    teamID,
+		CreatorID: new(userID),
+		Title:     title,
+		Status:    models.StatusDraft,
+	}
+
+	_, err := db.NewInsert().Model(guide).Exec(context.Background())
 	require.NoError(t, err)
 
 	return guide
@@ -971,6 +1007,112 @@ func TestBunGuidesRepository_UnarchiveGuide(t *testing.T) {
 				assert.Equal(t, models.StatusDraft, guide.Status)
 				assert.Nil(t, guide.ArchivedAt)
 				assert.NotNil(t, guide.RestoredAt)
+			}
+		})
+	}
+}
+
+func TestBunGuidesRepository_GetCountByOrganization(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		setup   func(bun.IDB) (orgID string, viewer *string, wantCount int)
+		wantErr bool
+	}{
+		{
+			name: "counts guides across all teams in organization",
+			setup: func(db bun.IDB) (string, *string, int) {
+				orgID, teams := createOrgWithTeams(t, db, 2)
+				userID := uuid.New().String()
+				_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
+				require.NoError(t, err)
+				seedGuideForTeam(t, db, userID, "Guide 1", teams[0])
+				seedGuideForTeam(t, db, userID, "Guide 2", teams[1])
+				return orgID, nil, 2
+			},
+		},
+		{
+			name: "excludes guides from other organizations",
+			setup: func(db bun.IDB) (string, *string, int) {
+				orgA, teamsA := createOrgWithTeams(t, db, 1)
+				_, teamsB := createOrgWithTeams(t, db, 1)
+				userID := uuid.New().String()
+				_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
+				require.NoError(t, err)
+				seedGuideForTeam(t, db, userID, "Org A Guide", teamsA[0])
+				seedGuideForTeam(t, db, userID, "Org B Guide", teamsB[0])
+				return orgA, nil, 1
+			},
+		},
+		{
+			name: "excludes deleted guides",
+			setup: func(db bun.IDB) (string, *string, int) {
+				orgID, teams := createOrgWithTeams(t, db, 1)
+				userID := uuid.New().String()
+				_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
+				require.NoError(t, err)
+				guide := seedGuideForTeam(t, db, userID, "To Delete", teams[0])
+				softDeleteGuide(t, db, guide.ID)
+				seedGuideForTeam(t, db, userID, "Active", teams[0])
+				return orgID, nil, 1
+			},
+		},
+		{
+			name: "respects accessibility filter for viewer",
+			setup: func(db bun.IDB) (string, *string, int) {
+				orgID, teams := createOrgWithTeams(t, db, 1)
+				viewer := uuid.New().String()
+				other := uuid.New().String()
+				_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", viewer).Exec(context.Background())
+				require.NoError(t, err)
+				_, err = db.NewRaw("INSERT INTO users (id) VALUES (?)", other).Exec(context.Background())
+				require.NoError(t, err)
+				seedGuideForTeam(t, db, viewer, "Viewer's guide", teams[0])
+
+				private := seedGuideForTeam(t, db, other, "Private guide", teams[0])
+				private.Visibility = models.VisibilityPrivate
+				_, err = db.NewUpdate().Model(private).WherePK().Exec(context.Background())
+				require.NoError(t, err)
+
+				public := seedGuideForTeam(t, db, other, "Public guide", teams[0])
+				public.Visibility = models.VisibilityPublic
+				_, err = db.NewUpdate().Model(public).WherePK().Exec(context.Background())
+				require.NoError(t, err)
+
+				return orgID, new(viewer), 2
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tx, err := guidesDB.Begin()
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = tx.Rollback() })
+
+			repo := guides.NewBunGuidesRepository(tx)
+			orgID, viewer, wantCount := tt.setup(tx)
+			ctx := context.Background()
+
+			parsedOrgID, err := uuid.Parse(orgID)
+			require.NoError(t, err)
+
+			filter := &types.GuideFilter{OrganizationID: &parsedOrgID}
+			if viewer != nil {
+				filter.ViewerUserID = viewer
+				filter.AccessibleOnly = true
+			}
+
+			count, err := repo.GetCount(ctx, filter)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, wantCount, count)
 			}
 		})
 	}

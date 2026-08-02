@@ -208,11 +208,18 @@
           "Guides"
         ],
         "summary": "Get guides count",
-        "description": "Returns the total count of non-deleted guides for the authenticated user",
+        "description": "Returns the total count of non-deleted guides for the authenticated user, scoped to a team or an organization",
         "operationId": "getGuidesCount",
         "parameters": [
           {
             "name": "team_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organization_id",
             "in": "query",
             "schema": {
               "type": "string"

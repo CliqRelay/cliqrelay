@@ -51,3 +51,11 @@ func (m *MockAuthorizationService) GuideListFilter(ctx context.Context, actor *a
 	}
 	return args.Get(0).(*types.GuideFilter), args.Error(1)
 }
+
+func (m *MockAuthorizationService) GuideListFilterByOrganization(ctx context.Context, actor *authulamodels.Actor, orgID string) (*types.GuideFilter, error) {
+	args := m.Called(ctx, actor, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*types.GuideFilter), args.Error(1)
+}

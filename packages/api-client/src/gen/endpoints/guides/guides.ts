@@ -613,7 +613,7 @@ export const getGetGuidesCountUrl = (params?: GetGuidesCountParams) => {
 };
 
 /**
- * Returns the total count of non-deleted guides for the authenticated user
+ * Returns the total count of non-deleted guides for the authenticated user, scoped to a team or an organization
  * @summary Get guides count
  */
 export const getGuidesCount = async (

@@ -30,11 +30,12 @@ type GuideStatus struct {
 	Status models.GuideStatus `query:"status" validate:"omitempty" nullable:"true"`
 }
 
-type TeamIDQueryParam struct {
-	ID string `query:"team_id" validate:"required,uuid"`
+type GetGuidesCountQueryParams struct {
+	TeamID         string `query:"team_id" validate:"omitempty,uuid"`
+	OrganizationID string `query:"organization_id" validate:"omitempty,uuid"`
 }
 
-func (r *TeamIDQueryParam) Validate() error {
+func (r *GetGuidesCountQueryParams) Validate() error {
 	return validator.Validate.Struct(r)
 }
 
@@ -83,6 +84,7 @@ type GuideWithStarred struct {
 type GuideFilter struct {
 	IDs             []uuid.UUID
 	TeamID          *uuid.UUID
+	OrganizationID  *uuid.UUID
 	CreatorID       *string
 	ViewerUserID    *string
 	Status          *models.GuideStatus

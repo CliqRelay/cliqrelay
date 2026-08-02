@@ -131,6 +131,20 @@ func (uc *GuidesUseCase) GetCount(ctx context.Context, actor *authulamodels.Acto
 	return count, nil
 }
 
+func (uc *GuidesUseCase) GetOrganizationCount(ctx context.Context, actor *authulamodels.Actor, orgID string) (int, error) {
+	_, err := uc.authzService.GuideListFilterByOrganization(ctx, actor, orgID)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := uc.guidesService.GetOrgCount(ctx, orgID, &actor.ID)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (uc *GuidesUseCase) Publish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
 	guide, err := uc.guidesService.GetByID(ctx, guideID)
 	if err != nil {

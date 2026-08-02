@@ -533,6 +533,27 @@ func (s *GuidesService) GetCount(ctx context.Context, teamID string, viewerUserI
 	return count, nil
 }
 
+func (s *GuidesService) GetOrgCount(ctx context.Context, orgID string, viewerUserID *string) (int, error) {
+	filter := &types.GuideFilter{}
+
+	parsedOrgID, err := uuid.Parse(orgID)
+	if err != nil {
+		return 0, constants.ErrOrganizationNotFound
+	}
+	filter.OrganizationID = &parsedOrgID
+	filter.ViewerUserID = viewerUserID
+	if viewerUserID != nil {
+		filter.AccessibleOnly = true
+	}
+
+	count, err := s.guidesRepo.GetCount(ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *GuidesService) PermanentlyDelete(ctx context.Context, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID

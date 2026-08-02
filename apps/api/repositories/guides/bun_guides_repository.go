@@ -445,6 +445,9 @@ func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideF
 		if filter.TeamID != nil {
 			query = query.Where("team_id = ?", *filter.TeamID)
 		}
+		if filter.OrganizationID != nil {
+			query = query.Where("team_id IN (SELECT id FROM organization_teams WHERE organization_id = ?)", *filter.OrganizationID)
+		}
 		if filter.AccessibleOnly && filter.ViewerUserID != nil {
 			query = query.Where("(creator_id = ? OR visibility IN (?))", *filter.ViewerUserID, bun.List([]string{string(models.VisibilityTeam), string(models.VisibilityPublic)}))
 		}

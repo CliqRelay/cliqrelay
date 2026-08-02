@@ -18,6 +18,7 @@ type GuidesUseCase interface {
 	Update(ctx context.Context, actor *authulamodels.Actor, guideID string, req *types.UpdateGuideRequest) (*models.Guide, error)
 	Delete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	GetCount(ctx context.Context, actor *authulamodels.Actor, teamID string) (int, error)
+	GetOrganizationCount(ctx context.Context, actor *authulamodels.Actor, orgID string) (int, error)
 	Publish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	Unpublish(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	Archive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)

@@ -23,6 +23,9 @@ var (
 	ErrTeamNotFound     = errors.New("team not found")
 	ErrTeamAccessDenied = errors.New("team access denied")
 
+	ErrOrganizationNotFound     = errors.New("organization not found")
+	ErrOrganizationAccessDenied = errors.New("organization access denied")
+
 	ErrGuideAccessDenied       = errors.New("you do not have permission to access this guide")
 	ErrGuideCreateDenied       = errors.New("you do not have permission to create guides")
 	ErrGuideEditDenied         = errors.New("you do not have permission to edit this guide")

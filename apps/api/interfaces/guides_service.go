@@ -23,6 +23,7 @@ type GuidesService interface {
 	Unarchive(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error)
 	Restore(ctx context.Context, guideID string) (*models.Guide, error)
 	GetCount(ctx context.Context, teamID string, viewerUserID *string) (int, error)
+	GetOrgCount(ctx context.Context, orgID string, viewerUserID *string) (int, error)
 	PermanentlyDelete(ctx context.Context, guideID string) (*models.Guide, error)
 	RecalculateDuration(ctx context.Context, guideID string) (*models.Guide, error)
 	BulkDelete(ctx context.Context, guideIDs []string, teamID string, actorID string, isAdmin bool) (int64, error)

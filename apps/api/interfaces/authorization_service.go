@@ -17,4 +17,5 @@ type AuthorizationService interface {
 	CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error
 	CanBulkGuideAction(ctx context.Context, actor *authulamodels.Actor, action string) error
 	GuideListFilter(ctx context.Context, actor *authulamodels.Actor, teamID string) (*types.GuideFilter, error)
+	GuideListFilterByOrganization(ctx context.Context, actor *authulamodels.Actor, orgID string) (*types.GuideFilter, error)
 }

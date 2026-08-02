@@ -25,8 +25,26 @@ func (h *GetGuidesCountHandler) Handle() http.HandlerFunc {
 		actor := reqCtx.Actor
 
 		teamID := r.URL.Query().Get("team_id")
+		orgID := r.URL.Query().Get("organization_id")
 
-		count, err := h.guidesUseCase.GetCount(ctx, actor, teamID)
+		if teamID == "" && orgID == "" {
+			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{"message": "either team_id or organization_id is required"})
+			reqCtx.Handled = true
+			return
+		}
+		if teamID != "" && orgID != "" {
+			reqCtx.SetJSONResponse(http.StatusBadRequest, map[string]any{"message": "provide only one of team_id or organization_id"})
+			reqCtx.Handled = true
+			return
+		}
+
+		var count int
+		var err error
+		if orgID != "" {
+			count, err = h.guidesUseCase.GetOrganizationCount(ctx, actor, orgID)
+		} else {
+			count, err = h.guidesUseCase.GetCount(ctx, actor, teamID)
+		}
 		if err != nil {
 			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

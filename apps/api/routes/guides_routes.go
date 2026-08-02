@@ -226,9 +226,9 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		fmt.Sprintf("%s/guides/count", basePath),
 		openapi.WithOperationID("getGuidesCount"),
 		openapi.WithSummary("Get guides count"),
-		openapi.WithDescription("Returns the total count of non-deleted guides for the authenticated user"),
+		openapi.WithDescription("Returns the total count of non-deleted guides for the authenticated user, scoped to a team or an organization"),
 		openapi.WithTags("Guides"),
-		openapi.WithRequest(types.TeamIDQueryParam{}),
+		openapi.WithRequest(&types.GetGuidesCountQueryParams{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetGuidesCountResponse{}),
 	)
 

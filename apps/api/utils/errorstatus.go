@@ -13,7 +13,7 @@ func ErrorStatus(err error) int {
 		return http.StatusUnauthorized
 	case errors.Is(err, constants.ErrInvalidGuideID):
 		return http.StatusBadRequest
-	case errors.Is(err, constants.ErrGuideNotFound), errors.Is(err, constants.ErrTeamNotFound):
+	case errors.Is(err, constants.ErrGuideNotFound), errors.Is(err, constants.ErrTeamNotFound), errors.Is(err, constants.ErrOrganizationNotFound):
 		return http.StatusNotFound
 	case errors.Is(err, constants.ErrTeamAccessDenied),
 		errors.Is(err, constants.ErrGuideAccessDenied),
@@ -22,7 +22,8 @@ func ErrorStatus(err error) int {
 		errors.Is(err, constants.ErrGuideReadDenied),
 		errors.Is(err, constants.ErrGuideDeleteDenied),
 		errors.Is(err, constants.ErrGuideNotOwnedByUser),
-		errors.Is(err, constants.ErrCannotSetGuideToPrivate):
+		errors.Is(err, constants.ErrCannotSetGuideToPrivate),
+		errors.Is(err, constants.ErrOrganizationAccessDenied):
 		return http.StatusForbidden
 	default:
 		return http.StatusInternalServerError
