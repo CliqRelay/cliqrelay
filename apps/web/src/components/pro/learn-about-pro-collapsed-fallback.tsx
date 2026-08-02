@@ -7,7 +7,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function LearAboutProCollapsedFallback() {
+export function LearnAboutProCollapsedFallback() {
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>

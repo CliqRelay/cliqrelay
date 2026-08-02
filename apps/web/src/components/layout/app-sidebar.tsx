@@ -24,7 +24,7 @@ import { Logo } from "./logo";
 import { AnalyticsFallback } from "../pro/analytics-fallback";
 import { ApiKeysFallback } from "../pro/api-keys-fallback";
 import { WebhooksFallback } from "../pro/webhooks-fallback";
-import { LearAboutProCollapsedFallback } from "../pro/learn-about-pro-collapsed-fallback";
+import { LearnAboutProCollapsedFallback } from "../pro/learn-about-pro-collapsed-fallback";
 import { LearnAboutProFallback } from "../pro/learn-about-pro-fallback";
 import { ProFeatureDialog } from "../pro/pro-feature-dialog";
 import { SidebarTooltip } from "./sidebar-tooltip";
@@ -338,7 +338,7 @@ export function SidebarContent({
 						<>
 							<ExtensionSlot
 								name="dashboard-sidebar-learn-about-pro-upgrade-collapsed"
-								fallback={LearAboutProCollapsedFallback}
+								fallback={LearnAboutProCollapsedFallback}
 							/>
 							<ExtensionSlot name="dashboard-sidebar-stats-collapsed" />
 						</>
