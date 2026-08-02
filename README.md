@@ -26,8 +26,8 @@
 
 - **Instant Capture**: Capture workflows in real-time with a Chrome extension that listens for user interactions and captures them.
 - **Contextual Screenshots**: Automatically capture screenshots during interactions to provide visual context.
+- **Seamless Sharing**: Share guides with your team to ensure everyone has access to the best practices and workflows.
 - **AI-Powered Refinement**: Use AI to automatically refine captured workflows into clear, step-by-step guides that are easy to follow and share. (coming soon)
-- **Seamless Sharing**: Share guides with your team to ensure everyone has access to the best practices and workflows. (coming soon)
 
 ---
 
