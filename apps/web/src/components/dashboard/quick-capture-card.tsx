@@ -41,7 +41,7 @@ export function QuickCaptureCard() {
 			</p>
 			<Button
 				type="button"
-				className="group mt-auto w-full h-10 rounded-md text-[13px] font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-[1.08] bg-linear-to-br from-[#234DF0] to-[#03A0EC] border border-[rgba(3,160,236,0.18)] shadow-(--shadow-primary)"
+				className="group mt-auto w-full h-10 rounded-md text-[13px] font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-[1.08] bg-linear-to-br from-[#234DF0] to-[#03A0EC] border border-[rgba(3,160,236,0.18)] shadow-(--shadow-primary) cursor-pointer"
 				onClick={async () => {
 					if (!runtime.isAvailable()) {
 						toast.error("Extension Not Found", {

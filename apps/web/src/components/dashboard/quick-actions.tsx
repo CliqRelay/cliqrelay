@@ -27,6 +27,7 @@ import useExtensionRuntime from "@/hooks/use-extension-runtime";
 import { toast } from "@/lib/toast";
 import { createGuide } from "@/server-fns/guides";
 import { useOrgStore, useTeamStore } from "@/stores";
+import { cn } from "@/lib/utils";
 
 type QuickActionItem = {
 	label: string;
@@ -174,7 +175,7 @@ export function QuickActions() {
 							<button
 								key={quickActionItem.label}
 								type="button"
-								className="flex-1 group relative text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover bg-linear-to-br from-[#234DF0] to-[#03A0EC] border border-[rgba(3,160,236,0.18)] shadow-(--shadow-primary)"
+								className="flex-1 group relative text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover bg-linear-to-br from-[#234DF0] to-[#03A0EC] border border-[rgba(3,160,236,0.18)] shadow-(--shadow-primary) cursor-pointer"
 								onClick={handleClick}
 							>
 								<div className="relative size-8 rounded-2xl flex items-center justify-center bg-white/10">
@@ -234,7 +235,10 @@ export function QuickActions() {
 						<button
 							key={quickActionItem.label}
 							type="button"
-							className={`flex-1 group text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover ${quickActionItem.comingSoon ? "opacity-50" : ""}`}
+							className={cn(
+								"flex-1 group text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover cursor-pointer",
+								quickActionItem.comingSoon && "opacity-50",
+							)}
 							onClick={handleClick}
 						>
 							<div className="flex items-start justify-between">
