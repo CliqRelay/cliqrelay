@@ -71,20 +71,28 @@ func runDeleteGuideHooks(hooks []interfaces.DeleteGuideHook, ctx context.Context
 }
 
 func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, teamID string, req *types.CreateGuideRequest) (*models.Guide, error) {
-	if err := runCreateGuideHooks(s.hooks.BeforeCreateHooks(), ctx, actor, teamID, req); err != nil {
-		return nil, err
-	}
-
 	parsedTeamID, err := uuid.Parse(teamID)
 	if err != nil {
 		return nil, constants.ErrTeamNotFound
 	}
 
-	guideCreated, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
-		TeamID:      parsedTeamID,
-		CreatorID:   new(actor.ID),
-		Title:       req.Title,
-		Description: req.Description,
+	var guideCreated *models.Guide
+	err = s.guidesRepo.Tx(ctx, func(ctx context.Context, txRepo interfaces.GuidesRepository) error {
+		if err := txRepo.LockOrganizationForUpdate(ctx, parsedTeamID); err != nil {
+			return err
+		}
+
+		if err := runCreateGuideHooks(s.hooks.BeforeCreateHooks(), ctx, actor, teamID, req); err != nil {
+			return err
+		}
+
+		guideCreated, err = txRepo.Create(ctx, &types.CreateGuideDTO{
+			TeamID:      parsedTeamID,
+			CreatorID:   new(actor.ID),
+			Title:       req.Title,
+			Description: req.Description,
+		})
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -103,11 +111,29 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 		return "", constants.ErrTeamNotFound
 	}
 
-	guide, err := s.guidesRepo.Create(ctx, &types.CreateGuideDTO{
+	demoRequest := &types.CreateGuideRequest{
 		TeamID:      parsedTeamID,
-		CreatorID:   new(actor.ID),
 		Title:       "Getting Started with CliqRelay",
 		Description: new("A sample guide to show you how CliqRelay works"),
+	}
+
+	var guide *models.Guide
+	err = s.guidesRepo.Tx(ctx, func(ctx context.Context, txRepo interfaces.GuidesRepository) error {
+		if err := txRepo.LockOrganizationForUpdate(ctx, parsedTeamID); err != nil {
+			return err
+		}
+
+		if err := runCreateGuideHooks(s.hooks.BeforeCreateHooks(), ctx, actor, teamID, demoRequest); err != nil {
+			return err
+		}
+
+		guide, err = txRepo.Create(ctx, &types.CreateGuideDTO{
+			TeamID:      parsedTeamID,
+			CreatorID:   new(actor.ID),
+			Title:       demoRequest.Title,
+			Description: demoRequest.Description,
+		})
+		return err
 	})
 	if err != nil {
 		return "", err

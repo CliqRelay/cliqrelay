@@ -634,6 +634,9 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 				Description: new("A test description"),
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
 				mockRepo.On("Create", mock.Anything, mock.Anything).
 					Return(&models.Guide{
 						ID:        uuid.New(),
@@ -651,6 +654,9 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 				Title: "Test",
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
 				mockRepo.On("Create", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).
 					Once()

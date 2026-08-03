@@ -10,6 +10,8 @@ import (
 )
 
 type GuidesRepository interface {
+	Tx(ctx context.Context, fn func(ctx context.Context, repo GuidesRepository) error) error
+	LockOrganizationForUpdate(ctx context.Context, teamID uuid.UUID) error
 	Create(ctx context.Context, data *types.CreateGuideDTO) (*models.Guide, error)
 	GetByID(ctx context.Context, id string) (*models.Guide, error)
 	GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error)

@@ -6,12 +6,22 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type MockGuidesRepository struct {
 	mock.Mock
+}
+
+func (m *MockGuidesRepository) Tx(ctx context.Context, fn func(ctx context.Context, repo interfaces.GuidesRepository) error) error {
+	return fn(ctx, m)
+}
+
+func (m *MockGuidesRepository) LockOrganizationForUpdate(ctx context.Context, teamID uuid.UUID) error {
+	args := m.Called(ctx, teamID)
+	return args.Error(0)
 }
 
 func (m *MockGuidesRepository) Create(ctx context.Context, data *types.CreateGuideDTO) (*models.Guide, error) {

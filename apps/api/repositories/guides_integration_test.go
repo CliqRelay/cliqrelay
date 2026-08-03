@@ -3,6 +3,7 @@ package repositories_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/repositories/guides"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -1116,4 +1118,79 @@ func TestBunGuidesRepository_GetCountByOrganization(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBunGuidesRepository_CreateConcurrent_OrgLock(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	orgID := uuid.New().String()
+	_, err := guidesDB.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(ctx)
+	require.NoError(t, err)
+
+	userID := uuid.New().String()
+	_, err = guidesDB.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(ctx)
+	require.NoError(t, err)
+
+	teamID := uuid.New()
+	_, err = guidesDB.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Concurrency Team", "concurrency-team").Exec(ctx)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_, _ = guidesDB.NewRaw("DELETE FROM guides WHERE team_id = ?", teamID).Exec(ctx)
+		_, _ = guidesDB.NewRaw("DELETE FROM organization_teams WHERE id = ?", teamID).Exec(ctx)
+		_, _ = guidesDB.NewRaw("DELETE FROM organizations WHERE id = ?", orgID).Exec(ctx)
+		_, _ = guidesDB.NewRaw("DELETE FROM users WHERE id = ?", userID).Exec(ctx)
+	})
+
+	repo := guides.NewBunGuidesRepository(guidesDB)
+	parsedOrgID, err := uuid.Parse(orgID)
+	require.NoError(t, err)
+
+	const workers = 5
+	var wg sync.WaitGroup
+	created := make(chan bool, workers)
+
+	for range workers {
+		wg.Go(func() {
+			_ = repo.Tx(ctx, func(ctx context.Context, txRepo interfaces.GuidesRepository) error {
+				if err := txRepo.LockOrganizationForUpdate(ctx, teamID); err != nil {
+					return err
+				}
+
+				count, err := txRepo.GetCount(ctx, &types.GuideFilter{OrganizationID: &parsedOrgID})
+				if err != nil {
+					return err
+				}
+				if count >= 1 {
+					return nil
+				}
+
+				if _, err := txRepo.Create(ctx, &types.CreateGuideDTO{
+					TeamID:    teamID,
+					CreatorID: &userID,
+					Title:     "Concurrent Guide",
+				}); err != nil {
+					return err
+				}
+
+				created <- true
+				return nil
+			})
+		})
+	}
+	wg.Wait()
+	close(created)
+
+	createdCount := 0
+	for range created {
+		createdCount++
+	}
+
+	assert.Equal(t, 1, createdCount, "organization row lock must serialize concurrent creates")
+
+	count, err := repo.GetCount(ctx, &types.GuideFilter{OrganizationID: &parsedOrgID})
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
 }

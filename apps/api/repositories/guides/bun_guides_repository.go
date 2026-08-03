@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
 )
@@ -20,6 +22,29 @@ type BunGuidesRepository struct {
 
 func NewBunGuidesRepository(db bun.IDB) *BunGuidesRepository {
 	return &BunGuidesRepository{db: db}
+}
+
+func (r *BunGuidesRepository) Tx(ctx context.Context, fn func(ctx context.Context, repo interfaces.GuidesRepository) error) error {
+	return r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return fn(ctx, &BunGuidesRepository{db: tx})
+	})
+}
+
+func (r *BunGuidesRepository) LockOrganizationForUpdate(ctx context.Context, teamID uuid.UUID) error {
+	var orgID uuid.UUID
+	err := r.db.NewSelect().
+		Column("o.id").
+		TableExpr("organizations o").
+		Where("o.id = (SELECT ot.organization_id FROM organization_teams ot WHERE ot.id = ?)", teamID).
+		For("UPDATE").
+		Scan(ctx, &orgID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return constants.ErrTeamNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuideDTO) (*models.Guide, error) {
