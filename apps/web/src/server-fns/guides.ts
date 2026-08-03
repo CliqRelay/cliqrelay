@@ -31,7 +31,7 @@ export const createGuide = createServerFn({ method: "POST", strict: false })
 			return response.guide;
 		} catch (error) {
 			console.error("Failed to create guide:", error);
-			return null;
+			throw error;
 		}
 	});
 
@@ -106,10 +106,11 @@ export const updateGuide = createServerFn({ method: "POST", strict: false })
 		}
 	});
 
-export const updateGuideVisibility = createServerFn({ method: "POST", strict: false })
-	.validator(
-		(input: { guideId: string; visibility: Visibility }) => input,
-	)
+export const updateGuideVisibility = createServerFn({
+	method: "POST",
+	strict: false,
+})
+	.validator((input: { guideId: string; visibility: Visibility }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
 		const response = await api.guides.updateGuide(
@@ -247,7 +248,10 @@ export const restoreGuide = createServerFn({ method: "POST", strict: false })
 		}
 	});
 
-export const permanentlyDeleteGuide = createServerFn({ method: "POST", strict: false })
+export const permanentlyDeleteGuide = createServerFn({
+	method: "POST",
+	strict: false,
+})
 	.validator((input: { guideId: string }) => input)
 	.middleware([authMiddleware])
 	.handler(async ({ data, context }) => {
@@ -265,7 +269,10 @@ export const permanentlyDeleteGuide = createServerFn({ method: "POST", strict: f
 		}
 	});
 
-export const getStepsByGuideId = createServerFn({ method: "GET", strict: false })
+export const getStepsByGuideId = createServerFn({
+	method: "GET",
+	strict: false,
+})
 	.validator((guideId: string) => guideId)
 	.middleware([authMiddleware])
 	.handler(async ({ data: guideId, context }) => {

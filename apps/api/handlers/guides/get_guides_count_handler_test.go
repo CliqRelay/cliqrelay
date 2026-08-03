@@ -44,8 +44,8 @@ func TestGetGuidesCountHandler(t *testing.T) {
 			expectedCount:  4,
 		},
 		{
-			name:   "organization count success",
-			orgID:  uuid.New().String(),
+			name:  "organization count success",
+			orgID: uuid.New().String(),
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockAuthz *tests.MockAuthorizationService) {
 				mockAuthz.On("GuideListFilterByOrganization", mock.Anything, mock.Anything, mock.Anything).
 					Return(&types.GuideFilter{}, nil).
@@ -74,8 +74,8 @@ func TestGetGuidesCountHandler(t *testing.T) {
 			expectedMsg:    "provide only one of team_id or organization_id",
 		},
 		{
-			name:   "organization not found",
-			orgID:  uuid.New().String(),
+			name:  "organization not found",
+			orgID: uuid.New().String(),
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockAuthz *tests.MockAuthorizationService) {
 				mockAuthz.On("GuideListFilterByOrganization", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, constants.ErrOrganizationNotFound).
@@ -85,8 +85,8 @@ func TestGetGuidesCountHandler(t *testing.T) {
 			expectedMsg:    constants.ErrOrganizationNotFound.Error(),
 		},
 		{
-			name:   "organization access denied",
-			orgID:  uuid.New().String(),
+			name:  "organization access denied",
+			orgID: uuid.New().String(),
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockAuthz *tests.MockAuthorizationService) {
 				mockAuthz.On("GuideListFilterByOrganization", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, constants.ErrOrganizationAccessDenied).
@@ -107,8 +107,8 @@ func TestGetGuidesCountHandler(t *testing.T) {
 			expectedMsg:    constants.ErrTeamAccessDenied.Error(),
 		},
 		{
-			name:   "service error",
-			orgID:  uuid.New().String(),
+			name:  "service error",
+			orgID: uuid.New().String(),
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockAuthz *tests.MockAuthorizationService) {
 				mockAuthz.On("GuideListFilterByOrganization", mock.Anything, mock.Anything, mock.Anything).
 					Return(&types.GuideFilter{}, nil).

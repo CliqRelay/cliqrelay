@@ -28,9 +28,7 @@ export function useCreateGuideForm({
 				toast("Success", { description: "Guide created" });
 				form.reset();
 				onOpenChange(false);
-				if (guide) {
-					onSuccess?.(guide.id);
-				}
+				onSuccess?.(guide.id);
 			} catch (error) {
 				toast.error("Error", {
 					description:

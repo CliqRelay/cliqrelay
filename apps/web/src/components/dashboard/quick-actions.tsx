@@ -104,25 +104,20 @@ export function QuickActions() {
 				data: { title: "Untitled Guide", teamId },
 			});
 
-			if (guide) {
-				queryClient.invalidateQueries({
-					queryKey: api.guides.getGetAllGuidesQueryKey(),
-				});
-				queryClient.invalidateQueries({
-					queryKey: api.guides.getGetGuidesCountQueryKey(),
-				});
-				navigate({
-					to: "/dashboard/guides/$guideId",
-					params: { guideId: guide.id },
-				});
-			} else {
-				toast.error("Failed to Create Guide", {
-					description: "Could not create the guide. Please try again.",
-				});
-			}
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetAllGuidesQueryKey(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: api.guides.getGetGuidesCountQueryKey(),
+			});
+			navigate({
+				to: "/dashboard/guides/$guideId",
+				params: { guideId: guide.id },
+			});
 		} catch (error: any) {
 			toast.error("Failed to Create Guide", {
-				description: error.message || "Unknown error",
+				description:
+					error.message || "Could not create the guide. Please try again.",
 			});
 		}
 	};
