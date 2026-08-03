@@ -253,7 +253,7 @@ function TrashGuides() {
 			<TrashPageHeader
 				selectedCount={selectedIds.length}
 				totalCount={guides.length}
-				selectable={true}
+				selectable={guides.length > 0}
 				onSelectAll={() =>
 					setSelectedIds((prev) =>
 						prev.length === guides.length ? [] : guides.map((g: Guide) => g.id),
