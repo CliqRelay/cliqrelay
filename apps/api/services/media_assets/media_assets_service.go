@@ -25,6 +25,9 @@ func NewMediaAssetsService(
 	guidesRepo interfaces.GuidesRepository,
 	hooks *interfaces.MediaAssetHooks,
 ) *MediaAssetsService {
+	if hooks == nil {
+		hooks = &interfaces.MediaAssetHooks{}
+	}
 	return &MediaAssetsService{
 		mediaAssetsRepo: mediaAssetsRepo,
 		stepsRepo:       stepsRepo,

@@ -48,44 +48,9 @@ func (h *StepHooks) RegisterAfterDelete(fn DeleteStepHook) {
 	h.afterDelete = append(h.afterDelete, fn)
 }
 
-func (h *StepHooks) BeforeCreateHooks() []CreateStepHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeCreate
-}
-
-func (h *StepHooks) AfterCreateHooks() []StepHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterCreate
-}
-
-func (h *StepHooks) BeforeUpdateHooks() []UpdateStepHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeUpdate
-}
-
-func (h *StepHooks) AfterUpdateHooks() []StepHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterUpdate
-}
-
-func (h *StepHooks) BeforeDeleteHooks() []StepHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeDelete
-}
-
-func (h *StepHooks) AfterDeleteHooks() []DeleteStepHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterDelete
-}
+func (h *StepHooks) BeforeCreateHooks() []CreateStepHook { return h.beforeCreate }
+func (h *StepHooks) AfterCreateHooks() []StepHook        { return h.afterCreate }
+func (h *StepHooks) BeforeUpdateHooks() []UpdateStepHook { return h.beforeUpdate }
+func (h *StepHooks) AfterUpdateHooks() []StepHook        { return h.afterUpdate }
+func (h *StepHooks) BeforeDeleteHooks() []StepHook       { return h.beforeDelete }
+func (h *StepHooks) AfterDeleteHooks() []DeleteStepHook  { return h.afterDelete }

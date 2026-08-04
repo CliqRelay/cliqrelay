@@ -48,44 +48,9 @@ func (h *MediaAssetHooks) RegisterAfterDelete(fn DeleteMediaAssetHook) {
 	h.afterDelete = append(h.afterDelete, fn)
 }
 
-func (h *MediaAssetHooks) BeforeCreateHooks() []CreateMediaAssetHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeCreate
-}
-
-func (h *MediaAssetHooks) AfterCreateHooks() []MediaAssetHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterCreate
-}
-
-func (h *MediaAssetHooks) BeforeUpdateHooks() []UpdateMediaAssetHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeUpdate
-}
-
-func (h *MediaAssetHooks) AfterUpdateHooks() []MediaAssetHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterUpdate
-}
-
-func (h *MediaAssetHooks) BeforeDeleteHooks() []DeleteMediaAssetHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeDelete
-}
-
-func (h *MediaAssetHooks) AfterDeleteHooks() []DeleteMediaAssetHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterDelete
-}
+func (h *MediaAssetHooks) BeforeCreateHooks() []CreateMediaAssetHook { return h.beforeCreate }
+func (h *MediaAssetHooks) AfterCreateHooks() []MediaAssetHook        { return h.afterCreate }
+func (h *MediaAssetHooks) BeforeUpdateHooks() []UpdateMediaAssetHook { return h.beforeUpdate }
+func (h *MediaAssetHooks) AfterUpdateHooks() []MediaAssetHook        { return h.afterUpdate }
+func (h *MediaAssetHooks) BeforeDeleteHooks() []DeleteMediaAssetHook { return h.beforeDelete }
+func (h *MediaAssetHooks) AfterDeleteHooks() []DeleteMediaAssetHook  { return h.afterDelete }

@@ -41,6 +41,9 @@ func NewStepsService(
 	logger *slog.Logger,
 	hooks *interfaces.StepHooks,
 ) *StepsService {
+	if hooks == nil {
+		hooks = &interfaces.StepHooks{}
+	}
 	return &StepsService{
 		redisClient:     redisClient,
 		stepsRepo:       stepsRepo,
