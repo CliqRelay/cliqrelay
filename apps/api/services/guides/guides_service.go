@@ -530,25 +530,44 @@ func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrInvalidGuideID
 	}
 
-	existing, err := s.guidesRepo.GetByID(ctx, guideID)
+	var restored *models.Guide
+	err := s.guidesRepo.Tx(ctx, func(ctx context.Context, txRepo interfaces.GuidesRepository) error {
+		existing, err := txRepo.GetByID(ctx, guideID)
+		if err != nil {
+			return err
+		}
+		if existing == nil {
+			return constants.ErrGuideNotFound
+		}
+
+		if err := txRepo.LockOrganizationForUpdate(ctx, existing.TeamID); err != nil {
+			return err
+		}
+
+		existing, err = txRepo.GetByID(ctx, guideID)
+		if err != nil {
+			return err
+		}
+		if existing == nil {
+			return constants.ErrGuideNotFound
+		}
+
+		if err := runGuideHooks(s.hooks.BeforeRestoreHooks(), ctx, actor, existing); err != nil {
+			return err
+		}
+
+		restored, err = txRepo.Restore(ctx, guideID)
+		if err != nil {
+			return err
+		}
+		if restored == nil {
+			return constants.ErrGuideNotFound
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-	if existing == nil {
-		return nil, constants.ErrGuideNotFound
-	}
-
-	if err := runGuideHooks(s.hooks.BeforeRestoreHooks(), ctx, actor, existing); err != nil {
-		return nil, err
-	}
-
-	restored, err := s.guidesRepo.Restore(ctx, guideID)
-	if err != nil {
-		return nil, err
-	}
-
-	if restored == nil {
-		return nil, constants.ErrGuideNotFound
 	}
 
 	if err := runGuideHooks(s.hooks.AfterRestoreHooks(), ctx, actor, restored); err != nil {
@@ -676,11 +695,19 @@ func (s *GuidesService) BulkRestore(ctx context.Context, guideIDs []string, team
 		}
 	}
 
-	if err := runBulkRestoreGuideHooks(s.hooks.BeforeBulkRestoreHooks(), ctx, actor, teamID, guideIDs); err != nil {
-		return 0, err
-	}
+	var count int64
+	err = s.guidesRepo.Tx(ctx, func(ctx context.Context, txRepo interfaces.GuidesRepository) error {
+		if err := txRepo.LockOrganizationForUpdate(ctx, parsedTeamID); err != nil {
+			return err
+		}
 
-	count, err := s.guidesRepo.BulkRestore(ctx, parsedIDs, parsedTeamID, actor.ID, isAdmin)
+		if err := runBulkRestoreGuideHooks(s.hooks.BeforeBulkRestoreHooks(), ctx, actor, teamID, guideIDs); err != nil {
+			return err
+		}
+
+		count, err = txRepo.BulkRestore(ctx, parsedIDs, parsedTeamID, actor.ID, isAdmin)
+		return err
+	})
 	if err != nil {
 		return 0, err
 	}

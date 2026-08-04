@@ -1194,3 +1194,83 @@ func TestBunGuidesRepository_CreateConcurrent_OrgLock(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 }
+
+func TestBunGuidesRepository_RestoreConcurrent_OrgLock(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	orgID := uuid.New().String()
+	_, err := guidesDB.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(ctx)
+	require.NoError(t, err)
+
+	userID := uuid.New().String()
+	_, err = guidesDB.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(ctx)
+	require.NoError(t, err)
+
+	teamID := uuid.New()
+	_, err = guidesDB.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Concurrency Team", "concurrency-team-restore").Exec(ctx)
+	require.NoError(t, err)
+
+	const totalDeleted = 5
+	guideIDs := make([]uuid.UUID, totalDeleted)
+	for i := range guideIDs {
+		guide := seedGuideForTeam(t, guidesDB, userID, "Concurrent Deleted Guide", teamID)
+		softDeleteGuide(t, guidesDB, guide.ID)
+		guideIDs[i] = guide.ID
+	}
+
+	t.Cleanup(func() {
+		_, _ = guidesDB.NewRaw("DELETE FROM guides WHERE team_id = ?", teamID).Exec(ctx)
+		_, _ = guidesDB.NewRaw("DELETE FROM organization_teams WHERE id = ?", teamID).Exec(ctx)
+		_, _ = guidesDB.NewRaw("DELETE FROM organizations WHERE id = ?", orgID).Exec(ctx)
+		_, _ = guidesDB.NewRaw("DELETE FROM users WHERE id = ?", userID).Exec(ctx)
+	})
+
+	repo := guides.NewBunGuidesRepository(guidesDB)
+	parsedOrgID, err := uuid.Parse(orgID)
+	require.NoError(t, err)
+
+	const workers = totalDeleted
+	const limit = 2
+	var wg sync.WaitGroup
+	restored := make(chan bool, workers)
+
+	for w := range workers {
+		wg.Go(func() {
+			_ = repo.Tx(ctx, func(ctx context.Context, txRepo interfaces.GuidesRepository) error {
+				if err := txRepo.LockOrganizationForUpdate(ctx, teamID); err != nil {
+					return err
+				}
+
+				count, err := txRepo.GetCount(ctx, &types.GuideFilter{OrganizationID: &parsedOrgID})
+				if err != nil {
+					return err
+				}
+				if count >= limit {
+					return nil
+				}
+
+				if _, err := txRepo.Restore(ctx, guideIDs[w].String()); err != nil {
+					return err
+				}
+
+				restored <- true
+				return nil
+			})
+		})
+	}
+	wg.Wait()
+	close(restored)
+
+	restoredCount := 0
+	for range restored {
+		restoredCount++
+	}
+
+	assert.Equal(t, limit, restoredCount, "organization row lock must serialize concurrent restores")
+
+	count, err := repo.GetCount(ctx, &types.GuideFilter{OrganizationID: &parsedOrgID})
+	require.NoError(t, err)
+	assert.Equal(t, limit, count)
+}

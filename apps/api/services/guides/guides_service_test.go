@@ -414,6 +414,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				deletedGuide := &models.Guide{
 					ID:        uuid.New(),
+					TeamID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					CreatorID: new("test-user-123"),
 					Title:     "Deleted Guide",
 					Status:    models.StatusDeleted,
@@ -421,6 +422,9 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 				future := time.Now().Add(time.Hour).UTC()
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(deletedGuide, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				mockRepo.On("Restore", mock.Anything, mock.Anything).
 					Return(&models.Guide{
@@ -455,12 +459,16 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				guide := &models.Guide{
 					ID:        uuid.New(),
+					TeamID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					CreatorID: new("test-user-123"),
 					Title:     "Active Guide",
 					Status:    models.StatusDraft,
 				}
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(guide, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				mockRepo.On("Restore", mock.Anything, mock.Anything).
 					Return(nil, nil).
@@ -474,12 +482,16 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				deletedGuide := &models.Guide{
 					ID:        uuid.New(),
+					TeamID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					CreatorID: new("test-user-123"),
 					Title:     "Deleted Guide",
 					Status:    models.StatusDeleted,
 				}
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(deletedGuide, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				mockRepo.On("Restore", mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).

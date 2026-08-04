@@ -167,6 +167,9 @@ func TestGuidesService_Restore_Hooks(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository, hooks *interfaces.GuideHooks, calls *[]int) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(deletedGuide, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				mockRepo.On("Restore", mock.Anything, mock.Anything).
 					Return(&models.Guide{ID: uuid.New(), Title: "Restored Guide", Status: models.StatusDraft}, nil).
@@ -187,6 +190,9 @@ func TestGuidesService_Restore_Hooks(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository, hooks *interfaces.GuideHooks, _ *[]int) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(deletedGuide, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				hooks.RegisterBeforeRestore(func(_ context.Context, _ *authulamodels.Actor, _ *models.Guide) error {
 					return assert.AnError
@@ -200,6 +206,9 @@ func TestGuidesService_Restore_Hooks(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository, hooks *interfaces.GuideHooks, _ *[]int) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(deletedGuide, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				mockRepo.On("Restore", mock.Anything, mock.Anything).
 					Return(&models.Guide{ID: uuid.New(), Title: "Restored Guide", Status: models.StatusDraft}, nil).
@@ -215,6 +224,9 @@ func TestGuidesService_Restore_Hooks(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuidesRepository, hooks *interfaces.GuideHooks, calls *[]int) {
 				mockRepo.On("GetByID", mock.Anything, mock.Anything).
 					Return(deletedGuide, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				mockRepo.On("Restore", mock.Anything, mock.Anything).
 					Return(&models.Guide{ID: uuid.New(), Title: "Restored Guide", Status: models.StatusDraft}, nil).
@@ -260,17 +272,40 @@ func TestGuidesService_Restore_Hooks(t *testing.T) {
 func assertBeforeRestoreBeforeRepoRestore(t *testing.T, mockRepo *tests.MockGuidesRepository) {
 	t.Helper()
 	hookIdx := -1
+	lockIdx := -1
 	restoreIdx := -1
 	for i, call := range mockRepo.Calls {
 		switch call.Method {
 		case "GetByID":
 			hookIdx = i
+		case "LockOrganizationForUpdate":
+			lockIdx = i
 		case "Restore":
 			restoreIdx = i
 		}
 	}
 	if hookIdx >= 0 && restoreIdx >= 0 {
 		assert.Less(t, hookIdx, restoreIdx, "guide must be loaded before restore")
+	}
+	if lockIdx >= 0 && restoreIdx >= 0 {
+		assert.Less(t, lockIdx, restoreIdx, "organization lock must be acquired before restore")
+	}
+}
+
+func assertLockedBeforeBulkRestore(t *testing.T, mockRepo *tests.MockGuidesRepository) {
+	t.Helper()
+	lockIdx := -1
+	bulkRestoreIdx := -1
+	for i, call := range mockRepo.Calls {
+		switch call.Method {
+		case "LockOrganizationForUpdate":
+			lockIdx = i
+		case "BulkRestore":
+			bulkRestoreIdx = i
+		}
+	}
+	if lockIdx >= 0 && bulkRestoreIdx >= 0 {
+		assert.Less(t, lockIdx, bulkRestoreIdx, "organization lock must be acquired before bulk restore")
 	}
 }
 
@@ -289,6 +324,9 @@ func TestGuidesService_BulkRestore_Hooks(t *testing.T) {
 		{
 			name: "runs before and after bulk restore hooks in registration order",
 			setup: func(mockRepo *tests.MockGuidesRepository, hooks *interfaces.GuideHooks, calls *[]int) {
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
 				mockRepo.On("BulkRestore", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(int64(2), nil).
 					Once()
@@ -306,6 +344,9 @@ func TestGuidesService_BulkRestore_Hooks(t *testing.T) {
 		{
 			name: "returns before bulk restore hook error without restoring the guides",
 			setup: func(mockRepo *tests.MockGuidesRepository, hooks *interfaces.GuideHooks, _ *[]int) {
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
 				hooks.RegisterBeforeBulkRestore(func(_ context.Context, _ *authulamodels.Actor, _ string, _ []string) error {
 					return assert.AnError
 				})
@@ -316,6 +357,9 @@ func TestGuidesService_BulkRestore_Hooks(t *testing.T) {
 		{
 			name: "returns after bulk restore hook error",
 			setup: func(mockRepo *tests.MockGuidesRepository, hooks *interfaces.GuideHooks, _ *[]int) {
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
 				mockRepo.On("BulkRestore", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(int64(2), nil).
 					Once()
@@ -346,6 +390,7 @@ func TestGuidesService_BulkRestore_Hooks(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, int64(2), count)
 				assert.Equal(t, tt.wantOrder, calls)
+				assertLockedBeforeBulkRestore(t, mockRepo)
 			}
 			if tt.wantBulkRestoreNotCalled {
 				mockRepo.AssertNotCalled(t, "BulkRestore", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)

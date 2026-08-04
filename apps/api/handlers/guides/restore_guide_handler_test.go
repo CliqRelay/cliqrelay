@@ -64,6 +64,9 @@ func TestRestoreGuideHandler(t *testing.T) {
 						Title:     "Deleted Guide",
 						Status:    models.StatusDeleted,
 					}, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				mockRepo.On("Restore", mock.Anything, guideID).
 					Return(&models.Guide{
@@ -90,6 +93,9 @@ func TestRestoreGuideHandler(t *testing.T) {
 						Title:     "Deleted Guide",
 						Status:    models.StatusDeleted,
 					}, nil).
+					Twice()
+				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
+					Return(nil).
 					Once()
 				mockRepo.On("Restore", mock.Anything, guideID).
 					Return(nil, assert.AnError).
