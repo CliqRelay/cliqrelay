@@ -15,21 +15,27 @@ type CreateGuideHook func(ctx context.Context, actor *authulamodels.Actor, teamI
 
 type DeleteGuideHook func(ctx context.Context, actor *authulamodels.Actor, guideID string) error
 
+type BulkRestoreGuideHook func(ctx context.Context, actor *authulamodels.Actor, teamID string, guideIDs []string) error
+
 type GuideHooks struct {
-	beforeCreate    []CreateGuideHook
-	afterCreate     []GuideHook
-	beforeUpdate    []GuideHook
-	afterUpdate     []GuideHook
-	beforeDelete    []DeleteGuideHook
-	afterDelete     []DeleteGuideHook
-	beforePublish   []GuideHook
-	afterPublish    []GuideHook
-	beforeArchive   []GuideHook
-	afterArchive    []GuideHook
-	beforeUnarchive []GuideHook
-	afterUnarchive  []GuideHook
-	beforeUnpublish []GuideHook
-	afterUnpublish  []GuideHook
+	beforeCreate      []CreateGuideHook
+	afterCreate       []GuideHook
+	beforeUpdate      []GuideHook
+	afterUpdate       []GuideHook
+	beforeDelete      []DeleteGuideHook
+	afterDelete       []DeleteGuideHook
+	beforePublish     []GuideHook
+	afterPublish      []GuideHook
+	beforeArchive     []GuideHook
+	afterArchive      []GuideHook
+	beforeUnarchive   []GuideHook
+	afterUnarchive    []GuideHook
+	beforeUnpublish   []GuideHook
+	afterUnpublish    []GuideHook
+	beforeRestore     []GuideHook
+	afterRestore      []GuideHook
+	beforeBulkRestore []BulkRestoreGuideHook
+	afterBulkRestore  []BulkRestoreGuideHook
 }
 
 func (h *GuideHooks) RegisterBeforeCreate(fn CreateGuideHook) {
@@ -88,100 +94,37 @@ func (h *GuideHooks) RegisterAfterUnpublish(fn GuideHook) {
 	h.afterUnpublish = append(h.afterUnpublish, fn)
 }
 
-func (h *GuideHooks) BeforeCreateHooks() []CreateGuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeCreate
+func (h *GuideHooks) RegisterBeforeRestore(fn GuideHook) {
+	h.beforeRestore = append(h.beforeRestore, fn)
 }
 
-func (h *GuideHooks) AfterCreateHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterCreate
+func (h *GuideHooks) RegisterAfterRestore(fn GuideHook) {
+	h.afterRestore = append(h.afterRestore, fn)
 }
 
-func (h *GuideHooks) BeforeUpdateHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeUpdate
+func (h *GuideHooks) RegisterBeforeBulkRestore(fn BulkRestoreGuideHook) {
+	h.beforeBulkRestore = append(h.beforeBulkRestore, fn)
 }
 
-func (h *GuideHooks) AfterUpdateHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterUpdate
+func (h *GuideHooks) RegisterAfterBulkRestore(fn BulkRestoreGuideHook) {
+	h.afterBulkRestore = append(h.afterBulkRestore, fn)
 }
 
-func (h *GuideHooks) BeforeDeleteHooks() []DeleteGuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeDelete
-}
-
-func (h *GuideHooks) AfterDeleteHooks() []DeleteGuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterDelete
-}
-
-func (h *GuideHooks) BeforePublishHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforePublish
-}
-
-func (h *GuideHooks) AfterPublishHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterPublish
-}
-
-func (h *GuideHooks) BeforeArchiveHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeArchive
-}
-
-func (h *GuideHooks) AfterArchiveHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterArchive
-}
-
-func (h *GuideHooks) BeforeUnarchiveHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeUnarchive
-}
-
-func (h *GuideHooks) AfterUnarchiveHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterUnarchive
-}
-
-func (h *GuideHooks) BeforeUnpublishHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.beforeUnpublish
-}
-
-func (h *GuideHooks) AfterUnpublishHooks() []GuideHook {
-	if h == nil {
-		return nil
-	}
-	return h.afterUnpublish
-}
+func (h *GuideHooks) BeforeCreateHooks() []CreateGuideHook           { return h.beforeCreate }
+func (h *GuideHooks) AfterCreateHooks() []GuideHook                  { return h.afterCreate }
+func (h *GuideHooks) BeforeUpdateHooks() []GuideHook                 { return h.beforeUpdate }
+func (h *GuideHooks) AfterUpdateHooks() []GuideHook                  { return h.afterUpdate }
+func (h *GuideHooks) BeforeDeleteHooks() []DeleteGuideHook           { return h.beforeDelete }
+func (h *GuideHooks) AfterDeleteHooks() []DeleteGuideHook            { return h.afterDelete }
+func (h *GuideHooks) BeforePublishHooks() []GuideHook                { return h.beforePublish }
+func (h *GuideHooks) AfterPublishHooks() []GuideHook                 { return h.afterPublish }
+func (h *GuideHooks) BeforeArchiveHooks() []GuideHook                { return h.beforeArchive }
+func (h *GuideHooks) AfterArchiveHooks() []GuideHook                 { return h.afterArchive }
+func (h *GuideHooks) BeforeUnarchiveHooks() []GuideHook              { return h.beforeUnarchive }
+func (h *GuideHooks) AfterUnarchiveHooks() []GuideHook               { return h.afterUnarchive }
+func (h *GuideHooks) BeforeUnpublishHooks() []GuideHook              { return h.beforeUnpublish }
+func (h *GuideHooks) AfterUnpublishHooks() []GuideHook               { return h.afterUnpublish }
+func (h *GuideHooks) BeforeRestoreHooks() []GuideHook                { return h.beforeRestore }
+func (h *GuideHooks) AfterRestoreHooks() []GuideHook                 { return h.afterRestore }
+func (h *GuideHooks) BeforeBulkRestoreHooks() []BulkRestoreGuideHook { return h.beforeBulkRestore }
+func (h *GuideHooks) AfterBulkRestoreHooks() []BulkRestoreGuideHook  { return h.afterBulkRestore }

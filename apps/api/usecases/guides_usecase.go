@@ -212,7 +212,7 @@ func (uc *GuidesUseCase) Restore(ctx context.Context, actor *authulamodels.Actor
 		return nil, err
 	}
 
-	return uc.guidesService.Restore(ctx, guideID)
+	return uc.guidesService.Restore(ctx, actor, guideID)
 }
 
 func (uc *GuidesUseCase) PermanentlyDelete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
@@ -245,7 +245,7 @@ func (uc *GuidesUseCase) BulkAction(ctx context.Context, actor *authulamodels.Ac
 	case "delete":
 		_, err = uc.guidesService.BulkDelete(ctx, req.IDs, req.TeamID, actor.ID, isAdmin)
 	case "restore":
-		_, err = uc.guidesService.BulkRestore(ctx, req.IDs, req.TeamID, actor.ID, isAdmin)
+		_, err = uc.guidesService.BulkRestore(ctx, req.IDs, req.TeamID, actor, isAdmin)
 	case "permanently-delete":
 		_, err = uc.guidesService.BulkPermanentlyDelete(ctx, req.IDs, req.TeamID, actor.ID, isAdmin)
 	default:

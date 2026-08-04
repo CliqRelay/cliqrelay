@@ -34,6 +34,9 @@ func NewGuidesService(
 	redisClient *redis.Client,
 	hooks *interfaces.GuideHooks,
 ) *GuidesService {
+	if hooks == nil {
+		hooks = &interfaces.GuideHooks{}
+	}
 	return &GuidesService{
 		guidesRepo:        guidesRepo,
 		starredGuidesRepo: starredGuidesRepo,
@@ -64,6 +67,15 @@ func runCreateGuideHooks(hooks []interfaces.CreateGuideHook, ctx context.Context
 func runDeleteGuideHooks(hooks []interfaces.DeleteGuideHook, ctx context.Context, actor *authulamodels.Actor, guideID string) error {
 	for _, hook := range hooks {
 		if err := hook(ctx, actor, guideID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func runBulkRestoreGuideHooks(hooks []interfaces.BulkRestoreGuideHook, ctx context.Context, actor *authulamodels.Actor, teamID string, guideIDs []string) error {
+	for _, hook := range hooks {
+		if err := hook(ctx, actor, teamID, guideIDs); err != nil {
 			return err
 		}
 	}
@@ -513,7 +525,7 @@ func (s *GuidesService) Unarchive(ctx context.Context, actor *authulamodels.Acto
 	return unarchived, nil
 }
 
-func (s *GuidesService) Restore(ctx context.Context, guideID string) (*models.Guide, error) {
+func (s *GuidesService) Restore(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
 	}
@@ -526,6 +538,10 @@ func (s *GuidesService) Restore(ctx context.Context, guideID string) (*models.Gu
 		return nil, constants.ErrGuideNotFound
 	}
 
+	if err := runGuideHooks(s.hooks.BeforeRestoreHooks(), ctx, actor, existing); err != nil {
+		return nil, err
+	}
+
 	restored, err := s.guidesRepo.Restore(ctx, guideID)
 	if err != nil {
 		return nil, err
@@ -533,6 +549,10 @@ func (s *GuidesService) Restore(ctx context.Context, guideID string) (*models.Gu
 
 	if restored == nil {
 		return nil, constants.ErrGuideNotFound
+	}
+
+	if err := runGuideHooks(s.hooks.AfterRestoreHooks(), ctx, actor, restored); err != nil {
+		return nil, err
 	}
 
 	return restored, nil
@@ -634,7 +654,7 @@ func (s *GuidesService) BulkDelete(ctx context.Context, guideIDs []string, teamI
 	return s.guidesRepo.BulkDelete(ctx, parsedIDs, parsedTeamID, actorID, isAdmin)
 }
 
-func (s *GuidesService) BulkRestore(ctx context.Context, guideIDs []string, teamID string, actorID string, isAdmin bool) (int64, error) {
+func (s *GuidesService) BulkRestore(ctx context.Context, guideIDs []string, teamID string, actor *authulamodels.Actor, isAdmin bool) (int64, error) {
 	if len(guideIDs) == 0 {
 		return 0, constants.ErrInvalidGuideID
 	}
@@ -656,7 +676,20 @@ func (s *GuidesService) BulkRestore(ctx context.Context, guideIDs []string, team
 		}
 	}
 
-	return s.guidesRepo.BulkRestore(ctx, parsedIDs, parsedTeamID, actorID, isAdmin)
+	if err := runBulkRestoreGuideHooks(s.hooks.BeforeBulkRestoreHooks(), ctx, actor, teamID, guideIDs); err != nil {
+		return 0, err
+	}
+
+	count, err := s.guidesRepo.BulkRestore(ctx, parsedIDs, parsedTeamID, actor.ID, isAdmin)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := runBulkRestoreGuideHooks(s.hooks.AfterBulkRestoreHooks(), ctx, actor, teamID, guideIDs); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (s *GuidesService) BulkPermanentlyDelete(ctx context.Context, guideIDs []string, teamID string, actorID string, isAdmin bool) (int64, error) {

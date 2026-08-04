@@ -496,7 +496,7 @@ func TestGuidesService_RestoreGuide(t *testing.T) {
 			tt.setup(mockRepo)
 			svc := guidesservice.NewGuidesService(mockRepo, nil, new(tests.MockStepsRepository), testRedisClient(), (*interfaces.GuideHooks)(nil))
 
-			guide, err := svc.Restore(context.Background(), tt.guideID)
+			guide, err := svc.Restore(context.Background(), nil, tt.guideID)
 
 			if tt.wantErr {
 				assert.Error(t, err)
