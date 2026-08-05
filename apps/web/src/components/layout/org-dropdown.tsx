@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 
+import { AppUserRole } from "@repo/data-commons";
+
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -19,6 +21,7 @@ import { clearActiveTeamCookie } from "@/lib/team-cookie";
 import { cn } from "@/lib/utils";
 import { useOrgStore, useTeamStore } from "@/stores";
 import { CreateOrganizationDialogSlot } from "./create-organization-dialog-slot";
+import { RoleGuard } from "../shared/role-guard";
 
 export function OrgDropdown() {
 	const navigate = useNavigate();
@@ -26,15 +29,11 @@ export function OrgDropdown() {
 	const orgId = useOrgStore((state) => state.orgId);
 	const orgName = useOrgStore((state) => state.orgName);
 	const organizations = useOrgStore((state) => state.organizations);
-	const currentMember = useOrgStore((state) => state.currentMember);
 	const setOrg = useOrgStore((state) => state.setOrg);
 	const setCurrentMember = useOrgStore((state) => state.setCurrentMember);
 	const resetTeams = useTeamStore((state) => state.resetTeams);
 
 	const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false);
-
-	const role = currentMember?.role ?? "";
-	const isAdmin = role === "owner" || role === "admin";
 
 	const isLoading = !orgId && organizations.length === 0;
 
@@ -107,34 +106,31 @@ export function OrgDropdown() {
 							);
 						})}
 					</DropdownMenuGroup>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						className="mx-1 gap-2.5 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
-						onClick={() => setCreateDialogOpen(true)}
-					>
-						<Plus size={16} className="shrink-0 text-muted-foreground" />
-						<span>Create Organization</span>
-					</DropdownMenuItem>
-					{isAdmin && (
-						<>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								className="mx-1 gap-2.5 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
-								onClick={() =>
-									navigate({
-										to: "/dashboard/organizations/$orgId/settings",
-										params: { orgId: orgId ?? "" },
-									})
-								}
-							>
-								<Settings
-									size={16}
-									className="shrink-0 text-muted-foreground"
-								/>
-								<span>Settings</span>
-							</DropdownMenuItem>
-						</>
-					)}
+					<RoleGuard minRole={AppUserRole.EDITOR}>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							className="mx-1 gap-2.5 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
+							onClick={() => setCreateDialogOpen(true)}
+						>
+							<Plus size={16} className="shrink-0 text-muted-foreground" />
+							<span>Create Organization</span>
+						</DropdownMenuItem>
+					</RoleGuard>
+					<RoleGuard minRole={AppUserRole.ADMIN}>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							className="mx-1 gap-2.5 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
+							onClick={() =>
+								navigate({
+									to: "/dashboard/organizations/$orgId/settings",
+									params: { orgId: orgId ?? "" },
+								})
+							}
+						>
+							<Settings size={16} className="shrink-0 text-muted-foreground" />
+							<span>Settings</span>
+						</DropdownMenuItem>
+					</RoleGuard>
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<CreateOrganizationDialogSlot

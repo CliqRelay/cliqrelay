@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Check, ChevronsUpDown, Plus, Settings, Users } from "lucide-react";
 
+import { AppUserRole } from "@repo/data-commons";
+
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -17,6 +19,7 @@ import { setActiveTeamCookie } from "@/lib/team-cookie";
 import { cn } from "@/lib/utils";
 import { useOrgStore, useTeamStore } from "@/stores";
 import { CreateTeamDialogSlot } from "./create-team-dialog-slot";
+import { RoleGuard } from "../shared/role-guard";
 
 type Props = {
 	collapsed?: boolean;
@@ -108,31 +111,35 @@ export function TeamsDropdown({ collapsed }: Props) {
 							);
 						})}
 					</DropdownMenuGroup>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						className="mx-1 gap-2 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
-						onClick={() => setCreateDialogOpen(true)}
-					>
-						<Plus size={16} className="shrink-0 text-muted-foreground" />
-						<span>Create Team</span>
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						className="mx-1 gap-2 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
-						onClick={() => {
-							const targetTeamId = activeTeam?.id ?? orgTeams[0]?.id;
-							if (!targetTeamId || !orgId) {
-								return;
-							}
-							navigate({
-								to: "/dashboard/organizations/$orgId/teams/$teamId/settings/general",
-								params: { orgId, teamId: targetTeamId },
-							});
-						}}
-					>
-						<Settings size={16} className="shrink-0 text-muted-foreground" />
-						<span>Settings</span>
-					</DropdownMenuItem>
+					<RoleGuard minRole={AppUserRole.EDITOR}>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							className="mx-1 gap-2 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
+							onClick={() => setCreateDialogOpen(true)}
+						>
+							<Plus size={16} className="shrink-0 text-muted-foreground" />
+							<span>Create Team</span>
+						</DropdownMenuItem>
+					</RoleGuard>
+					<RoleGuard minRole={AppUserRole.ADMIN}>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem
+							className="mx-1 gap-2 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
+							onClick={() => {
+								const targetTeamId = activeTeam?.id ?? orgTeams[0]?.id;
+								if (!targetTeamId || !orgId) {
+									return;
+								}
+								navigate({
+									to: "/dashboard/organizations/$orgId/teams/$teamId/settings/general",
+									params: { orgId, teamId: targetTeamId },
+								});
+							}}
+						>
+							<Settings size={16} className="shrink-0 text-muted-foreground" />
+							<span>Settings</span>
+						</DropdownMenuItem>
+					</RoleGuard>
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<CreateTeamDialogSlot
