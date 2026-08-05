@@ -46,7 +46,7 @@ type ProItem = {
 	}>;
 };
 
-const proItems: ProItem[] = [
+const proNavItems: ProItem[] = [
 	{
 		label: "Analytics",
 		icon: BarChart3,
@@ -324,31 +324,36 @@ export function SidebarContent({
 			</div>
 
 			{/* Pro section */}
-			<div
-				className={cn(
-					"mt-3 shrink-0",
-					collapsed ? "px-3 items-center" : "px-3",
-				)}
-			>
-				{teamLoaded && <SectionLabel collapsed={collapsed} label="Pro" />}
-				{!teamLoaded ? (
-					<NavSkeleton collapsed={collapsed} count={proItems.length} />
-				) : (
-					<nav
-						className={cn("flex flex-col gap-0.5", collapsed && "items-center")}
-					>
-						{proItems.map((item) => (
-							<ProNavButton
-								key={item.dialog}
-								collapsed={collapsed}
-								label={item.label}
-								icon={item.icon}
-								onClick={() => setActiveDialog(item.dialog)}
-							/>
-						))}
-					</nav>
-				)}
-			</div>
+			{hasTeamsInOrg && (
+				<div
+					className={cn(
+						"mt-3 shrink-0",
+						collapsed ? "px-3 items-center" : "px-3",
+					)}
+				>
+					{teamLoaded && <SectionLabel collapsed={collapsed} label="Pro" />}
+					{!teamLoaded ? (
+						<NavSkeleton collapsed={collapsed} count={proNavItems.length} />
+					) : (
+						<nav
+							className={cn(
+								"flex flex-col gap-0.5",
+								collapsed && "items-center",
+							)}
+						>
+							{proNavItems.map((item) => (
+								<ProNavButton
+									key={item.dialog}
+									collapsed={collapsed}
+									label={item.label}
+									icon={item.icon}
+									onClick={() => setActiveDialog(item.dialog)}
+								/>
+							))}
+						</nav>
+					)}
+				</div>
+			)}
 
 			{/* Bottom section */}
 			<div
@@ -372,7 +377,7 @@ export function SidebarContent({
 			</div>
 
 			{/* Pro feature dialogs */}
-			{proItems.map((item) => (
+			{proNavItems.map((item) => (
 				<ProFeatureDialog
 					key={item.dialog}
 					slotName={item.slotName}
