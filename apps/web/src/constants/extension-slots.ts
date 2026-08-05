@@ -15,7 +15,6 @@ export enum ExtensionSlotKeys {
 	ORG_SETTINGS_MEMBERS = "org-settings-members",
 	ORG_SETTINGS_TEAMS = "org-settings-teams",
 	ORG_SETTINGS_BRANDING = "org-settings-branding",
-	ORG_SETTINGS_INTEGRATIONS = "org-settings-integrations",
 
 	// Team Settings
 	TEAM_SETTINGS_SIDEBAR_BOTTOM = "team-settings-sidebar-bottom",

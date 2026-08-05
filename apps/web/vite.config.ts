@@ -53,10 +53,6 @@ export async function buildVirtualRouteConfig(
 							"/branding",
 							"dashboard/organizations/$orgId/settings/branding/index.tsx",
 						),
-						route(
-							"/integrations",
-							"dashboard/organizations/$orgId/settings/integrations/index.tsx",
-						),
 					],
 				),
 				route(

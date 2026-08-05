@@ -38,18 +38,11 @@ const allSections = [
 		to: "/dashboard/organizations/$orgId/settings/branding",
 		adminOnly: true,
 	},
-	{
-		id: "integrations",
-		label: "Integrations",
-		icon: Plug,
-		to: "/dashboard/organizations/$orgId/settings/integrations",
-		adminOnly: true,
-	},
 ] as const;
 
 type Section = (typeof allSections)[number];
 
-export function SettingsSidebar() {
+export function OrganizationSettingsSidebar() {
 	const orgName = useOrgStore((state) => state.orgName);
 	const currentMember = useOrgStore((state) => state.currentMember);
 	const { orgId } = useParams({

@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
-import { SettingsSidebar } from "@/components/settings/settings-sidebar";
+import { OrganizationSettingsSidebar } from "@/components/settings/organization-settings-sidebar";
 import { authulaClient } from "@/lib/authula-client";
 import { useOrgStore } from "@/stores";
 
@@ -43,7 +43,7 @@ export const Route = createFileRoute(
 function SettingsLayout() {
 	return (
 		<div className="flex h-full">
-			<SettingsSidebar />
+			<OrganizationSettingsSidebar />
 			<div className="flex-1 overflow-auto">
 				<div className="mx-auto max-w-3xl p-8">
 					<Outlet />

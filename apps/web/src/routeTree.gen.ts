@@ -28,7 +28,6 @@ import { Route as dashboardOrganizationsOrgIdSettingsRouteRouteImport } from './
 import { Route as dashboardOrganizationsOrgIdSettingsIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/index'
 import { Route as dashboardOrganizationsOrgIdSettingsBrandingIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/branding/index'
 import { Route as dashboardOrganizationsOrgIdSettingsGeneralIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/general/index'
-import { Route as dashboardOrganizationsOrgIdSettingsIntegrationsIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/integrations/index'
 import { Route as dashboardOrganizationsOrgIdSettingsMembersIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/members/index'
 import { Route as dashboardOrganizationsOrgIdSettingsTeamsIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/teams/index'
 import { Route as dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteImport } from './routes/dashboard/organizations/$orgId/teams/$teamId/settings/route'
@@ -137,12 +136,6 @@ const dashboardOrganizationsOrgIdSettingsGeneralIndexRoute =
     path: '/general',
     getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
   } as any)
-const dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute =
-  dashboardOrganizationsOrgIdSettingsIntegrationsIndexRouteImport.update({
-    id: '/integrations',
-    path: '/integrations',
-    getParentRoute: () => dashboardOrganizationsOrgIdSettingsRouteRoute,
-  } as any)
 const dashboardOrganizationsOrgIdSettingsMembersIndexRoute =
   dashboardOrganizationsOrgIdSettingsMembersIndexRouteImport.update({
     id: '/members',
@@ -203,7 +196,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/organizations/$orgId/settings/': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
   '/dashboard/organizations/$orgId/settings/branding': typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRoute
   '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
-  '/dashboard/organizations/$orgId/settings/integrations': typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute
   '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
   '/dashboard/organizations/$orgId/settings/teams': typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRoute
   '/dashboard/organizations/$orgId/teams/$teamId/settings': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteWithChildren
@@ -229,7 +221,6 @@ export interface FileRoutesByTo {
   '/dashboard/organizations/$orgId/settings': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
   '/dashboard/organizations/$orgId/settings/branding': typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRoute
   '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
-  '/dashboard/organizations/$orgId/settings/integrations': typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute
   '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
   '/dashboard/organizations/$orgId/settings/teams': typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRoute
   '/dashboard/organizations/$orgId/teams/$teamId/settings': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsIndexRoute
@@ -257,7 +248,6 @@ export interface FileRoutesById {
   '/dashboard/organizations/$orgId/settings/': typeof dashboardOrganizationsOrgIdSettingsIndexRoute
   '/dashboard/organizations/$orgId/settings/branding': typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRoute
   '/dashboard/organizations/$orgId/settings/general': typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
-  '/dashboard/organizations/$orgId/settings/integrations': typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute
   '/dashboard/organizations/$orgId/settings/members': typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
   '/dashboard/organizations/$orgId/settings/teams': typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRoute
   '/dashboard/organizations/$orgId/teams/$teamId/settings': typeof dashboardOrganizationsOrgIdTeamsTeamIdSettingsRouteRouteWithChildren
@@ -287,7 +277,6 @@ export interface FileRouteTypes {
     | '/dashboard/organizations/$orgId/settings/'
     | '/dashboard/organizations/$orgId/settings/branding'
     | '/dashboard/organizations/$orgId/settings/general'
-    | '/dashboard/organizations/$orgId/settings/integrations'
     | '/dashboard/organizations/$orgId/settings/members'
     | '/dashboard/organizations/$orgId/settings/teams'
     | '/dashboard/organizations/$orgId/teams/$teamId/settings'
@@ -313,7 +302,6 @@ export interface FileRouteTypes {
     | '/dashboard/organizations/$orgId/settings'
     | '/dashboard/organizations/$orgId/settings/branding'
     | '/dashboard/organizations/$orgId/settings/general'
-    | '/dashboard/organizations/$orgId/settings/integrations'
     | '/dashboard/organizations/$orgId/settings/members'
     | '/dashboard/organizations/$orgId/settings/teams'
     | '/dashboard/organizations/$orgId/teams/$teamId/settings'
@@ -340,7 +328,6 @@ export interface FileRouteTypes {
     | '/dashboard/organizations/$orgId/settings/'
     | '/dashboard/organizations/$orgId/settings/branding'
     | '/dashboard/organizations/$orgId/settings/general'
-    | '/dashboard/organizations/$orgId/settings/integrations'
     | '/dashboard/organizations/$orgId/settings/members'
     | '/dashboard/organizations/$orgId/settings/teams'
     | '/dashboard/organizations/$orgId/teams/$teamId/settings'
@@ -491,13 +478,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRouteImport
       parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
     }
-    '/dashboard/organizations/$orgId/settings/integrations': {
-      id: '/dashboard/organizations/$orgId/settings/integrations'
-      path: '/integrations'
-      fullPath: '/dashboard/organizations/$orgId/settings/integrations'
-      preLoaderRoute: typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRouteImport
-      parentRoute: typeof dashboardOrganizationsOrgIdSettingsRouteRoute
-    }
     '/dashboard/organizations/$orgId/settings/members': {
       id: '/dashboard/organizations/$orgId/settings/members'
       path: '/members'
@@ -567,7 +547,6 @@ interface dashboardOrganizationsOrgIdSettingsRouteRouteChildren {
   dashboardOrganizationsOrgIdSettingsIndexRoute: typeof dashboardOrganizationsOrgIdSettingsIndexRoute
   dashboardOrganizationsOrgIdSettingsBrandingIndexRoute: typeof dashboardOrganizationsOrgIdSettingsBrandingIndexRoute
   dashboardOrganizationsOrgIdSettingsGeneralIndexRoute: typeof dashboardOrganizationsOrgIdSettingsGeneralIndexRoute
-  dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute: typeof dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute
   dashboardOrganizationsOrgIdSettingsMembersIndexRoute: typeof dashboardOrganizationsOrgIdSettingsMembersIndexRoute
   dashboardOrganizationsOrgIdSettingsTeamsIndexRoute: typeof dashboardOrganizationsOrgIdSettingsTeamsIndexRoute
 }
@@ -580,8 +559,6 @@ const dashboardOrganizationsOrgIdSettingsRouteRouteChildren: dashboardOrganizati
       dashboardOrganizationsOrgIdSettingsBrandingIndexRoute,
     dashboardOrganizationsOrgIdSettingsGeneralIndexRoute:
       dashboardOrganizationsOrgIdSettingsGeneralIndexRoute,
-    dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute:
-      dashboardOrganizationsOrgIdSettingsIntegrationsIndexRoute,
     dashboardOrganizationsOrgIdSettingsMembersIndexRoute:
       dashboardOrganizationsOrgIdSettingsMembersIndexRoute,
     dashboardOrganizationsOrgIdSettingsTeamsIndexRoute:
