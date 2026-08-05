@@ -68,13 +68,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		meta: [
 			{ charSet: "utf-8" },
 			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-			{ title: "Dashboard — CliqRelay" },
+			{ title: "CliqRelay" },
 			{
 				name: "description",
 				content:
 					"Capture, document and share step-by-step workflows with your team from one calm, premium workspace.",
 			},
-			{ property: "og:title", content: "Dashboard — CliqRelay" },
+			{ property: "og:title", content: "CliqRelay" },
 			{
 				property: "og:description",
 				content:
