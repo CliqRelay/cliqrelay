@@ -33,13 +33,6 @@ import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 type DialogType = "analytics" | "webhooks" | "api-keys";
 
-const nav = [
-	{ label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-	{ label: "Guides", to: "/dashboard/guides", icon: FileText },
-	{ label: "Starred", to: "/dashboard/starred", icon: Star },
-	{ label: "Trash", to: "/dashboard/trash", icon: Trash },
-] as const;
-
 type ProItem = {
 	label: string;
 	icon: ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -77,12 +70,12 @@ const proItems: ProItem[] = [
 	},
 ];
 
-interface SidebarContentProps {
+type SidebarContentProps = {
 	user?: AppUser | null;
 	onNavigate?: () => void;
 	collapsed: boolean;
 	onToggleCollapse: () => void;
-}
+};
 
 function SectionLabel({
 	collapsed,
@@ -214,7 +207,35 @@ export function SidebarContent({
 	const orgId = useOrgStore((s) => s.orgId);
 	const teams = useTeamStore((s) => s.teams);
 	const hasTeamsInOrg = teams.some((t) => t.organizationId === orgId);
+
 	const [activeDialog, setActiveDialog] = useState<DialogType | null>(null);
+
+	const nav = [
+		{
+			label: "Dashboard",
+			to: "/dashboard",
+			icon: LayoutDashboard,
+			canAccess: true,
+		},
+		{
+			label: "Guides",
+			to: "/dashboard/guides",
+			icon: FileText,
+			canAccess: hasTeamsInOrg,
+		},
+		{
+			label: "Starred",
+			to: "/dashboard/starred",
+			icon: Star,
+			canAccess: hasTeamsInOrg,
+		},
+		{
+			label: "Trash",
+			to: "/dashboard/trash",
+			icon: Trash,
+			canAccess: hasTeamsInOrg,
+		},
+	] as const;
 
 	return (
 		<TooltipProvider delayDuration={0}>
@@ -255,17 +276,19 @@ export function SidebarContent({
 				{!teamLoaded ? (
 					<NavSkeleton collapsed={collapsed} count={nav.length} />
 				) : (
-					nav.map((item) => (
-						<NavLink
-							key={item.to}
-							collapsed={collapsed}
-							to={item.to}
-							label={item.label}
-							icon={item.icon}
-							active={pathname === item.to}
-							onClick={onNavigate}
-						/>
-					))
+					nav
+						.filter((item) => item.canAccess)
+						.map((item) => (
+							<NavLink
+								key={item.to}
+								collapsed={collapsed}
+								to={item.to}
+								label={item.label}
+								icon={item.icon}
+								active={pathname === item.to}
+								onClick={onNavigate}
+							/>
+						))
 				)}
 			</nav>
 
