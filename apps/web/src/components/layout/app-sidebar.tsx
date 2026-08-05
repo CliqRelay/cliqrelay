@@ -33,7 +33,7 @@ import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 type DialogType = "analytics" | "webhooks" | "api-keys";
 
-type ProItem = {
+type ProNavItem = {
 	label: string;
 	icon: ComponentType<{ className?: string; strokeWidth?: number }>;
 	dialog: DialogType;
@@ -46,7 +46,7 @@ type ProItem = {
 	}>;
 };
 
-const proNavItems: ProItem[] = [
+const proNavItems: ProNavItem[] = [
 	{
 		label: "Analytics",
 		icon: BarChart3,
