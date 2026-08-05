@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	authulamodels "github.com/Authula/authula/models"
-	accesscontrol "github.com/Authula/authula/plugins/access-control"
-	accesscontroltypes "github.com/Authula/authula/plugins/access-control/types"
 	organizations "github.com/Authula/authula/plugins/organizations"
 	organizationsplugintypes "github.com/Authula/authula/plugins/organizations/types"
 )
@@ -39,11 +37,6 @@ func createDefaultTeamAndAssignAdminRole(ctx context.Context, actor *authulamode
 		return fmt.Errorf("organizations plugin not found")
 	}
 
-	accessControlPlugin, ok := pluginRegistry.GetPlugin(authulamodels.PluginAccessControl.String()).(*accesscontrol.AccessControlPlugin)
-	if !ok {
-		return fmt.Errorf("access control plugin not found")
-	}
-
 	systemActor := &authulamodels.Actor{
 		ID:     actor.ID,
 		Type:   authulamodels.ActorMachine,
@@ -55,17 +48,6 @@ func createDefaultTeamAndAssignAdminRole(ctx context.Context, actor *authulamode
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create team: %w", err)
-	}
-
-	adminRole, err := accessControlPlugin.Api.GetRoleByName(ctx, systemActor, "admin")
-	if err != nil {
-		return fmt.Errorf("failed to get admin role: %w", err)
-	}
-
-	if err := accessControlPlugin.Api.AssignRoleToUser(ctx, systemActor, actor.ID, accesscontroltypes.AssignUserRoleRequest{
-		RoleID: adminRole.ID,
-	}, nil); err != nil {
-		return fmt.Errorf("failed to assign admin role to user: %w", err)
 	}
 
 	return nil
