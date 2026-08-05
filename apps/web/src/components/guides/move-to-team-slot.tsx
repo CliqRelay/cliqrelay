@@ -1,6 +1,7 @@
 import { extensionRegistry } from "@repo/extensions-sdk";
 
 import { MoveToTeamFallback } from "../pro/move-to-team-fallback";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 type Props = {
 	guideId: string;
@@ -17,7 +18,7 @@ export function MoveToTeamSlot({
 	open,
 	onOpenChange,
 }: Props) {
-	const slot = extensionRegistry.getSlot("guide-move-to-team");
+	const slot = extensionRegistry.getSlot(ExtensionSlotKeys.GUIDE_MOVE_TO_TEAM);
 
 	if (slot) {
 		const Component = slot.component;

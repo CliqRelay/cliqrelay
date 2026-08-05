@@ -29,6 +29,7 @@ import { LearnAboutProFallback } from "../pro/learn-about-pro-fallback";
 import { ProFeatureDialog } from "../pro/pro-feature-dialog";
 import { SidebarTooltip } from "./sidebar-tooltip";
 import { TeamsDropdown } from "./teams-dropdown";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 type DialogType = "analytics" | "webhooks" | "api-keys";
 
@@ -335,21 +336,15 @@ export function SidebarContent({
 			>
 				{teamLoaded &&
 					(collapsed ? (
-						<>
-							<ExtensionSlot
-								name="dashboard-sidebar-learn-about-pro-upgrade-collapsed"
-								fallback={LearnAboutProCollapsedFallback}
-							/>
-							<ExtensionSlot name="dashboard-sidebar-stats-collapsed" />
-						</>
+						<ExtensionSlot
+							name={ExtensionSlotKeys.DASHBOARD_SIDEBAR_PRO_UPGRADE_COLLAPSED}
+							fallback={LearnAboutProCollapsedFallback}
+						/>
 					) : (
-						<>
-							<ExtensionSlot
-								name="dashboard-sidebar-learn-about-pro-upgrade"
-								fallback={LearnAboutProFallback}
-							/>
-							<ExtensionSlot name="dashboard-sidebar-stats" />
-						</>
+						<ExtensionSlot
+							name={ExtensionSlotKeys.DASHBOARD_SIDEBAR_PRO_UPGRADE}
+							fallback={LearnAboutProFallback}
+						/>
 					))}
 			</div>
 

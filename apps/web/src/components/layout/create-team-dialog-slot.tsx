@@ -1,6 +1,7 @@
 import { extensionRegistry } from "@repo/extensions-sdk";
 
 import { CreateTeamFallback } from "../pro/create-team-fallback";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 type Props = {
 	open: boolean;
@@ -8,7 +9,7 @@ type Props = {
 };
 
 export function CreateTeamDialogSlot({ open, onOpenChange }: Props) {
-	const slot = extensionRegistry.getSlot("create-team-dialog");
+	const slot = extensionRegistry.getSlot(ExtensionSlotKeys.CREATE_TEAM_DIALOG);
 
 	if (slot) {
 		const Component = slot.component;

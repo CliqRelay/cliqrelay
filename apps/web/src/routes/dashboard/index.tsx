@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrgStore, useTeamStore } from "@/stores";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 export const Route = createFileRoute("/dashboard/")({
 	component: DashboardPage,
@@ -209,7 +210,7 @@ function DashboardPage() {
 				<RecentGuides teamId={activeTeamId ?? undefined} />
 				<QuickCaptureCard />
 				<ExtensionSlot
-					name="dashboard-activity-feed"
+					name={ExtensionSlotKeys.DASHBOARD_ACTIVITY_FEED}
 					fallback={ActivityFeedFallback}
 				/>
 			</div>

@@ -5,6 +5,7 @@ import { ArrowLeft, Settings, Users } from "lucide-react";
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
 import { cn } from "@/lib/utils";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 const sections = [
 	{
@@ -79,7 +80,7 @@ export function TeamSettingsSidebar({ team }: Props) {
 				})}
 			</nav>
 			<div className="p-2 border-t">
-				<ExtensionSlot name="team-settings-sidebar-bottom" />
+				<ExtensionSlot name={ExtensionSlotKeys.TEAM_SETTINGS_SIDEBAR_BOTTOM} />
 			</div>
 		</div>
 	);

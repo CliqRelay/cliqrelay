@@ -7,10 +7,10 @@ import { authulaClient } from "@/lib/authula-client";
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/teams/$teamId/settings/general",
 )({
-	component: TeamGeneralPageComponent,
+	component: TeamSettingsGeneralPage,
 });
 
-function TeamGeneralPageComponent() {
+function TeamSettingsGeneralPage() {
 	const { orgId, teamId } = Route.useParams();
 
 	const { data: team } = useQuery({

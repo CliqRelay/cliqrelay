@@ -3,17 +3,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
 import { TeamSettingsMembersFallback } from "@/components/pro/team-settings-members-fallback";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/teams/$teamId/settings/members",
 )({
-	component: TeamMembersPageComponent,
+	component: TeamSettingsMembersPage,
 });
 
-function TeamMembersPageComponent() {
+function TeamSettingsMembersPage() {
 	return (
 		<ExtensionSlot
-			name="team-settings-members"
+			name={ExtensionSlotKeys.TEAM_SETTINGS_MEMBERS}
 			fallback={TeamSettingsMembersFallback}
 		/>
 	);

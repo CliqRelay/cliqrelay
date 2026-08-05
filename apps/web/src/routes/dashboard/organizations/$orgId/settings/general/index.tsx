@@ -5,9 +5,9 @@ import { OrganizationSettingsGeneralSection } from "@/components/settings/organi
 export const Route = createFileRoute(
 	"/dashboard/organizations/$orgId/settings/general",
 )({
-	component: OrganizationsSettingsGeneralPageComponent,
+	component: OrganizationSettingsGeneralPage,
 });
 
-function OrganizationsSettingsGeneralPageComponent() {
+function OrganizationSettingsGeneralPage() {
 	return <OrganizationSettingsGeneralSection />;
 }

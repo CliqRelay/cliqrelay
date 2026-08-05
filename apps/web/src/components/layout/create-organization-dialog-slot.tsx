@@ -1,6 +1,7 @@
 import { extensionRegistry } from "@repo/extensions-sdk";
 
 import { CreateOrganizationFallback } from "../pro/create-organization-fallback";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 
 type Props = {
 	open: boolean;
@@ -8,7 +9,9 @@ type Props = {
 };
 
 export function CreateOrganizationDialogSlot({ open, onOpenChange }: Props) {
-	const slot = extensionRegistry.getSlot("create-organization-dialog");
+	const slot = extensionRegistry.getSlot(
+		ExtensionSlotKeys.CREATE_ORGANIZATION_DIALOG,
+	);
 
 	if (slot) {
 		const Component = slot.component;
