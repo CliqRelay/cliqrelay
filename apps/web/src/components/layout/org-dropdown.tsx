@@ -106,16 +106,14 @@ export function OrgDropdown() {
 							);
 						})}
 					</DropdownMenuGroup>
-					<RoleGuard minRole={AppUserRole.EDITOR}>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							className="mx-1 gap-2.5 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
-							onClick={() => setCreateDialogOpen(true)}
-						>
-							<Plus size={16} className="shrink-0 text-muted-foreground" />
-							<span>Create Organization</span>
-						</DropdownMenuItem>
-					</RoleGuard>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						className="mx-1 gap-2.5 px-3 py-2 text-sm font-medium cursor-pointer rounded-lg hover:bg-accent/50"
+						onClick={() => setCreateDialogOpen(true)}
+					>
+						<Plus size={16} className="shrink-0 text-muted-foreground" />
+						<span>Create Organization</span>
+					</DropdownMenuItem>
 					<RoleGuard minRole={AppUserRole.ADMIN}>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
