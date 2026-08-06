@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { authulaClient } from "@/lib/authula-client";
 import { toast } from "@/lib/toast";
 import { useOrgStore } from "@/stores";
+import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 const formSchema = z.object({
 	name: z.string().trim().min(1, "Organization name is required"),
@@ -41,6 +42,16 @@ export function OrganizationSettingsGeneralSection() {
 	const setOrg = useOrgStore((state) => state.setOrg);
 	const setOrganizations = useOrgStore((state) => state.setOrganizations);
 
+	const { mutateAsync: updateOrganization } =
+		authulaClient.organizations.useUpdateOrganization({
+			request: {
+				credentials: "include",
+				headers: {
+					...getCsrfTokenHeader(),
+				},
+			},
+		});
+
 	const form = useForm({
 		validators: {
 			onChange: formSchema,
@@ -54,22 +65,22 @@ export function OrganizationSettingsGeneralSection() {
 				if (!orgId) {
 					return;
 				}
-				const org = await authulaClient.organizations.updateOrganization(
-					orgId,
-					{
+				const updatedOrg = await updateOrganization({
+					organizationId: orgId,
+					data: {
 						name: value.name,
 						slug: value.slug || undefined,
 					},
-				);
-				setOrg(orgId, value.name, org?.ownerId ?? "");
+				});
+				setOrg(orgId, value.name, updatedOrg?.ownerId ?? "");
 				setOrganizations(
 					organizations.map((o) =>
 						o.id === orgId
-							? { ...o, name: value.name, slug: org?.slug ?? value.slug }
+							? { ...o, name: value.name, slug: updatedOrg?.slug ?? value.slug }
 							: o,
 					),
 				);
-				form.reset({ name: value.name, slug: org?.slug ?? value.slug });
+				form.reset({ name: value.name, slug: updatedOrg?.slug ?? value.slug });
 				toast.success("Organization settings updated");
 			} catch (error) {
 				toast.error(
