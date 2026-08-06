@@ -1,6 +1,8 @@
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
+import { AppUserRole } from "@repo/data-commons";
+
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -15,6 +17,7 @@ import { authulaClient } from "@/lib/authula-client";
 import { toast } from "@/lib/toast";
 import { useOrgStore } from "@/stores";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
+import { RoleGuard } from "../shared/role-guard";
 
 const formSchema = z.object({
 	name: z.string().trim().min(1, "Organization name is required"),
@@ -39,6 +42,7 @@ export function OrganizationSettingsGeneralSection() {
 	const orgId = useOrgStore((state) => state.orgId);
 	const orgName = useOrgStore((state) => state.orgName);
 	const organizations = useOrgStore((state) => state.organizations);
+	const currentMember = useOrgStore((state) => state.currentMember);
 	const setOrg = useOrgStore((state) => state.setOrg);
 	const setOrganizations = useOrgStore((state) => state.setOrganizations);
 
@@ -129,6 +133,7 @@ export function OrganizationSettingsGeneralSection() {
 										onBlur={field.handleBlur}
 										placeholder="My Organization"
 										className="w-full"
+										disabled={currentMember?.role !== "admin"}
 									/>
 									<FieldInfo field={field} />
 								</div>
@@ -146,27 +151,33 @@ export function OrganizationSettingsGeneralSection() {
 										onBlur={field.handleBlur}
 										placeholder="my-organization"
 										className="w-full"
+										disabled={currentMember?.role !== "admin"}
 									/>
 									<FieldInfo field={field} />
 								</div>
 							)}
 						/>
-						<form.Subscribe
-							selector={(state) => ({
-								values: state.values,
-								isSubmitting: state.isSubmitting,
-							})}
-							children={({ values, isSubmitting }) => {
-								const hasChanges =
-									values.name !== form.options.defaultValues?.name ||
-									values.slug !== form.options.defaultValues?.slug;
-								return (
-									<Button type="submit" disabled={!hasChanges || isSubmitting}>
-										{isSubmitting ? "Saving..." : "Save"}
-									</Button>
-								);
-							}}
-						/>
+						<RoleGuard minRole={AppUserRole.ADMIN}>
+							<form.Subscribe
+								selector={(state) => ({
+									values: state.values,
+									isSubmitting: state.isSubmitting,
+								})}
+								children={({ values, isSubmitting }) => {
+									const hasChanges =
+										values.name !== form.options.defaultValues?.name ||
+										values.slug !== form.options.defaultValues?.slug;
+									return (
+										<Button
+											type="submit"
+											disabled={!hasChanges || isSubmitting}
+										>
+											{isSubmitting ? "Saving..." : "Save"}
+										</Button>
+									);
+								}}
+							/>
+						</RoleGuard>
 					</form>
 				</CardContent>
 			</Card>
