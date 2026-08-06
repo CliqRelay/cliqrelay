@@ -71,7 +71,6 @@ func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) err
 			Permissions: []string{
 				// Organizations
 				orgconstants.All,
-
 				// Guides
 				constants.GuidesAllPermission,
 			},
@@ -81,21 +80,8 @@ func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) err
 			Permissions: []string{
 				// Organizations
 				orgconstants.OrganizationsReadPermission,
-				orgconstants.OrganizationsInvitationsCreatePermission,
-				orgconstants.OrganizationsInvitationsListPermission,
-				orgconstants.OrganizationsInvitationsReadPermission,
-				orgconstants.OrganizationsInvitationsRevokePermission,
-				orgconstants.OrganizationsMembersAddPermission,
-				orgconstants.OrganizationsMembersListPermission,
-				orgconstants.OrganizationsMembersReadPermission,
-				orgconstants.OrganizationsMembersUpdatePermission,
-				orgconstants.OrganizationsTeamsCreatePermission,
 				orgconstants.OrganizationsTeamsListPermission,
 				orgconstants.OrganizationsTeamsReadPermission,
-				orgconstants.OrganizationsTeamsUpdatePermission,
-				orgconstants.OrganizationsTeamMembersAddPermission,
-				orgconstants.OrganizationsTeamMembersListPermission,
-				orgconstants.OrganizationsTeamMembersReadPermission,
 				// Guides
 				constants.GuidesReadPermission,
 				constants.GuidesCreatePermission,
@@ -107,12 +93,6 @@ func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) err
 			Permissions: []string{
 				// Organizations
 				orgconstants.OrganizationsReadPermission,
-				orgconstants.OrganizationsInvitationsListPermission,
-				orgconstants.OrganizationsInvitationsReadPermission,
-				orgconstants.OrganizationsMembersListPermission,
-				orgconstants.OrganizationsMembersReadPermission,
-				orgconstants.OrganizationsTeamsListPermission,
-				orgconstants.OrganizationsTeamsReadPermission,
 				orgconstants.OrganizationsTeamMembersListPermission,
 				orgconstants.OrganizationsTeamMembersReadPermission,
 				// Guides
