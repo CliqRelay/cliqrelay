@@ -36,6 +36,8 @@ func (s *DefaultAuthorizationService) lookupActorOrgID(ctx context.Context, acto
 	}
 
 	for _, org := range orgs {
+		systemActor.Claims["organization_id"] = org.ID
+
 		teams, err := s.organizationsApi.GetAllTeams(ctx, systemActor, org.ID)
 		if err != nil {
 			continue

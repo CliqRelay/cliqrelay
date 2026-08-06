@@ -41,10 +41,21 @@ func createDefaultTeamAndAssignAdminRole(ctx context.Context, actor *authulamode
 		ID:     actor.ID,
 		Type:   authulamodels.ActorMachine,
 		Scopes: []string{"*"},
+		Claims: map[string]any{
+			"organization_id": organization.ID,
+		},
+	}
+
+	if orgs, err := organizationsPlugin.Api.GetAllOrganizationsByOwner(ctx, actor); err != nil {
+		return fmt.Errorf("failed to get organizations by owner: %w", err)
+	} else {
+		if len(orgs) >= 1 {
+			return nil
+		}
 	}
 
 	_, err := organizationsPlugin.Api.CreateTeam(ctx, systemActor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
-		Name: "My Team",
+		Name: "New Team",
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create team: %w", err)
