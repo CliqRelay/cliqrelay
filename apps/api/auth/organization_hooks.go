@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	authulamodels "github.com/Authula/authula/models"
-	accesscontrol "github.com/Authula/authula/plugins/access-control"
 	organizations "github.com/Authula/authula/plugins/organizations"
 	organizationsplugintypes "github.com/Authula/authula/plugins/organizations/types"
 )
@@ -38,11 +37,6 @@ func createDefaultTeamAndAssignAdminRole(ctx context.Context, actor *authulamode
 		return fmt.Errorf("organizations plugin not found")
 	}
 
-	accessControlPlugin, ok := pluginRegistry.GetPlugin(authulamodels.PluginAccessControl.String()).(*accesscontrol.AccessControlPlugin)
-	if !ok {
-		return fmt.Errorf("access control plugin not found")
-	}
-
 	systemActor := &authulamodels.Actor{
 		ID:     actor.ID,
 		Type:   authulamodels.ActorMachine,
@@ -50,18 +44,6 @@ func createDefaultTeamAndAssignAdminRole(ctx context.Context, actor *authulamode
 		Claims: map[string]any{
 			"organization_id": organization.ID,
 		},
-	}
-
-	if err := assignRoleToUserIfMissing(ctx, accessControlPlugin, systemActor, actor.ID, "admin"); err != nil {
-		return fmt.Errorf("failed to assign admin role to user: %w", err)
-	}
-
-	if orgs, err := organizationsPlugin.Api.GetAllOrganizationsByOwner(ctx, actor); err != nil {
-		return fmt.Errorf("failed to get organizations by owner: %w", err)
-	} else {
-		if len(orgs) >= 1 {
-			return nil
-		}
 	}
 
 	_, err := organizationsPlugin.Api.CreateTeam(ctx, systemActor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
