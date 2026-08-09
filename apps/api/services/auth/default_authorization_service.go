@@ -174,7 +174,7 @@ func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor 
 		return constants.ErrGuideDeleteDenied
 	}
 
-	isAdmin := hasScope(actor.Scopes, orgconstants.All)
+	isAdmin := hasScope(actor.Scopes, orgconstants.OrganizationsAllPermission)
 	if !isAdmin {
 		return constants.ErrGuideDeleteDenied
 	}

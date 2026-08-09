@@ -70,7 +70,7 @@ func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) err
 			Name: "admin", Description: "Administrator with full access", Weight: 100,
 			Permissions: []string{
 				// Organizations
-				orgconstants.All,
+				orgconstants.OrganizationsAllPermission,
 				// Guides
 				constants.GuidesAllPermission,
 			},

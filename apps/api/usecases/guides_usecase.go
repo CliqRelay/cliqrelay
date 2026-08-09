@@ -238,7 +238,7 @@ func (uc *GuidesUseCase) BulkAction(ctx context.Context, actor *authulamodels.Ac
 		return err
 	}
 
-	isAdmin := slices.Contains(actor.Scopes, orgconstants.All)
+	isAdmin := slices.Contains(actor.Scopes, orgconstants.OrganizationsAllPermission)
 
 	var err error
 	switch action {
