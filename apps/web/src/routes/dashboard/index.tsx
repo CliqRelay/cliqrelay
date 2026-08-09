@@ -1,5 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { MailQuestion } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { ExtensionSlot } from "@repo/extensions-sdk";
 
@@ -9,7 +8,6 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { QuickCaptureCard } from "@/components/dashboard/quick-capture-card";
 import { RecentGuides } from "@/components/dashboard/recent-guides";
 import { StatsCards } from "@/components/dashboard/stats-cards";
-import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -25,13 +23,7 @@ export const Route = createFileRoute("/dashboard/")({
 	component: DashboardPage,
 });
 
-function NoTeamsView({
-	orgName,
-	onRequestAccess,
-}: {
-	orgName: string | null;
-	onRequestAccess: () => void;
-}) {
+function NoTeamsView({ orgName }: { orgName: string | null }) {
 	return (
 		<div className="dashboard-page__wrapper">
 			<div className="space-y-6 p-6">
@@ -47,22 +39,12 @@ function NoTeamsView({
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="rounded-lg border bg-card p-4 space-y-3">
-							<p className="text-sm font-medium text-muted-foreground">
-								💡 What would you like to do next?
-							</p>
-							<Button
-								variant="outline"
-								className="w-full justify-start gap-3 h-auto py-3 px-4 cursor-pointer"
-								onClick={onRequestAccess}
-							>
-								<MailQuestion size={18} />
-								<div className="text-left">
-									<div className="font-medium">✉️ Request Team Access</div>
-									<div className="text-xs text-muted-foreground font-normal">
-										Reach out to an org admin to get added to a team
-									</div>
+							<div className="text-left">
+								<div className="font-medium">Request Team Access</div>
+								<div className="text-xs text-muted-foreground font-normal">
+									Reach out to an org admin to get added to a team
 								</div>
-							</Button>
+							</div>
 						</div>
 					</CardContent>
 				</Card>
@@ -176,29 +158,17 @@ function DashboardSkeleton() {
 }
 
 function DashboardPage() {
-	const navigate = useNavigate();
 	const teams = useTeamStore((s) => s.teams);
 	const loaded = useTeamStore((s) => s.loaded);
 	const activeTeamId = useTeamStore((s) => s.activeTeamId);
 	const orgName = useOrgStore((s) => s.orgName);
-	const orgId = useOrgStore((s) => s.orgId);
 
 	if (!loaded) {
 		return <DashboardSkeleton />;
 	}
 
 	if (teams.length === 0) {
-		return (
-			<NoTeamsView
-				orgName={orgName}
-				onRequestAccess={() =>
-					navigate({
-						to: "/dashboard/organizations/$orgId/settings/members",
-						params: { orgId: orgId ?? "" },
-					})
-				}
-			/>
-		);
+		return <NoTeamsView orgName={orgName} />;
 	}
 
 	return (
