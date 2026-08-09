@@ -34,21 +34,15 @@ func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) err
 		return fmt.Errorf("access control plugin not found")
 	}
 
-	systemActor := &authulamodels.Actor{
-		ID:     "system",
-		Type:   authulamodels.ActorMachine,
-		Scopes: []string{"*"},
-	}
-
 	for _, gp := range guidePermissions {
 		desc := gp.Description
-		perm, err := acPlugin.Api.GetPermissionByKey(ctx, systemActor, gp.Key)
+		perm, err := acPlugin.Api.GetPermissionByKey(ctx, gp.Key)
 		if err != nil && !errors.Is(err, coreerrors.ErrNotFound) {
 			return fmt.Errorf("failed to check permission %q: %w", gp.Key, err)
 		}
 
 		if perm == nil {
-			if _, err := acPlugin.Api.CreatePermission(ctx, systemActor, accesscontrolplugintypes.CreatePermissionRequest{
+			if _, err := acPlugin.Api.CreatePermission(ctx, accesscontrolplugintypes.CreatePermissionRequest{
 				Key:         gp.Key,
 				Description: &desc,
 				IsSystem:    false,
@@ -102,14 +96,14 @@ func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) err
 	}
 
 	for _, r := range orgRoles {
-		role, err := acPlugin.Api.GetRoleByName(ctx, systemActor, r.Name)
+		role, err := acPlugin.Api.GetRoleByName(ctx, r.Name)
 		if err != nil && !errors.Is(err, coreerrors.ErrNotFound) {
 			return fmt.Errorf("failed to check role %q: %w", r.Name, err)
 		}
 
 		if role == nil {
 			desc := r.Description
-			role, err = acPlugin.Api.CreateRole(ctx, systemActor, accesscontrolplugintypes.CreateRoleRequest{
+			role, err = acPlugin.Api.CreateRole(ctx, accesscontrolplugintypes.CreateRoleRequest{
 				Name:        r.Name,
 				Description: &desc,
 				Weight:      &r.Weight,
@@ -122,7 +116,7 @@ func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) err
 
 		permissionIDs := make([]string, 0, len(r.Permissions))
 		for _, key := range r.Permissions {
-			perm, err := acPlugin.Api.GetPermissionByKey(ctx, systemActor, key)
+			perm, err := acPlugin.Api.GetPermissionByKey(ctx, key)
 			if err != nil {
 				return fmt.Errorf("failed to look up permission %q for role %q: %w", key, r.Name, err)
 			}
@@ -132,7 +126,7 @@ func SeedRolesAndPermissions(ctx context.Context, authulaAuth *authula.Auth) err
 			permissionIDs = append(permissionIDs, perm.ID)
 		}
 
-		if err := acPlugin.Api.ReplaceRolePermissions(ctx, systemActor, role.ID, permissionIDs, nil); err != nil {
+		if err := acPlugin.Api.ReplaceRolePermissions(ctx, role.ID, permissionIDs, nil); err != nil {
 			return fmt.Errorf("failed to assign permissions to role %q: %w", r.Name, err)
 		}
 	}
