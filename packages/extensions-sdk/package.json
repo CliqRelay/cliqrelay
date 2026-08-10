@@ -17,10 +17,10 @@
     "react": "^19.2.8"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.5",
+    "@biomejs/biome": "^2.5.7",
     "@testing-library/react": "^16.3.2",
-    "@types/react": "^19.2.17",
-    "jsdom": "^30.0.0",
+    "@types/react": "^19.2.18",
+    "jsdom": "^30.0.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   }
