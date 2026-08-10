@@ -188,7 +188,7 @@ func GuidesRoutes(cfg *config.HTTPConfig, guidesUseCase interfaces.GuidesUseCase
 }
 
 func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/demo", basePath),
 		openapi.WithOperationID("createDemoGuide"),
@@ -199,7 +199,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusCreated, &types.CreateDemoGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides", basePath),
 		openapi.WithOperationID("createGuide"),
@@ -210,7 +210,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusCreated, &types.CreateGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/guides", basePath),
 		openapi.WithOperationID("getAllGuides"),
@@ -221,7 +221,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllGuidesResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/guides/count", basePath),
 		openapi.WithOperationID("getGuidesCount"),
@@ -232,7 +232,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.GetGuidesCountResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/guides/{id}", basePath),
 		openapi.WithOperationID("getGuideById"),
@@ -243,7 +243,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.GetGuideByIDResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPatch,
 		fmt.Sprintf("%s/guides/{id}", basePath),
 		openapi.WithOperationID("updateGuide"),
@@ -255,7 +255,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.UpdateGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodDelete,
 		fmt.Sprintf("%s/guides/{id}", basePath),
 		openapi.WithOperationID("deleteGuide"),
@@ -266,7 +266,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.DeleteGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/publish", basePath),
 		openapi.WithOperationID("publishGuide"),
@@ -277,7 +277,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.PublishGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/unpublish", basePath),
 		openapi.WithOperationID("unpublishGuide"),
@@ -288,7 +288,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.UnpublishGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/recalculate-duration", basePath),
 		openapi.WithOperationID("recalculateGuideDuration"),
@@ -299,7 +299,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.RecalculateDurationResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/archive", basePath),
 		openapi.WithOperationID("archiveGuide"),
@@ -310,7 +310,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.ArchiveGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/unarchive", basePath),
 		openapi.WithOperationID("unarchiveGuide"),
@@ -321,7 +321,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.UnarchiveGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/restore", basePath),
 		openapi.WithOperationID("restoreGuide"),
@@ -332,7 +332,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.RestoreGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/permanently-delete", basePath),
 		openapi.WithOperationID("permanentlyDeleteGuide"),
@@ -343,7 +343,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.PermanentlyDeleteGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/guides/starred", basePath),
 		openapi.WithOperationID("getStarredGuides"),
@@ -354,7 +354,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.GetStarredGuidesResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/star", basePath),
 		openapi.WithOperationID("starGuide"),
@@ -365,7 +365,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.StarGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodDelete,
 		fmt.Sprintf("%s/guides/{id}/star", basePath),
 		openapi.WithOperationID("unstarGuide"),
@@ -376,7 +376,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.UnstarGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/bulk", basePath),
 		openapi.WithOperationID("bulkGuidesAction"),
@@ -388,7 +388,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.BulkGuidesResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/export", basePath),
 		openapi.WithOperationID("exportGuide"),
@@ -400,7 +400,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusAccepted, &types.ExportGuideResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/guide-exports/{exportID}", basePath),
 		openapi.WithOperationID("getExportStatus"),
@@ -411,7 +411,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.GetExportStatusResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/guides/{id}/view", basePath),
 		openapi.WithOperationID("recordGuideView"),
@@ -422,7 +422,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.RecordGuideViewResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/guides/views/count", basePath),
 		openapi.WithOperationID("getGuideViewsCount"),
@@ -433,7 +433,7 @@ func RegisterGuidesOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.GetGuideViewsCountResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/guides/time-saved", basePath),
 		openapi.WithOperationID("getGuidesTimeSaved"),

@@ -74,5 +74,5 @@ func TestNewOpenAPISpecYAMLHandler(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, "text/vnd.yaml", rec.Header().Get("Content-Type"))
-	assert.Contains(t, string(rec.Body.Bytes()), "openapi: ")
+	assert.Contains(t, rec.Body.String(), "openapi: ")
 }

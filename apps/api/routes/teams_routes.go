@@ -31,7 +31,7 @@ func TeamsRoutes(cfg *config.HTTPConfig) []authulamodels.Route {
 }
 
 func RegisterTeamsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/teams", basePath),
 		openapi.WithOperationID("getTeams"),

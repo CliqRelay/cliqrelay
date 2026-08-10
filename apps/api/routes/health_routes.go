@@ -25,7 +25,7 @@ func HealthRoutes(cfg *config.HTTPConfig) []authulamodels.Route {
 }
 
 func RegisterHealthOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/health", basePath),
 		openapi.WithOperationID("getHealth"),

@@ -62,7 +62,7 @@ func MediaAssetsRoutes(cfg *config.HTTPConfig, mediaUseCase interfaces.MediaAsse
 }
 
 func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/media-assets", basePath),
 		openapi.WithOperationID("createMediaAsset"),
@@ -73,7 +73,7 @@ func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string)
 		openapi.WithResponseStatus(http.StatusCreated, &types.CreateMediaAssetResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/media-assets", basePath),
 		openapi.WithOperationID("getAllMediaAssetsByStepId"),
@@ -84,7 +84,7 @@ func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string)
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllMediaAssetsResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/media-assets/{id}", basePath),
 		openapi.WithOperationID("getMediaAssetById"),
@@ -95,7 +95,7 @@ func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string)
 		openapi.WithResponseStatus(http.StatusOK, &types.GetMediaAssetByIDResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPatch,
 		fmt.Sprintf("%s/media-assets/{id}", basePath),
 		openapi.WithOperationID("updateMediaAsset"),
@@ -107,7 +107,7 @@ func RegisterMediaAssetsOpenAPIDocs(svc openapi.OpenAPIService, basePath string)
 		openapi.WithResponseStatus(http.StatusOK, &types.UpdateMediaAssetResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodDelete,
 		fmt.Sprintf("%s/media-assets/{id}", basePath),
 		openapi.WithOperationID("deleteMediaAsset"),

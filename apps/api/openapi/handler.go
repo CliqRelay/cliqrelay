@@ -12,7 +12,7 @@ func NewOpenAPISpecHandler(svc OpenAPIService) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(spec)
+		_, _ = w.Write(spec)
 	}
 }
 
@@ -24,6 +24,6 @@ func NewOpenAPISpecYAMLHandler(svc OpenAPIService) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "text/vnd.yaml")
-		w.Write(spec)
+		_, _ = w.Write(spec)
 	}
 }

@@ -41,7 +41,7 @@ func UploadRoutes(cfg *config.HTTPConfig, uploadUseCase interfaces.UploadsUseCas
 }
 
 func RegisterUploadsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/uploads/presign", basePath),
 		openapi.WithOperationID("presignUpload"),
@@ -51,7 +51,7 @@ func RegisterUploadsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithRequest(&types.PresignUploadRequest{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.PresignUploadResponse{}),
 	)
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/uploads/complete", basePath),
 		openapi.WithOperationID("completeUpload"),

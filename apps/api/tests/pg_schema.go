@@ -30,7 +30,7 @@ func SetupTestSchema(packageName, dsn string) (*bun.DB, func(), error) {
 	schemaDSN := dsn + fmt.Sprintf("&search_path=%s", schemaName)
 	sqldb, err := sql.Open("postgres", schemaDSN)
 	if err != nil {
-		adminDB.Exec(fmt.Sprintf("DROP SCHEMA %s CASCADE", pq.QuoteIdentifier(schemaName)))
+		_, _ = adminDB.Exec(fmt.Sprintf("DROP SCHEMA %s CASCADE", pq.QuoteIdentifier(schemaName)))
 		adminDB.Close()
 		return nil, nil, fmt.Errorf("schema connect: %w", err)
 	}
@@ -40,14 +40,14 @@ func SetupTestSchema(packageName, dsn string) (*bun.DB, func(), error) {
 	ctx := context.Background()
 	if err := migrations.RunTestMigrations(ctx, db); err != nil {
 		sqldb.Close()
-		adminDB.Exec(fmt.Sprintf("DROP SCHEMA %s CASCADE", pq.QuoteIdentifier(schemaName)))
+		_, _ = adminDB.Exec(fmt.Sprintf("DROP SCHEMA %s CASCADE", pq.QuoteIdentifier(schemaName)))
 		adminDB.Close()
 		return nil, nil, fmt.Errorf("test migrations: %w", err)
 	}
 
 	cleanup := func() {
 		sqldb.Close()
-		adminDB.Exec(fmt.Sprintf("DROP SCHEMA %s CASCADE", pq.QuoteIdentifier(schemaName)))
+		_, _ = adminDB.Exec(fmt.Sprintf("DROP SCHEMA %s CASCADE", pq.QuoteIdentifier(schemaName)))
 		adminDB.Close()
 	}
 

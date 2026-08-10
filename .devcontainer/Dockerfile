@@ -34,7 +34,7 @@ ENV SHELL=/bin/zsh
 # --------------------------------------
 # pnpm
 # --------------------------------------
-RUN npm i -g pnpm@11.18.0
+RUN npm i -g pnpm@11.21.0
 # --------------------------------------
 
 # --------------------------------------
@@ -79,13 +79,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # --------------------------------------
 # Go & tools
 # --------------------------------------
-RUN curl -sSL https://go.dev/dl/go1.26.4.linux-amd64.tar.gz | tar -C /usr/local -xz
+RUN curl -sSL https://go.dev/dl/go1.26.5.linux-amd64.tar.gz | tar -C /usr/local -xz
 ENV PATH="${PATH}:/usr/local/go/bin"
 
 # Install Go tools useful for dev
 RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest \
 && go install github.com/go-delve/delve/cmd/dlv@latest \
 && go install golang.org/x/tools/gopls@latest
+
+ENV PATH="$PATH:$(go env GOPATH)/bin"
 # --------------------------------------
 
 # --------------------------------------

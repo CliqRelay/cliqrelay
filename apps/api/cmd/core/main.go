@@ -5,8 +5,6 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/Authula/authula"
-
 	"github.com/CliqRelay/cliqrelay/auth"
 	"github.com/CliqRelay/cliqrelay/bootstrap"
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -34,8 +32,7 @@ func main() {
 		log.Fatal("Error initializing OpenAPI service: ", err)
 	}
 
-	var authulaAuth *authula.Auth
-	authulaAuth = auth.InitAuth(
+	authulaAuth := auth.InitAuth(
 		envConfig,
 		auth.InitAuthServiceHooks(),
 	)

@@ -76,7 +76,7 @@ func StepsRoutes(cfg *config.HTTPConfig, stepsUseCase interfaces.StepsUseCase) [
 }
 
 func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/steps", basePath),
 		openapi.WithOperationID("createStep"),
@@ -87,7 +87,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusCreated, &types.CreateStepResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/steps", basePath),
 		openapi.WithOperationID("getAllStepsByGuideId"),
@@ -98,7 +98,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllStepsResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodGet,
 		fmt.Sprintf("%s/steps/{id}", basePath),
 		openapi.WithOperationID("getStepById"),
@@ -109,7 +109,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.GetStepByIDResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPatch,
 		fmt.Sprintf("%s/steps/{id}", basePath),
 		openapi.WithOperationID("updateStep"),
@@ -121,7 +121,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.UpdateStepResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodDelete,
 		fmt.Sprintf("%s/steps/{id}", basePath),
 		openapi.WithOperationID("deleteStep"),
@@ -132,7 +132,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusOK, &types.DeleteStepResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/steps/{id}/duplicate", basePath),
 		openapi.WithOperationID("duplicateStep"),
@@ -144,7 +144,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithResponseStatus(http.StatusCreated, &types.DuplicateStepResponse{}),
 	)
 
-	svc.AddOperation(
+	_ = svc.AddOperation(
 		http.MethodPost,
 		fmt.Sprintf("%s/steps/reorder", basePath),
 		openapi.WithOperationID("reorderSteps"),

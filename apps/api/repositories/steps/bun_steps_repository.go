@@ -306,16 +306,12 @@ func (r *BunStepsRepository) Update(ctx context.Context, dto *types.UpdateStepDT
 }
 
 func (r *BunStepsRepository) Delete(ctx context.Context, id string) error {
-	res, err := r.db.NewDelete().
+	_, err := r.db.NewDelete().
 		Model((*models.Step)(nil)).
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
 		return err
-	}
-
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
 	}
 
 	return nil

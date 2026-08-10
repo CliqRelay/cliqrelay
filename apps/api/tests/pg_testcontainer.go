@@ -27,12 +27,12 @@ func StartPostgresContainer(ctx context.Context) (dsn string, cleanup func(), er
 
 	dsn, err = pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
-		testcontainers.TerminateContainer(pgContainer)
+		_ = testcontainers.TerminateContainer(pgContainer)
 		return "", nil, fmt.Errorf("get connection string: %w", err)
 	}
 
 	cleanup = func() {
-		testcontainers.TerminateContainer(pgContainer)
+		_ = testcontainers.TerminateContainer(pgContainer)
 	}
 
 	return dsn, cleanup, nil

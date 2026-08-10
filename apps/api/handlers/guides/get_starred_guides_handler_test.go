@@ -17,8 +17,6 @@ import (
 	"github.com/CliqRelay/cliqrelay/usecases"
 )
 
-const testPageSize = 10
-
 func TestGetStarredGuidesHandler(t *testing.T) {
 	t.Parallel()
 
