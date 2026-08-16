@@ -4,9 +4,9 @@ import { useNavigate } from "@tanstack/react-router";
 import {
 	Archive,
 	ArchiveRestore,
-	Clock,
 	Eye,
 	Globe,
+	Hourglass,
 	Lock,
 	MoreHorizontal,
 	RotateCcw,
@@ -192,7 +192,7 @@ export function GuideCard({
 				</CardContent>
 				<CardFooter className="px-5 pb-3 pt-0 gap-1.5">
 					<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/50">
-						<Clock className="size-3 text-muted-foreground/70" />
+						<Hourglass className="size-3 text-muted-foreground/70" />
 						<span className="text-muted-foreground/70">
 							{formatDuration(guide.durationSeconds)}
 						</span>
