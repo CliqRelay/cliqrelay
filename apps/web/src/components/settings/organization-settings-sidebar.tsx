@@ -1,17 +1,10 @@
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
-import {
-	Building2,
-	Layers,
-	Palette,
-	Plug,
-	Settings,
-	Users,
-} from "lucide-react";
+import { Building2, Layers, Palette, Settings, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useOrgStore } from "@/stores";
 
-const allSections = [
+const sections = [
 	{
 		id: "general",
 		label: "General",
@@ -29,34 +22,22 @@ const allSections = [
 		label: "Teams",
 		icon: Layers,
 		to: "/dashboard/organizations/$orgId/settings/teams",
-		adminOnly: true,
 	},
 	{
 		id: "branding",
 		label: "Branding",
 		icon: Palette,
 		to: "/dashboard/organizations/$orgId/settings/branding",
-		adminOnly: true,
 	},
 ] as const;
 
-type Section = (typeof allSections)[number];
-
 export function OrganizationSettingsSidebar() {
 	const orgName = useOrgStore((state) => state.orgName);
-	const currentMember = useOrgStore((state) => state.currentMember);
 	const { orgId } = useParams({
 		from: "/dashboard/organizations/$orgId/settings",
 	});
 
 	const location = useRouterState({ select: (s) => s.location });
-
-	const role = currentMember?.role ?? "";
-	const isAdmin = role === "owner" || role === "admin";
-
-	const sections = allSections.filter(
-		(s) => !("adminOnly" in s && s.adminOnly) || isAdmin,
-	) as Section[];
 
 	const activeSection =
 		sections.find((s) => location.pathname.endsWith(s.id))?.id ?? "general";

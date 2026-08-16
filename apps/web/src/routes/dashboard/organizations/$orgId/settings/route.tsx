@@ -1,7 +1,10 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
+import { AppUserRole, hasMinimumRole } from "@repo/data-commons";
+
 import { OrganizationSettingsSidebar } from "@/components/settings/organization-settings-sidebar";
 import { authulaClient } from "@/lib/authula-client";
+import type { AppOrganizationMemberResponse } from "@/models";
 import { useOrgStore } from "@/stores";
 
 export const Route = createFileRoute(
@@ -17,24 +20,34 @@ export const Route = createFileRoute(
 			}>;
 			user?: { id: string };
 		};
-		if (!ctx.orgs?.some((o) => o.id === params.orgId)) {
+		const org = ctx.orgs?.find((o) => o.id === params.orgId);
+		if (!org || !ctx.user?.id) {
 			throw redirect({ to: "/dashboard" });
 		}
 
-		if (ctx.user?.id) {
-			try {
-				const members =
-					await authulaClient.organizations.listOrganizationMembers(
-						params.orgId,
-					);
-				const currentMember =
-					members?.find((m) => m.user.id === ctx.user?.id) ?? null;
-				if (currentMember) {
-					useOrgStore.getState().setCurrentMember(currentMember);
-				}
-			} catch {
-				// Non-critical — sidebar will show fewer items
-			}
+		let currentMember: AppOrganizationMemberResponse | null = null;
+		try {
+			const members =
+				(await authulaClient.organizations.listOrganizationMembers(
+					params.orgId,
+				)) as AppOrganizationMemberResponse[] | null;
+			currentMember = members?.find((m) => m.user.id === ctx.user?.id) ?? null;
+		} catch {
+			// Membership could not be resolved — only org ownership can grant access
+		}
+
+		const isOwner = org.ownerId === ctx.user.id;
+		const isAdmin = hasMinimumRole(
+			currentMember?.role as AppUserRole,
+			AppUserRole.ADMIN,
+		);
+
+		if (!isOwner && !isAdmin) {
+			throw redirect({ to: "/dashboard" });
+		}
+
+		if (currentMember) {
+			useOrgStore.getState().setCurrentMember(currentMember);
 		}
 	},
 	component: SettingsLayout,
