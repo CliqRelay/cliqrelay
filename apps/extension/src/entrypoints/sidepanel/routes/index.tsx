@@ -1,18 +1,22 @@
 import { useState } from "react";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
 import { api } from "@repo/api-client";
 
-import { useSidePanelBridge } from "../hooks/useSidePanelBridge";
-import { useSidePanelStore } from "../stores/sidepanel-store";
 import {
 	CaptureSessionPanel,
 	DeleteGuideDialog,
 	DeleteStepDialog,
 	PersistedGuideView,
+	RecentGuidesList,
 	RecordingControls,
 	StepList,
+	ViewedGuidePanel,
 } from "../components";
+import { useSidePanelBridge } from "../hooks/useSidePanelBridge";
+import { useSidePanelStore } from "../stores/sidepanel-store";
 
 export const Route = createFileRoute("/")({
 	component: Home,
@@ -29,11 +33,19 @@ function Home() {
 	const removeJobProgress = useSidePanelStore((s) => s.removeJobProgress);
 	const clearStore = useSidePanelStore((s) => s.clear);
 
+	const queryClient = useQueryClient();
+
 	const [isPending, setIsPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [viewingGuideId, setViewingGuideId] = useState<string | null>(null);
 
 	const stepCount = jobProgress.length;
 	const isActive = status === "recording" || status === "paused";
+
+	const invalidateGuides = () =>
+		queryClient.invalidateQueries({
+			queryKey: api.guides.getGetAllGuidesQueryKey(),
+		});
 
 	const deleteGuideMutation = api.guides.useDeleteGuide({
 		request: { credentials: "include" },
@@ -116,6 +128,7 @@ function Home() {
 				await deleteGuideMutation.mutateAsync({ id: activeGuideId });
 			}
 			clearStore();
+			await invalidateGuides();
 		} catch (err) {
 			setError(
 				err instanceof Error ? err.message : "An unknown error occurred",
@@ -126,8 +139,16 @@ function Home() {
 		}
 	};
 
-	const handleStart = () => withPending(bridge.startRecording);
-	const handleStop = () => withPending(bridge.stopRecording);
+	const handleStart = () =>
+		withPending(async () => {
+			setViewingGuideId(null);
+			await bridge.startRecording();
+		});
+	const handleStop = () =>
+		withPending(async () => {
+			await bridge.stopRecording();
+			await invalidateGuides();
+		});
 	const handlePause = () => withPending(bridge.pauseRecording);
 	const handleResume = () => withPending(bridge.resumeRecording);
 
@@ -167,6 +188,15 @@ function Home() {
 		);
 	}
 
+	if (viewingGuideId) {
+		return (
+			<ViewedGuidePanel
+				guideId={viewingGuideId}
+				onBack={() => setViewingGuideId(null)}
+			/>
+		);
+	}
+
 	if (showPersistedView && activeGuideId) {
 		return (
 			<>
@@ -188,28 +218,35 @@ function Home() {
 					Capture Session
 				</span>
 			</div>
-			<RecordingControls
-				status={status}
-				onStart={handleStart}
-				onStop={handleStop}
-				isPending={isPending}
-				error={error}
-				uploadQueue={uploadQueue}
-			/>
-			{jobProgress.length > 0 && (
-				<span className="shrink-0 text-[11px] font-semibold text-muted-foreground/60">
-					Steps
-				</span>
-			)}
-			<div className="min-h-0 flex-1">
-				<StepList
-					mode="recording"
-					steps={jobProgress}
-					bufferedCount={bufferedCount}
-					onDeleteStep={handleDeleteRequest}
-					onDismiss={handleDismiss}
+			<div className="shrink-0">
+				<RecordingControls
+					status={status}
+					onStart={handleStart}
+					onStop={handleStop}
+					isPending={isPending}
+					error={error}
+					uploadQueue={uploadQueue}
 				/>
 			</div>
+			{jobProgress.length === 0 && (
+				<RecentGuidesList onSelectGuide={setViewingGuideId} />
+			)}
+			{jobProgress.length > 0 && (
+				<>
+					<span className="shrink-0 text-[11px] font-semibold text-muted-foreground/60">
+						Steps
+					</span>
+					<div className="min-h-0 flex-1">
+						<StepList
+							mode="recording"
+							steps={jobProgress}
+							bufferedCount={bufferedCount}
+							onDeleteStep={handleDeleteRequest}
+							onDismiss={handleDismiss}
+						/>
+					</div>
+				</>
+			)}
 			{activeGuideId && (
 				<button
 					type="button"

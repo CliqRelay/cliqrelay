@@ -2,6 +2,7 @@ import { api } from "@repo/api-client";
 
 import { getActiveTeamId } from "@/lib/active-team";
 import { withCsrf } from "@/lib/csrf";
+import { createGuideTitle } from "@/utils/guide";
 
 export const createEnsureGuide = (
 	getActiveGuideId: () => Promise<string | undefined>,
@@ -13,7 +14,7 @@ export const createEnsureGuide = (
 		if (!guideId) {
 			const teamId = await getActiveTeamId();
 			const response = await api.guides.createGuide(
-				{ title: "Untitled Guide", teamId: teamId ?? "" },
+				{ title: createGuideTitle(), teamId: teamId ?? "" },
 				await withCsrf(),
 			);
 			guideId = response.guide.id;

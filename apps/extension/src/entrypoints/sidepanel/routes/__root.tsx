@@ -18,7 +18,7 @@ export const Route = createRootRoute({
 function RootComponent() {
 	return (
 		<TooltipProvider>
-			<div className="flex h-screen w-full flex-col bg-background">
+			<div className="flex h-screen w-full flex-col overflow-hidden bg-background">
 				<header className="flex shrink-0 items-center gap-3 border-b border-border/40 p-5">
 					<img
 						src="/app-icon-logo.svg"

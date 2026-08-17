@@ -8,6 +8,9 @@ body,
 	width: 100%;
 	margin: 0;
 	padding: 0;
+	/* The panel is a fixed-viewport app: only inner scroll regions may scroll.
+	   Without this the document itself scrolls past the panel. */
+	overflow: hidden;
 	font-size: 16px;
 	font-family: "Google Sans Flex", sans-serif;
 	-webkit-font-smoothing: antialiased;

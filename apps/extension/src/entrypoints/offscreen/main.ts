@@ -6,38 +6,41 @@ import { getActiveTeamId } from "@/lib/active-team";
 import { withCsrf } from "@/lib/csrf";
 import { validateOffscreenCommand } from "@/models/offscreen";
 import { createOffscreenRuntime } from "@/services/offscreen";
+import { createGuideTitle } from "@/utils/guide";
 
 let activeGuideId: string | undefined;
 let guideCreatePromise: Promise<{ guideId: string; isNew: boolean }> | null =
 	null;
 
-const getOrCreateGuideId =
-	async (): Promise<{ guideId: string; isNew: boolean }> => {
-		if (activeGuideId) return { guideId: activeGuideId, isNew: false };
+const getOrCreateGuideId = async (): Promise<{
+	guideId: string;
+	isNew: boolean;
+}> => {
+	if (activeGuideId) return { guideId: activeGuideId, isNew: false };
 
-		if (guideCreatePromise) {
-			const { guideId } = await guideCreatePromise;
-			return { guideId, isNew: false };
-		}
+	if (guideCreatePromise) {
+		const { guideId } = await guideCreatePromise;
+		return { guideId, isNew: false };
+	}
 
-		const createPromise = (async () => {
-			const teamId = await getActiveTeamId();
-			const guideResponse = await api.guides.createGuide(
-				{ title: "Untitled Guide", teamId: teamId ?? "" },
-				await withCsrf(),
-			);
-			activeGuideId = guideResponse.guide.id;
-			return { guideId: activeGuideId!, isNew: true };
-		})();
+	const createPromise = (async () => {
+		const teamId = await getActiveTeamId();
+		const guideResponse = await api.guides.createGuide(
+			{ title: createGuideTitle(), teamId: teamId ?? "" },
+			await withCsrf(),
+		);
+		activeGuideId = guideResponse.guide.id;
+		return { guideId: activeGuideId!, isNew: true };
+	})();
 
-		guideCreatePromise = createPromise;
+	guideCreatePromise = createPromise;
 
-		try {
-			return await createPromise;
-		} finally {
-			guideCreatePromise = null;
-		}
-	};
+	try {
+		return await createPromise;
+	} finally {
+		guideCreatePromise = null;
+	}
+};
 
 const runtime = createOffscreenRuntime({
 	onEvent: (event) => {

@@ -166,7 +166,7 @@ function ViewStepList({
 
 	return (
 		<ScrollArea type="auto" className="h-full min-h-0 min-w-0">
-			<div className="flex flex-col gap-1 px-0.5">
+			<div className="flex flex-col gap-3 p-0.5">
 				{sorted.map((step, index) => (
 					<StepCardView
 						key={step.id}

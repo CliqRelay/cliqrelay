@@ -2,12 +2,24 @@ import { api } from "@repo/api-client";
 
 import { getActiveTeamId } from "@/lib/active-team";
 import { withCsrf } from "@/lib/csrf";
-import type { CaptureBridgeMessage, CaptureMetadataEntry, OffscreenEvent, RecordingStateMachine, SessionService, SidePanelCommand, StepJobProgress } from "@/models";
+import type {
+	CaptureBridgeMessage,
+	CaptureMetadataEntry,
+	OffscreenEvent,
+	RecordingStateMachine,
+	SessionService,
+	SidePanelCommand,
+	StepJobProgress,
+} from "@/models";
 import type { PortManager } from "@/services/sidepanel/port-manager.service";
-import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
+import {
+	createCommandHandler,
+	createStateUpdateBuilder,
+} from "@/services/sidepanel";
 import { createOffscreenManager } from "@/services/background/offscreen-manager.service";
 import type { GetSettings, UpdateSettings } from "@/services/settings";
 import { buildActionText } from "@/utils/action-text";
+import { createGuideTitle } from "@/utils/guide";
 import { generateCaptureId } from "@/utils/id";
 
 export const createSessionManager = (
@@ -32,26 +44,31 @@ export const createSessionManager = (
 		clearPendingActivations = fn;
 	};
 
-	const getOrCreateGuideId =
-		async (): Promise<{ guideId: string; isNew: boolean }> => {
-			const activeGuideId = await sessionService.getActiveGuideId();
-			if (activeGuideId) {
-				return { guideId: activeGuideId, isNew: false };
-			}
-			const teamId = await getActiveTeamId();
-			const guideResponse = await api.guides.createGuide(
-				{ title: "Untitled Guide", teamId: teamId ?? "" },
-				await withCsrf(),
-			);
-			await sessionService.setActiveGuideId(guideResponse.guide.id);
-			return { guideId: guideResponse.guide.id, isNew: true };
-		};
+	const getOrCreateGuideId = async (): Promise<{
+		guideId: string;
+		isNew: boolean;
+	}> => {
+		const activeGuideId = await sessionService.getActiveGuideId();
+		if (activeGuideId) {
+			return { guideId: activeGuideId, isNew: false };
+		}
+		const teamId = await getActiveTeamId();
+		const guideResponse = await api.guides.createGuide(
+			{ title: createGuideTitle(), teamId: teamId ?? "" },
+			await withCsrf(),
+		);
+		await sessionService.setActiveGuideId(guideResponse.guide.id);
+		return { guideId: guideResponse.guide.id, isNew: true };
+	};
 
 	const setPortManager = (pm: PortManager) => {
 		currentPortManager = pm;
 	};
 
-	const updateJobProgress = (jobId: string, updates: Partial<StepJobProgress>) => {
+	const updateJobProgress = (
+		jobId: string,
+		updates: Partial<StepJobProgress>,
+	) => {
 		const existing = jobProgressMap.get(jobId);
 		if (existing) {
 			Object.assign(existing, updates);
@@ -145,7 +162,8 @@ export const createSessionManager = (
 				if (event.navStepId && event.navUrl) {
 					const navJobId = `nav-${event.navStepId}`;
 					if (!jobProgressMap.has(navJobId)) {
-						const navCapturedAt = event.navCapturedAt ?? new Date().toISOString();
+						const navCapturedAt =
+							event.navCapturedAt ?? new Date().toISOString();
 						const navTime = new Date(navCapturedAt).getTime() - 1;
 						jobProgressMap.set(navJobId, {
 							jobId: navJobId,
@@ -187,7 +205,9 @@ export const createSessionManager = (
 						phase: "failed",
 						error: event.error,
 						attempts: event.attempt,
-						...(meta?.targetElement ? { targetElement: meta.targetElement } : {}),
+						...(meta?.targetElement
+							? { targetElement: meta.targetElement }
+							: {}),
 					});
 					captureMetadataMap.delete(event.jobId);
 				}
@@ -249,7 +269,8 @@ export const createSessionManager = (
 			return;
 		}
 
-		const guideId = pendingFreeTypingGuideId ?? (await getOrCreateGuideId()).guideId;
+		const guideId =
+			pendingFreeTypingGuideId ?? (await getOrCreateGuideId()).guideId;
 		const actionText = buildActionText("input", undefined, payload.typedText);
 
 		if (pendingFreeTypingStepId) {
@@ -303,7 +324,7 @@ export const createSessionManager = (
 			executeFreeTypingCapture(captureId, message),
 		);
 
-		pendingFreeTypingOp = currentOp.catch(() => { });
+		pendingFreeTypingOp = currentOp.catch(() => {});
 		await currentOp;
 	};
 
@@ -315,7 +336,9 @@ export const createSessionManager = (
 			clearPendingFreeTyping();
 			clearDedup?.();
 			clearPendingActivations?.();
-			void offscreenManager.closeDocument().then(() => offscreenManager.startSession(generateCaptureId()));
+			void offscreenManager
+				.closeDocument()
+				.then(() => offscreenManager.startSession(generateCaptureId()));
 		}
 		if (message.command === "stop_recording") {
 			isDraining = true;
@@ -339,7 +362,11 @@ export const createSessionManager = (
 			"resume_recording",
 			"stop_recording",
 		] as const;
-		if (mutationCommands.includes(message.command as typeof mutationCommands[number])) {
+		if (
+			mutationCommands.includes(
+				message.command as (typeof mutationCommands)[number],
+			)
+		) {
 			await broadcastUpdate();
 		}
 		return result;
