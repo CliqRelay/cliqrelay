@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Code, File, Loader2 } from "lucide-react";
+import { File, Loader2 } from "lucide-react";
 
 import { api, type ExportGuideFormat } from "@repo/api-client";
 
-import SoonBadge from "@/components/shared/coming-soon-badge";
-import ProBadge from "@/components/shared/pro-badge";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -28,13 +26,6 @@ const formats = [
 		icon: File,
 		disabled: false,
 		tag: null,
-	},
-	{
-		id: "json",
-		name: "JSON",
-		icon: Code,
-		disabled: true,
-		tag: "Soon" as const,
 	},
 ] as const;
 

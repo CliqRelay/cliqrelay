@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const exportFormatValues = ["markdown", "pdf", "html", "json"] as const;
+export const exportFormatValues = ["pdf", "markdown", "html"] as const;
 export const exportFormatSchema = z.enum(exportFormatValues);
 export type ExportFormat = z.infer<typeof exportFormatSchema>;
 
@@ -17,23 +17,19 @@ const createExportPayloadSchema = (format: ExportFormat) =>
 		format: z.literal(format),
 	});
 
+export const pdfExportPayloadSchema = createExportPayloadSchema("pdf");
+export type PdfExportPayload = z.infer<typeof pdfExportPayloadSchema>;
+
 export const markdownExportPayloadSchema =
 	createExportPayloadSchema("markdown");
 export type MarkdownExportPayload = z.infer<typeof markdownExportPayloadSchema>;
 
-export const pdfExportPayloadSchema = createExportPayloadSchema("pdf");
-export type PdfExportPayload = z.infer<typeof pdfExportPayloadSchema>;
-
 export const htmlExportPayloadSchema = createExportPayloadSchema("html");
 export type HtmlExportPayload = z.infer<typeof htmlExportPayloadSchema>;
 
-export const jsonExportPayloadSchema = createExportPayloadSchema("json");
-export type JsonExportPayload = z.infer<typeof jsonExportPayloadSchema>;
-
 export const exportPayloadSchema = z.discriminatedUnion("format", [
-	markdownExportPayloadSchema,
 	pdfExportPayloadSchema,
+	markdownExportPayloadSchema,
 	htmlExportPayloadSchema,
-	jsonExportPayloadSchema,
 ]);
 export type ExportPayload = z.infer<typeof exportPayloadSchema>;

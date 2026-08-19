@@ -303,7 +303,7 @@ export type DuplicateStepResponseOutput = zod.output<
 >;
 
 export const ExportGuideFormat = zod
-	.enum(["pdf", "json", "markdown", "html"])
+	.enum(["pdf", "markdown", "html"])
 	.describe("The type of the guide document to export");
 
 export type ExportGuideFormat = zod.input<typeof ExportGuideFormat>;

@@ -6,7 +6,6 @@ import {
 	FilePlus,
 	LayoutTemplate,
 	type LucideIcon,
-	Upload,
 } from "lucide-react";
 
 import { api } from "@repo/api-client";
@@ -138,16 +137,6 @@ export function QuickActions() {
 			onClick: handleNewBlankGuide,
 		},
 		{
-			label: "Import",
-			sub: "Import from JSON",
-			icon: Upload,
-			comingSoon: true,
-			onClick: () =>
-				toast("Coming Soon", {
-					description: "Importing guides is not yet available.",
-				}),
-		},
-		{
 			label: "Templates",
 			sub: "Use pre-made templates",
 			icon: LayoutTemplate,
@@ -162,13 +151,13 @@ export function QuickActions() {
 	return (
 		<div className="rounded-[20px] p-4 mb-8 surface-card">
 			<div className="grid grid-cols-1 sm:grid-cols-2 xl:flex xl:flex-row xl:flex-wrap xl:justify-between xl:items-center gap-4">
-				{quickActions.map((quickActionItem) => {
-					const Icon = quickActionItem.icon;
-					const handleClick = () => quickActionItem.onClick?.();
-					if (quickActionItem.primary) {
+				{quickActions.map((actionItem) => {
+					const Icon = actionItem.icon;
+					const handleClick = () => actionItem.onClick?.();
+					if (actionItem.primary) {
 						return (
 							<button
-								key={quickActionItem.label}
+								key={actionItem.label}
 								type="button"
 								className="flex-1 group relative text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover bg-linear-to-br from-[#234DF0] to-[#03A0EC] border border-[rgba(3,160,236,0.18)] shadow-(--shadow-primary) cursor-pointer"
 								onClick={handleClick}
@@ -178,10 +167,10 @@ export function QuickActions() {
 								</div>
 								<div>
 									<div className="text-[14px] font-semibold text-white">
-										{quickActionItem.label}
+										{actionItem.label}
 									</div>
 									<div className="text-[11.5px] text-white/70 mt-0.5">
-										{quickActionItem.sub}
+										{actionItem.sub}
 									</div>
 								</div>
 								<span className="flex items-center justify-center absolute right-3.5 top-1/2 -translate-y-1/2 size-10 bg-white/20 text-white/70 transition-transform group-hover:translate-x-0.5 rounded-full">
@@ -190,9 +179,9 @@ export function QuickActions() {
 							</button>
 						);
 					}
-					if (quickActionItem.disabled) {
+					if (actionItem.disabled) {
 						return (
-							<Tooltip key={quickActionItem.label}>
+							<Tooltip key={actionItem.label}>
 								<TooltipTrigger asChild>
 									<span className="flex-1 cursor-not-allowed">
 										<button
@@ -207,14 +196,14 @@ export function QuickActions() {
 														strokeWidth={1.9}
 													/>
 												</div>
-												{quickActionItem.comingSoon && <SoonBadge />}
+												{actionItem.comingSoon && <SoonBadge />}
 											</div>
 											<div>
 												<div className="text-[14px] font-semibold text-foreground">
-													{quickActionItem.label}
+													{actionItem.label}
 												</div>
 												<div className="text-[11.5px] text-muted-foreground mt-0.5">
-													{quickActionItem.sub}
+													{actionItem.sub}
 												</div>
 											</div>
 										</button>
@@ -228,11 +217,11 @@ export function QuickActions() {
 					}
 					return (
 						<button
-							key={quickActionItem.label}
+							key={actionItem.label}
 							type="button"
 							className={cn(
 								"flex-1 group text-left rounded-[20px] p-4 h-32.5 flex flex-col justify-between surface-card surface-card-hover cursor-pointer",
-								quickActionItem.comingSoon && "opacity-50",
+								actionItem.comingSoon && "opacity-50",
 							)}
 							onClick={handleClick}
 						>
@@ -243,14 +232,14 @@ export function QuickActions() {
 										strokeWidth={1.9}
 									/>
 								</div>
-								{quickActionItem.comingSoon && <SoonBadge />}
+								{actionItem.comingSoon && <SoonBadge />}
 							</div>
 							<div>
 								<div className="text-[14px] font-semibold text-foreground">
-									{quickActionItem.label}
+									{actionItem.label}
 								</div>
 								<div className="text-[11.5px] text-muted-foreground mt-0.5">
-									{quickActionItem.sub}
+									{actionItem.sub}
 								</div>
 							</div>
 						</button>

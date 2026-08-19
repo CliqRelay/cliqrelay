@@ -14,7 +14,6 @@ export type ExportGuideFormat =
 
 export const ExportGuideFormat = {
 	pdf: "pdf",
-	json: "json",
 	markdown: "markdown",
 	html: "html",
 } as const;

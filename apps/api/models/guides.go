@@ -62,7 +62,6 @@ type ExportGuideFormat string
 
 const (
 	ExportGuideFormatPDF      ExportGuideFormat = "pdf"
-	ExportGuideFormatJSON     ExportGuideFormat = "json"
 	ExportGuideFormatMarkdown ExportGuideFormat = "markdown"
 	ExportGuideFormatHTML     ExportGuideFormat = "html"
 )
@@ -75,7 +74,6 @@ func (ExportGuideFormat) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	schema.WithType(jsonschema.String.Type())
 	schema.Enum = []any{
 		string(ExportGuideFormatPDF),
-		string(ExportGuideFormatJSON),
 		string(ExportGuideFormatMarkdown),
 		string(ExportGuideFormatHTML),
 	}

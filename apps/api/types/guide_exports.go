@@ -6,7 +6,7 @@ import (
 )
 
 type ExportGuideRequest struct {
-	Format models.ExportGuideFormat `json:"format" validate:"required,oneof=pdf json markdown html" required:"true"`
+	Format models.ExportGuideFormat `json:"format" validate:"required,oneof=pdf markdown html" required:"true"`
 }
 
 func (r *ExportGuideRequest) Validate() error {

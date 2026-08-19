@@ -1704,7 +1704,6 @@
         "description": "The type of the guide document to export",
         "enum": [
           "pdf",
-          "json",
           "markdown",
           "html"
         ],
