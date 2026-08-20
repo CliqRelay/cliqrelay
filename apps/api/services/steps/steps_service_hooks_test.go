@@ -64,6 +64,7 @@ func TestStepsService_Create_Hooks(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			hooks := &interfaces.StepHooks{}
 			tt.setup(mockGuidesRepo, mockStepsRepo, hooks)
+			tests.StubGuideDurationRecalculation(mockStepsRepo, mockGuidesRepo)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, hooks)
 
 			// Act

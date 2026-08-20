@@ -190,6 +190,10 @@ func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodel
 		}
 	}
 
+	if err := s.recalculateDuration(ctx, guideID); err != nil {
+		return "", err
+	}
+
 	return guideID, nil
 }
 

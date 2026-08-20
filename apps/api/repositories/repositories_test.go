@@ -17,6 +17,7 @@ var (
 	guidesDB      *bun.DB
 	stepsDB       *bun.DB
 	mediaAssetsDB *bun.DB
+	guideViewsDB  *bun.DB
 )
 
 func TestMain(m *testing.M) {
@@ -60,6 +61,16 @@ func TestMain(m *testing.M) {
 	}
 	cleanups = append(cleanups, func() {
 		mediaAssetsDB.Close()
+	})
+
+	guideViewsDB, _, err = tests.SetupTestSchema("guide_views", dsn)
+	if err != nil {
+		runCleanups(cleanups)
+		cleanupContainer()
+		os.Exit(1)
+	}
+	cleanups = append(cleanups, func() {
+		guideViewsDB.Close()
 	})
 
 	code := m.Run()

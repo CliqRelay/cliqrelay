@@ -123,6 +123,18 @@ function GuideDetailPage() {
 	}, [guide]);
 
 	const recordViewMutation = api.guides.useRecordGuideView({
+		mutation: {
+			// The dashboard stats are only correct once the view has actually been
+			// persisted, so both cards are invalidated after the write succeeds.
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: api.guides.getGetGuideViewsCountQueryKey(),
+				});
+				queryClient.invalidateQueries({
+					queryKey: api.guides.getGetGuidesTimeSavedQueryKey(),
+				});
+			},
+		},
 		request: {
 			credentials: "include",
 			headers: {
@@ -141,9 +153,6 @@ function GuideDetailPage() {
 		) {
 			hasTrackedView.current = true;
 			recordViewMutation.mutate({ id: currentGuide.id });
-			queryClient.invalidateQueries({
-				queryKey: api.guides.getGetGuideViewsCountQueryKey(),
-			});
 		}
 	}, [
 		mode,

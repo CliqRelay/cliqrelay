@@ -33,7 +33,6 @@ func NewWorker(opts ...Option) (*Worker, error) {
 	consumer.RegisterHandler(events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, worker.HandleMediaAssetsEvent(svcs.Storage, o.infraCfg.S3Bucket))
 	consumer.RegisterHandler(events.TopicGuides, events.EventTypeGuidePurge, worker.HandleGuidePurgeEvent(svcs.Domain.PurgeService))
 	consumer.RegisterHandler(events.TopicGuideExports, events.EventTypeGuideExport, worker.HandleGuideExportEvent(svcs.Domain.ExportService))
-	consumer.RegisterHandler(events.TopicGuideViews, events.EventTypeGuideViewed, worker.HandleGuideViewEvent(repos.GuideViews))
 
 	w := &Worker{consumer: consumer}
 

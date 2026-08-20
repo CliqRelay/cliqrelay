@@ -119,6 +119,8 @@ func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest)
 		return nil, err
 	}
 
+	s.recalculateGuideDuration(ctx, guide.ID.String())
+
 	if err := runStepHooks(s.hooks.AfterCreateHooks(), ctx, step); err != nil {
 		return nil, err
 	}
@@ -198,6 +200,8 @@ func (s *StepsService) Update(ctx context.Context, stepID string, req *types.Upd
 		return nil, constants.ErrStepNotFound
 	}
 
+	s.recalculateGuideDuration(ctx, updated.GuideID.String())
+
 	s.enrichMediaAssets(ctx, updated)
 
 	if err := runStepHooks(s.hooks.AfterUpdateHooks(), ctx, updated); err != nil {
@@ -224,6 +228,8 @@ func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 		return err
 	}
 
+	guideID := step.GuideID.String()
+
 	mediaAssets, err := s.mediaAssetsRepo.GetByStepID(ctx, stepID)
 	if err != nil {
 		return err
@@ -232,6 +238,8 @@ func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 	if err := s.stepsRepo.Delete(ctx, stepID); err != nil {
 		return err
 	}
+
+	s.recalculateGuideDuration(ctx, guideID)
 
 	if err := runDeleteStepHooks(s.hooks.AfterDeleteHooks(), ctx, stepID); err != nil {
 		return err
@@ -303,6 +311,8 @@ func (s *StepsService) Duplicate(ctx context.Context, stepID string, req *types.
 		return nil, err
 	}
 
+	s.recalculateGuideDuration(ctx, original.GuideID.String())
+
 	var copyErrs []error
 	oldStepID := stepID
 	newStepID := newStep.ID.String()
@@ -352,6 +362,21 @@ func (s *StepsService) Duplicate(ctx context.Context, stepID string, req *types.
 	s.enrichMediaAssets(ctx, result)
 
 	return result, nil
+}
+
+// recalculateGuideDuration refreshes the owning guide's synthetic duration after a
+// step mutation. The step change itself has already been persisted, so a failure here
+// is logged rather than propagated -- the manual recalculate endpoint remains the repair path.
+func (s *StepsService) recalculateGuideDuration(ctx context.Context, guideID string) {
+	steps, err := s.stepsRepo.GetByGuideID(ctx, guideID)
+	if err != nil {
+		s.logger.Error("recalculate guide duration: get steps", "err", err, "guide_id", guideID)
+		return
+	}
+
+	if _, err := s.guidesRepo.UpdateDuration(ctx, guideID, models.CalculateSyntheticDuration(steps)); err != nil {
+		s.logger.Error("recalculate guide duration: update duration", "err", err, "guide_id", guideID)
+	}
 }
 
 func (s *StepsService) getGuideForStep(ctx context.Context, guideID string) (*models.Guide, error) {

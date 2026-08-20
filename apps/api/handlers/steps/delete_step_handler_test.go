@@ -105,6 +105,7 @@ func TestDeleteStepHandler(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo, mockMediaAssetsRepo)
+			tests.StubGuideDurationRecalculation(mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))

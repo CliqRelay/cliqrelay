@@ -33,11 +33,11 @@ export const createSessionManager = (
 	const dismissedJobIds = new Set<string>();
 	let isDraining = false;
 	let currentPortManager: PortManager | null = null;
-	let clearDedup: (() => void) | undefined;
+	let clearDedupe: (() => void) | undefined;
 	let clearPendingActivations: (() => void) | undefined;
 
-	const setClearDedup = (fn: () => void) => {
-		clearDedup = fn;
+	const setClearDedupe = (fn: () => void) => {
+		clearDedupe = fn;
 	};
 
 	const setClearPendingActivations = (fn: () => void) => {
@@ -334,7 +334,7 @@ export const createSessionManager = (
 			jobProgressMap.clear();
 			captureMetadataMap.clear();
 			clearPendingFreeTyping();
-			clearDedup?.();
+			clearDedupe?.();
 			clearPendingActivations?.();
 			void offscreenManager
 				.closeDocument()
@@ -377,7 +377,7 @@ export const createSessionManager = (
 		stateUpdateBuilder,
 		captureMetadataMap,
 		setPortManager,
-		setClearDedup,
+		setClearDedupe,
 		setClearPendingActivations,
 		handleSidePanelCommand,
 		handleOffscreenEvent,

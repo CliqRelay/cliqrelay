@@ -76,8 +76,8 @@ export default defineBackground(() => {
 		generateCaptureId,
 	);
 
-	const { clearDedup, clearPendingActivations } = navigationListener.start();
-	sessionManager.setClearDedup(clearDedup);
+	const { clearDedupe, clearPendingActivations } = navigationListener.start();
+	sessionManager.setClearDedupe(clearDedupe);
 	sessionManager.setClearPendingActivations(clearPendingActivations);
 
 	browser.runtime.onMessage.addListener(
@@ -85,7 +85,8 @@ export default defineBackground(() => {
 			if (
 				typeof message === "object" &&
 				message !== null &&
-				(message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_CSRF_TOKEN
+				(message as Record<string, unknown>).type ===
+					RUNTIME_MESSAGE_TYPES.GET_CSRF_TOKEN
 			) {
 				try {
 					const cookie = await browser.cookies.get({
@@ -101,7 +102,8 @@ export default defineBackground(() => {
 			if (
 				typeof message === "object" &&
 				message !== null &&
-				(message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_ACTIVE_TEAM_ID
+				(message as Record<string, unknown>).type ===
+					RUNTIME_MESSAGE_TYPES.GET_ACTIVE_TEAM_ID
 			) {
 				try {
 					const cookie = await browser.cookies.get({

@@ -8,7 +8,7 @@ import type {
 } from "@/models";
 import type { ScreenshotService } from "@/models/screenshot";
 import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
-import { NAVIGATION_DEDUP_MS, NAVIGATION_TIMEOUT_MS } from "@/utils/constants";
+import { NAVIGATION_DEDUPE_MS, NAVIGATION_TIMEOUT_MS } from "@/utils/constants";
 import { CliqRelayEvents } from "@repo/data-commons";
 
 const urlSchema = z.url();
@@ -24,7 +24,7 @@ export const createNavigationListener = (
 	captureMetadataMap: Map<string, CaptureMetadataEntry>,
 	generateCaptureId: GenerateCaptureId,
 ) => {
-	const dedupMap = new Map<number, { url: string; time: number }>();
+	const dedupeMap = new Map<number, { url: string; time: number }>();
 	const pendingActivations = new Map<
 		number,
 		{ capturedAt: string; timeoutId: ReturnType<typeof setTimeout> }
@@ -42,13 +42,13 @@ export const createNavigationListener = (
 	};
 
 	const isDeduped = (tabId: number, url: string): boolean => {
-		const entry = dedupMap.get(tabId);
+		const entry = dedupeMap.get(tabId);
 		if (!entry) return false;
-		return Date.now() - entry.time < NAVIGATION_DEDUP_MS && url === entry.url;
+		return Date.now() - entry.time < NAVIGATION_DEDUPE_MS && url === entry.url;
 	};
 
-	const updateDedup = (tabId: number, url: string) => {
-		dedupMap.set(tabId, { url, time: Date.now() });
+	const updateDedupe = (tabId: number, url: string) => {
+		dedupeMap.set(tabId, { url, time: Date.now() });
 	};
 
 	const getViewportDimensions = async (
@@ -85,7 +85,7 @@ export const createNavigationListener = (
 		if (isDeduped(tabId, url)) {
 			return;
 		}
-		updateDedup(tabId, url);
+		updateDedupe(tabId, url);
 
 		const captureId = generateCaptureId();
 
@@ -252,8 +252,8 @@ export const createNavigationListener = (
 				browser.tabs.onRemoved.removeListener(onRemoved);
 				clearPendingActivations();
 			},
-			clearDedup: () => {
-				dedupMap.clear();
+			clearDedupe: () => {
+				dedupeMap.clear();
 				tabOrigins.clear();
 			},
 			clearPendingActivations: () => {

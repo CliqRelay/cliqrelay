@@ -9,12 +9,13 @@ import (
 )
 
 type CreateGuideViewDTO struct {
-	TeamID    uuid.UUID  `json:"team_id" validate:"required,uuid"`
-	GuideID   uuid.UUID  `json:"guide_id" validate:"required,uuid"`
-	ViewerID  *uuid.UUID `json:"viewer_id,omitempty" validate:"omitempty,required,uuid"`
-	IPHash    *string    `json:"ip_hash,omitempty"`
-	UserAgent *string    `json:"user_agent,omitempty"`
-	ViewedAt  time.Time  `json:"viewed_at" validate:"required"`
+	TeamID          uuid.UUID  `json:"team_id" validate:"required,uuid"`
+	GuideID         uuid.UUID  `json:"guide_id" validate:"required,uuid"`
+	ViewerID        *uuid.UUID `json:"viewer_id,omitempty" validate:"omitempty,required,uuid"`
+	IPHash          *string    `json:"ip_hash,omitempty"`
+	UserAgent       *string    `json:"user_agent,omitempty"`
+	DurationSeconds int        `json:"duration_seconds"`
+	ViewedAt        time.Time  `json:"viewed_at" validate:"required"`
 }
 
 func (r *CreateGuideViewDTO) Validate() error {
@@ -59,8 +60,9 @@ type GetTimeSavedResponse struct {
 	TimeSavedHours   float64 `json:"time_saved_hours" required:"true" nullable:"false"`
 }
 
+// GuideViewStats aggregates recorded views by the duration that was snapshotted onto
+// them, which is all the time saved calculation needs.
 type GuideViewStats struct {
-	GuideID         uuid.UUID `bun:"guide_id"`
-	ViewCount       int       `bun:"view_count"`
-	DurationSeconds int       `bun:"duration_seconds"`
+	ViewCount       int `bun:"view_count"`
+	DurationSeconds int `bun:"duration_seconds"`
 }

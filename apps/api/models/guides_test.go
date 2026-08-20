@@ -7,199 +7,114 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCalculateSyntheticDuration_EmptySteps(t *testing.T) {
-	assert.Equal(t, 0, CalculateSyntheticDuration([]*Step{}))
-}
+func TestCalculateSyntheticDuration(t *testing.T) {
+	t.Parallel()
 
-func TestCalculateSyntheticDuration_SingleClickStepNoWords(t *testing.T) {
-	action := StepActionClick
-	step := &Step{
-		ID:         uuid.New(),
-		Type:       StepTypeInteraction,
-		Action:     &action,
-		ActionText: nil,
-		Notes:      nil,
-	}
-	assert.Equal(t, 2, CalculateSyntheticDuration([]*Step{step}))
-}
-
-func TestCalculateSyntheticDuration_SingleInputStepNoWords(t *testing.T) {
-	action := StepActionInput
-	step := &Step{
-		ID:         uuid.New(),
-		Type:       StepTypeInteraction,
-		Action:     &action,
-		ActionText: nil,
-		Notes:      nil,
-	}
-	assert.Equal(t, 3, CalculateSyntheticDuration([]*Step{step}))
-}
-
-func TestCalculateSyntheticDuration_SingleCanvasStepNoWords(t *testing.T) {
-	step := &Step{
-		ID:            uuid.New(),
-		Type:          StepTypeCanvas,
-		CanvasContent: nil,
-		Notes:         nil,
-	}
-	assert.Equal(t, 2, CalculateSyntheticDuration([]*Step{step}))
-}
-
-func TestCalculateSyntheticDuration_InteractionStepWithActionText(t *testing.T) {
-	action := StepActionClick
-	actionText := "click the submit button now"
-	step := &Step{
-		ID:         uuid.New(),
-		Type:       StepTypeInteraction,
-		Action:     &action,
-		ActionText: &actionText,
-		Notes:      nil,
-	}
-	// 5 words / 225 * 60 = 1.333... → round = 1
-	// baseline 2 + 1 = 3
-	assert.Equal(t, 3, CalculateSyntheticDuration([]*Step{step}))
-}
-
-func TestCalculateSyntheticDuration_InteractionStepWithNotes(t *testing.T) {
-	action := StepActionClick
-	notes := "please remember to check the settings first"
-	step := &Step{
-		ID:         uuid.New(),
-		Type:       StepTypeInteraction,
-		Action:     &action,
-		ActionText: nil,
-		Notes:      &notes,
-	}
-	// 7 words / 225 * 60 = 1.866... → round = 2
-	// baseline 2 + 2 = 4
-	assert.Equal(t, 4, CalculateSyntheticDuration([]*Step{step}))
-}
-
-func TestCalculateSyntheticDuration_CanvasStepWithHeadAndBody(t *testing.T) {
-	headingText := "welcome to this guide"
-	bodyText := "follow these steps to complete the task"
-	step := &Step{
-		ID:   uuid.New(),
-		Type: StepTypeCanvas,
-		CanvasContent: &StepCanvasContent{
-			HeadingText: &headingText,
-			BodyText:    &bodyText,
-		},
-		Notes: nil,
-	}
-	// 4 + 6 = 10 words / 225 * 60 = 2.666... → round = 3
-	// baseline 2 + 3 = 5
-	assert.Equal(t, 5, CalculateSyntheticDuration([]*Step{step}))
-}
-
-func TestCalculateSyntheticDuration_CanvasStepWithNotes(t *testing.T) {
-	notes := "this is an important note for the canvas"
-	step := &Step{
-		ID:            uuid.New(),
-		Type:          StepTypeCanvas,
-		CanvasContent: nil,
-		Notes:         &notes,
-	}
-	// 7 words / 225 * 60 = 1.866... → round = 2
-	// baseline 2 + 2 = 4
-	assert.Equal(t, 4, CalculateSyntheticDuration([]*Step{step}))
-}
-
-func TestCalculateSyntheticDuration_MultipleSteps(t *testing.T) {
-	click := StepActionClick
-	input := StepActionInput
-	nav := StepActionNavigation
-
-	steps := []*Step{
-		{
+	interactionStep := func(action StepAction, actionText, notes *string) *Step {
+		return &Step{
 			ID:         uuid.New(),
 			Type:       StepTypeInteraction,
-			Action:     &click,
-			ActionText: nil,
-			Notes:      nil,
-		},
-		{
-			ID:         uuid.New(),
-			Type:       StepTypeInteraction,
-			Action:     &input,
-			ActionText: nil,
-			Notes:      nil,
-		},
-		{
-			ID:         uuid.New(),
-			Type:       StepTypeInteraction,
-			Action:     &nav,
-			ActionText: nil,
-			Notes:      nil,
-		},
-		{
+			Action:     &action,
+			ActionText: actionText,
+			Notes:      notes,
+		}
+	}
+
+	canvasStep := func(content *StepCanvasContent, notes *string) *Step {
+		return &Step{
 			ID:            uuid.New(),
 			Type:          StepTypeCanvas,
-			CanvasContent: nil,
-			Notes:         nil,
-		},
+			CanvasContent: content,
+			Notes:         notes,
+		}
 	}
-	// click 2 + input 3 + nav 2 + canvas 2 = 9
-	assert.Equal(t, 9, CalculateSyntheticDuration(steps))
-}
 
-func TestCalculateSyntheticDuration_RealisticGuide(t *testing.T) {
-	click := StepActionClick
-	input := StepActionInput
-	nav := StepActionNavigation
-
-	headingText := "welcome to setup"
-	bodyText := "this guide will walk through the initial configuration process"
-	notesCanvas := "take your time reading each section"
-
-	actionText := "click the next button"
-	notesStep := "make sure you have your credentials ready"
-
-	steps := []*Step{
+	cases := []struct {
+		name  string
+		steps []*Step
+		want  int
+	}{
 		{
-			ID:   uuid.New(),
-			Type: StepTypeCanvas,
-			CanvasContent: &StepCanvasContent{
-				HeadingText: &headingText,
-				BodyText:    &bodyText,
+			name:  "no steps has no duration and no overhead",
+			steps: []*Step{},
+			want:  0,
+		},
+		{
+			name:  "single click step is overhead plus the step baseline",
+			steps: []*Step{interactionStep(StepActionClick, nil, nil)},
+			want:  GuideOverheadSeconds + StepBaselineSeconds,
+		},
+		{
+			name:  "single input step uses the input baseline",
+			steps: []*Step{interactionStep(StepActionInput, nil, nil)},
+			want:  GuideOverheadSeconds + InputStepBaselineSeconds,
+		},
+		{
+			name:  "canvas step without content uses the step baseline",
+			steps: []*Step{canvasStep(nil, nil)},
+			want:  GuideOverheadSeconds + StepBaselineSeconds,
+		},
+		{
+			// 5 words / 200 * 60 = 1.5 -> 2
+			name:  "interaction step adds reading time for its action text",
+			steps: []*Step{interactionStep(StepActionClick, new("click the submit button now"), nil)},
+			want:  GuideOverheadSeconds + StepBaselineSeconds + 2,
+		},
+		{
+			// 7 words / 200 * 60 = 2.1 -> 2
+			name:  "interaction step adds reading time for its notes",
+			steps: []*Step{interactionStep(StepActionClick, nil, new("please remember to check the settings first"))},
+			want:  GuideOverheadSeconds + StepBaselineSeconds + 2,
+		},
+		{
+			// 4 + 7 = 11 words / 200 * 60 = 3.3 -> 3
+			name: "canvas step adds reading time for its heading and body",
+			steps: []*Step{canvasStep(&StepCanvasContent{
+				HeadingText: new("welcome to this guide"),
+				BodyText:    new("follow these steps to complete the task"),
+			}, nil)},
+			want: GuideOverheadSeconds + StepBaselineSeconds + 3,
+		},
+		{
+			// 8 words / 200 * 60 = 2.4 -> 2
+			name:  "canvas step adds reading time for its notes",
+			steps: []*Step{canvasStep(nil, new("this is an important note for the canvas"))},
+			want:  GuideOverheadSeconds + StepBaselineSeconds + 2,
+		},
+		{
+			name: "overhead is charged once across multiple steps",
+			steps: []*Step{
+				interactionStep(StepActionClick, nil, nil),
+				interactionStep(StepActionInput, nil, nil),
+				interactionStep(StepActionNavigation, nil, nil),
+				canvasStep(nil, nil),
 			},
-			Notes: &notesCanvas,
+			want: GuideOverheadSeconds + StepBaselineSeconds*3 + InputStepBaselineSeconds,
 		},
 		{
-			ID:         uuid.New(),
-			Type:       StepTypeInteraction,
-			Action:     &click,
-			ActionText: &actionText,
-			Notes:      nil,
-		},
-		{
-			ID:         uuid.New(),
-			Type:       StepTypeInteraction,
-			Action:     &input,
-			ActionText: nil,
-			Notes:      &notesStep,
-		},
-		{
-			ID:     uuid.New(),
-			Type:   StepTypeInteraction,
-			Action: &nav,
+			// canvas    3 + 9 + 6 = 18 words -> 5.4 -> 5
+			// click     4 words        -> 1.2 -> 1
+			// input     7 words        -> 2.1 -> 2
+			// navigation no words      -> 0
+			name: "realistic guide",
+			steps: []*Step{
+				canvasStep(&StepCanvasContent{
+					HeadingText: new("welcome to setup"),
+					BodyText:    new("this guide will walk through the initial configuration process"),
+				}, new("take your time reading each section")),
+				interactionStep(StepActionClick, new("click the next button"), nil),
+				interactionStep(StepActionInput, nil, new("make sure you have your credentials ready")),
+				interactionStep(StepActionNavigation, nil, nil),
+			},
+			want: GuideOverheadSeconds + (StepBaselineSeconds + 5) + (StepBaselineSeconds + 1) + (InputStepBaselineSeconds + 2) + StepBaselineSeconds,
 		},
 	}
-	// Canvas: headingText(3) + bodyText(9) + notesCanvas(6) = 18 words
-	// 18 / 225 * 60 = 4.8 → round = 5
-	// baseline 2 + 5 = 7
-	//
-	// Click: actionText(4) = 4 words
-	// 4 / 225 * 60 = 1.066... → round = 1
-	// baseline 2 + 1 = 3
-	//
-	// Input: notesStep(7) = 7 words
-	// 7 / 225 * 60 = 1.866... → round = 2
-	// baseline 3 + 2 = 5
-	//
-	// Nav: no words
-	// baseline 2 + 0 = 2
-	//
-	// total = 7 + 3 + 5 + 2 = 17
-	assert.Equal(t, 17, CalculateSyntheticDuration(steps))
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, CalculateSyntheticDuration(tt.steps))
+		})
+	}
 }

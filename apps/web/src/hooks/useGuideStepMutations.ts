@@ -21,9 +21,19 @@ export function useGuideStepMutations(guideId: string) {
 		queryClient.invalidateQueries({ queryKey });
 	};
 
+	// The backend recalculates the guide's duration whenever the set of steps or their
+	// content changes, so the guide itself is refetched alongside the steps. Reordering
+	// is excluded because the duration is an order-independent sum.
+	const invalidateStepsAndGuide = () => {
+		invalidateSteps();
+		queryClient.invalidateQueries({
+			queryKey: api.guides.getGetGuideByIdQueryKey(guideId),
+		});
+	};
+
 	const createStep = api.steps.useCreateStep({
 		mutation: {
-			onSuccess: invalidateSteps,
+			onSuccess: invalidateStepsAndGuide,
 			onError: (error) => {
 				toast.error("Error", {
 					description:
@@ -41,7 +51,7 @@ export function useGuideStepMutations(guideId: string) {
 
 	const updateStep = api.steps.useUpdateStep({
 		mutation: {
-			onSuccess: invalidateSteps,
+			onSuccess: invalidateStepsAndGuide,
 			onError: (error) => {
 				toast.error("Error", {
 					description:
@@ -59,7 +69,7 @@ export function useGuideStepMutations(guideId: string) {
 
 	const deleteStep = api.steps.useDeleteStep({
 		mutation: {
-			onSuccess: invalidateSteps,
+			onSuccess: invalidateStepsAndGuide,
 			onError: (error) => {
 				toast.error("Error", {
 					description:
@@ -74,7 +84,7 @@ export function useGuideStepMutations(guideId: string) {
 
 	const duplicateStep = api.steps.useDuplicateStep({
 		mutation: {
-			onSuccess: () => invalidateSteps(),
+			onSuccess: invalidateStepsAndGuide,
 			onError: (error) => {
 				toast.error("Error", {
 					description:

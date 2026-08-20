@@ -16,6 +16,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/models"
 	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
 	"github.com/CliqRelay/cliqrelay/tests"
+	"github.com/CliqRelay/cliqrelay/types"
 )
 
 func testRedisClient(t *testing.T) *redis.Client {
@@ -33,13 +34,22 @@ func TestGuideViewsService_RecordView(t *testing.T) {
 	teamID := uuid.New()
 	viewerID := uuid.New()
 
+	const viewedAt = "2026-07-30T20:00:00Z"
+
+	expectCreate := func(mockRepo *tests.MockGuideViewsRepository) {
+		mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Once()
+	}
+
 	cases := []struct {
 		name      string
 		guide     *models.Guide
 		viewerID  *uuid.UUID
 		ipHash    string
 		userAgent string
+		viewedAt  string
+		setup     func(*tests.MockGuideViewsRepository)
 		seed      func(*redis.Client) error
+		check     func(*testing.T, *redis.Client, *tests.MockGuideViewsRepository)
 		wantErr   bool
 		wantIsErr error
 	}{
@@ -73,17 +83,43 @@ func TestGuideViewsService_RecordView(t *testing.T) {
 				ID: guideID, TeamID: teamID, Status: models.StatusPublished,
 			},
 			viewerID: &viewerID,
+			setup:    expectCreate,
+			check: func(t *testing.T, rdb *redis.Client, _ *tests.MockGuideViewsRepository) {
+				exists, err := rdb.Exists(context.Background(), "dedupe:guide-views:{"+guideID.String()+"}:user:"+viewerID.String()).Result()
+				require.NoError(t, err)
+				assert.EqualValues(t, 1, exists)
+			},
 		},
 		{
 			name: "published without viewer ID",
 			guide: &models.Guide{
 				ID: guideID, TeamID: teamID, Status: models.StatusPublished,
 			},
+			setup: expectCreate,
 		},
 		{
 			name: "published with empty ip and user agent",
 			guide: &models.Guide{
 				ID: uuid.New(), TeamID: uuid.New(), Status: models.StatusPublished,
+			},
+			setup: func(mockRepo *tests.MockGuideViewsRepository) {
+				mockRepo.On("Create", mock.Anything, mock.MatchedBy(func(dto *types.CreateGuideViewDTO) bool {
+					return dto.IPHash == nil && dto.UserAgent == nil
+				})).Return(nil).Once()
+			},
+		},
+		{
+			name: "snapshots the guide duration onto the view",
+			guide: &models.Guide{
+				ID: guideID, TeamID: teamID, Status: models.StatusPublished, DurationSeconds: 143,
+			},
+			setup: func(mockRepo *tests.MockGuideViewsRepository) {
+				mockRepo.On("Create", mock.Anything, mock.MatchedBy(func(dto *types.CreateGuideViewDTO) bool {
+					return dto.DurationSeconds == 143 &&
+						dto.GuideID == guideID &&
+						dto.TeamID == teamID &&
+						dto.ViewedAt.Equal(time.Date(2026, 7, 30, 20, 0, 0, 0, time.UTC))
+				})).Return(nil).Once()
 			},
 		},
 		{
@@ -93,8 +129,32 @@ func TestGuideViewsService_RecordView(t *testing.T) {
 			},
 			viewerID: &viewerID,
 			seed: func(rdb *redis.Client) error {
-				dedupKey := "dedupe:guide-views:{" + guideID.String() + "}:user:" + viewerID.String()
-				return rdb.Set(context.Background(), dedupKey, "1", 0).Err()
+				dedupeKey := "dedupe:guide-views:{" + guideID.String() + "}:user:" + viewerID.String()
+				return rdb.Set(context.Background(), dedupeKey, "1", 0).Err()
+			},
+		},
+		{
+			name: "invalid viewed at returns error",
+			guide: &models.Guide{
+				ID: guideID, TeamID: teamID, Status: models.StatusPublished,
+			},
+			viewedAt: "not-a-timestamp",
+			wantErr:  true,
+		},
+		{
+			name: "propagates repository error and leaves the view undeduped",
+			guide: &models.Guide{
+				ID: guideID, TeamID: teamID, Status: models.StatusPublished,
+			},
+			viewerID: &viewerID,
+			setup: func(mockRepo *tests.MockGuideViewsRepository) {
+				mockRepo.On("Create", mock.Anything, mock.Anything).Return(assert.AnError).Once()
+			},
+			wantErr: true,
+			check: func(t *testing.T, rdb *redis.Client, _ *tests.MockGuideViewsRepository) {
+				exists, err := rdb.Exists(context.Background(), "dedupe:guide-views:{"+guideID.String()+"}:user:"+viewerID.String()).Result()
+				require.NoError(t, err)
+				assert.EqualValues(t, 0, exists)
 			},
 		},
 	}
@@ -104,6 +164,9 @@ func TestGuideViewsService_RecordView(t *testing.T) {
 			t.Parallel()
 
 			mockRepo := new(tests.MockGuideViewsRepository)
+			if tt.setup != nil {
+				tt.setup(mockRepo)
+			}
 			rdb := testRedisClient(t)
 			svc := guideviewsservice.NewGuideViewsService(mockRepo, rdb)
 
@@ -111,7 +174,12 @@ func TestGuideViewsService_RecordView(t *testing.T) {
 				require.NoError(t, tt.seed(rdb))
 			}
 
-			err := svc.RecordView(context.Background(), tt.guide.TeamID, tt.guide, tt.viewerID, tt.ipHash, tt.userAgent, "2026-07-30T20:00:00Z")
+			recordedAt := viewedAt
+			if tt.viewedAt != "" {
+				recordedAt = tt.viewedAt
+			}
+
+			err := svc.RecordView(context.Background(), tt.guide.TeamID, tt.guide, tt.viewerID, tt.ipHash, tt.userAgent, recordedAt)
 
 			if tt.wantErr {
 				if tt.wantIsErr != nil {
@@ -121,6 +189,90 @@ func TestGuideViewsService_RecordView(t *testing.T) {
 				}
 			} else {
 				assert.NoError(t, err)
+			}
+
+			if tt.check != nil {
+				tt.check(t, rdb, mockRepo)
+			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGuideViewsService_GetTimeSavedByTeam(t *testing.T) {
+	t.Parallel()
+
+	teamID := uuid.New()
+	since := time.Now().Add(-24 * time.Hour)
+
+	cases := []struct {
+		name    string
+		setup   func(*tests.MockGuideViewsRepository)
+		want    int
+		wantErr bool
+	}{
+		{
+			name: "folds view counts against their snapshotted durations",
+			setup: func(mockRepo *tests.MockGuideViewsRepository) {
+				mockRepo.On("GetTimeSavedByTeam", mock.Anything, teamID, mock.Anything).
+					Return([]*types.GuideViewStats{
+						// max(30*3, 120) - 30 = 90, twice
+						{ViewCount: 2, DurationSeconds: 30},
+						// max(600*3, 120) - 600 = 1200
+						{ViewCount: 1, DurationSeconds: 600},
+					}, nil).
+					Once()
+			},
+			want: 1380,
+		},
+		{
+			name: "ignores views whose snapshotted duration is zero",
+			setup: func(mockRepo *tests.MockGuideViewsRepository) {
+				mockRepo.On("GetTimeSavedByTeam", mock.Anything, teamID, mock.Anything).
+					Return([]*types.GuideViewStats{
+						{ViewCount: 5, DurationSeconds: 0},
+						{ViewCount: 1, DurationSeconds: 60},
+					}, nil).
+					Once()
+			},
+			want: 120,
+		},
+		{
+			name: "no views saves no time",
+			setup: func(mockRepo *tests.MockGuideViewsRepository) {
+				mockRepo.On("GetTimeSavedByTeam", mock.Anything, teamID, mock.Anything).
+					Return([]*types.GuideViewStats{}, nil).
+					Once()
+			},
+			want: 0,
+		},
+		{
+			name: "propagates repository error",
+			setup: func(mockRepo *tests.MockGuideViewsRepository) {
+				mockRepo.On("GetTimeSavedByTeam", mock.Anything, teamID, mock.Anything).
+					Return([]*types.GuideViewStats(nil), assert.AnError).
+					Once()
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockRepo := new(tests.MockGuideViewsRepository)
+			tt.setup(mockRepo)
+
+			svc := guideviewsservice.NewGuideViewsService(mockRepo, testRedisClient(t))
+
+			total, err := svc.GetTimeSavedByTeam(context.Background(), teamID, &since)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, total)
 			}
 			mockRepo.AssertExpectations(t)
 		})
@@ -193,14 +345,14 @@ func TestGuideViewsService_FlushGuideDedupeKeys(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "no dedup keys",
+			name: "no dedupe keys",
 		},
 		{
-			name: "flushes existing dedup keys",
+			name: "flushes existing dedupe keys",
 			seed: func(rdb *redis.Client) error {
 				viewerID := uuid.New()
-				dedupKey := "dedupe:guide-views:{" + guideID.String() + "}:user:" + viewerID.String()
-				return rdb.Set(context.Background(), dedupKey, "1", 0).Err()
+				dedupeKey := "dedupe:guide-views:{" + guideID.String() + "}:user:" + viewerID.String()
+				return rdb.Set(context.Background(), dedupeKey, "1", 0).Err()
 			},
 		},
 	}

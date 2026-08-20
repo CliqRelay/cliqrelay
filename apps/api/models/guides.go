@@ -128,12 +128,27 @@ func wordCount(s *string) int {
 	return len(strings.Fields(*s))
 }
 
+const (
+	// Extra seconds needed to orient to a step's screenshot and perform the action.
+	StepBaselineSeconds = 8
+	// Extra seconds needed for steps that require typing instead of clicking.
+	InputStepBaselineSeconds = 12
+	// Fixed setup time added once per guide for initial orientation.
+	GuideOverheadSeconds = 15
+	// Average user reading speed used to estimate text reading time.
+	ReadingWordsPerMinute = 200
+)
+
 func CalculateSyntheticDuration(steps []*Step) int {
-	total := 0
+	if len(steps) == 0 {
+		return 0
+	}
+
+	total := GuideOverheadSeconds
 	for _, step := range steps {
-		baseline := 2
+		baseline := StepBaselineSeconds
 		if step.Action != nil && *step.Action == StepActionInput {
-			baseline = 3
+			baseline = InputStepBaselineSeconds
 		}
 
 		var words int
@@ -148,7 +163,7 @@ func CalculateSyntheticDuration(steps []*Step) int {
 			words += wordCount(step.Notes)
 		}
 
-		readingTime := int(math.Round(float64(words) / 225.0 * 60.0))
+		readingTime := int(math.Round(float64(words) / ReadingWordsPerMinute * 60.0))
 		total += baseline + readingTime
 	}
 	return total

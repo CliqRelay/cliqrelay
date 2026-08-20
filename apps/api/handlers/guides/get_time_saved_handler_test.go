@@ -34,8 +34,8 @@ func TestGetTimeSavedHandler(t *testing.T) {
 			setup: func(mockRepo *tests.MockGuideViewsRepository) {
 				mockRepo.On("GetTimeSavedByTeam", mock.Anything, mock.Anything, mock.Anything).
 					Return([]*types.GuideViewStats{
-						{GuideID: uuid.New(), ViewCount: 2, DurationSeconds: 30},
-						{GuideID: uuid.New(), ViewCount: 1, DurationSeconds: 600},
+						{ViewCount: 2, DurationSeconds: 30},
+						{ViewCount: 1, DurationSeconds: 600},
 					}, nil).
 					Once()
 			},

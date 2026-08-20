@@ -21,6 +21,7 @@ func guideViewsInitial() authulamigrations.Migration {
 					viewer_id UUID REFERENCES users(id) ON DELETE SET NULL,
 					ip_hash TEXT,
 					user_agent TEXT,
+					duration_seconds INT NOT NULL DEFAULT 0,
 					viewed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 				);`,
 				`CREATE INDEX idx_guide_views_team_analytics ON guide_views(team_id, viewed_at DESC);`,

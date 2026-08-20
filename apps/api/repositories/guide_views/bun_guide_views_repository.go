@@ -27,13 +27,14 @@ func (r *BunGuideViewsRepository) Create(ctx context.Context, dto *types.CreateG
 	}
 
 	view := &models.GuideView{
-		ID:        uuid.New(),
-		TeamID:    dto.TeamID,
-		GuideID:   dto.GuideID,
-		ViewerID:  viewerID,
-		IPHash:    dto.IPHash,
-		UserAgent: dto.UserAgent,
-		ViewedAt:  dto.ViewedAt,
+		ID:              uuid.New(),
+		TeamID:          dto.TeamID,
+		GuideID:         dto.GuideID,
+		ViewerID:        viewerID,
+		IPHash:          dto.IPHash,
+		UserAgent:       dto.UserAgent,
+		DurationSeconds: dto.DurationSeconds,
+		ViewedAt:        dto.ViewedAt,
 	}
 
 	_, err := r.db.NewInsert().Model(view).Exec(ctx)
@@ -49,18 +50,18 @@ func (r *BunGuideViewsRepository) GetCountByTeam(ctx context.Context, teamID uui
 }
 
 func (r *BunGuideViewsRepository) GetTimeSavedByTeam(ctx context.Context, teamID uuid.UUID, since *time.Time) ([]*types.GuideViewStats, error) {
+	// Grouped by the duration snapshotted onto each view rather than by guide: the
+	// metric is historical, so it neither follows later edits to a guide nor drops
+	// when a guide is trashed.
 	q := r.db.NewSelect().
-		ColumnExpr("gv.guide_id AS guide_id").
-		ColumnExpr("COUNT(gv.id) AS view_count").
-		ColumnExpr("MAX(g.duration_seconds) AS duration_seconds").
-		TableExpr("guide_views AS gv").
-		Join("JOIN guides AS g ON g.id = gv.guide_id").
-		Where("gv.team_id = ?", teamID).
-		Where("g.deleted_at IS NULL").
-		GroupExpr("gv.guide_id")
+		ColumnExpr("COUNT(id) AS view_count").
+		ColumnExpr("duration_seconds AS duration_seconds").
+		TableExpr("guide_views").
+		Where("team_id = ?", teamID).
+		GroupExpr("duration_seconds")
 
 	if since != nil {
-		q = q.Where("gv.viewed_at >= ?", *since)
+		q = q.Where("viewed_at >= ?", *since)
 	}
 
 	var stats []*types.GuideViewStats

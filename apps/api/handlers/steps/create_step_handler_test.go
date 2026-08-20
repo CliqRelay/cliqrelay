@@ -225,6 +225,7 @@ func TestCreateStepHandler(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockStepsRepo, mockGuidesRepo)
+			tests.StubGuideDurationRecalculation(mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))

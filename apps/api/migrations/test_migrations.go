@@ -47,6 +47,7 @@ func RunTestMigrations(ctx context.Context, db *bun.DB) error {
 				stepsInitial(),
 				mediaAssetsInitial(),
 				starredGuidesInitial(),
+				guideViewsInitial(),
 			},
 		},
 	}
