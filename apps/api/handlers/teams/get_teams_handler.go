@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Authula/authula"
+	"github.com/Authula/authula/core/pagination"
 	authulamodels "github.com/Authula/authula/models"
 	organizations "github.com/Authula/authula/plugins/organizations"
 	orgtypes "github.com/Authula/authula/plugins/organizations/types"
@@ -36,22 +37,28 @@ func (h *GetTeamsHandler) Handle() http.HandlerFunc {
 		reqCtx, _ := authulamodels.GetRequestContext(r.Context())
 		actor := reqCtx.Actor
 
-		plugin := h.auth.PluginRegistry.GetPlugin("organizations")
+		plugin := h.auth.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String())
 		orgPlugin, ok := plugin.(*organizations.OrganizationsPlugin)
 		if !ok {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": "organizations plugin not found"})
 			return
 		}
 
-		orgs, err := orgPlugin.Api.GetAllOrganizationsByOwner(r.Context(), actor)
+		orgs, err := orgPlugin.Api.GetAllOrganizations(r.Context(), actor, pagination.Params{
+			Page:  1,
+			Limit: 1000,
+		})
 		if err != nil {
 			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": fmt.Sprintf("failed to list organizations: %v", err)})
 			return
 		}
 
 		var teams []teamResponse
-		for _, org := range orgs {
-			orgTeams, err := orgPlugin.Api.GetAllTeams(r.Context(), actor, org.ID)
+		for _, org := range orgs.Data {
+			orgTeams, err := orgPlugin.Api.GetAllTeams(r.Context(), actor, org.ID, pagination.Params{
+				Page:  1,
+				Limit: 1000,
+			})
 			if err != nil {
 				continue
 			}
@@ -66,7 +73,7 @@ func (h *GetTeamsHandler) Handle() http.HandlerFunc {
 				}
 			}
 
-			for _, t := range orgTeams {
+			for _, t := range orgTeams.Data {
 				if !isOwner {
 					teamMember, err := orgPlugin.Api.GetTeamMember(r.Context(), actor, org.ID, t.ID, member.ID)
 					if err != nil || teamMember == nil {

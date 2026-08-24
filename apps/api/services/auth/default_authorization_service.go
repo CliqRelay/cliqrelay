@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/Authula/authula/core/pagination"
 	authulamodels "github.com/Authula/authula/models"
 	organizationsplugin "github.com/Authula/authula/plugins/organizations"
 	orgconstants "github.com/Authula/authula/plugins/organizations/constants"
@@ -30,19 +31,22 @@ func (s *DefaultAuthorizationService) lookupActorOrgID(ctx context.Context, acto
 		Claims: map[string]any{},
 	}
 
-	orgs, err := s.organizationsApi.GetAllOrganizationsByOwner(ctx, systemActor)
+	orgs, err := s.organizationsApi.GetAllOrganizations(ctx, systemActor, pagination.Params{})
 	if err != nil {
 		return "", err
 	}
 
-	for _, org := range orgs {
+	for _, org := range orgs.Data {
 		systemActor.Claims["organization_id"] = org.ID
 
-		teams, err := s.organizationsApi.GetAllTeams(ctx, systemActor, org.ID)
+		teams, err := s.organizationsApi.GetAllTeams(ctx, systemActor, org.ID, pagination.Params{
+			Page:  1,
+			Limit: 1000,
+		})
 		if err != nil {
 			continue
 		}
-		for _, team := range teams {
+		for _, team := range teams.Data {
 			if team.ID == teamID {
 				return team.OrganizationID, nil
 			}

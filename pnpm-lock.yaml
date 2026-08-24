@@ -298,8 +298,8 @@ importers:
         specifier: ^1.162.0
         version: 1.162.0
       authula:
-        specifier: ^0.7.11
-        version: 0.7.11(react@19.2.8)
+        specifier: ^0.7.12
+        version: 0.7.12(react@19.2.8)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -3611,8 +3611,8 @@ packages:
   async-mutex@0.5.0:
     resolution: {integrity: sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA==}
 
-  authula@0.7.11:
-    resolution: {integrity: sha512-UgtWO2C/wuRlZ0ZXD59NKN9xRq2tET6QDpUaocs5SWjAF0ZAUDukYqvuqRQT+jG+/GlIrNfSqqacLLx9TK4qVA==}
+  authula@0.7.12:
+    resolution: {integrity: sha512-7GNUM1FPMI+Cm0GdiaxlRfZNUuoBctlqyWCEgV345RVVghG6YZ/3DRZ6cXe5sbTdf7PNScAF0K+1JXhkm9Zcsg==}
 
   babel-dead-code-elimination@1.0.12:
     resolution: {integrity: sha512-GERT7L2TiYcYDtYk1IpD+ASAYXjKbLTDPhBtYj7X1NuRMDTMtAx9kyBenub1Ev41lo91OHCKdmP+egTDmfQ7Ig==}
@@ -9227,7 +9227,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  authula@0.7.11(react@19.2.8):
+  authula@0.7.12(react@19.2.8):
     dependencies:
       '@tanstack/react-query': 5.101.4(react@19.2.8)
       cookie: 2.0.1
