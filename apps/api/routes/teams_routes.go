@@ -9,12 +9,13 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/config"
 	"github.com/CliqRelay/cliqrelay/handlers/teams"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/openapi"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
-func TeamsRoutes(cfg *config.HTTPConfig) []authulamodels.Route {
-	teamsHandler := teams.NewGetTeamsHandler(cfg.AuthulaInstance)
+func TeamsRoutes(cfg *config.HTTPConfig, teamsUseCase interfaces.TeamsUseCase) []authulamodels.Route {
+	teamsHandler := teams.NewGetTeamsHandler(teamsUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
