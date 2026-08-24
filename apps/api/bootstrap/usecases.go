@@ -29,6 +29,7 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 	guideViewsUseCase := usecases.NewGuideViewsUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.GuideViewsService)
 	stepsUseCase := usecases.NewStepsUseCase(authorizationService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
 	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, svcs.Domain.MediaAssetsService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
+	teamsUseCase := usecases.NewTeamsUseCase(svcs.Domain.TeamsService)
 	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, svcs.Domain.UploadsService, svcs.Domain.GuidesService, svcs.Domain.StepsService)
 
 	return &interfaces.DomainUseCases{
@@ -37,5 +38,6 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 		StepsUseCase:       stepsUseCase,
 		MediaAssetsUseCase: mediaAssetsUseCase,
 		UploadsUseCase:     uploadsUseCase,
+		TeamsUseCase:       teamsUseCase,
 	}, authorizationService, nil
 }

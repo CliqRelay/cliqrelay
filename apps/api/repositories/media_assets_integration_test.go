@@ -21,9 +21,7 @@ func seedSimpleStep(t *testing.T, db bun.IDB) (uuid.UUID, uuid.UUID) {
 	_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
 	require.NoError(t, err)
 
-	orgID := uuid.New().String()
-	_, err = db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-	require.NoError(t, err)
+	orgID := createTestOrganization(context.Background(), db, t)
 	teamID := uuid.New()
 	_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Test Team", "test-team").Exec(context.Background())
 	require.NoError(t, err)

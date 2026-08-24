@@ -18,6 +18,7 @@ var (
 	stepsDB       *bun.DB
 	mediaAssetsDB *bun.DB
 	guideViewsDB  *bun.DB
+	teamsDB       *bun.DB
 )
 
 func TestMain(m *testing.M) {
@@ -73,6 +74,16 @@ func TestMain(m *testing.M) {
 		guideViewsDB.Close()
 	})
 
+	teamsDB, _, err = tests.SetupTestSchema("teams", dsn)
+	if err != nil {
+		runCleanups(cleanups)
+		cleanupContainer()
+		os.Exit(1)
+	}
+	cleanups = append(cleanups, func() {
+		teamsDB.Close()
+	})
+
 	code := m.Run()
 
 	for i := len(cleanups) - 1; i >= 0; i-- {
@@ -89,13 +100,29 @@ func runCleanups(cleanups []func()) {
 	}
 }
 
+// createTestOrganization inserts an organization together with the user that owns
+// it, since organizations.owner_id is NOT NULL and references users(id).
+func createTestOrganization(ctx context.Context, db bun.IDB, t *testing.T) string {
+	t.Helper()
+	ownerID := uuid.New().String()
+	_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", ownerID).Exec(ctx)
+	require.NoError(t, err)
+	orgID := uuid.New().String()
+	_, err = db.NewRaw("INSERT INTO organizations (id, owner_id) VALUES (?, ?)", orgID, ownerID).Exec(ctx)
+	require.NoError(t, err)
+	return orgID
+}
+
 func createTestOrgTeam(ctx context.Context, db bun.IDB, t *testing.T) (uuid.UUID, string) {
 	t.Helper()
-	orgID := uuid.New().String()
-	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(ctx)
-	require.NoError(t, err)
+	// organizations.owner_id is NOT NULL and references users(id), so the user has
+	// to exist before the organization. The returned user is also the org owner;
+	// callers only use it as a guide creator/viewer, so that is harmless.
 	userID := uuid.New().String()
-	_, err = db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(ctx)
+	_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(ctx)
+	require.NoError(t, err)
+	orgID := uuid.New().String()
+	_, err = db.NewRaw("INSERT INTO organizations (id, owner_id) VALUES (?, ?)", orgID, userID).Exec(ctx)
 	require.NoError(t, err)
 	teamID := uuid.New()
 	_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Test Team", "test-team").Exec(ctx)
