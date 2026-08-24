@@ -85,7 +85,7 @@ func generatePDFWithTypst(
 	if err != nil {
 		return nil, fmt.Errorf("create temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Write the typst template
 	if err := os.WriteFile(filepath.Join(tmpDir, typstInputFile), guides.GuideTyp, 0644); err != nil {
@@ -336,7 +336,7 @@ func downloadMedia(
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	return io.ReadAll(reader)
 }

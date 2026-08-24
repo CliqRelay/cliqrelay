@@ -18,13 +18,9 @@ import (
 func seedTeamWithGuide(t *testing.T, db bun.IDB, userID, title string) (*models.Guide, uuid.UUID) {
 	t.Helper()
 
-	orgID := uuid.New().String()
-	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-	require.NoError(t, err)
+	orgID := createTestOrganization(context.Background(), db, t)
 
-	teamID := uuid.New()
-	_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, fmt.Sprintf("Team %s", title), fmt.Sprintf("team-%s", title)).Exec(context.Background())
-	require.NoError(t, err)
+	teamID := uuid.MustParse(insertTestTeam(context.Background(), db, t, orgID, fmt.Sprintf("Team %s", title), nil))
 
 	guide := &models.Guide{
 		ID:        uuid.New(),
@@ -33,7 +29,7 @@ func seedTeamWithGuide(t *testing.T, db bun.IDB, userID, title string) (*models.
 		Title:     title,
 		Status:    models.StatusDraft,
 	}
-	_, err = db.NewInsert().Model(guide).Exec(context.Background())
+	_, err := db.NewInsert().Model(guide).Exec(context.Background())
 	require.NoError(t, err)
 
 	return guide, teamID
@@ -59,12 +55,7 @@ func TestBunStarredGuidesRepository_GetAll_TeamFilter(t *testing.T) {
 		{
 			name: "returns starred guides scoped to team",
 			setup: func(db *bun.DB) (string, *uuid.UUID, int) {
-				orgID := uuid.New().String()
-				_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-				require.NoError(t, err)
-				userID := uuid.New().String()
-				_, err = db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-				require.NoError(t, err)
+				userID := insertTestUser(context.Background(), db, t)
 
 				guideA, teamA := seedTeamWithGuide(t, db, userID, "Guide A")
 				guideB, _ := seedTeamWithGuide(t, db, userID, "Guide B")
@@ -79,12 +70,7 @@ func TestBunStarredGuidesRepository_GetAll_TeamFilter(t *testing.T) {
 		{
 			name: "excludes starred guides from other teams",
 			setup: func(db *bun.DB) (string, *uuid.UUID, int) {
-				orgID := uuid.New().String()
-				_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-				require.NoError(t, err)
-				userID := uuid.New().String()
-				_, err = db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-				require.NoError(t, err)
+				userID := insertTestUser(context.Background(), db, t)
 
 				guideA, teamA := seedTeamWithGuide(t, db, userID, "Guide A")
 				guideB, _ := seedTeamWithGuide(t, db, userID, "Guide B")
@@ -99,12 +85,7 @@ func TestBunStarredGuidesRepository_GetAll_TeamFilter(t *testing.T) {
 		{
 			name: "returns empty when no starred guides for team",
 			setup: func(db *bun.DB) (string, *uuid.UUID, int) {
-				orgID := uuid.New().String()
-				_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-				require.NoError(t, err)
-				userID := uuid.New().String()
-				_, err = db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-				require.NoError(t, err)
+				userID := insertTestUser(context.Background(), db, t)
 
 				_, teamA := seedTeamWithGuide(t, db, userID, "Guide A")
 				guideB, _ := seedTeamWithGuide(t, db, userID, "Guide B")
@@ -118,12 +99,7 @@ func TestBunStarredGuidesRepository_GetAll_TeamFilter(t *testing.T) {
 		{
 			name: "returns all starred guides when team filter is nil",
 			setup: func(db *bun.DB) (string, *uuid.UUID, int) {
-				orgID := uuid.New().String()
-				_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-				require.NoError(t, err)
-				userID := uuid.New().String()
-				_, err = db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-				require.NoError(t, err)
+				userID := insertTestUser(context.Background(), db, t)
 
 				guideA, _ := seedTeamWithGuide(t, db, userID, "Guide A")
 				guideB, _ := seedTeamWithGuide(t, db, userID, "Guide B")

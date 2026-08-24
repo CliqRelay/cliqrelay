@@ -21,27 +21,21 @@ func seedGuide(t *testing.T, db bun.IDB, userID, title string) *models.Guide {
 	t.Helper()
 
 	if userID == "" {
-		userID = uuid.New().String()
-		_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-		require.NoError(t, err)
+		userID = insertTestUser(context.Background(), db, t)
 	}
 
-	orgID := uuid.New().String()
-	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-	require.NoError(t, err)
-	teamID := uuid.New()
-	_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Test Team", "test-team").Exec(context.Background())
-	require.NoError(t, err)
+	orgID := createTestOrganization(context.Background(), db, t)
+	teamID := uuid.MustParse(insertTestTeam(context.Background(), db, t, orgID, "Test Team", nil))
 
 	guide := &models.Guide{
 		ID:        uuid.New(),
 		TeamID:    teamID,
-		CreatorID: new(userID),
+		CreatorID: &userID,
 		Title:     title,
 		Status:    models.StatusDraft,
 	}
 
-	_, err = db.NewInsert().Model(guide).Exec(context.Background())
+	_, err := db.NewInsert().Model(guide).Exec(context.Background())
 	require.NoError(t, err)
 
 	return guide
@@ -50,15 +44,11 @@ func seedGuide(t *testing.T, db bun.IDB, userID, title string) *models.Guide {
 func createOrgWithTeams(t *testing.T, db bun.IDB, numTeams int) (string, []uuid.UUID) {
 	t.Helper()
 
-	orgID := uuid.New().String()
-	_, err := db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-	require.NoError(t, err)
+	orgID := createTestOrganization(context.Background(), db, t)
 
 	teams := make([]uuid.UUID, 0, numTeams)
 	for i := 0; i < numTeams; i++ {
-		teamID := uuid.New()
-		_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, fmt.Sprintf("Team %d", i+1), fmt.Sprintf("team-%d", i+1)).Exec(context.Background())
-		require.NoError(t, err)
+		teamID := uuid.MustParse(insertTestTeam(context.Background(), db, t, orgID, fmt.Sprintf("Team %d", i+1), nil))
 		teams = append(teams, teamID)
 	}
 
@@ -167,8 +157,7 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 			repo := guides.NewBunGuidesRepository(tx)
 			ctx := context.Background()
 
-			_, userErr := tx.NewRaw("INSERT INTO users (id) VALUES (?)", tt.userID).Exec(ctx)
-			require.NoError(t, userErr)
+			insertTestUserWithID(ctx, tx, t, tt.userID)
 
 			teamID, _ := createTestOrgTeam(ctx, tx, t)
 			guide, err := repo.Create(ctx, &types.CreateGuideDTO{
@@ -1026,9 +1015,7 @@ func TestBunGuidesRepository_GetCountByOrganization(t *testing.T) {
 			name: "counts guides across all teams in organization",
 			setup: func(db bun.IDB) (string, *string, int) {
 				orgID, teams := createOrgWithTeams(t, db, 2)
-				userID := uuid.New().String()
-				_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-				require.NoError(t, err)
+				userID := insertTestUser(context.Background(), db, t)
 				seedGuideForTeam(t, db, userID, "Guide 1", teams[0])
 				seedGuideForTeam(t, db, userID, "Guide 2", teams[1])
 				return orgID, nil, 2
@@ -1039,9 +1026,7 @@ func TestBunGuidesRepository_GetCountByOrganization(t *testing.T) {
 			setup: func(db bun.IDB) (string, *string, int) {
 				orgA, teamsA := createOrgWithTeams(t, db, 1)
 				_, teamsB := createOrgWithTeams(t, db, 1)
-				userID := uuid.New().String()
-				_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-				require.NoError(t, err)
+				userID := insertTestUser(context.Background(), db, t)
 				seedGuideForTeam(t, db, userID, "Org A Guide", teamsA[0])
 				seedGuideForTeam(t, db, userID, "Org B Guide", teamsB[0])
 				return orgA, nil, 1
@@ -1051,9 +1036,7 @@ func TestBunGuidesRepository_GetCountByOrganization(t *testing.T) {
 			name: "excludes deleted guides",
 			setup: func(db bun.IDB) (string, *string, int) {
 				orgID, teams := createOrgWithTeams(t, db, 1)
-				userID := uuid.New().String()
-				_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-				require.NoError(t, err)
+				userID := insertTestUser(context.Background(), db, t)
 				guide := seedGuideForTeam(t, db, userID, "To Delete", teams[0])
 				softDeleteGuide(t, db, guide.ID)
 				seedGuideForTeam(t, db, userID, "Active", teams[0])
@@ -1064,17 +1047,13 @@ func TestBunGuidesRepository_GetCountByOrganization(t *testing.T) {
 			name: "respects accessibility filter for viewer",
 			setup: func(db bun.IDB) (string, *string, int) {
 				orgID, teams := createOrgWithTeams(t, db, 1)
-				viewer := uuid.New().String()
-				other := uuid.New().String()
-				_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", viewer).Exec(context.Background())
-				require.NoError(t, err)
-				_, err = db.NewRaw("INSERT INTO users (id) VALUES (?)", other).Exec(context.Background())
-				require.NoError(t, err)
+				viewer := insertTestUser(context.Background(), db, t)
+				other := insertTestUser(context.Background(), db, t)
 				seedGuideForTeam(t, db, viewer, "Viewer's guide", teams[0])
 
 				private := seedGuideForTeam(t, db, other, "Private guide", teams[0])
 				private.Visibility = models.VisibilityPrivate
-				_, err = db.NewUpdate().Model(private).WherePK().Exec(context.Background())
+				_, err := db.NewUpdate().Model(private).WherePK().Exec(context.Background())
 				require.NoError(t, err)
 
 				public := seedGuideForTeam(t, db, other, "Public guide", teams[0])
@@ -1125,17 +1104,10 @@ func TestBunGuidesRepository_CreateConcurrent_OrgLock(t *testing.T) {
 
 	ctx := context.Background()
 
-	orgID := uuid.New().String()
-	_, err := guidesDB.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(ctx)
-	require.NoError(t, err)
+	orgID := createTestOrganization(ctx, guidesDB, t)
 
-	userID := uuid.New().String()
-	_, err = guidesDB.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(ctx)
-	require.NoError(t, err)
-
-	teamID := uuid.New()
-	_, err = guidesDB.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Concurrency Team", "concurrency-team").Exec(ctx)
-	require.NoError(t, err)
+	userID := insertTestUser(ctx, guidesDB, t)
+	teamID := uuid.MustParse(insertTestTeam(ctx, guidesDB, t, orgID, "Concurrency Team", nil))
 
 	t.Cleanup(func() {
 		_, _ = guidesDB.NewRaw("DELETE FROM guides WHERE team_id = ?", teamID).Exec(ctx)
@@ -1200,17 +1172,10 @@ func TestBunGuidesRepository_RestoreConcurrent_OrgLock(t *testing.T) {
 
 	ctx := context.Background()
 
-	orgID := uuid.New().String()
-	_, err := guidesDB.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(ctx)
-	require.NoError(t, err)
+	orgID := createTestOrganization(ctx, guidesDB, t)
 
-	userID := uuid.New().String()
-	_, err = guidesDB.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(ctx)
-	require.NoError(t, err)
-
-	teamID := uuid.New()
-	_, err = guidesDB.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Concurrency Team", "concurrency-team-restore").Exec(ctx)
-	require.NoError(t, err)
+	userID := insertTestUser(ctx, guidesDB, t)
+	teamID := uuid.MustParse(insertTestTeam(ctx, guidesDB, t, orgID, "Concurrency Team", nil))
 
 	const totalDeleted = 5
 	guideIDs := make([]uuid.UUID, totalDeleted)

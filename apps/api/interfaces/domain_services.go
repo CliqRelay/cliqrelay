@@ -9,4 +9,5 @@ type DomainServices struct {
 	ExportService        ExportService
 	UploadsService       UploadsService
 	PurgeService         PurgeService
+	TeamsService         TeamsService
 }

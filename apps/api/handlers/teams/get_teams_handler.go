@@ -1,90 +1,54 @@
 package teams
 
 import (
-	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/Authula/authula"
 	authulamodels "github.com/Authula/authula/models"
-	organizations "github.com/Authula/authula/plugins/organizations"
-	orgtypes "github.com/Authula/authula/plugins/organizations/types"
+
+	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type GetTeamsHandler struct {
-	auth *authula.Auth
+	teamsUseCase interfaces.TeamsUseCase
 }
 
-func NewGetTeamsHandler(auth *authula.Auth) *GetTeamsHandler {
-	return &GetTeamsHandler{auth: auth}
-}
-
-type teamResponse struct {
-	ID             string `json:"id"`
-	OrganizationID string `json:"organization_id"`
-	OwnerID        string `json:"owner_id"`
-	Name           string `json:"name"`
-	CreatedAt      string `json:"created_at"`
-	UpdatedAt      string `json:"updated_at"`
-}
-
-type getAllTeamsResponse struct {
-	Teams []teamResponse `json:"teams"`
+func NewGetTeamsHandler(teamsUseCase interfaces.TeamsUseCase) *GetTeamsHandler {
+	return &GetTeamsHandler{teamsUseCase: teamsUseCase}
 }
 
 func (h *GetTeamsHandler) Handle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqCtx, _ := authulamodels.GetRequestContext(r.Context())
-		actor := reqCtx.Actor
-
-		plugin := h.auth.PluginRegistry.GetPlugin("organizations")
-		orgPlugin, ok := plugin.(*organizations.OrganizationsPlugin)
-		if !ok {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": "organizations plugin not found"})
+		ctx := r.Context()
+		reqCtx, ok := authulamodels.GetRequestContext(ctx)
+		if !ok || reqCtx == nil {
+			http.Error(w, "request context not found", http.StatusInternalServerError)
 			return
 		}
 
-		orgs, err := orgPlugin.Api.GetAllOrganizationsByOwner(r.Context(), actor)
+		rows, err := h.teamsUseCase.List(ctx, reqCtx.Actor)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": fmt.Sprintf("failed to list organizations: %v", err)})
+			reqCtx.SetJSONResponse(utils.ErrorStatus(err), map[string]any{"message": err.Error()})
+			reqCtx.Handled = true
 			return
 		}
 
-		var teams []teamResponse
-		for _, org := range orgs {
-			orgTeams, err := orgPlugin.Api.GetAllTeams(r.Context(), actor, org.ID)
-			if err != nil {
-				continue
-			}
-
-			isOwner := org.OwnerID == actor.ID
-
-			var member *orgtypes.OrganizationMemberResponse
-			if !isOwner {
-				member, err = orgPlugin.Api.GetMemberByUserID(r.Context(), actor, org.ID, actor.ID)
-				if err != nil || member == nil {
-					continue
-				}
-			}
-
-			for _, t := range orgTeams {
-				if !isOwner {
-					teamMember, err := orgPlugin.Api.GetTeamMember(r.Context(), actor, org.ID, t.ID, member.ID)
-					if err != nil || teamMember == nil {
-						continue
-					}
-				}
-
-				teams = append(teams, teamResponse{
-					ID:             t.ID,
-					Name:           t.Name,
-					OrganizationID: t.OrganizationID,
-					OwnerID:        actor.ID,
-					CreatedAt:      t.CreatedAt.Format("2006-01-02T15:04:05Z"),
-					UpdatedAt:      t.UpdatedAt.Format("2006-01-02T15:04:05Z"),
-				})
-			}
+		teams := make([]types.Team, 0, len(rows))
+		for _, row := range rows {
+			teams = append(teams, types.Team{
+				ID:             row.ID,
+				Name:           row.Name,
+				OrganizationID: row.OrganizationID,
+				// The organization's owner. The JSON field keeps its owner_id name
+				// for contract compatibility even though the team itself has no owner.
+				OwnerID:   row.OwnerID,
+				CreatedAt: row.CreatedAt.UTC().Format(time.RFC3339),
+				UpdatedAt: row.UpdatedAt.UTC().Format(time.RFC3339),
+			})
 		}
 
-		reqCtx.SetJSONResponse(http.StatusOK, getAllTeamsResponse{Teams: teams})
+		reqCtx.SetJSONResponse(http.StatusOK, &types.GetAllTeamsResponse{Teams: teams})
 	}
 }
