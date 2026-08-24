@@ -311,6 +311,21 @@ func TestBunTeamsRepository_GetAccessibleByUserID(t *testing.T) {
 			teamID: func(*teamAccessFixture) string { return "not-a-uuid" },
 			want:   func(*teamAccessFixture) string { return "" },
 		},
+		{
+			// uuid.Parse accepts these two alternative spellings. Postgres accepts the
+			// braced form but rejects the URN one, so the id reaching the query has to
+			// be the normalized value rather than whatever the caller sent.
+			name:   "a urn:uuid team id resolves rather than erroring",
+			actor:  func(f *teamAccessFixture) string { return f.OwnerID },
+			teamID: func(f *teamAccessFixture) string { return "urn:uuid:" + f.AssignedTeamID },
+			want:   func(f *teamAccessFixture) string { return f.AssignedTeamID },
+		},
+		{
+			name:   "a braced team id resolves rather than erroring",
+			actor:  func(f *teamAccessFixture) string { return f.OwnerID },
+			teamID: func(f *teamAccessFixture) string { return "{" + f.AssignedTeamID + "}" },
+			want:   func(f *teamAccessFixture) string { return f.AssignedTeamID },
+		},
 	}
 
 	for _, tt := range cases {

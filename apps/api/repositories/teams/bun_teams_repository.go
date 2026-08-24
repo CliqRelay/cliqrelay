@@ -67,13 +67,19 @@ func (r *BunTeamsRepository) GetAccessibleByUserID(ctx context.Context, userID, 
 	// organization_teams.id is a Postgres uuid, so a malformed id from the query
 	// string would raise "invalid input syntax for type uuid" and surface as a 500.
 	// A malformed id is definitionally not an accessible team.
-	if _, err := uuid.Parse(teamID); err != nil {
+	//
+	// The parsed value is what goes into the query, not the caller's string:
+	// uuid.Parse also accepts the "urn:uuid:" and braced forms, and Postgres
+	// rejects the former, so passing the raw input through would reopen the 500
+	// this guard exists to close.
+	parsedTeamID, err := uuid.Parse(teamID)
+	if err != nil {
 		return nil, nil
 	}
 
 	team := new(models.Team)
-	err := r.accessibleQuery(userID).
-		Where("ot.id = ?", teamID).
+	err = r.accessibleQuery(userID).
+		Where("ot.id = ?", parsedTeamID.String()).
 		Scan(ctx, team)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
