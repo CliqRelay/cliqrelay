@@ -22,7 +22,7 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 		if !ok {
 			return nil, nil, errors.New("bootstrap: organizations plugin not found")
 		}
-		authorizationService = authservice.NewDefaultAuthorizationService(*orgPlugin.Api)
+		authorizationService = authservice.NewDefaultAuthorizationService(*orgPlugin.Api, svcs.Domain.TeamsService)
 	}
 
 	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.StarredGuidesService, svcs.Domain.ExportService)

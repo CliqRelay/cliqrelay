@@ -2,88 +2,57 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"strings"
 
-	"github.com/Authula/authula/core/pagination"
 	authulamodels "github.com/Authula/authula/models"
 	organizationsplugin "github.com/Authula/authula/plugins/organizations"
 	orgconstants "github.com/Authula/authula/plugins/organizations/constants"
 
 	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type DefaultAuthorizationService struct {
+	// organizationsApi is still needed by GuideListFilterByOrganization, which is
+	// already a single lookup and so was left on the plugin API.
 	organizationsApi organizationsplugin.API
+	teamsService     interfaces.TeamsService
 }
 
-func NewDefaultAuthorizationService(organizationsApi organizationsplugin.API) *DefaultAuthorizationService {
-	return &DefaultAuthorizationService{organizationsApi: organizationsApi}
+func NewDefaultAuthorizationService(organizationsApi organizationsplugin.API, teamsService interfaces.TeamsService) *DefaultAuthorizationService {
+	return &DefaultAuthorizationService{organizationsApi: organizationsApi, teamsService: teamsService}
 }
 
-func (s *DefaultAuthorizationService) lookupActorOrgID(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error) {
-	systemActor := &authulamodels.Actor{
-		ID:     actor.ID,
-		Type:   authulamodels.ActorMachine,
-		Scopes: []string{"*"},
-		Claims: map[string]any{},
+// resolveAccessibleTeam returns the team if the actor can reach it, (nil, nil) if
+// they cannot, and an error only when the lookup itself failed. Callers substitute
+// their own denial error for the (nil, nil) case, so an infrastructure failure
+// propagates as a 500 rather than telling every user they have lost access.
+func (s *DefaultAuthorizationService) resolveAccessibleTeam(ctx context.Context, actor *authulamodels.Actor, teamID string) (*models.Team, error) {
+	if actor == nil || actor.ID == "" {
+		return nil, constants.ErrUnauthorized
 	}
 
-	orgs, err := s.organizationsApi.GetAllOrganizations(ctx, systemActor, pagination.Params{})
-	if err != nil {
-		return "", err
-	}
-
-	for _, org := range orgs.Data {
-		systemActor.Claims["organization_id"] = org.ID
-
-		teams, err := s.organizationsApi.GetAllTeams(ctx, systemActor, org.ID, pagination.Params{
-			Page:  1,
-			Limit: 1000,
-		})
-		if err != nil {
-			continue
-		}
-		for _, team := range teams.Data {
-			if team.ID == teamID {
-				return team.OrganizationID, nil
-			}
-		}
-	}
-
-	return "", errors.New("team not found in user's organizations")
-}
-
-func (s *DefaultAuthorizationService) isTeamMember(ctx context.Context, actor *authulamodels.Actor, orgID, teamID string) error {
-	systemActor := &authulamodels.Actor{
-		ID:     actor.ID,
-		Type:   authulamodels.ActorMachine,
-		Scopes: []string{"*"},
-		Claims: map[string]any{
-			"organization_id": orgID,
-		},
-	}
-
-	member, err := s.organizationsApi.GetMemberByUserID(ctx, systemActor, orgID, actor.ID)
-	if err != nil {
-		return err
-	}
-
-	teamMember, err := s.organizationsApi.GetTeamMember(ctx, systemActor, orgID, teamID, member.ID)
-	if err != nil {
-		return err
-	}
-	if teamMember == nil {
-		return errors.New("team member not found")
-	}
-
-	return nil
+	return s.teamsService.GetAccessibleByUserID(ctx, actor.ID, teamID)
 }
 
 func (s *DefaultAuthorizationService) CanReadTeam(ctx context.Context, actor *authulamodels.Actor, orgID string, teamID string) error {
-	return s.isTeamMember(ctx, actor, orgID, teamID)
+	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
+	if err != nil {
+		return err
+	}
+	if team == nil {
+		return constants.ErrTeamAccessDenied
+	}
+
+	// Denial rather than a not-found, so this does not leak whether teams exist in
+	// organizations the actor cannot see.
+	if orgID != "" && team.OrganizationID != orgID {
+		return constants.ErrTeamAccessDenied
+	}
+
+	return nil
 }
 
 func hasScope(scopes []string, required string) bool {
@@ -102,12 +71,11 @@ func hasScope(scopes []string, required string) bool {
 }
 
 func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
-	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
 	if err != nil {
-		return constants.ErrTeamAccessDenied
+		return err
 	}
-
-	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+	if team == nil {
 		return constants.ErrTeamAccessDenied
 	}
 
@@ -119,12 +87,11 @@ func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor 
 }
 
 func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
-	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
 	if err != nil {
-		return constants.ErrTeamAccessDenied
+		return err
 	}
-
-	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+	if team == nil {
 		return constants.ErrGuideAccessDenied
 	}
 
@@ -140,12 +107,11 @@ func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *a
 }
 
 func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
-	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
 	if err != nil {
-		return constants.ErrTeamAccessDenied
+		return err
 	}
-
-	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+	if team == nil {
 		return constants.ErrGuideEditDenied
 	}
 
@@ -161,12 +127,11 @@ func (s *DefaultAuthorizationService) CanEditGuide(ctx context.Context, actor *a
 }
 
 func (s *DefaultAuthorizationService) CanDeleteGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
-	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
 	if err != nil {
-		return constants.ErrTeamAccessDenied
+		return err
 	}
-
-	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+	if team == nil {
 		return constants.ErrGuideDeleteDenied
 	}
 
@@ -208,12 +173,11 @@ func (s *DefaultAuthorizationService) CanBulkGuideAction(ctx context.Context, ac
 }
 
 func (s *DefaultAuthorizationService) GuideListFilter(ctx context.Context, actor *authulamodels.Actor, teamID string) (*types.GuideFilter, error) {
-	orgID, err := s.lookupActorOrgID(ctx, actor, teamID)
+	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
 	if err != nil {
-		return nil, constants.ErrTeamAccessDenied
+		return nil, err
 	}
-
-	if err := s.isTeamMember(ctx, actor, orgID, teamID); err != nil {
+	if team == nil {
 		return nil, constants.ErrGuideAccessDenied
 	}
 
