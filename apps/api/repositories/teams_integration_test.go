@@ -291,6 +291,15 @@ func TestBunTeamsRepository_GetAccessibleByUserID(t *testing.T) {
 			want:   func(*teamAccessFixture) string { return "" },
 		},
 		{
+			// Guards the precedence of the access rule against the team-id filter. If
+			// the two were ever combined without parentheses, the owner disjunct would
+			// ignore the team id and hand this caller back one of their own teams.
+			name:   "an org owner cannot reach a team in an organization they do not own",
+			actor:  func(*teamAccessFixture) string { return seedTeamAccessFixture(t, teamsDB).OwnerID },
+			teamID: func(f *teamAccessFixture) string { return f.AssignedTeamID },
+			want:   func(*teamAccessFixture) string { return "" },
+		},
+		{
 			name:   "unknown team id yields no team",
 			actor:  func(f *teamAccessFixture) string { return f.OwnerID },
 			teamID: func(*teamAccessFixture) string { return uuid.New().String() },
