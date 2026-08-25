@@ -31,7 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error connecting to database: ", err)
 	}
-	defer sqlDB.Close()
+	defer func() { _ = sqlDB.Close() }()
 
 	db := bun.NewDB(sqlDB, pgdialect.New())
 

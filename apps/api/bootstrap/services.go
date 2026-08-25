@@ -13,6 +13,7 @@ import (
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/services/storage"
+	teamsservice "github.com/CliqRelay/cliqrelay/services/teams"
 	uploadsservice "github.com/CliqRelay/cliqrelay/services/uploads"
 )
 
@@ -33,6 +34,7 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 	exportService := export.NewExportService(repos.GuideExports, repos.Guides, repos.Steps, storageService, presignService, o.infraCfg.RedisClient, o.infraCfg.S3Bucket)
 	uploadsService := uploadsservice.NewUploadsService(repos.Guides, repos.Steps, repos.MediaAssets, presignService, o.infraCfg.S3Bucket)
 	guideViewsService := guideviewsservice.NewGuideViewsService(repos.GuideViews, o.infraCfg.RedisClient)
+	teamsService := teamsservice.NewTeamsService(repos.Teams)
 	purgeService := purge.NewPurgeService(repos.Guides, storageService, guideViewsService, o.infraCfg.S3Bucket)
 
 	return &builtServices{
@@ -47,6 +49,7 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 			ExportService:        exportService,
 			UploadsService:       uploadsService,
 			PurgeService:         purgeService,
+			TeamsService:         teamsService,
 		},
 	}
 }

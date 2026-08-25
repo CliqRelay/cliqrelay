@@ -8,6 +8,7 @@ import (
 	bunMediaAssets "github.com/CliqRelay/cliqrelay/repositories/media_assets"
 	bunStarredGuides "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
 	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
+	bunTeams "github.com/CliqRelay/cliqrelay/repositories/teams"
 )
 
 func buildRepositories(o *options) (*interfaces.Repositories, error) {
@@ -23,6 +24,7 @@ func buildRepositories(o *options) (*interfaces.Repositories, error) {
 		StarredGuides: o.starredGuidesRepo,
 		GuideExports:  o.guideExportsRepo,
 		GuideViews:    o.guideViewsRepo,
+		Teams:         o.teamsRepo,
 	}
 
 	if repos.Guides == nil {
@@ -42,6 +44,9 @@ func buildRepositories(o *options) (*interfaces.Repositories, error) {
 	}
 	if repos.GuideViews == nil {
 		repos.GuideViews = bunGuideViews.NewBunGuideViewsRepository(db)
+	}
+	if repos.Teams == nil {
+		repos.Teams = bunTeams.NewBunTeamsRepository(db)
 	}
 
 	return repos, nil

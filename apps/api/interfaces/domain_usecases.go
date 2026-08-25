@@ -6,4 +6,5 @@ type DomainUseCases struct {
 	StepsUseCase       StepsUseCase
 	MediaAssetsUseCase MediaAssetsUseCase
 	UploadsUseCase     UploadsUseCase
+	TeamsUseCase       TeamsUseCase
 }

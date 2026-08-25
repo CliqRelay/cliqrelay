@@ -10,6 +10,7 @@ import (
 	bunMediaAssets "github.com/CliqRelay/cliqrelay/repositories/media_assets"
 	bunStarredGuides "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
 	bunSteps "github.com/CliqRelay/cliqrelay/repositories/steps"
+	bunTeams "github.com/CliqRelay/cliqrelay/repositories/teams"
 )
 
 // Ensures at compile time that our Bun database repositories correctly implement all domain interfaces.
@@ -20,6 +21,7 @@ var (
 	_ interfaces.MediaAssetsRepository   = (*bunMediaAssets.BunMediaAssetsRepository)(nil)
 	_ interfaces.GuideExportsRepository  = (*bunGuideExports.BunGuideExportsRepository)(nil)
 	_ interfaces.GuideViewsRepository    = (*bunGuideViews.BunGuideViewsRepository)(nil)
+	_ interfaces.TeamsRepository         = (*bunTeams.BunTeamsRepository)(nil)
 )
 
 func TestBuildRepositoriesDefaultsToBun(t *testing.T) {

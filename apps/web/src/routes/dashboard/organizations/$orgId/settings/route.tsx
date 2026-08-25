@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import type { ListOrganizationMembersResponse } from "authula";
 
 import { AppUserRole, hasMinimumRole } from "@repo/data-commons";
 
@@ -30,8 +31,9 @@ export const Route = createFileRoute(
 			const members =
 				(await authulaClient.organizations.listOrganizationMembers(
 					params.orgId,
-				)) as AppOrganizationMemberResponse[] | null;
-			currentMember = members?.find((m) => m.user.id === ctx.user?.id) ?? null;
+				)) as ListOrganizationMembersResponse | null;
+			currentMember = (members?.data?.find((m) => m.user.id === ctx.user?.id) ??
+				null) as unknown as AppOrganizationMemberResponse;
 		} catch {
 			// Membership could not be resolved — only org ownership can grant access
 		}
