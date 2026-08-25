@@ -5,6 +5,7 @@ export const validatedEnv = createEnv({
 	server: {
 		AUTHULA_URL: z.string().nonempty(),
 		API_URL: z.string().nonempty(),
+		AUTH_COOKIE_DOMAIN: z.string().optional(),
 	},
 	runtimeEnv: process.env,
 	emptyStringAsUndefined: true,
@@ -13,4 +14,5 @@ export const validatedEnv = createEnv({
 export const envServer = {
 	authulaUrl: validatedEnv.AUTHULA_URL,
 	apiUrl: validatedEnv.API_URL,
+	authCookieDomain: validatedEnv.AUTH_COOKIE_DOMAIN,
 } as const;
