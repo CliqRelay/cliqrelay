@@ -24,100 +24,85 @@ const isBrowser = (): boolean => typeof window !== "undefined";
 let cachedCsrfToken: string | undefined;
 
 function extractCsrfFromSetCookieHeaders(headers: Headers): void {
-	if (!isBrowser()) return;
+  if (!isBrowser()) return;
 
-	try {
-		const setCookie =
-			typeof headers.getSetCookie === "function" ? headers.getSetCookie() : [];
-		for (const cookie of setCookie) {
-			const match = cookie.match(
-				new RegExp(`(?:^|;\\s*)${CSRF_COOKIE_NAME}=([^;]+)`),
-			);
-			if (match) {
-				cachedCsrfToken = match[1];
-				return;
-			}
-		}
-	} catch {
-		// headers API not available in this environment
-	}
+  try {
+    const setCookie = typeof headers.getSetCookie === "function" ? headers.getSetCookie() : [];
+    for (const cookie of setCookie) {
+      const match = cookie.match(new RegExp(`(?:^|;\\s*)${CSRF_COOKIE_NAME}=([^;]+)`));
+      if (match) {
+        cachedCsrfToken = match[1];
+        return;
+      }
+    }
+  } catch {
+    // headers API not available in this environment
+  }
 }
 
 export function getCachedCsrfToken(): string | undefined {
-	return isBrowser() ? cachedCsrfToken : undefined;
+  return isBrowser() ? cachedCsrfToken : undefined;
 }
 
 // A dedicated error class makes it easy to type check and handle in UI layers
 export class ApiError extends Error {
-	status: number;
-	data: any;
-	headers: Headers;
+  status: number;
+  data: any;
+  headers: Headers;
 
-	constructor(message: string, status: number, data: any, headers: Headers) {
-		super(message || `Request failed with status ${status}`);
-		this.name = "ApiError";
-		this.status = status;
-		this.data = data;
-		this.headers = headers;
-	}
+  constructor(message: string, status: number, data: any, headers: Headers) {
+    super(message || `Request failed with status ${status}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+    this.headers = headers;
+  }
 }
 
-export const customFetch = async <T>(
-	url: string,
-	options?: RequestInit,
-): Promise<T> => {
-	// Server-side (SSR in Docker): use internal API_URL to reach the api container
-	const resolvedUrl =
-		typeof window === "undefined" &&
-		typeof process !== "undefined" &&
-		process.env?.API_URL
-			? url.replace(
-					/^https?:\/\/[^/]+/,
-					process.env.API_URL.replace(/\/+$/, ""),
-				)
-			: url;
+export const customFetch = async <T>(url: string, options?: RequestInit): Promise<T> => {
+  // Server-side (SSR in Docker): use internal API_URL to reach the api container
+  const resolvedUrl =
+    typeof window === "undefined" && typeof process !== "undefined" && process.env?.API_URL
+      ? url.replace(/^https?:\/\/[^/]+/, process.env.API_URL.replace(/\/+$/, ""))
+      : url;
 
-	const body = convertRequestBodyToSnakeCase(options?.body);
+  const body = convertRequestBodyToSnakeCase(options?.body);
 
-	const res = await fetch(resolvedUrl, { ...options, body });
+  const res = await fetch(resolvedUrl, { ...options, body });
 
-	extractCsrfFromSetCookieHeaders(res.headers);
+  extractCsrfFromSetCookieHeaders(res.headers);
 
-	const responseBody = [204, 205, 304].includes(res.status)
-		? null
-		: await res.text();
+  const responseBody = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-	const parsed: any = responseBody ? JSON.parse(responseBody) : {};
-	const camelCasedData = toCamelCaseKeys(parsed);
+  const parsed: any = responseBody ? JSON.parse(responseBody) : {};
+  const camelCasedData = toCamelCaseKeys(parsed);
 
-	const message =
-		typeof camelCasedData === "object" &&
-		camelCasedData !== null &&
-		"message" in camelCasedData
-			? String(camelCasedData.message)
-			: "";
+  const message =
+    typeof camelCasedData === "object" && camelCasedData !== null && "message" in camelCasedData
+      ? String(camelCasedData.message)
+      : "";
 
-	if (!res.ok) {
-		throw new ApiError(message, res.status, camelCasedData, res.headers);
-	}
+  if (!res.ok) {
+    throw new ApiError(message, res.status, camelCasedData, res.headers);
+  }
 
-	return camelCasedData as T;
+  return camelCasedData as T;
 };
 
 function convertRequestBodyToSnakeCase(
-	body: BodyInit | null | undefined,
+  body: BodyInit | null | undefined,
 ): BodyInit | null | undefined {
-	if (typeof body !== "string") {
-		return body;
-	}
+  if (typeof body !== "string") {
+    return body;
+  }
 
-	try {
-		const parsed = JSON.parse(body);
-		if (parsed !== null && typeof parsed === "object") {
-			return JSON.stringify(toSnakeCaseKeys(parsed));
-		}
-		return body;
-	} catch {
-		return body;
-	}
+  try {
+    const parsed = JSON.parse(body);
+    if (parsed !== null && typeof parsed === "object") {
+      return JSON.stringify(toSnakeCaseKeys(parsed));
+    }
+    return body;
+  } catch {
+    return body;
+  }
 }

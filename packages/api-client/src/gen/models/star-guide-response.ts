@@ -7,5 +7,5 @@
  */
 
 export type StarGuideResponse = {
-	message: string;
+  message: string;
 };

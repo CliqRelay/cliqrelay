@@ -8,5 +8,5 @@
 import type { Guide } from "./guide";
 
 export type UnpublishGuideResponse = {
-	guide: Guide;
+  guide: Guide;
 };

@@ -7,5 +7,5 @@
  */
 
 export type RecordGuideViewResponse = {
-	message: string;
+  message: string;
 };

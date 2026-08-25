@@ -5,36 +5,36 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
-
-import type { RequestHandlerOptions } from "msw";
 import { HttpResponse, http } from "msw";
+import type { RequestHandlerOptions } from "msw";
 
 import type { GetAllTeamsResponse } from "../../models";
+
 import { getGetTeamsResponseMock } from "./teams.faker";
 
 export { getGetTeamsResponseMock } from "./teams.faker";
 
 export const getGetTeamsMockHandler = (
-	overrideResponse?:
-		| GetAllTeamsResponse
-		| ((
-				info: Parameters<Parameters<typeof http.get>[1]>[0],
-		  ) => Promise<GetAllTeamsResponse> | GetAllTeamsResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | GetAllTeamsResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<GetAllTeamsResponse> | GetAllTeamsResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.get(
-		"*/api/v1/teams",
-		async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getGetTeamsResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
+  return http.get(
+    "*/api/v1/teams",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetTeamsResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
 };
 export const getTeamsMock = () => [getGetTeamsMockHandler()];

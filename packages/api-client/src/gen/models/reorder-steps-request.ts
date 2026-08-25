@@ -8,10 +8,10 @@
 import type { Uuid } from "./uuid";
 
 export type ReorderStepsRequest = {
-	guideId: Uuid;
-	/** @nullable */
-	nextStepId?: string | null;
-	/** @nullable */
-	prevStepId?: string | null;
-	targetStepId: string;
+  guideId: Uuid;
+  /** @nullable */
+  nextStepId?: string | null;
+  /** @nullable */
+  prevStepId?: string | null;
+  targetStepId: string;
 };

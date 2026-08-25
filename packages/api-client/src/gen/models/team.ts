@@ -10,10 +10,10 @@
  * A team within an organization
  */
 export type Team = {
-	createdAt: string;
-	id: string;
-	name: string;
-	organizationId: string;
-	ownerId: string;
-	updatedAt: string;
+  createdAt: string;
+  id: string;
+  name: string;
+  organizationId: string;
+  ownerId: string;
+  updatedAt: string;
 };

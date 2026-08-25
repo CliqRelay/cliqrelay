@@ -9,11 +9,10 @@
 /**
  * The type of the guide document to export
  */
-export type ExportGuideFormat =
-	(typeof ExportGuideFormat)[keyof typeof ExportGuideFormat];
+export type ExportGuideFormat = (typeof ExportGuideFormat)[keyof typeof ExportGuideFormat];
 
 export const ExportGuideFormat = {
-	pdf: "pdf",
-	markdown: "markdown",
-	html: "html",
+  pdf: "pdf",
+  markdown: "markdown",
+  html: "html",
 } as const;

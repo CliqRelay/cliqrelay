@@ -11,15 +11,15 @@ import type { StepType } from "./step-type";
 import type { UpdateStepRequestTargetElement } from "./update-step-request-target-element";
 
 export type UpdateStepRequest = {
-	action?: StepAction;
-	/** @nullable */
-	actionText?: string | null;
-	canvasContent?: null | StepCanvasContent;
-	/** @nullable */
-	notes?: string | null;
-	/** @nullable */
-	targetElement?: UpdateStepRequestTargetElement;
-	type?: StepType;
-	/** @nullable */
-	url?: string | null;
+  action?: StepAction;
+  /** @nullable */
+  actionText?: string | null;
+  canvasContent?: null | StepCanvasContent;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  targetElement?: UpdateStepRequestTargetElement;
+  type?: StepType;
+  /** @nullable */
+  url?: string | null;
 };

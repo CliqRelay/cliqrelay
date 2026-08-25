@@ -12,6 +12,6 @@
 export type StepType = (typeof StepType)[keyof typeof StepType];
 
 export const StepType = {
-	interaction: "interaction",
-	canvas: "canvas",
+  interaction: "interaction",
+  canvas: "canvas",
 } as const;

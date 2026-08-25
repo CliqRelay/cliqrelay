@@ -90,7 +90,6 @@ function Guides() {
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [pendingGuideId, setPendingGuideId] = useState<string | null>(null);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally reset page on filter change
 	useEffect(() => {
 		setCurrentPage(1);
 	}, [filter]);

@@ -12,20 +12,20 @@ import type { StepType } from "./step-type";
 import type { Uuid } from "./uuid";
 
 export type CreateStepRequest = {
-	action?: StepAction;
-	/** @nullable */
-	actionText?: string | null;
-	canvasContent?: null | StepCanvasContent;
-	guideId: Uuid;
-	/** @nullable */
-	insertAfterStepId?: string | null;
-	/** @nullable */
-	insertBeforeStepId?: string | null;
-	/** @nullable */
-	notes?: string | null;
-	/** @nullable */
-	targetElement?: CreateStepRequestTargetElement;
-	type: StepType;
-	/** @nullable */
-	url?: string | null;
+  action?: StepAction;
+  /** @nullable */
+  actionText?: string | null;
+  canvasContent?: null | StepCanvasContent;
+  guideId: Uuid;
+  /** @nullable */
+  insertAfterStepId?: string | null;
+  /** @nullable */
+  insertBeforeStepId?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  targetElement?: CreateStepRequestTargetElement;
+  type: StepType;
+  /** @nullable */
+  url?: string | null;
 };

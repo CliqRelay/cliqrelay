@@ -8,5 +8,5 @@
 import type { Guide } from "./guide";
 
 export type RecalculateDurationResponse = {
-	guide: Guide;
+  guide: Guide;
 };

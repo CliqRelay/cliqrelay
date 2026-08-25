@@ -7,5 +7,5 @@
  */
 
 export type GetAllMediaAssetsByStepIdParams = {
-	step_id?: string;
+  step_id?: string;
 };

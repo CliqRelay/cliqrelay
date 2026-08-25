@@ -9,10 +9,9 @@
 /**
  * The field to sort guides by
  */
-export type GuideSortField =
-	(typeof GuideSortField)[keyof typeof GuideSortField];
+export type GuideSortField = (typeof GuideSortField)[keyof typeof GuideSortField];
 
 export const GuideSortField = {
-	createdAt: "created_at",
-	updatedAt: "updated_at",
+  createdAt: "created_at",
+  updatedAt: "updated_at",
 } as const;

@@ -8,11 +8,11 @@
 import type { GuideCreatorMetadata } from "./guide-creator-metadata";
 
 export type GuideCreator = {
-	email: string;
-	id: string;
-	/** @nullable */
-	image?: string | null;
-	/** @nullable */
-	metadata?: GuideCreatorMetadata;
-	name: string;
+  email: string;
+  id: string;
+  /** @nullable */
+  image?: string | null;
+  /** @nullable */
+  metadata?: GuideCreatorMetadata;
+  name: string;
 };

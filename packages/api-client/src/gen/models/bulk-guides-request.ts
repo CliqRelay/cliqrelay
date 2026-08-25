@@ -7,7 +7,7 @@
  */
 
 export type BulkGuidesRequest = {
-	/** @nullable */
-	ids?: string[] | null;
-	teamId?: string;
+  /** @nullable */
+  ids?: string[] | null;
+  teamId?: string;
 };

@@ -5,156 +5,156 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
-
-import type { RequestHandlerOptions } from "msw";
 import { HttpResponse, http } from "msw";
+import type { RequestHandlerOptions } from "msw";
 
 import type {
-	CreateMediaAssetResponse,
-	DeleteMediaAssetResponse,
-	GetAllMediaAssetsResponse,
-	GetMediaAssetByIDResponse,
-	UpdateMediaAssetResponse,
+  CreateMediaAssetResponse,
+  DeleteMediaAssetResponse,
+  GetAllMediaAssetsResponse,
+  GetMediaAssetByIDResponse,
+  UpdateMediaAssetResponse,
 } from "../../models";
+
 import {
-	getCreateMediaAssetResponseMock,
-	getDeleteMediaAssetResponseMock,
-	getGetAllMediaAssetsByStepIdResponseMock,
-	getGetMediaAssetByIdResponseMock,
-	getUpdateMediaAssetResponseMock,
+  getCreateMediaAssetResponseMock,
+  getDeleteMediaAssetResponseMock,
+  getGetAllMediaAssetsByStepIdResponseMock,
+  getGetMediaAssetByIdResponseMock,
+  getUpdateMediaAssetResponseMock,
 } from "./media-assets.faker";
 
 export {
-	getCreateMediaAssetResponseMock,
-	getDeleteMediaAssetResponseMock,
-	getGetAllMediaAssetsByStepIdResponseMock,
-	getGetMediaAssetByIdResponseMock,
-	getUpdateMediaAssetResponseMock,
+  getGetAllMediaAssetsByStepIdResponseMock,
+  getCreateMediaAssetResponseMock,
+  getGetMediaAssetByIdResponseMock,
+  getDeleteMediaAssetResponseMock,
+  getUpdateMediaAssetResponseMock,
 } from "./media-assets.faker";
 
 export const getGetAllMediaAssetsByStepIdMockHandler = (
-	overrideResponse?:
-		| GetAllMediaAssetsResponse
-		| ((
-				info: Parameters<Parameters<typeof http.get>[1]>[0],
-		  ) => Promise<GetAllMediaAssetsResponse> | GetAllMediaAssetsResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | GetAllMediaAssetsResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<GetAllMediaAssetsResponse> | GetAllMediaAssetsResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.get(
-		"*/api/v1/media-assets",
-		async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getGetAllMediaAssetsByStepIdResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
+  return http.get(
+    "*/api/v1/media-assets",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetAllMediaAssetsByStepIdResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
 };
 
 export const getCreateMediaAssetMockHandler = (
-	overrideResponse?:
-		| CreateMediaAssetResponse
-		| ((
-				info: Parameters<Parameters<typeof http.post>[1]>[0],
-		  ) => Promise<CreateMediaAssetResponse> | CreateMediaAssetResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | CreateMediaAssetResponse
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<CreateMediaAssetResponse> | CreateMediaAssetResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.post(
-		"*/api/v1/media-assets",
-		async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getCreateMediaAssetResponseMock(),
-				{ status: 201 },
-			);
-		},
-		options,
-	);
+  return http.post(
+    "*/api/v1/media-assets",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getCreateMediaAssetResponseMock(),
+        { status: 201 },
+      );
+    },
+    options,
+  );
 };
 
 export const getGetMediaAssetByIdMockHandler = (
-	overrideResponse?:
-		| GetMediaAssetByIDResponse
-		| ((
-				info: Parameters<Parameters<typeof http.get>[1]>[0],
-		  ) => Promise<GetMediaAssetByIDResponse> | GetMediaAssetByIDResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | GetMediaAssetByIDResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<GetMediaAssetByIDResponse> | GetMediaAssetByIDResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.get(
-		"*/api/v1/media-assets/:id",
-		async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getGetMediaAssetByIdResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
+  return http.get(
+    "*/api/v1/media-assets/:id",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetMediaAssetByIdResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
 };
 
 export const getDeleteMediaAssetMockHandler = (
-	overrideResponse?:
-		| DeleteMediaAssetResponse
-		| ((
-				info: Parameters<Parameters<typeof http.delete>[1]>[0],
-		  ) => Promise<DeleteMediaAssetResponse> | DeleteMediaAssetResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | DeleteMediaAssetResponse
+    | ((
+        info: Parameters<Parameters<typeof http.delete>[1]>[0],
+      ) => Promise<DeleteMediaAssetResponse> | DeleteMediaAssetResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.delete(
-		"*/api/v1/media-assets/:id",
-		async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getDeleteMediaAssetResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
+  return http.delete(
+    "*/api/v1/media-assets/:id",
+    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getDeleteMediaAssetResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
 };
 
 export const getUpdateMediaAssetMockHandler = (
-	overrideResponse?:
-		| UpdateMediaAssetResponse
-		| ((
-				info: Parameters<Parameters<typeof http.patch>[1]>[0],
-		  ) => Promise<UpdateMediaAssetResponse> | UpdateMediaAssetResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | UpdateMediaAssetResponse
+    | ((
+        info: Parameters<Parameters<typeof http.patch>[1]>[0],
+      ) => Promise<UpdateMediaAssetResponse> | UpdateMediaAssetResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.patch(
-		"*/api/v1/media-assets/:id",
-		async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getUpdateMediaAssetResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
+  return http.patch(
+    "*/api/v1/media-assets/:id",
+    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getUpdateMediaAssetResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
 };
 export const getMediaAssetsMock = () => [
-	getGetAllMediaAssetsByStepIdMockHandler(),
-	getCreateMediaAssetMockHandler(),
-	getGetMediaAssetByIdMockHandler(),
-	getDeleteMediaAssetMockHandler(),
-	getUpdateMediaAssetMockHandler(),
+  getGetAllMediaAssetsByStepIdMockHandler(),
+  getCreateMediaAssetMockHandler(),
+  getGetMediaAssetByIdMockHandler(),
+  getDeleteMediaAssetMockHandler(),
+  getUpdateMediaAssetMockHandler(),
 ];

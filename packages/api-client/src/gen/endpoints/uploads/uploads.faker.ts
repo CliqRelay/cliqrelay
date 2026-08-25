@@ -7,23 +7,20 @@
  */
 import { faker } from "@faker-js/faker";
 
-import type {
-	CompleteUploadResponse,
-	PresignUploadResponse,
-} from "../../models";
+import type { CompleteUploadResponse, PresignUploadResponse } from "../../models";
 
 export const getCompleteUploadResponseMock = (
-	overrideResponse: Partial<Extract<CompleteUploadResponse, object>> = {},
+  overrideResponse: Partial<Extract<CompleteUploadResponse, object>> = {},
 ): CompleteUploadResponse => ({
-	storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
-	url: faker.string.alpha({ length: { min: 10, max: 20 } }),
-	...overrideResponse,
+  storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  url: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
 });
 
 export const getPresignUploadResponseMock = (
-	overrideResponse: Partial<Extract<PresignUploadResponse, object>> = {},
+  overrideResponse: Partial<Extract<PresignUploadResponse, object>> = {},
 ): PresignUploadResponse => ({
-	presignedUrl: faker.string.alpha({ length: { min: 10, max: 20 } }),
-	storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
-	...overrideResponse,
+  presignedUrl: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
 });

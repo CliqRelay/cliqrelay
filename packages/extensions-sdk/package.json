@@ -3,25 +3,28 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "lint": "biome lint ./src",
-    "format": "biome format --write",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "test": "vitest --run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui"
   },
-  "peerDependencies": {
-    "react": "^19.2.8"
-  },
   "dependencies": {
     "react": "^19.2.8"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.7",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.18",
     "jsdom": "^30.0.1",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
+  },
+  "peerDependencies": {
+    "react": "^19.2.8"
   }
 }

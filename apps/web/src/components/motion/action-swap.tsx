@@ -221,7 +221,6 @@ export function ActionSwapText({
 						>
 							{label.split("").map((char, i) => (
 								<motion.span
-									// biome-ignore lint/suspicious/noArrayIndexKey: position is the slot identity — the letter at a position is exactly what rolls.
 									key={i}
 									custom={i * CASCADE_STAGGER}
 									variants={CASCADE_LETTER_VARIANTS}

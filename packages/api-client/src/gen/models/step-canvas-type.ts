@@ -9,12 +9,11 @@
 /**
  * The type of the canvas element
  */
-export type StepCanvasType =
-	(typeof StepCanvasType)[keyof typeof StepCanvasType];
+export type StepCanvasType = (typeof StepCanvasType)[keyof typeof StepCanvasType];
 
 export const StepCanvasType = {
-	callout: "callout",
-	alert: "alert",
-	tip: "tip",
-	header: "header",
+  callout: "callout",
+  alert: "alert",
+  tip: "tip",
+  header: "header",
 } as const;

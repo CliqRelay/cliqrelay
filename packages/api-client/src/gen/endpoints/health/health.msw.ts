@@ -5,36 +5,36 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
-
-import type { RequestHandlerOptions } from "msw";
 import { HttpResponse, http } from "msw";
+import type { RequestHandlerOptions } from "msw";
 
 import type { HealthResponse } from "../../models";
+
 import { getGetHealthResponseMock } from "./health.faker";
 
 export { getGetHealthResponseMock } from "./health.faker";
 
 export const getGetHealthMockHandler = (
-	overrideResponse?:
-		| HealthResponse
-		| ((
-				info: Parameters<Parameters<typeof http.get>[1]>[0],
-		  ) => Promise<HealthResponse> | HealthResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | HealthResponse
+    | ((
+        info: Parameters<Parameters<typeof http.get>[1]>[0],
+      ) => Promise<HealthResponse> | HealthResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.get(
-		"*/api/v1/health",
-		async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getGetHealthResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
+  return http.get(
+    "*/api/v1/health",
+    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getGetHealthResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
 };
 export const getHealthMock = () => [getGetHealthMockHandler()];

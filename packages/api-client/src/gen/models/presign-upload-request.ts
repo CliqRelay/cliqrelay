@@ -7,6 +7,6 @@
  */
 
 export type PresignUploadRequest = {
-	guideId?: string;
-	stepId?: string;
+  guideId?: string;
+  stepId?: string;
 };

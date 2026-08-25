@@ -8,17 +8,17 @@
 import * as zod from "zod";
 
 import {
-	CreateStepRequest,
-	CreateStepResponse,
-	DeleteStepResponse,
-	DuplicateStepRequest,
-	DuplicateStepResponse,
-	GetAllStepsResponse,
-	GetStepByIDResponse,
-	ReorderStepsRequest,
-	ReorderStepsResponse,
-	UpdateStepRequest,
-	UpdateStepResponse,
+  CreateStepRequest,
+  CreateStepResponse,
+  DeleteStepResponse,
+  DuplicateStepRequest,
+  DuplicateStepResponse,
+  GetAllStepsResponse,
+  GetStepByIDResponse,
+  ReorderStepsRequest,
+  ReorderStepsResponse,
+  UpdateStepRequest,
+  UpdateStepResponse,
 } from "../cliqrelay-api.schemas.zod";
 
 /**
@@ -26,7 +26,7 @@ import {
  * @summary Get all steps by guide ID
  */
 export const GetAllStepsByGuideIdQueryParams = zod.object({
-	guide_id: zod.string().optional(),
+  guide_id: zod.string().optional(),
 });
 
 export const GetAllStepsByGuideIdResponse = GetAllStepsResponse;
@@ -52,7 +52,7 @@ export const ReorderStepsResponseSchema = ReorderStepsResponse;
  * @summary Get step by ID
  */
 export const GetStepByIdParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const GetStepByIdResponse = GetStepByIDResponse;
@@ -62,7 +62,7 @@ export const GetStepByIdResponse = GetStepByIDResponse;
  * @summary Delete step
  */
 export const DeleteStepParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const DeleteStepResponseSchema = DeleteStepResponse;
@@ -72,7 +72,7 @@ export const DeleteStepResponseSchema = DeleteStepResponse;
  * @summary Update step
  */
 export const UpdateStepParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const UpdateStepBody = UpdateStepRequest;
@@ -84,7 +84,7 @@ export const UpdateStepResponseSchema = UpdateStepResponse;
  * @summary Duplicate step
  */
 export const DuplicateStepParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const DuplicateStepBody = DuplicateStepRequest;

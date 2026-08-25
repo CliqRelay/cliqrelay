@@ -7,6 +7,6 @@
  */
 
 export type GetTimeSavedResponse = {
-	timeSavedHours: number;
-	timeSavedSeconds: number;
+  timeSavedHours: number;
+  timeSavedSeconds: number;
 };

@@ -7,6 +7,6 @@
  */
 
 export type PresignUploadResponse = {
-	presignedUrl: string;
-	storagePath: string;
+  presignedUrl: string;
+  storagePath: string;
 };

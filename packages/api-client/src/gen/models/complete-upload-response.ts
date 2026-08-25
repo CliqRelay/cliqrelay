@@ -7,6 +7,6 @@
  */
 
 export type CompleteUploadResponse = {
-	storagePath: string;
-	url: string;
+  storagePath: string;
+  url: string;
 };

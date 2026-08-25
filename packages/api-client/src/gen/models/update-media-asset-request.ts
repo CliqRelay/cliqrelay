@@ -7,16 +7,16 @@
  */
 
 export type UpdateMediaAssetRequest = {
-	/** @nullable */
-	altText?: string | null;
-	/** @nullable */
-	byteSize?: number | null;
-	/** @nullable */
-	height?: number | null;
-	/** @nullable */
-	mimeType?: string | null;
-	/** @nullable */
-	thumbnail?: string | null;
-	/** @nullable */
-	width?: number | null;
+  /** @nullable */
+  altText?: string | null;
+  /** @nullable */
+  byteSize?: number | null;
+  /** @nullable */
+  height?: number | null;
+  /** @nullable */
+  mimeType?: string | null;
+  /** @nullable */
+  thumbnail?: string | null;
+  /** @nullable */
+  width?: number | null;
 };

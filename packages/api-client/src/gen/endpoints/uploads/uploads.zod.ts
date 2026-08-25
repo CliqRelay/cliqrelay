@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
-	CompleteUploadRequest,
-	CompleteUploadResponse,
-	PresignUploadRequest,
-	PresignUploadResponse,
+  CompleteUploadRequest,
+  CompleteUploadResponse,
+  PresignUploadRequest,
+  PresignUploadResponse,
 } from "../cliqrelay-api.schemas.zod";
 
 /**

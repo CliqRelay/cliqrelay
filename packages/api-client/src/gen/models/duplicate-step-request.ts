@@ -7,8 +7,8 @@
  */
 
 export type DuplicateStepRequest = {
-	/** @nullable */
-	insertAfterStepId?: string | null;
-	/** @nullable */
-	insertBeforeStepId?: string | null;
+  /** @nullable */
+  insertAfterStepId?: string | null;
+  /** @nullable */
+  insertBeforeStepId?: string | null;
 };

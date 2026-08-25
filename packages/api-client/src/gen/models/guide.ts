@@ -11,28 +11,28 @@ import type { Uuid } from "./uuid";
 import type { Visibility } from "./visibility";
 
 export type Guide = {
-	/** @nullable */
-	archivedAt?: string | null;
-	createdAt: string;
-	creator?: null | GuideCreator;
-	/** @nullable */
-	creatorId: string | null;
-	/** @nullable */
-	deletedAt?: string | null;
-	/** @nullable */
-	description?: string | null;
-	durationSeconds: number;
-	id: Uuid;
-	isStarred: boolean;
-	/** @nullable */
-	publishedAt?: string | null;
-	/** @nullable */
-	purgeRequestedAt?: string | null;
-	/** @nullable */
-	restoredAt?: string | null;
-	status: GuideStatus;
-	teamId: Uuid;
-	title: string;
-	updatedAt: string;
-	visibility: Visibility;
+  /** @nullable */
+  archivedAt?: string | null;
+  createdAt: string;
+  creator?: null | GuideCreator;
+  /** @nullable */
+  creatorId: string | null;
+  /** @nullable */
+  deletedAt?: string | null;
+  /** @nullable */
+  description?: string | null;
+  durationSeconds: number;
+  id: Uuid;
+  isStarred: boolean;
+  /** @nullable */
+  publishedAt?: string | null;
+  /** @nullable */
+  purgeRequestedAt?: string | null;
+  /** @nullable */
+  restoredAt?: string | null;
+  status: GuideStatus;
+  teamId: Uuid;
+  title: string;
+  updatedAt: string;
+  visibility: Visibility;
 };

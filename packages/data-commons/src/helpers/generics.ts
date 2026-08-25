@@ -2,16 +2,14 @@ import * as z from "zod";
 import { createErrorMap, fromError } from "zod-validation-error";
 
 z.config({
-  customError: createErrorMap({})
+  customError: createErrorMap({}),
 });
 
-export type ValidationResult<T> =
-  | { success: true; value: T }
-  | { success: false; error: string };
+export type ValidationResult<T> = { success: true; value: T } | { success: false; error: string };
 
 export const getValidationResult = <T>(
   input: unknown,
-  schema: z.ZodType<T>
+  schema: z.ZodType<T>,
 ): ValidationResult<T> => {
   const result = schema.safeParse(input);
 
@@ -21,7 +19,7 @@ export const getValidationResult = <T>(
 
   return {
     success: false,
-    error: fromError(result.error).toString()
+    error: fromError(result.error).toString(),
   };
 };
 

@@ -8,23 +8,23 @@
 import type { Uuid } from "./uuid";
 
 export type MediaAsset = {
-	/** @nullable */
-	altText?: string | null;
-	/** @nullable */
-	byteSize?: number | null;
-	createdAt: string;
-	/** @nullable */
-	height?: number | null;
-	id: Uuid;
-	/** @nullable */
-	mimeType?: string | null;
-	stepId: Uuid;
-	storagePath: string;
-	/** @nullable */
-	thumbnail?: string | null;
-	updatedAt: string;
-	/** @nullable */
-	url?: string | null;
-	/** @nullable */
-	width?: number | null;
+  /** @nullable */
+  altText?: string | null;
+  /** @nullable */
+  byteSize?: number | null;
+  createdAt: string;
+  /** @nullable */
+  height?: number | null;
+  id: Uuid;
+  /** @nullable */
+  mimeType?: string | null;
+  stepId: Uuid;
+  storagePath: string;
+  /** @nullable */
+  thumbnail?: string | null;
+  updatedAt: string;
+  /** @nullable */
+  url?: string | null;
+  /** @nullable */
+  width?: number | null;
 };

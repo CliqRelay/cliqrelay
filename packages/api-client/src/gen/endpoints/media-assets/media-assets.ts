@@ -5,71 +5,66 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
-	DataTag,
-	DefinedInitialDataOptions,
-	DefinedUseQueryResult,
-	MutationFunction,
-	QueryClient,
-	QueryFunction,
-	QueryKey,
-	UndefinedInitialDataOptions,
-	UseMutationOptions,
-	UseMutationResult,
-	UseQueryOptions,
-	UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  CreateMediaAssetRequest,
+  CreateMediaAssetResponse,
+  DeleteMediaAssetResponse,
+  GetAllMediaAssetsByStepIdParams,
+  GetAllMediaAssetsResponse,
+  GetMediaAssetByIDResponse,
+  UpdateMediaAssetRequest,
+  UpdateMediaAssetResponse,
+} from "../../models";
 
 import { customFetch } from "../../../mutators/custom-fetch";
-import type {
-	CreateMediaAssetRequest,
-	CreateMediaAssetResponse,
-	DeleteMediaAssetResponse,
-	GetAllMediaAssetsByStepIdParams,
-	GetAllMediaAssetsResponse,
-	GetMediaAssetByIDResponse,
-	UpdateMediaAssetRequest,
-	UpdateMediaAssetResponse,
-} from "../../models";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-const withQueryKey = <T extends object, K>(
-	query: T,
-	queryKey: K,
-): T & { queryKey: K } => {
-	const result = { queryKey } as T & { queryKey: K };
-	for (const key of Object.keys(query)) {
-		// The explicit queryKey always wins, matching the previous
-		// `{ ...query, queryKey }` spread where it was set last.
-		if (key === "queryKey") continue;
-		Object.defineProperty(result, key, {
-			enumerable: true,
-			configurable: true,
-			get: () => (query as Record<string, unknown>)[key],
-		});
-	}
-	return result;
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === "queryKey") continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
 };
 
-export const getGetAllMediaAssetsByStepIdUrl = (
-	params?: GetAllMediaAssetsByStepIdParams,
-) => {
-	const normalizedParams = new URLSearchParams();
+export const getGetAllMediaAssetsByStepIdUrl = (params?: GetAllMediaAssetsByStepIdParams) => {
+  const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
 
-	const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString();
 
-	return stringifiedParams.length > 0
-		? `${import.meta.env.VITE_API_URL}/api/v1/media-assets?${stringifiedParams}`
-		: `${import.meta.env.VITE_API_URL}/api/v1/media-assets`;
+  return stringifiedParams.length > 0
+    ? `${import.meta.env.VITE_API_URL}/api/v1/media-assets?${stringifiedParams}`
+    : `${import.meta.env.VITE_API_URL}/api/v1/media-assets`;
 };
 
 /**
@@ -77,176 +72,137 @@ export const getGetAllMediaAssetsByStepIdUrl = (
  * @summary Get all media assets by step ID
  */
 export const getAllMediaAssetsByStepId = async (
-	params?: GetAllMediaAssetsByStepIdParams,
-	options?: Parameters<typeof customFetch>[1],
+  params?: GetAllMediaAssetsByStepIdParams,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetAllMediaAssetsResponse> => {
-	return customFetch<GetAllMediaAssetsResponse>(
-		getGetAllMediaAssetsByStepIdUrl(params),
-		{
-			...options,
-			method: "GET",
-		},
-	);
+  return customFetch<GetAllMediaAssetsResponse>(getGetAllMediaAssetsByStepIdUrl(params), {
+    ...options,
+    method: "GET",
+  });
 };
 
-export const getGetAllMediaAssetsByStepIdQueryKey = (
-	params?: GetAllMediaAssetsByStepIdParams,
-) => {
-	return [
-		`${import.meta.env.VITE_API_URL}/api/v1/media-assets`,
-		...(params ? [params] : []),
-	] as const;
+export const getGetAllMediaAssetsByStepIdQueryKey = (params?: GetAllMediaAssetsByStepIdParams) => {
+  return [
+    `${import.meta.env.VITE_API_URL}/api/v1/media-assets`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getGetAllMediaAssetsByStepIdQueryOptions = <
-	TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
+  TError = unknown,
 >(
-	params?: GetAllMediaAssetsByStepIdParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  params?: GetAllMediaAssetsByStepIdParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetAllMediaAssetsByStepIdQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getGetAllMediaAssetsByStepIdQueryKey(params);
 
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>
-	> = ({ signal }) =>
-		getAllMediaAssetsByStepId(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>> = ({
+    signal,
+  }) => getAllMediaAssetsByStepId(params, { signal, ...requestOptions });
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetAllMediaAssetsByStepIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>
+  Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>
 >;
 export type GetAllMediaAssetsByStepIdQueryError = unknown;
 
 export function useGetAllMediaAssetsByStepId<
-	TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
+  TError = unknown,
 >(
-	params: undefined | GetAllMediaAssetsByStepIdParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-					TError,
-					Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params: undefined | GetAllMediaAssetsByStepIdParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
+          TError,
+          Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetAllMediaAssetsByStepId<
-	TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
+  TError = unknown,
 >(
-	params?: GetAllMediaAssetsByStepIdParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-					TError,
-					Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetAllMediaAssetsByStepIdParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
+          TError,
+          Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetAllMediaAssetsByStepId<
-	TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
+  TError = unknown,
 >(
-	params?: GetAllMediaAssetsByStepIdParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetAllMediaAssetsByStepIdParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get all media assets by step ID
  */
 
 export function useGetAllMediaAssetsByStepId<
-	TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
+  TError = unknown,
 >(
-	params?: GetAllMediaAssetsByStepIdParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetAllMediaAssetsByStepIdQueryOptions(
-		params,
-		options,
-	);
+  params?: GetAllMediaAssetsByStepIdParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetAllMediaAssetsByStepIdQueryOptions(params, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getCreateMediaAssetUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/media-assets`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/media-assets`;
 };
 
 /**
@@ -254,57 +210,52 @@ export const getCreateMediaAssetUrl = () => {
  * @summary Create media asset
  */
 export const createMediaAsset = async (
-	createMediaAssetRequest?: CreateMediaAssetRequest,
-	options?: Parameters<typeof customFetch>[1],
+  createMediaAssetRequest?: CreateMediaAssetRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<CreateMediaAssetResponse> => {
-	return customFetch<CreateMediaAssetResponse>(getCreateMediaAssetUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(createMediaAssetRequest),
-	});
+  return customFetch<CreateMediaAssetResponse>(getCreateMediaAssetUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createMediaAssetRequest),
+  });
 };
 
-export const getCreateMediaAssetMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createMediaAsset>>,
-		TError,
-		{ data?: CreateMediaAssetRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getCreateMediaAssetMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createMediaAsset>>,
+    TError,
+    { data?: CreateMediaAssetRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof createMediaAsset>>,
-	TError,
-	{ data?: CreateMediaAssetRequest },
-	TContext
+  Awaited<ReturnType<typeof createMediaAsset>>,
+  TError,
+  { data?: CreateMediaAssetRequest },
+  TContext
 > => {
-	const mutationKey = ["createMediaAsset"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["createMediaAsset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createMediaAsset>>,
-		{ data?: CreateMediaAssetRequest }
-	> = (props) => {
-		const { data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createMediaAsset>>,
+    { data?: CreateMediaAssetRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
-		return createMediaAsset(data, requestOptions);
-	};
+    return createMediaAsset(data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type CreateMediaAssetMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createMediaAsset>>
+  Awaited<ReturnType<typeof createMediaAsset>>
 >;
 export type CreateMediaAssetMutationBody = CreateMediaAssetRequest | undefined;
 export type CreateMediaAssetMutationError = unknown;
@@ -313,26 +264,26 @@ export type CreateMediaAssetMutationError = unknown;
  * @summary Create media asset
  */
 export const useCreateMediaAsset = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof createMediaAsset>>,
-			TError,
-			{ data?: CreateMediaAssetRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createMediaAsset>>,
+      TError,
+      { data?: CreateMediaAssetRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof createMediaAsset>>,
-	TError,
-	{ data?: CreateMediaAssetRequest },
-	TContext
+  Awaited<ReturnType<typeof createMediaAsset>>,
+  TError,
+  { data?: CreateMediaAssetRequest },
+  TContext
 > => {
-	return useMutation(getCreateMediaAssetMutationOptions(options), queryClient);
+  return useMutation(getCreateMediaAssetMutationOptions(options), queryClient);
 };
 export const getGetMediaAssetByIdUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/media-assets/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/media-assets/${id}`;
 };
 
 /**
@@ -340,168 +291,126 @@ export const getGetMediaAssetByIdUrl = (id: string) => {
  * @summary Get media asset by ID
  */
 export const getMediaAssetById = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetMediaAssetByIDResponse> => {
-	return customFetch<GetMediaAssetByIDResponse>(getGetMediaAssetByIdUrl(id), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetMediaAssetByIDResponse>(getGetMediaAssetByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
 };
 
 export const getGetMediaAssetByIdQueryKey = (id: string) => {
-	return [`${import.meta.env.VITE_API_URL}/api/v1/media-assets/${id}`] as const;
+  return [`${import.meta.env.VITE_API_URL}/api/v1/media-assets/${id}`] as const;
 };
 
 export const getGetMediaAssetByIdQueryOptions = <
-	TData = Awaited<ReturnType<typeof getMediaAssetById>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getMediaAssetById>>,
+  TError = unknown,
 >(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getMediaAssetById>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaAssetById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetMediaAssetByIdQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getGetMediaAssetByIdQueryKey(id);
 
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getMediaAssetById>>
-	> = ({ signal }) => getMediaAssetById(id, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMediaAssetById>>> = ({ signal }) =>
+    getMediaAssetById(id, { signal, ...requestOptions });
 
-	return {
-		queryKey,
-		queryFn,
-		enabled: id !== null && id !== undefined,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getMediaAssetById>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getMediaAssetById>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 };
 
 export type GetMediaAssetByIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getMediaAssetById>>
+  Awaited<ReturnType<typeof getMediaAssetById>>
 >;
 export type GetMediaAssetByIdQueryError = unknown;
 
 export function useGetMediaAssetById<
-	TData = Awaited<ReturnType<typeof getMediaAssetById>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getMediaAssetById>>,
+  TError = unknown,
 >(
-	id: string,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getMediaAssetById>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getMediaAssetById>>,
-					TError,
-					Awaited<ReturnType<typeof getMediaAssetById>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaAssetById>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMediaAssetById>>,
+          TError,
+          Awaited<ReturnType<typeof getMediaAssetById>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetMediaAssetById<
-	TData = Awaited<ReturnType<typeof getMediaAssetById>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getMediaAssetById>>,
+  TError = unknown,
 >(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getMediaAssetById>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getMediaAssetById>>,
-					TError,
-					Awaited<ReturnType<typeof getMediaAssetById>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaAssetById>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMediaAssetById>>,
+          TError,
+          Awaited<ReturnType<typeof getMediaAssetById>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetMediaAssetById<
-	TData = Awaited<ReturnType<typeof getMediaAssetById>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getMediaAssetById>>,
+  TError = unknown,
 >(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getMediaAssetById>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaAssetById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get media asset by ID
  */
 
 export function useGetMediaAssetById<
-	TData = Awaited<ReturnType<typeof getMediaAssetById>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getMediaAssetById>>,
+  TError = unknown,
 >(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getMediaAssetById>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetMediaAssetByIdQueryOptions(id, options);
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMediaAssetById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMediaAssetByIdQueryOptions(id, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getDeleteMediaAssetUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/media-assets/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/media-assets/${id}`;
 };
 
 /**
@@ -509,55 +418,50 @@ export const getDeleteMediaAssetUrl = (id: string) => {
  * @summary Delete media asset
  */
 export const deleteMediaAsset = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<DeleteMediaAssetResponse> => {
-	return customFetch<DeleteMediaAssetResponse>(getDeleteMediaAssetUrl(id), {
-		...options,
-		method: "DELETE",
-	});
+  return customFetch<DeleteMediaAssetResponse>(getDeleteMediaAssetUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
 };
 
-export const getDeleteMediaAssetMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteMediaAsset>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getDeleteMediaAssetMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMediaAsset>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteMediaAsset>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof deleteMediaAsset>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["deleteMediaAsset"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["deleteMediaAsset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteMediaAsset>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMediaAsset>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
 
-		return deleteMediaAsset(id, requestOptions);
-	};
+    return deleteMediaAsset(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type DeleteMediaAssetMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteMediaAsset>>
+  Awaited<ReturnType<typeof deleteMediaAsset>>
 >;
 
 export type DeleteMediaAssetMutationError = unknown;
@@ -566,26 +470,26 @@ export type DeleteMediaAssetMutationError = unknown;
  * @summary Delete media asset
  */
 export const useDeleteMediaAsset = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof deleteMediaAsset>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteMediaAsset>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof deleteMediaAsset>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof deleteMediaAsset>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(getDeleteMediaAssetMutationOptions(options), queryClient);
+  return useMutation(getDeleteMediaAssetMutationOptions(options), queryClient);
 };
 export const getUpdateMediaAssetUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/media-assets/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/media-assets/${id}`;
 };
 
 /**
@@ -593,58 +497,53 @@ export const getUpdateMediaAssetUrl = (id: string) => {
  * @summary Update media asset
  */
 export const updateMediaAsset = async (
-	id: string,
-	updateMediaAssetRequest?: UpdateMediaAssetRequest,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  updateMediaAssetRequest?: UpdateMediaAssetRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<UpdateMediaAssetResponse> => {
-	return customFetch<UpdateMediaAssetResponse>(getUpdateMediaAssetUrl(id), {
-		...options,
-		method: "PATCH",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(updateMediaAssetRequest),
-	});
+  return customFetch<UpdateMediaAssetResponse>(getUpdateMediaAssetUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMediaAssetRequest),
+  });
 };
 
-export const getUpdateMediaAssetMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateMediaAsset>>,
-		TError,
-		{ id: string; data?: UpdateMediaAssetRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getUpdateMediaAssetMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMediaAsset>>,
+    TError,
+    { id: string; data?: UpdateMediaAssetRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof updateMediaAsset>>,
-	TError,
-	{ id: string; data?: UpdateMediaAssetRequest },
-	TContext
+  Awaited<ReturnType<typeof updateMediaAsset>>,
+  TError,
+  { id: string; data?: UpdateMediaAssetRequest },
+  TContext
 > => {
-	const mutationKey = ["updateMediaAsset"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["updateMediaAsset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateMediaAsset>>,
-		{ id: string; data?: UpdateMediaAssetRequest }
-	> = (props) => {
-		const { id, data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMediaAsset>>,
+    { id: string; data?: UpdateMediaAssetRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
-		return updateMediaAsset(id, data, requestOptions);
-	};
+    return updateMediaAsset(id, data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type UpdateMediaAssetMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateMediaAsset>>
+  Awaited<ReturnType<typeof updateMediaAsset>>
 >;
 export type UpdateMediaAssetMutationBody = UpdateMediaAssetRequest | undefined;
 export type UpdateMediaAssetMutationError = unknown;
@@ -653,21 +552,21 @@ export type UpdateMediaAssetMutationError = unknown;
  * @summary Update media asset
  */
 export const useUpdateMediaAsset = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof updateMediaAsset>>,
-			TError,
-			{ id: string; data?: UpdateMediaAssetRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateMediaAsset>>,
+      TError,
+      { id: string; data?: UpdateMediaAssetRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof updateMediaAsset>>,
-	TError,
-	{ id: string; data?: UpdateMediaAssetRequest },
-	TContext
+  Awaited<ReturnType<typeof updateMediaAsset>>,
+  TError,
+  { id: string; data?: UpdateMediaAssetRequest },
+  TContext
 > => {
-	return useMutation(getUpdateMediaAssetMutationOptions(options), queryClient);
+  return useMutation(getUpdateMediaAssetMutationOptions(options), queryClient);
 };

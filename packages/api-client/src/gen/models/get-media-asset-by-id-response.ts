@@ -8,5 +8,5 @@
 import type { MediaAsset } from "./media-asset";
 
 export type GetMediaAssetByIDResponse = {
-	mediaAsset: null | MediaAsset;
+  mediaAsset: null | MediaAsset;
 };

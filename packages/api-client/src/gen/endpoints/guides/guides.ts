@@ -5,83 +5,80 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
-	DataTag,
-	DefinedInitialDataOptions,
-	DefinedUseQueryResult,
-	MutationFunction,
-	QueryClient,
-	QueryFunction,
-	QueryKey,
-	UndefinedInitialDataOptions,
-	UseMutationOptions,
-	UseMutationResult,
-	UseQueryOptions,
-	UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  ArchiveGuideResponse,
+  BulkGuidesActionParams,
+  BulkGuidesRequest,
+  BulkGuidesResponse,
+  CreateDemoGuideRequest,
+  CreateDemoGuideResponse,
+  CreateGuideRequest,
+  CreateGuideResponse,
+  DeleteGuideResponse,
+  ExportGuideRequest,
+  ExportGuideResponse,
+  GetAllGuidesParams,
+  GetAllGuidesResponse,
+  GetExportStatusResponse,
+  GetGuideByIDResponse,
+  GetGuideViewsCountParams,
+  GetGuideViewsCountResponse,
+  GetGuidesCountParams,
+  GetGuidesCountResponse,
+  GetGuidesTimeSavedParams,
+  GetStarredGuidesParams,
+  GetStarredGuidesResponse,
+  GetTimeSavedResponse,
+  PermanentlyDeleteGuideResponse,
+  PublishGuideResponse,
+  RecalculateDurationResponse,
+  RecordGuideViewResponse,
+  RestoreGuideResponse,
+  StarGuideResponse,
+  UnarchiveGuideResponse,
+  UnpublishGuideResponse,
+  UnstarGuideResponse,
+  UpdateGuideRequest,
+  UpdateGuideResponse,
+} from "../../models";
 
 import { customFetch } from "../../../mutators/custom-fetch";
-import type {
-	ArchiveGuideResponse,
-	BulkGuidesActionParams,
-	BulkGuidesRequest,
-	BulkGuidesResponse,
-	CreateDemoGuideRequest,
-	CreateDemoGuideResponse,
-	CreateGuideRequest,
-	CreateGuideResponse,
-	DeleteGuideResponse,
-	ExportGuideRequest,
-	ExportGuideResponse,
-	GetAllGuidesParams,
-	GetAllGuidesResponse,
-	GetExportStatusResponse,
-	GetGuideByIDResponse,
-	GetGuidesCountParams,
-	GetGuidesCountResponse,
-	GetGuidesTimeSavedParams,
-	GetGuideViewsCountParams,
-	GetGuideViewsCountResponse,
-	GetStarredGuidesParams,
-	GetStarredGuidesResponse,
-	GetTimeSavedResponse,
-	PermanentlyDeleteGuideResponse,
-	PublishGuideResponse,
-	RecalculateDurationResponse,
-	RecordGuideViewResponse,
-	RestoreGuideResponse,
-	StarGuideResponse,
-	UnarchiveGuideResponse,
-	UnpublishGuideResponse,
-	UnstarGuideResponse,
-	UpdateGuideRequest,
-	UpdateGuideResponse,
-} from "../../models";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-const withQueryKey = <T extends object, K>(
-	query: T,
-	queryKey: K,
-): T & { queryKey: K } => {
-	const result = { queryKey } as T & { queryKey: K };
-	for (const key of Object.keys(query)) {
-		// The explicit queryKey always wins, matching the previous
-		// `{ ...query, queryKey }` spread where it was set last.
-		if (key === "queryKey") continue;
-		Object.defineProperty(result, key, {
-			enumerable: true,
-			configurable: true,
-			get: () => (query as Record<string, unknown>)[key],
-		});
-	}
-	return result;
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === "queryKey") continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
 };
 
 export const getGetExportStatusUrl = (exportID: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guide-exports/${exportID}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guide-exports/${exportID}`;
 };
 
 /**
@@ -89,183 +86,136 @@ export const getGetExportStatusUrl = (exportID: string) => {
  * @summary Get export status
  */
 export const getExportStatus = async (
-	exportID: string,
-	options?: Parameters<typeof customFetch>[1],
+  exportID: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetExportStatusResponse> => {
-	return customFetch<GetExportStatusResponse>(getGetExportStatusUrl(exportID), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetExportStatusResponse>(getGetExportStatusUrl(exportID), {
+    ...options,
+    method: "GET",
+  });
 };
 
 export const getGetExportStatusQueryKey = (exportID: string) => {
-	return [
-		`${import.meta.env.VITE_API_URL}/api/v1/guide-exports/${exportID}`,
-	] as const;
+  return [`${import.meta.env.VITE_API_URL}/api/v1/guide-exports/${exportID}`] as const;
 };
 
 export const getGetExportStatusQueryOptions = <
-	TData = Awaited<ReturnType<typeof getExportStatus>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getExportStatus>>,
+  TError = unknown,
 >(
-	exportID: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getExportStatus>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  exportID: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getExportStatus>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetExportStatusQueryKey(exportID);
+  const queryKey = queryOptions?.queryKey ?? getGetExportStatusQueryKey(exportID);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getExportStatus>>> = ({
-		signal,
-	}) => getExportStatus(exportID, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getExportStatus>>> = ({ signal }) =>
+    getExportStatus(exportID, { signal, ...requestOptions });
 
-	return {
-		queryKey,
-		queryFn,
-		enabled: exportID !== null && exportID !== undefined,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getExportStatus>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return {
+    queryKey,
+    queryFn,
+    enabled: exportID !== null && exportID !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getExportStatus>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 };
 
-export type GetExportStatusQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getExportStatus>>
->;
+export type GetExportStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getExportStatus>>>;
 export type GetExportStatusQueryError = unknown;
 
 export function useGetExportStatus<
-	TData = Awaited<ReturnType<typeof getExportStatus>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getExportStatus>>,
+  TError = unknown,
 >(
-	exportID: string,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getExportStatus>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getExportStatus>>,
-					TError,
-					Awaited<ReturnType<typeof getExportStatus>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  exportID: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getExportStatus>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getExportStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getExportStatus>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetExportStatus<
-	TData = Awaited<ReturnType<typeof getExportStatus>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getExportStatus>>,
+  TError = unknown,
 >(
-	exportID: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getExportStatus>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getExportStatus>>,
-					TError,
-					Awaited<ReturnType<typeof getExportStatus>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  exportID: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getExportStatus>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getExportStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getExportStatus>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetExportStatus<
-	TData = Awaited<ReturnType<typeof getExportStatus>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getExportStatus>>,
+  TError = unknown,
 >(
-	exportID: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getExportStatus>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  exportID: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getExportStatus>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get export status
  */
 
 export function useGetExportStatus<
-	TData = Awaited<ReturnType<typeof getExportStatus>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getExportStatus>>,
+  TError = unknown,
 >(
-	exportID: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getExportStatus>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetExportStatusQueryOptions(exportID, options);
+  exportID: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getExportStatus>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetExportStatusQueryOptions(exportID, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getGetAllGuidesUrl = (params?: GetAllGuidesParams) => {
-	const normalizedParams = new URLSearchParams();
+  const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
 
-	const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString();
 
-	return stringifiedParams.length > 0
-		? `${import.meta.env.VITE_API_URL}/api/v1/guides?${stringifiedParams}`
-		: `${import.meta.env.VITE_API_URL}/api/v1/guides`;
+  return stringifiedParams.length > 0
+    ? `${import.meta.env.VITE_API_URL}/api/v1/guides?${stringifiedParams}`
+    : `${import.meta.env.VITE_API_URL}/api/v1/guides`;
 };
 
 /**
@@ -273,146 +223,109 @@ export const getGetAllGuidesUrl = (params?: GetAllGuidesParams) => {
  * @summary Get all guides
  */
 export const getAllGuides = async (
-	params?: GetAllGuidesParams,
-	options?: Parameters<typeof customFetch>[1],
+  params?: GetAllGuidesParams,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetAllGuidesResponse> => {
-	return customFetch<GetAllGuidesResponse>(getGetAllGuidesUrl(params), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetAllGuidesResponse>(getGetAllGuidesUrl(params), {
+    ...options,
+    method: "GET",
+  });
 };
 
 export const getGetAllGuidesQueryKey = (params?: GetAllGuidesParams) => {
-	return [
-		`${import.meta.env.VITE_API_URL}/api/v1/guides`,
-		...(params ? [params] : []),
-	] as const;
+  return [`${import.meta.env.VITE_API_URL}/api/v1/guides`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetAllGuidesQueryOptions = <
-	TData = Awaited<ReturnType<typeof getAllGuides>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllGuides>>,
+  TError = unknown,
 >(
-	params?: GetAllGuidesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  params?: GetAllGuidesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetAllGuidesQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getGetAllGuidesQueryKey(params);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllGuides>>> = ({
-		signal,
-	}) => getAllGuides(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllGuides>>> = ({ signal }) =>
+    getAllGuides(params, { signal, ...requestOptions });
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getAllGuides>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAllGuides>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetAllGuidesQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getAllGuides>>
->;
+export type GetAllGuidesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllGuides>>>;
 export type GetAllGuidesQueryError = unknown;
 
-export function useGetAllGuides<
-	TData = Awaited<ReturnType<typeof getAllGuides>>,
-	TError = unknown,
->(
-	params: undefined | GetAllGuidesParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getAllGuides>>,
-					TError,
-					Awaited<ReturnType<typeof getAllGuides>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetAllGuides<
-	TData = Awaited<ReturnType<typeof getAllGuides>>,
-	TError = unknown,
->(
-	params?: GetAllGuidesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getAllGuides>>,
-					TError,
-					Awaited<ReturnType<typeof getAllGuides>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetAllGuides<
-	TData = Awaited<ReturnType<typeof getAllGuides>>,
-	TError = unknown,
->(
-	params?: GetAllGuidesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>, TError = unknown>(
+  params: undefined | GetAllGuidesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllGuides>>,
+          TError,
+          Awaited<ReturnType<typeof getAllGuides>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>, TError = unknown>(
+  params?: GetAllGuidesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllGuides>>,
+          TError,
+          Awaited<ReturnType<typeof getAllGuides>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>, TError = unknown>(
+  params?: GetAllGuidesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get all guides
  */
 
-export function useGetAllGuides<
-	TData = Awaited<ReturnType<typeof getAllGuides>>,
-	TError = unknown,
->(
-	params?: GetAllGuidesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetAllGuidesQueryOptions(params, options);
+export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>, TError = unknown>(
+  params?: GetAllGuidesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllGuides>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetAllGuidesQueryOptions(params, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getCreateGuideUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides`;
 };
 
 /**
@@ -420,58 +333,51 @@ export const getCreateGuideUrl = () => {
  * @summary Create guide
  */
 export const createGuide = async (
-	createGuideRequest?: CreateGuideRequest,
-	options?: Parameters<typeof customFetch>[1],
+  createGuideRequest?: CreateGuideRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<CreateGuideResponse> => {
-	return customFetch<CreateGuideResponse>(getCreateGuideUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(createGuideRequest),
-	});
+  return customFetch<CreateGuideResponse>(getCreateGuideUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createGuideRequest),
+  });
 };
 
-export const getCreateGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createGuide>>,
-		TError,
-		{ data?: CreateGuideRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getCreateGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGuide>>,
+    TError,
+    { data?: CreateGuideRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof createGuide>>,
-	TError,
-	{ data?: CreateGuideRequest },
-	TContext
+  Awaited<ReturnType<typeof createGuide>>,
+  TError,
+  { data?: CreateGuideRequest },
+  TContext
 > => {
-	const mutationKey = ["createGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["createGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createGuide>>,
-		{ data?: CreateGuideRequest }
-	> = (props) => {
-		const { data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createGuide>>,
+    { data?: CreateGuideRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
-		return createGuide(data, requestOptions);
-	};
+    return createGuide(data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type CreateGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createGuide>>
->;
+export type CreateGuideMutationResult = NonNullable<Awaited<ReturnType<typeof createGuide>>>;
 export type CreateGuideMutationBody = CreateGuideRequest | undefined;
 export type CreateGuideMutationError = unknown;
 
@@ -479,38 +385,38 @@ export type CreateGuideMutationError = unknown;
  * @summary Create guide
  */
 export const useCreateGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof createGuide>>,
-			TError,
-			{ data?: CreateGuideRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createGuide>>,
+      TError,
+      { data?: CreateGuideRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof createGuide>>,
-	TError,
-	{ data?: CreateGuideRequest },
-	TContext
+  Awaited<ReturnType<typeof createGuide>>,
+  TError,
+  { data?: CreateGuideRequest },
+  TContext
 > => {
-	return useMutation(getCreateGuideMutationOptions(options), queryClient);
+  return useMutation(getCreateGuideMutationOptions(options), queryClient);
 };
 export const getBulkGuidesActionUrl = (params?: BulkGuidesActionParams) => {
-	const normalizedParams = new URLSearchParams();
+  const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
 
-	const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString();
 
-	return stringifiedParams.length > 0
-		? `${import.meta.env.VITE_API_URL}/api/v1/guides/bulk?${stringifiedParams}`
-		: `${import.meta.env.VITE_API_URL}/api/v1/guides/bulk`;
+  return stringifiedParams.length > 0
+    ? `${import.meta.env.VITE_API_URL}/api/v1/guides/bulk?${stringifiedParams}`
+    : `${import.meta.env.VITE_API_URL}/api/v1/guides/bulk`;
 };
 
 /**
@@ -518,58 +424,53 @@ export const getBulkGuidesActionUrl = (params?: BulkGuidesActionParams) => {
  * @summary Bulk action on guides
  */
 export const bulkGuidesAction = async (
-	bulkGuidesRequest?: BulkGuidesRequest,
-	params?: BulkGuidesActionParams,
-	options?: Parameters<typeof customFetch>[1],
+  bulkGuidesRequest?: BulkGuidesRequest,
+  params?: BulkGuidesActionParams,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<BulkGuidesResponse> => {
-	return customFetch<BulkGuidesResponse>(getBulkGuidesActionUrl(params), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(bulkGuidesRequest),
-	});
+  return customFetch<BulkGuidesResponse>(getBulkGuidesActionUrl(params), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(bulkGuidesRequest),
+  });
 };
 
-export const getBulkGuidesActionMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof bulkGuidesAction>>,
-		TError,
-		{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getBulkGuidesActionMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkGuidesAction>>,
+    TError,
+    { data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof bulkGuidesAction>>,
-	TError,
-	{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
-	TContext
+  Awaited<ReturnType<typeof bulkGuidesAction>>,
+  TError,
+  { data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
+  TContext
 > => {
-	const mutationKey = ["bulkGuidesAction"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["bulkGuidesAction"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof bulkGuidesAction>>,
-		{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams }
-	> = (props) => {
-		const { data, params } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof bulkGuidesAction>>,
+    { data?: BulkGuidesRequest; params?: BulkGuidesActionParams }
+  > = (props) => {
+    const { data, params } = props ?? {};
 
-		return bulkGuidesAction(data, params, requestOptions);
-	};
+    return bulkGuidesAction(data, params, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type BulkGuidesActionMutationResult = NonNullable<
-	Awaited<ReturnType<typeof bulkGuidesAction>>
+  Awaited<ReturnType<typeof bulkGuidesAction>>
 >;
 export type BulkGuidesActionMutationBody = BulkGuidesRequest | undefined;
 export type BulkGuidesActionMutationError = unknown;
@@ -578,38 +479,38 @@ export type BulkGuidesActionMutationError = unknown;
  * @summary Bulk action on guides
  */
 export const useBulkGuidesAction = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof bulkGuidesAction>>,
-			TError,
-			{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof bulkGuidesAction>>,
+      TError,
+      { data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof bulkGuidesAction>>,
-	TError,
-	{ data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
-	TContext
+  Awaited<ReturnType<typeof bulkGuidesAction>>,
+  TError,
+  { data?: BulkGuidesRequest; params?: BulkGuidesActionParams },
+  TContext
 > => {
-	return useMutation(getBulkGuidesActionMutationOptions(options), queryClient);
+  return useMutation(getBulkGuidesActionMutationOptions(options), queryClient);
 };
 export const getGetGuidesCountUrl = (params?: GetGuidesCountParams) => {
-	const normalizedParams = new URLSearchParams();
+  const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
 
-	const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString();
 
-	return stringifiedParams.length > 0
-		? `${import.meta.env.VITE_API_URL}/api/v1/guides/count?${stringifiedParams}`
-		: `${import.meta.env.VITE_API_URL}/api/v1/guides/count`;
+  return stringifiedParams.length > 0
+    ? `${import.meta.env.VITE_API_URL}/api/v1/guides/count?${stringifiedParams}`
+    : `${import.meta.env.VITE_API_URL}/api/v1/guides/count`;
 };
 
 /**
@@ -617,146 +518,124 @@ export const getGetGuidesCountUrl = (params?: GetGuidesCountParams) => {
  * @summary Get guides count
  */
 export const getGuidesCount = async (
-	params?: GetGuidesCountParams,
-	options?: Parameters<typeof customFetch>[1],
+  params?: GetGuidesCountParams,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetGuidesCountResponse> => {
-	return customFetch<GetGuidesCountResponse>(getGetGuidesCountUrl(params), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetGuidesCountResponse>(getGetGuidesCountUrl(params), {
+    ...options,
+    method: "GET",
+  });
 };
 
 export const getGetGuidesCountQueryKey = (params?: GetGuidesCountParams) => {
-	return [
-		`${import.meta.env.VITE_API_URL}/api/v1/guides/count`,
-		...(params ? [params] : []),
-	] as const;
+  return [
+    `${import.meta.env.VITE_API_URL}/api/v1/guides/count`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getGetGuidesCountQueryOptions = <
-	TData = Awaited<ReturnType<typeof getGuidesCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesCount>>,
+  TError = unknown,
 >(
-	params?: GetGuidesCountParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  params?: GetGuidesCountParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetGuidesCountQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getGetGuidesCountQueryKey(params);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuidesCount>>> = ({
-		signal,
-	}) => getGuidesCount(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuidesCount>>> = ({ signal }) =>
+    getGuidesCount(params, { signal, ...requestOptions });
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getGuidesCount>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getGuidesCount>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetGuidesCountQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getGuidesCount>>
->;
+export type GetGuidesCountQueryResult = NonNullable<Awaited<ReturnType<typeof getGuidesCount>>>;
 export type GetGuidesCountQueryError = unknown;
 
 export function useGetGuidesCount<
-	TData = Awaited<ReturnType<typeof getGuidesCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesCount>>,
+  TError = unknown,
 >(
-	params: undefined | GetGuidesCountParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getGuidesCount>>,
-					TError,
-					Awaited<ReturnType<typeof getGuidesCount>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params: undefined | GetGuidesCountParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGuidesCount>>,
+          TError,
+          Awaited<ReturnType<typeof getGuidesCount>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetGuidesCount<
-	TData = Awaited<ReturnType<typeof getGuidesCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesCount>>,
+  TError = unknown,
 >(
-	params?: GetGuidesCountParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getGuidesCount>>,
-					TError,
-					Awaited<ReturnType<typeof getGuidesCount>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetGuidesCountParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGuidesCount>>,
+          TError,
+          Awaited<ReturnType<typeof getGuidesCount>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetGuidesCount<
-	TData = Awaited<ReturnType<typeof getGuidesCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesCount>>,
+  TError = unknown,
 >(
-	params?: GetGuidesCountParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetGuidesCountParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get guides count
  */
 
 export function useGetGuidesCount<
-	TData = Awaited<ReturnType<typeof getGuidesCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesCount>>,
+  TError = unknown,
 >(
-	params?: GetGuidesCountParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetGuidesCountQueryOptions(params, options);
+  params?: GetGuidesCountParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesCount>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetGuidesCountQueryOptions(params, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getCreateDemoGuideUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/demo`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/demo`;
 };
 
 /**
@@ -764,57 +643,52 @@ export const getCreateDemoGuideUrl = () => {
  * @summary Create demo guide
  */
 export const createDemoGuide = async (
-	createDemoGuideRequest?: CreateDemoGuideRequest,
-	options?: Parameters<typeof customFetch>[1],
+  createDemoGuideRequest?: CreateDemoGuideRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<CreateDemoGuideResponse> => {
-	return customFetch<CreateDemoGuideResponse>(getCreateDemoGuideUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(createDemoGuideRequest),
-	});
+  return customFetch<CreateDemoGuideResponse>(getCreateDemoGuideUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createDemoGuideRequest),
+  });
 };
 
-export const getCreateDemoGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createDemoGuide>>,
-		TError,
-		{ data?: CreateDemoGuideRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getCreateDemoGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDemoGuide>>,
+    TError,
+    { data?: CreateDemoGuideRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof createDemoGuide>>,
-	TError,
-	{ data?: CreateDemoGuideRequest },
-	TContext
+  Awaited<ReturnType<typeof createDemoGuide>>,
+  TError,
+  { data?: CreateDemoGuideRequest },
+  TContext
 > => {
-	const mutationKey = ["createDemoGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["createDemoGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createDemoGuide>>,
-		{ data?: CreateDemoGuideRequest }
-	> = (props) => {
-		const { data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createDemoGuide>>,
+    { data?: CreateDemoGuideRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
-		return createDemoGuide(data, requestOptions);
-	};
+    return createDemoGuide(data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type CreateDemoGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createDemoGuide>>
+  Awaited<ReturnType<typeof createDemoGuide>>
 >;
 export type CreateDemoGuideMutationBody = CreateDemoGuideRequest | undefined;
 export type CreateDemoGuideMutationError = unknown;
@@ -823,38 +697,38 @@ export type CreateDemoGuideMutationError = unknown;
  * @summary Create demo guide
  */
 export const useCreateDemoGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof createDemoGuide>>,
-			TError,
-			{ data?: CreateDemoGuideRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createDemoGuide>>,
+      TError,
+      { data?: CreateDemoGuideRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof createDemoGuide>>,
-	TError,
-	{ data?: CreateDemoGuideRequest },
-	TContext
+  Awaited<ReturnType<typeof createDemoGuide>>,
+  TError,
+  { data?: CreateDemoGuideRequest },
+  TContext
 > => {
-	return useMutation(getCreateDemoGuideMutationOptions(options), queryClient);
+  return useMutation(getCreateDemoGuideMutationOptions(options), queryClient);
 };
 export const getGetStarredGuidesUrl = (params?: GetStarredGuidesParams) => {
-	const normalizedParams = new URLSearchParams();
+  const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
 
-	const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString();
 
-	return stringifiedParams.length > 0
-		? `${import.meta.env.VITE_API_URL}/api/v1/guides/starred?${stringifiedParams}`
-		: `${import.meta.env.VITE_API_URL}/api/v1/guides/starred`;
+  return stringifiedParams.length > 0
+    ? `${import.meta.env.VITE_API_URL}/api/v1/guides/starred?${stringifiedParams}`
+    : `${import.meta.env.VITE_API_URL}/api/v1/guides/starred`;
 };
 
 /**
@@ -862,181 +736,136 @@ export const getGetStarredGuidesUrl = (params?: GetStarredGuidesParams) => {
  * @summary Get starred guides
  */
 export const getStarredGuides = async (
-	params?: GetStarredGuidesParams,
-	options?: Parameters<typeof customFetch>[1],
+  params?: GetStarredGuidesParams,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetStarredGuidesResponse> => {
-	return customFetch<GetStarredGuidesResponse>(getGetStarredGuidesUrl(params), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetStarredGuidesResponse>(getGetStarredGuidesUrl(params), {
+    ...options,
+    method: "GET",
+  });
 };
 
-export const getGetStarredGuidesQueryKey = (
-	params?: GetStarredGuidesParams,
-) => {
-	return [
-		`${import.meta.env.VITE_API_URL}/api/v1/guides/starred`,
-		...(params ? [params] : []),
-	] as const;
+export const getGetStarredGuidesQueryKey = (params?: GetStarredGuidesParams) => {
+  return [
+    `${import.meta.env.VITE_API_URL}/api/v1/guides/starred`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getGetStarredGuidesQueryOptions = <
-	TData = Awaited<ReturnType<typeof getStarredGuides>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getStarredGuides>>,
+  TError = unknown,
 >(
-	params?: GetStarredGuidesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getStarredGuides>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  params?: GetStarredGuidesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStarredGuides>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetStarredGuidesQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getGetStarredGuidesQueryKey(params);
 
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getStarredGuides>>
-	> = ({ signal }) => getStarredGuides(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getStarredGuides>>> = ({ signal }) =>
+    getStarredGuides(params, { signal, ...requestOptions });
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getStarredGuides>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getStarredGuides>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type GetStarredGuidesQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getStarredGuides>>
->;
+export type GetStarredGuidesQueryResult = NonNullable<Awaited<ReturnType<typeof getStarredGuides>>>;
 export type GetStarredGuidesQueryError = unknown;
 
 export function useGetStarredGuides<
-	TData = Awaited<ReturnType<typeof getStarredGuides>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getStarredGuides>>,
+  TError = unknown,
 >(
-	params: undefined | GetStarredGuidesParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getStarredGuides>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getStarredGuides>>,
-					TError,
-					Awaited<ReturnType<typeof getStarredGuides>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params: undefined | GetStarredGuidesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStarredGuides>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getStarredGuides>>,
+          TError,
+          Awaited<ReturnType<typeof getStarredGuides>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetStarredGuides<
-	TData = Awaited<ReturnType<typeof getStarredGuides>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getStarredGuides>>,
+  TError = unknown,
 >(
-	params?: GetStarredGuidesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getStarredGuides>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getStarredGuides>>,
-					TError,
-					Awaited<ReturnType<typeof getStarredGuides>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetStarredGuidesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStarredGuides>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getStarredGuides>>,
+          TError,
+          Awaited<ReturnType<typeof getStarredGuides>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetStarredGuides<
-	TData = Awaited<ReturnType<typeof getStarredGuides>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getStarredGuides>>,
+  TError = unknown,
 >(
-	params?: GetStarredGuidesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getStarredGuides>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetStarredGuidesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStarredGuides>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get starred guides
  */
 
 export function useGetStarredGuides<
-	TData = Awaited<ReturnType<typeof getStarredGuides>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getStarredGuides>>,
+  TError = unknown,
 >(
-	params?: GetStarredGuidesParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getStarredGuides>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetStarredGuidesQueryOptions(params, options);
+  params?: GetStarredGuidesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStarredGuides>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetStarredGuidesQueryOptions(params, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getGetGuidesTimeSavedUrl = (params?: GetGuidesTimeSavedParams) => {
-	const normalizedParams = new URLSearchParams();
+  const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
 
-	const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString();
 
-	return stringifiedParams.length > 0
-		? `${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved?${stringifiedParams}`
-		: `${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved`;
+  return stringifiedParams.length > 0
+    ? `${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved?${stringifiedParams}`
+    : `${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved`;
 };
 
 /**
@@ -1044,181 +873,140 @@ export const getGetGuidesTimeSavedUrl = (params?: GetGuidesTimeSavedParams) => {
  * @summary Get guides time saved
  */
 export const getGuidesTimeSaved = async (
-	params?: GetGuidesTimeSavedParams,
-	options?: Parameters<typeof customFetch>[1],
+  params?: GetGuidesTimeSavedParams,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetTimeSavedResponse> => {
-	return customFetch<GetTimeSavedResponse>(getGetGuidesTimeSavedUrl(params), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetTimeSavedResponse>(getGetGuidesTimeSavedUrl(params), {
+    ...options,
+    method: "GET",
+  });
 };
 
-export const getGetGuidesTimeSavedQueryKey = (
-	params?: GetGuidesTimeSavedParams,
-) => {
-	return [
-		`${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved`,
-		...(params ? [params] : []),
-	] as const;
+export const getGetGuidesTimeSavedQueryKey = (params?: GetGuidesTimeSavedParams) => {
+  return [
+    `${import.meta.env.VITE_API_URL}/api/v1/guides/time-saved`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getGetGuidesTimeSavedQueryOptions = <
-	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+  TError = unknown,
 >(
-	params?: GetGuidesTimeSavedParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  params?: GetGuidesTimeSavedParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesTimeSaved>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetGuidesTimeSavedQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getGetGuidesTimeSavedQueryKey(params);
 
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getGuidesTimeSaved>>
-	> = ({ signal }) => getGuidesTimeSaved(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuidesTimeSaved>>> = ({ signal }) =>
+    getGuidesTimeSaved(params, { signal, ...requestOptions });
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetGuidesTimeSavedQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getGuidesTimeSaved>>
+  Awaited<ReturnType<typeof getGuidesTimeSaved>>
 >;
 export type GetGuidesTimeSavedQueryError = unknown;
 
 export function useGetGuidesTimeSaved<
-	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+  TError = unknown,
 >(
-	params: undefined | GetGuidesTimeSavedParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-					TError,
-					Awaited<ReturnType<typeof getGuidesTimeSaved>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params: undefined | GetGuidesTimeSavedParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesTimeSaved>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+          TError,
+          Awaited<ReturnType<typeof getGuidesTimeSaved>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetGuidesTimeSaved<
-	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+  TError = unknown,
 >(
-	params?: GetGuidesTimeSavedParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-					TError,
-					Awaited<ReturnType<typeof getGuidesTimeSaved>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetGuidesTimeSavedParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGuidesTimeSaved>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+          TError,
+          Awaited<ReturnType<typeof getGuidesTimeSaved>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetGuidesTimeSaved<
-	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+  TError = unknown,
 >(
-	params?: GetGuidesTimeSavedParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetGuidesTimeSavedParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesTimeSaved>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get guides time saved
  */
 
 export function useGetGuidesTimeSaved<
-	TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuidesTimeSaved>>,
+  TError = unknown,
 >(
-	params?: GetGuidesTimeSavedParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuidesTimeSaved>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetGuidesTimeSavedQueryOptions(params, options);
+  params?: GetGuidesTimeSavedParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuidesTimeSaved>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetGuidesTimeSavedQueryOptions(params, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getGetGuideViewsCountUrl = (params?: GetGuideViewsCountParams) => {
-	const normalizedParams = new URLSearchParams();
+  const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
 
-	const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString();
 
-	return stringifiedParams.length > 0
-		? `${import.meta.env.VITE_API_URL}/api/v1/guides/views/count?${stringifiedParams}`
-		: `${import.meta.env.VITE_API_URL}/api/v1/guides/views/count`;
+  return stringifiedParams.length > 0
+    ? `${import.meta.env.VITE_API_URL}/api/v1/guides/views/count?${stringifiedParams}`
+    : `${import.meta.env.VITE_API_URL}/api/v1/guides/views/count`;
 };
 
 /**
@@ -1226,172 +1014,128 @@ export const getGetGuideViewsCountUrl = (params?: GetGuideViewsCountParams) => {
  * @summary Get guide views count
  */
 export const getGuideViewsCount = async (
-	params?: GetGuideViewsCountParams,
-	options?: Parameters<typeof customFetch>[1],
+  params?: GetGuideViewsCountParams,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetGuideViewsCountResponse> => {
-	return customFetch<GetGuideViewsCountResponse>(
-		getGetGuideViewsCountUrl(params),
-		{
-			...options,
-			method: "GET",
-		},
-	);
+  return customFetch<GetGuideViewsCountResponse>(getGetGuideViewsCountUrl(params), {
+    ...options,
+    method: "GET",
+  });
 };
 
-export const getGetGuideViewsCountQueryKey = (
-	params?: GetGuideViewsCountParams,
-) => {
-	return [
-		`${import.meta.env.VITE_API_URL}/api/v1/guides/views/count`,
-		...(params ? [params] : []),
-	] as const;
+export const getGetGuideViewsCountQueryKey = (params?: GetGuideViewsCountParams) => {
+  return [
+    `${import.meta.env.VITE_API_URL}/api/v1/guides/views/count`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getGetGuideViewsCountQueryOptions = <
-	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+  TError = unknown,
 >(
-	params?: GetGuideViewsCountParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuideViewsCount>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  params?: GetGuideViewsCountParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideViewsCount>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetGuideViewsCountQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getGetGuideViewsCountQueryKey(params);
 
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getGuideViewsCount>>
-	> = ({ signal }) => getGuideViewsCount(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuideViewsCount>>> = ({ signal }) =>
+    getGuideViewsCount(params, { signal, ...requestOptions });
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getGuideViewsCount>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getGuideViewsCount>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetGuideViewsCountQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getGuideViewsCount>>
+  Awaited<ReturnType<typeof getGuideViewsCount>>
 >;
 export type GetGuideViewsCountQueryError = unknown;
 
 export function useGetGuideViewsCount<
-	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+  TError = unknown,
 >(
-	params: undefined | GetGuideViewsCountParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuideViewsCount>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getGuideViewsCount>>,
-					TError,
-					Awaited<ReturnType<typeof getGuideViewsCount>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params: undefined | GetGuideViewsCountParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideViewsCount>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGuideViewsCount>>,
+          TError,
+          Awaited<ReturnType<typeof getGuideViewsCount>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetGuideViewsCount<
-	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+  TError = unknown,
 >(
-	params?: GetGuideViewsCountParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuideViewsCount>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getGuideViewsCount>>,
-					TError,
-					Awaited<ReturnType<typeof getGuideViewsCount>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetGuideViewsCountParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getGuideViewsCount>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGuideViewsCount>>,
+          TError,
+          Awaited<ReturnType<typeof getGuideViewsCount>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetGuideViewsCount<
-	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+  TError = unknown,
 >(
-	params?: GetGuideViewsCountParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuideViewsCount>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetGuideViewsCountParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideViewsCount>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get guide views count
  */
 
 export function useGetGuideViewsCount<
-	TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuideViewsCount>>,
+  TError = unknown,
 >(
-	params?: GetGuideViewsCountParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getGuideViewsCount>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetGuideViewsCountQueryOptions(params, options);
+  params?: GetGuideViewsCountParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideViewsCount>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetGuideViewsCountQueryOptions(params, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getGetGuideByIdUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}`;
 };
 
 /**
@@ -1399,148 +1143,112 @@ export const getGetGuideByIdUrl = (id: string) => {
  * @summary Get guide by ID
  */
 export const getGuideById = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetGuideByIDResponse> => {
-	return customFetch<GetGuideByIDResponse>(getGetGuideByIdUrl(id), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetGuideByIDResponse>(getGetGuideByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
 };
 
 export const getGetGuideByIdQueryKey = (id: string) => {
-	return [`${import.meta.env.VITE_API_URL}/api/v1/guides/${id}`] as const;
+  return [`${import.meta.env.VITE_API_URL}/api/v1/guides/${id}`] as const;
 };
 
 export const getGetGuideByIdQueryOptions = <
-	TData = Awaited<ReturnType<typeof getGuideById>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getGuideById>>,
+  TError = unknown,
 >(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetGuideByIdQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getGetGuideByIdQueryKey(id);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuideById>>> = ({
-		signal,
-	}) => getGuideById(id, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getGuideById>>> = ({ signal }) =>
+    getGuideById(id, { signal, ...requestOptions });
 
-	return {
-		queryKey,
-		queryFn,
-		enabled: id !== null && id !== undefined,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getGuideById>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 };
 
-export type GetGuideByIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getGuideById>>
->;
+export type GetGuideByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getGuideById>>>;
 export type GetGuideByIdQueryError = unknown;
 
-export function useGetGuideById<
-	TData = Awaited<ReturnType<typeof getGuideById>>,
-	TError = unknown,
->(
-	id: string,
-	options: {
-		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getGuideById>>,
-					TError,
-					Awaited<ReturnType<typeof getGuideById>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetGuideById<
-	TData = Awaited<ReturnType<typeof getGuideById>>,
-	TError = unknown,
->(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getGuideById>>,
-					TError,
-					Awaited<ReturnType<typeof getGuideById>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetGuideById<
-	TData = Awaited<ReturnType<typeof getGuideById>>,
-	TError = unknown,
->(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>, TError = unknown>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGuideById>>,
+          TError,
+          Awaited<ReturnType<typeof getGuideById>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGuideById>>,
+          TError,
+          Awaited<ReturnType<typeof getGuideById>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get guide by ID
  */
 
-export function useGetGuideById<
-	TData = Awaited<ReturnType<typeof getGuideById>>,
-	TError = unknown,
->(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetGuideByIdQueryOptions(id, options);
+export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getGuideById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetGuideByIdQueryOptions(id, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getDeleteGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}`;
 };
 
 /**
@@ -1548,56 +1256,48 @@ export const getDeleteGuideUrl = (id: string) => {
  * @summary Delete guide
  */
 export const deleteGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<DeleteGuideResponse> => {
-	return customFetch<DeleteGuideResponse>(getDeleteGuideUrl(id), {
-		...options,
-		method: "DELETE",
-	});
+  return customFetch<DeleteGuideResponse>(getDeleteGuideUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
 };
 
-export const getDeleteGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getDeleteGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof deleteGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["deleteGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["deleteGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteGuide>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return deleteGuide(id, requestOptions);
-	};
+    return deleteGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type DeleteGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteGuide>>
->;
+export type DeleteGuideMutationResult = NonNullable<Awaited<ReturnType<typeof deleteGuide>>>;
 
 export type DeleteGuideMutationError = unknown;
 
@@ -1605,26 +1305,21 @@ export type DeleteGuideMutationError = unknown;
  * @summary Delete guide
  */
 export const useDeleteGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof deleteGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof deleteGuide>>,
-	TError,
-	{ id: string },
-	TContext
-> => {
-	return useMutation(getDeleteGuideMutationOptions(options), queryClient);
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof deleteGuide>>, TError, { id: string }, TContext> => {
+  return useMutation(getDeleteGuideMutationOptions(options), queryClient);
 };
 export const getUpdateGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}`;
 };
 
 /**
@@ -1632,59 +1327,52 @@ export const getUpdateGuideUrl = (id: string) => {
  * @summary Update guide
  */
 export const updateGuide = async (
-	id: string,
-	updateGuideRequest?: UpdateGuideRequest,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  updateGuideRequest?: UpdateGuideRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<UpdateGuideResponse> => {
-	return customFetch<UpdateGuideResponse>(getUpdateGuideUrl(id), {
-		...options,
-		method: "PATCH",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(updateGuideRequest),
-	});
+  return customFetch<UpdateGuideResponse>(getUpdateGuideUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateGuideRequest),
+  });
 };
 
-export const getUpdateGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateGuide>>,
-		TError,
-		{ id: string; data?: UpdateGuideRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getUpdateGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateGuide>>,
+    TError,
+    { id: string; data?: UpdateGuideRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof updateGuide>>,
-	TError,
-	{ id: string; data?: UpdateGuideRequest },
-	TContext
+  Awaited<ReturnType<typeof updateGuide>>,
+  TError,
+  { id: string; data?: UpdateGuideRequest },
+  TContext
 > => {
-	const mutationKey = ["updateGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["updateGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateGuide>>,
-		{ id: string; data?: UpdateGuideRequest }
-	> = (props) => {
-		const { id, data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateGuide>>,
+    { id: string; data?: UpdateGuideRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
-		return updateGuide(id, data, requestOptions);
-	};
+    return updateGuide(id, data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type UpdateGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateGuide>>
->;
+export type UpdateGuideMutationResult = NonNullable<Awaited<ReturnType<typeof updateGuide>>>;
 export type UpdateGuideMutationBody = UpdateGuideRequest | undefined;
 export type UpdateGuideMutationError = unknown;
 
@@ -1692,26 +1380,26 @@ export type UpdateGuideMutationError = unknown;
  * @summary Update guide
  */
 export const useUpdateGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof updateGuide>>,
-			TError,
-			{ id: string; data?: UpdateGuideRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateGuide>>,
+      TError,
+      { id: string; data?: UpdateGuideRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof updateGuide>>,
-	TError,
-	{ id: string; data?: UpdateGuideRequest },
-	TContext
+  Awaited<ReturnType<typeof updateGuide>>,
+  TError,
+  { id: string; data?: UpdateGuideRequest },
+  TContext
 > => {
-	return useMutation(getUpdateGuideMutationOptions(options), queryClient);
+  return useMutation(getUpdateGuideMutationOptions(options), queryClient);
 };
 export const getArchiveGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/archive`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/archive`;
 };
 
 /**
@@ -1719,56 +1407,48 @@ export const getArchiveGuideUrl = (id: string) => {
  * @summary Archive guide
  */
 export const archiveGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<ArchiveGuideResponse> => {
-	return customFetch<ArchiveGuideResponse>(getArchiveGuideUrl(id), {
-		...options,
-		method: "POST",
-	});
+  return customFetch<ArchiveGuideResponse>(getArchiveGuideUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
-export const getArchiveGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof archiveGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getArchiveGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof archiveGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof archiveGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof archiveGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["archiveGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["archiveGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof archiveGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof archiveGuide>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return archiveGuide(id, requestOptions);
-	};
+    return archiveGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type ArchiveGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof archiveGuide>>
->;
+export type ArchiveGuideMutationResult = NonNullable<Awaited<ReturnType<typeof archiveGuide>>>;
 
 export type ArchiveGuideMutationError = unknown;
 
@@ -1776,26 +1456,26 @@ export type ArchiveGuideMutationError = unknown;
  * @summary Archive guide
  */
 export const useArchiveGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof archiveGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof archiveGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof archiveGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof archiveGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(getArchiveGuideMutationOptions(options), queryClient);
+  return useMutation(getArchiveGuideMutationOptions(options), queryClient);
 };
 export const getExportGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/export`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/export`;
 };
 
 /**
@@ -1803,59 +1483,52 @@ export const getExportGuideUrl = (id: string) => {
  * @summary Export guide
  */
 export const exportGuide = async (
-	id: string,
-	exportGuideRequest?: ExportGuideRequest,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  exportGuideRequest?: ExportGuideRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<ExportGuideResponse> => {
-	return customFetch<ExportGuideResponse>(getExportGuideUrl(id), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(exportGuideRequest),
-	});
+  return customFetch<ExportGuideResponse>(getExportGuideUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(exportGuideRequest),
+  });
 };
 
-export const getExportGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof exportGuide>>,
-		TError,
-		{ id: string; data?: ExportGuideRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getExportGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof exportGuide>>,
+    TError,
+    { id: string; data?: ExportGuideRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof exportGuide>>,
-	TError,
-	{ id: string; data?: ExportGuideRequest },
-	TContext
+  Awaited<ReturnType<typeof exportGuide>>,
+  TError,
+  { id: string; data?: ExportGuideRequest },
+  TContext
 > => {
-	const mutationKey = ["exportGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["exportGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof exportGuide>>,
-		{ id: string; data?: ExportGuideRequest }
-	> = (props) => {
-		const { id, data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof exportGuide>>,
+    { id: string; data?: ExportGuideRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
-		return exportGuide(id, data, requestOptions);
-	};
+    return exportGuide(id, data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type ExportGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof exportGuide>>
->;
+export type ExportGuideMutationResult = NonNullable<Awaited<ReturnType<typeof exportGuide>>>;
 export type ExportGuideMutationBody = ExportGuideRequest | undefined;
 export type ExportGuideMutationError = unknown;
 
@@ -1863,26 +1536,26 @@ export type ExportGuideMutationError = unknown;
  * @summary Export guide
  */
 export const useExportGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof exportGuide>>,
-			TError,
-			{ id: string; data?: ExportGuideRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof exportGuide>>,
+      TError,
+      { id: string; data?: ExportGuideRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof exportGuide>>,
-	TError,
-	{ id: string; data?: ExportGuideRequest },
-	TContext
+  Awaited<ReturnType<typeof exportGuide>>,
+  TError,
+  { id: string; data?: ExportGuideRequest },
+  TContext
 > => {
-	return useMutation(getExportGuideMutationOptions(options), queryClient);
+  return useMutation(getExportGuideMutationOptions(options), queryClient);
 };
 export const getPermanentlyDeleteGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/permanently-delete`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/permanently-delete`;
 };
 
 /**
@@ -1890,58 +1563,53 @@ export const getPermanentlyDeleteGuideUrl = (id: string) => {
  * @summary Permanently delete guide
  */
 export const permanentlyDeleteGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<PermanentlyDeleteGuideResponse> => {
-	return customFetch<PermanentlyDeleteGuideResponse>(
-		getPermanentlyDeleteGuideUrl(id),
-		{
-			...options,
-			method: "POST",
-		},
-	);
+  return customFetch<PermanentlyDeleteGuideResponse>(getPermanentlyDeleteGuideUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
 export const getPermanentlyDeleteGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
+  TError = unknown,
+  TContext = unknown,
 >(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["permanentlyDeleteGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["permanentlyDeleteGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
 
-		return permanentlyDeleteGuide(id, requestOptions);
-	};
+    return permanentlyDeleteGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type PermanentlyDeleteGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof permanentlyDeleteGuide>>
+  Awaited<ReturnType<typeof permanentlyDeleteGuide>>
 >;
 
 export type PermanentlyDeleteGuideMutationError = unknown;
@@ -1950,29 +1618,26 @@ export type PermanentlyDeleteGuideMutationError = unknown;
  * @summary Permanently delete guide
  */
 export const usePermanentlyDeleteGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof permanentlyDeleteGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(
-		getPermanentlyDeleteGuideMutationOptions(options),
-		queryClient,
-	);
+  return useMutation(getPermanentlyDeleteGuideMutationOptions(options), queryClient);
 };
 export const getPublishGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/publish`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/publish`;
 };
 
 /**
@@ -1980,56 +1645,48 @@ export const getPublishGuideUrl = (id: string) => {
  * @summary Publish guide
  */
 export const publishGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<PublishGuideResponse> => {
-	return customFetch<PublishGuideResponse>(getPublishGuideUrl(id), {
-		...options,
-		method: "POST",
-	});
+  return customFetch<PublishGuideResponse>(getPublishGuideUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
-export const getPublishGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof publishGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getPublishGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof publishGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof publishGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof publishGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["publishGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["publishGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof publishGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof publishGuide>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return publishGuide(id, requestOptions);
-	};
+    return publishGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type PublishGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof publishGuide>>
->;
+export type PublishGuideMutationResult = NonNullable<Awaited<ReturnType<typeof publishGuide>>>;
 
 export type PublishGuideMutationError = unknown;
 
@@ -2037,26 +1694,26 @@ export type PublishGuideMutationError = unknown;
  * @summary Publish guide
  */
 export const usePublishGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof publishGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof publishGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof publishGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof publishGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(getPublishGuideMutationOptions(options), queryClient);
+  return useMutation(getPublishGuideMutationOptions(options), queryClient);
 };
 export const getRecalculateGuideDurationUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/recalculate-duration`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/recalculate-duration`;
 };
 
 /**
@@ -2064,58 +1721,53 @@ export const getRecalculateGuideDurationUrl = (id: string) => {
  * @summary Recalculate guide duration
  */
 export const recalculateGuideDuration = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<RecalculateDurationResponse> => {
-	return customFetch<RecalculateDurationResponse>(
-		getRecalculateGuideDurationUrl(id),
-		{
-			...options,
-			method: "POST",
-		},
-	);
+  return customFetch<RecalculateDurationResponse>(getRecalculateGuideDurationUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
 export const getRecalculateGuideDurationMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
+  TError = unknown,
+  TContext = unknown,
 >(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof recalculateGuideDuration>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recalculateGuideDuration>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof recalculateGuideDuration>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof recalculateGuideDuration>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["recalculateGuideDuration"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["recalculateGuideDuration"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof recalculateGuideDuration>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recalculateGuideDuration>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
 
-		return recalculateGuideDuration(id, requestOptions);
-	};
+    return recalculateGuideDuration(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type RecalculateGuideDurationMutationResult = NonNullable<
-	Awaited<ReturnType<typeof recalculateGuideDuration>>
+  Awaited<ReturnType<typeof recalculateGuideDuration>>
 >;
 
 export type RecalculateGuideDurationMutationError = unknown;
@@ -2123,33 +1775,27 @@ export type RecalculateGuideDurationMutationError = unknown;
 /**
  * @summary Recalculate guide duration
  */
-export const useRecalculateGuideDuration = <
-	TError = unknown,
-	TContext = unknown,
->(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof recalculateGuideDuration>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+export const useRecalculateGuideDuration = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof recalculateGuideDuration>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof recalculateGuideDuration>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof recalculateGuideDuration>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(
-		getRecalculateGuideDurationMutationOptions(options),
-		queryClient,
-	);
+  return useMutation(getRecalculateGuideDurationMutationOptions(options), queryClient);
 };
 export const getRestoreGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/restore`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/restore`;
 };
 
 /**
@@ -2157,56 +1803,48 @@ export const getRestoreGuideUrl = (id: string) => {
  * @summary Restore guide
  */
 export const restoreGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<RestoreGuideResponse> => {
-	return customFetch<RestoreGuideResponse>(getRestoreGuideUrl(id), {
-		...options,
-		method: "POST",
-	});
+  return customFetch<RestoreGuideResponse>(getRestoreGuideUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
-export const getRestoreGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof restoreGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getRestoreGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof restoreGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof restoreGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof restoreGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["restoreGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["restoreGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof restoreGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreGuide>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return restoreGuide(id, requestOptions);
-	};
+    return restoreGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type RestoreGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof restoreGuide>>
->;
+export type RestoreGuideMutationResult = NonNullable<Awaited<ReturnType<typeof restoreGuide>>>;
 
 export type RestoreGuideMutationError = unknown;
 
@@ -2214,26 +1852,26 @@ export type RestoreGuideMutationError = unknown;
  * @summary Restore guide
  */
 export const useRestoreGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof restoreGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof restoreGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof restoreGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof restoreGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(getRestoreGuideMutationOptions(options), queryClient);
+  return useMutation(getRestoreGuideMutationOptions(options), queryClient);
 };
 export const getStarGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/star`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/star`;
 };
 
 /**
@@ -2241,56 +1879,43 @@ export const getStarGuideUrl = (id: string) => {
  * @summary Star guide
  */
 export const starGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<StarGuideResponse> => {
-	return customFetch<StarGuideResponse>(getStarGuideUrl(id), {
-		...options,
-		method: "POST",
-	});
+  return customFetch<StarGuideResponse>(getStarGuideUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
-export const getStarGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof starGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof starGuide>>,
-	TError,
-	{ id: string },
-	TContext
-> => {
-	const mutationKey = ["starGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+export const getStarGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof starGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof starGuide>>, TError, { id: string }, TContext> => {
+  const mutationKey = ["starGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof starGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof starGuide>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return starGuide(id, requestOptions);
-	};
+    return starGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type StarGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof starGuide>>
->;
+export type StarGuideMutationResult = NonNullable<Awaited<ReturnType<typeof starGuide>>>;
 
 export type StarGuideMutationError = unknown;
 
@@ -2298,26 +1923,21 @@ export type StarGuideMutationError = unknown;
  * @summary Star guide
  */
 export const useStarGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof starGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof starGuide>>,
-	TError,
-	{ id: string },
-	TContext
-> => {
-	return useMutation(getStarGuideMutationOptions(options), queryClient);
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof starGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof starGuide>>, TError, { id: string }, TContext> => {
+  return useMutation(getStarGuideMutationOptions(options), queryClient);
 };
 export const getUnstarGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/star`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/star`;
 };
 
 /**
@@ -2325,56 +1945,48 @@ export const getUnstarGuideUrl = (id: string) => {
  * @summary Unstar guide
  */
 export const unstarGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<UnstarGuideResponse> => {
-	return customFetch<UnstarGuideResponse>(getUnstarGuideUrl(id), {
-		...options,
-		method: "DELETE",
-	});
+  return customFetch<UnstarGuideResponse>(getUnstarGuideUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
 };
 
-export const getUnstarGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof unstarGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getUnstarGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unstarGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof unstarGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof unstarGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["unstarGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["unstarGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof unstarGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof unstarGuide>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return unstarGuide(id, requestOptions);
-	};
+    return unstarGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type UnstarGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof unstarGuide>>
->;
+export type UnstarGuideMutationResult = NonNullable<Awaited<ReturnType<typeof unstarGuide>>>;
 
 export type UnstarGuideMutationError = unknown;
 
@@ -2382,26 +1994,21 @@ export type UnstarGuideMutationError = unknown;
  * @summary Unstar guide
  */
 export const useUnstarGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof unstarGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof unstarGuide>>,
-	TError,
-	{ id: string },
-	TContext
-> => {
-	return useMutation(getUnstarGuideMutationOptions(options), queryClient);
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof unstarGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof unstarGuide>>, TError, { id: string }, TContext> => {
+  return useMutation(getUnstarGuideMutationOptions(options), queryClient);
 };
 export const getUnarchiveGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/unarchive`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/unarchive`;
 };
 
 /**
@@ -2409,56 +2016,48 @@ export const getUnarchiveGuideUrl = (id: string) => {
  * @summary Unarchive guide
  */
 export const unarchiveGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<UnarchiveGuideResponse> => {
-	return customFetch<UnarchiveGuideResponse>(getUnarchiveGuideUrl(id), {
-		...options,
-		method: "POST",
-	});
+  return customFetch<UnarchiveGuideResponse>(getUnarchiveGuideUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
-export const getUnarchiveGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof unarchiveGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getUnarchiveGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unarchiveGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof unarchiveGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof unarchiveGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["unarchiveGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["unarchiveGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof unarchiveGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof unarchiveGuide>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return unarchiveGuide(id, requestOptions);
-	};
+    return unarchiveGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type UnarchiveGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof unarchiveGuide>>
->;
+export type UnarchiveGuideMutationResult = NonNullable<Awaited<ReturnType<typeof unarchiveGuide>>>;
 
 export type UnarchiveGuideMutationError = unknown;
 
@@ -2466,26 +2065,26 @@ export type UnarchiveGuideMutationError = unknown;
  * @summary Unarchive guide
  */
 export const useUnarchiveGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof unarchiveGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof unarchiveGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof unarchiveGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof unarchiveGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(getUnarchiveGuideMutationOptions(options), queryClient);
+  return useMutation(getUnarchiveGuideMutationOptions(options), queryClient);
 };
 export const getUnpublishGuideUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/unpublish`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/unpublish`;
 };
 
 /**
@@ -2493,56 +2092,48 @@ export const getUnpublishGuideUrl = (id: string) => {
  * @summary Unpublish guide
  */
 export const unpublishGuide = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<UnpublishGuideResponse> => {
-	return customFetch<UnpublishGuideResponse>(getUnpublishGuideUrl(id), {
-		...options,
-		method: "POST",
-	});
+  return customFetch<UnpublishGuideResponse>(getUnpublishGuideUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
-export const getUnpublishGuideMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof unpublishGuide>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getUnpublishGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unpublishGuide>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof unpublishGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof unpublishGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["unpublishGuide"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["unpublishGuide"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof unpublishGuide>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof unpublishGuide>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return unpublishGuide(id, requestOptions);
-	};
+    return unpublishGuide(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type UnpublishGuideMutationResult = NonNullable<
-	Awaited<ReturnType<typeof unpublishGuide>>
->;
+export type UnpublishGuideMutationResult = NonNullable<Awaited<ReturnType<typeof unpublishGuide>>>;
 
 export type UnpublishGuideMutationError = unknown;
 
@@ -2550,26 +2141,26 @@ export type UnpublishGuideMutationError = unknown;
  * @summary Unpublish guide
  */
 export const useUnpublishGuide = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof unpublishGuide>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof unpublishGuide>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof unpublishGuide>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof unpublishGuide>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(getUnpublishGuideMutationOptions(options), queryClient);
+  return useMutation(getUnpublishGuideMutationOptions(options), queryClient);
 };
 export const getRecordGuideViewUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/view`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/guides/${id}/view`;
 };
 
 /**
@@ -2577,55 +2168,50 @@ export const getRecordGuideViewUrl = (id: string) => {
  * @summary Record guide view
  */
 export const recordGuideView = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<RecordGuideViewResponse> => {
-	return customFetch<RecordGuideViewResponse>(getRecordGuideViewUrl(id), {
-		...options,
-		method: "POST",
-	});
+  return customFetch<RecordGuideViewResponse>(getRecordGuideViewUrl(id), {
+    ...options,
+    method: "POST",
+  });
 };
 
-export const getRecordGuideViewMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof recordGuideView>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getRecordGuideViewMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordGuideView>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof recordGuideView>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof recordGuideView>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["recordGuideView"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["recordGuideView"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof recordGuideView>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recordGuideView>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
 
-		return recordGuideView(id, requestOptions);
-	};
+    return recordGuideView(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
 export type RecordGuideViewMutationResult = NonNullable<
-	Awaited<ReturnType<typeof recordGuideView>>
+  Awaited<ReturnType<typeof recordGuideView>>
 >;
 
 export type RecordGuideViewMutationError = unknown;
@@ -2634,21 +2220,21 @@ export type RecordGuideViewMutationError = unknown;
  * @summary Record guide view
  */
 export const useRecordGuideView = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof recordGuideView>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof recordGuideView>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof recordGuideView>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof recordGuideView>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	return useMutation(getRecordGuideViewMutationOptions(options), queryClient);
+  return useMutation(getRecordGuideViewMutationOptions(options), queryClient);
 };

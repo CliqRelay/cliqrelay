@@ -8,9 +8,9 @@
 import type { StepCanvasType } from "./step-canvas-type";
 
 export type StepCanvasContent = {
-	/** @nullable */
-	bodyText?: string | null;
-	/** @nullable */
-	headingText?: string | null;
-	type: StepCanvasType;
+  /** @nullable */
+  bodyText?: string | null;
+  /** @nullable */
+  headingText?: string | null;
+  type: StepCanvasType;
 };

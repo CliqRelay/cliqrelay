@@ -12,8 +12,8 @@
 export type StepAction = (typeof StepAction)[keyof typeof StepAction];
 
 export const StepAction = {
-	click: "click",
-	input: "input",
-	navigation: "navigation",
-	keypress: "keypress",
+  click: "click",
+  input: "input",
+  navigation: "navigation",
+  keypress: "keypress",
 } as const;

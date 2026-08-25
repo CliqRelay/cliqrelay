@@ -8,36 +8,36 @@
 import * as zod from "zod";
 
 import {
-	ArchiveGuideResponse,
-	BulkGuidesRequest,
-	BulkGuidesResponse,
-	CreateDemoGuideRequest,
-	CreateDemoGuideResponse,
-	CreateGuideRequest,
-	CreateGuideResponse,
-	DeleteGuideResponse,
-	ExportGuideRequest,
-	ExportGuideResponse,
-	GetAllGuidesResponse,
-	GetExportStatusResponse,
-	GetGuideByIDResponse,
-	GetGuideViewsCountResponse,
-	GetGuidesCountResponse,
-	GetStarredGuidesResponse,
-	GetTimeSavedResponse,
-	GuideSortField,
-	GuideStatus,
-	PermanentlyDeleteGuideResponse,
-	PublishGuideResponse,
-	RecalculateDurationResponse,
-	RecordGuideViewResponse,
-	RestoreGuideResponse,
-	StarGuideResponse,
-	UnarchiveGuideResponse,
-	UnpublishGuideResponse,
-	UnstarGuideResponse,
-	UpdateGuideRequest,
-	UpdateGuideResponse,
+  ArchiveGuideResponse,
+  BulkGuidesRequest,
+  BulkGuidesResponse,
+  CreateDemoGuideRequest,
+  CreateDemoGuideResponse,
+  CreateGuideRequest,
+  CreateGuideResponse,
+  DeleteGuideResponse,
+  ExportGuideRequest,
+  ExportGuideResponse,
+  GetAllGuidesResponse,
+  GetExportStatusResponse,
+  GetGuideByIDResponse,
+  GetGuideViewsCountResponse,
+  GetGuidesCountResponse,
+  GetStarredGuidesResponse,
+  GetTimeSavedResponse,
+  GuideSortField,
+  GuideStatus,
+  PermanentlyDeleteGuideResponse,
+  PublishGuideResponse,
+  RecalculateDurationResponse,
+  RecordGuideViewResponse,
+  RestoreGuideResponse,
+  StarGuideResponse,
+  UnarchiveGuideResponse,
+  UnpublishGuideResponse,
+  UnstarGuideResponse,
+  UpdateGuideRequest,
+  UpdateGuideResponse,
 } from "../cliqrelay-api.schemas.zod";
 
 /**
@@ -45,7 +45,7 @@ import {
  * @summary Get export status
  */
 export const GetExportStatusParams = zod.object({
-	exportID: zod.string(),
+  exportID: zod.string(),
 });
 
 export const GetExportStatusResponseSchema = GetExportStatusResponse;
@@ -55,13 +55,13 @@ export const GetExportStatusResponseSchema = GetExportStatusResponse;
  * @summary Get all guides
  */
 export const GetAllGuidesQueryParams = zod.object({
-	team_id: zod.string().optional(),
-	status: zod.union([zod.null(), GuideStatus]).optional(),
-	exclude_archived: zod.boolean().optional(),
-	page: zod.int().optional(),
-	limit: zod.int().optional(),
-	sort_by: zod.union([zod.null(), GuideSortField]).optional(),
-	sort_dir: zod.string().nullish(),
+  team_id: zod.string().optional(),
+  status: zod.union([zod.null(), GuideStatus]).optional(),
+  exclude_archived: zod.boolean().optional(),
+  page: zod.int().optional(),
+  limit: zod.int().optional(),
+  sort_by: zod.union([zod.null(), GuideSortField]).optional(),
+  sort_dir: zod.string().nullish(),
 });
 
 export const GetAllGuidesResponseSchema = GetAllGuidesResponse;
@@ -79,7 +79,7 @@ export const CreateGuideResponseSchema = CreateGuideResponse;
  * @summary Bulk action on guides
  */
 export const BulkGuidesActionQueryParams = zod.object({
-	action: zod.string().optional(),
+  action: zod.string().optional(),
 });
 
 export const BulkGuidesActionBody = BulkGuidesRequest;
@@ -91,8 +91,8 @@ export const BulkGuidesActionResponse = BulkGuidesResponse;
  * @summary Get guides count
  */
 export const GetGuidesCountQueryParams = zod.object({
-	team_id: zod.string().optional(),
-	organization_id: zod.string().optional(),
+  team_id: zod.string().optional(),
+  organization_id: zod.string().optional(),
 });
 
 export const GetGuidesCountResponseSchema = GetGuidesCountResponse;
@@ -110,9 +110,9 @@ export const CreateDemoGuideResponseSchema = CreateDemoGuideResponse;
  * @summary Get starred guides
  */
 export const GetStarredGuidesQueryParams = zod.object({
-	team_id: zod.string().optional(),
-	page: zod.int().optional(),
-	limit: zod.int().optional(),
+  team_id: zod.string().optional(),
+  page: zod.int().optional(),
+  limit: zod.int().optional(),
 });
 
 export const GetStarredGuidesResponseSchema = GetStarredGuidesResponse;
@@ -122,8 +122,8 @@ export const GetStarredGuidesResponseSchema = GetStarredGuidesResponse;
  * @summary Get guides time saved
  */
 export const GetGuidesTimeSavedQueryParams = zod.object({
-	team_id: zod.uuid().optional(),
-	since: zod.iso.datetime({ offset: true }).nullish(),
+  team_id: zod.uuid().optional(),
+  since: zod.iso.datetime({ offset: true }).nullish(),
 });
 
 export const GetGuidesTimeSavedResponse = GetTimeSavedResponse;
@@ -133,7 +133,7 @@ export const GetGuidesTimeSavedResponse = GetTimeSavedResponse;
  * @summary Get guide views count
  */
 export const GetGuideViewsCountQueryParams = zod.object({
-	team_id: zod.uuid().optional(),
+  team_id: zod.uuid().optional(),
 });
 
 export const GetGuideViewsCountResponseSchema = GetGuideViewsCountResponse;
@@ -143,7 +143,7 @@ export const GetGuideViewsCountResponseSchema = GetGuideViewsCountResponse;
  * @summary Get guide by ID
  */
 export const GetGuideByIdParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const GetGuideByIdResponse = GetGuideByIDResponse;
@@ -153,7 +153,7 @@ export const GetGuideByIdResponse = GetGuideByIDResponse;
  * @summary Delete guide
  */
 export const DeleteGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const DeleteGuideResponseSchema = DeleteGuideResponse;
@@ -163,7 +163,7 @@ export const DeleteGuideResponseSchema = DeleteGuideResponse;
  * @summary Update guide
  */
 export const UpdateGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const UpdateGuideBody = UpdateGuideRequest;
@@ -175,7 +175,7 @@ export const UpdateGuideResponseSchema = UpdateGuideResponse;
  * @summary Archive guide
  */
 export const ArchiveGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const ArchiveGuideResponseSchema = ArchiveGuideResponse;
@@ -185,7 +185,7 @@ export const ArchiveGuideResponseSchema = ArchiveGuideResponse;
  * @summary Export guide
  */
 export const ExportGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const ExportGuideBody = ExportGuideRequest;
@@ -197,18 +197,17 @@ export const ExportGuideResponseSchema = ExportGuideResponse;
  * @summary Permanently delete guide
  */
 export const PermanentlyDeleteGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
-export const PermanentlyDeleteGuideResponseSchema =
-	PermanentlyDeleteGuideResponse;
+export const PermanentlyDeleteGuideResponseSchema = PermanentlyDeleteGuideResponse;
 
 /**
  * Publishes a guide
  * @summary Publish guide
  */
 export const PublishGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const PublishGuideResponseSchema = PublishGuideResponse;
@@ -218,7 +217,7 @@ export const PublishGuideResponseSchema = PublishGuideResponse;
  * @summary Recalculate guide duration
  */
 export const RecalculateGuideDurationParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const RecalculateGuideDurationResponse = RecalculateDurationResponse;
@@ -228,7 +227,7 @@ export const RecalculateGuideDurationResponse = RecalculateDurationResponse;
  * @summary Restore guide
  */
 export const RestoreGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const RestoreGuideResponseSchema = RestoreGuideResponse;
@@ -238,7 +237,7 @@ export const RestoreGuideResponseSchema = RestoreGuideResponse;
  * @summary Star guide
  */
 export const StarGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const StarGuideResponseSchema = StarGuideResponse;
@@ -248,7 +247,7 @@ export const StarGuideResponseSchema = StarGuideResponse;
  * @summary Unstar guide
  */
 export const UnstarGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const UnstarGuideResponseSchema = UnstarGuideResponse;
@@ -258,7 +257,7 @@ export const UnstarGuideResponseSchema = UnstarGuideResponse;
  * @summary Unarchive guide
  */
 export const UnarchiveGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const UnarchiveGuideResponseSchema = UnarchiveGuideResponse;
@@ -268,7 +267,7 @@ export const UnarchiveGuideResponseSchema = UnarchiveGuideResponse;
  * @summary Unpublish guide
  */
 export const UnpublishGuideParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const UnpublishGuideResponseSchema = UnpublishGuideResponse;
@@ -278,7 +277,7 @@ export const UnpublishGuideResponseSchema = UnpublishGuideResponse;
  * @summary Record guide view
  */
 export const RecordGuideViewParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const RecordGuideViewResponseSchema = RecordGuideViewResponse;

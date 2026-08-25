@@ -7,5 +7,5 @@
  */
 
 export type BulkGuidesResponse = {
-	message: string;
+  message: string;
 };

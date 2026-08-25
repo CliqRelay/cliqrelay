@@ -5,75 +5,70 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 import type {
-	DataTag,
-	DefinedInitialDataOptions,
-	DefinedUseQueryResult,
-	MutationFunction,
-	QueryClient,
-	QueryFunction,
-	QueryKey,
-	UndefinedInitialDataOptions,
-	UseMutationOptions,
-	UseMutationResult,
-	UseQueryOptions,
-	UseQueryResult,
-} from "@tanstack/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
+  CreateStepRequest,
+  CreateStepResponse,
+  DeleteStepResponse,
+  DuplicateStepRequest,
+  DuplicateStepResponse,
+  GetAllStepsByGuideIdParams,
+  GetAllStepsResponse,
+  GetStepByIDResponse,
+  ReorderStepsRequest,
+  ReorderStepsResponse,
+  UpdateStepRequest,
+  UpdateStepResponse,
+} from "../../models";
 
 import { customFetch } from "../../../mutators/custom-fetch";
-import type {
-	CreateStepRequest,
-	CreateStepResponse,
-	DeleteStepResponse,
-	DuplicateStepRequest,
-	DuplicateStepResponse,
-	GetAllStepsByGuideIdParams,
-	GetAllStepsResponse,
-	GetStepByIDResponse,
-	ReorderStepsRequest,
-	ReorderStepsResponse,
-	UpdateStepRequest,
-	UpdateStepResponse,
-} from "../../models";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-const withQueryKey = <T extends object, K>(
-	query: T,
-	queryKey: K,
-): T & { queryKey: K } => {
-	const result = { queryKey } as T & { queryKey: K };
-	for (const key of Object.keys(query)) {
-		// The explicit queryKey always wins, matching the previous
-		// `{ ...query, queryKey }` spread where it was set last.
-		if (key === "queryKey") continue;
-		Object.defineProperty(result, key, {
-			enumerable: true,
-			configurable: true,
-			get: () => (query as Record<string, unknown>)[key],
-		});
-	}
-	return result;
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === "queryKey") continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
 };
 
-export const getGetAllStepsByGuideIdUrl = (
-	params?: GetAllStepsByGuideIdParams,
-) => {
-	const normalizedParams = new URLSearchParams();
+export const getGetAllStepsByGuideIdUrl = (params?: GetAllStepsByGuideIdParams) => {
+  const normalizedParams = new URLSearchParams();
 
-	Object.entries(params || {}).forEach(([key, value]) => {
-		if (value !== undefined) {
-			normalizedParams.append(key, value === null ? "null" : String(value));
-		}
-	});
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
 
-	const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString();
 
-	return stringifiedParams.length > 0
-		? `${import.meta.env.VITE_API_URL}/api/v1/steps?${stringifiedParams}`
-		: `${import.meta.env.VITE_API_URL}/api/v1/steps`;
+  return stringifiedParams.length > 0
+    ? `${import.meta.env.VITE_API_URL}/api/v1/steps?${stringifiedParams}`
+    : `${import.meta.env.VITE_API_URL}/api/v1/steps`;
 };
 
 /**
@@ -81,170 +76,133 @@ export const getGetAllStepsByGuideIdUrl = (
  * @summary Get all steps by guide ID
  */
 export const getAllStepsByGuideId = async (
-	params?: GetAllStepsByGuideIdParams,
-	options?: Parameters<typeof customFetch>[1],
+  params?: GetAllStepsByGuideIdParams,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetAllStepsResponse> => {
-	return customFetch<GetAllStepsResponse>(getGetAllStepsByGuideIdUrl(params), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetAllStepsResponse>(getGetAllStepsByGuideIdUrl(params), {
+    ...options,
+    method: "GET",
+  });
 };
 
-export const getGetAllStepsByGuideIdQueryKey = (
-	params?: GetAllStepsByGuideIdParams,
-) => {
-	return [
-		`${import.meta.env.VITE_API_URL}/api/v1/steps`,
-		...(params ? [params] : []),
-	] as const;
+export const getGetAllStepsByGuideIdQueryKey = (params?: GetAllStepsByGuideIdParams) => {
+  return [`${import.meta.env.VITE_API_URL}/api/v1/steps`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetAllStepsByGuideIdQueryOptions = <
-	TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+  TError = unknown,
 >(
-	params?: GetAllStepsByGuideIdParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  params?: GetAllStepsByGuideIdParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllStepsByGuideId>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey =
-		queryOptions?.queryKey ?? getGetAllStepsByGuideIdQueryKey(params);
+  const queryKey = queryOptions?.queryKey ?? getGetAllStepsByGuideIdQueryKey(params);
 
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getAllStepsByGuideId>>
-	> = ({ signal }) =>
-		getAllStepsByGuideId(params, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllStepsByGuideId>>> = ({ signal }) =>
+    getAllStepsByGuideId(params, { signal, ...requestOptions });
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
 export type GetAllStepsByGuideIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getAllStepsByGuideId>>
+  Awaited<ReturnType<typeof getAllStepsByGuideId>>
 >;
 export type GetAllStepsByGuideIdQueryError = unknown;
 
 export function useGetAllStepsByGuideId<
-	TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+  TError = unknown,
 >(
-	params: undefined | GetAllStepsByGuideIdParams,
-	options: {
-		query: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-					TError,
-					Awaited<ReturnType<typeof getAllStepsByGuideId>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params: undefined | GetAllStepsByGuideIdParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllStepsByGuideId>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+          TError,
+          Awaited<ReturnType<typeof getAllStepsByGuideId>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetAllStepsByGuideId<
-	TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+  TError = unknown,
 >(
-	params?: GetAllStepsByGuideIdParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-				TError,
-				TData
-			>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-					TError,
-					Awaited<ReturnType<typeof getAllStepsByGuideId>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetAllStepsByGuideIdParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllStepsByGuideId>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+          TError,
+          Awaited<ReturnType<typeof getAllStepsByGuideId>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGetAllStepsByGuideId<
-	TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+  TError = unknown,
 >(
-	params?: GetAllStepsByGuideIdParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+  params?: GetAllStepsByGuideIdParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllStepsByGuideId>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get all steps by guide ID
  */
 
 export function useGetAllStepsByGuideId<
-	TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+  TError = unknown,
 >(
-	params?: GetAllStepsByGuideIdParams,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<
-				Awaited<ReturnType<typeof getAllStepsByGuideId>>,
-				TError,
-				TData
-			>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetAllStepsByGuideIdQueryOptions(params, options);
+  params?: GetAllStepsByGuideIdParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllStepsByGuideId>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetAllStepsByGuideIdQueryOptions(params, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getCreateStepUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/steps`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/steps`;
 };
 
 /**
@@ -252,58 +210,51 @@ export const getCreateStepUrl = () => {
  * @summary Create step
  */
 export const createStep = async (
-	createStepRequest?: CreateStepRequest,
-	options?: Parameters<typeof customFetch>[1],
+  createStepRequest?: CreateStepRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<CreateStepResponse> => {
-	return customFetch<CreateStepResponse>(getCreateStepUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(createStepRequest),
-	});
+  return customFetch<CreateStepResponse>(getCreateStepUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createStepRequest),
+  });
 };
 
-export const getCreateStepMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createStep>>,
-		TError,
-		{ data?: CreateStepRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getCreateStepMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStep>>,
+    TError,
+    { data?: CreateStepRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof createStep>>,
-	TError,
-	{ data?: CreateStepRequest },
-	TContext
+  Awaited<ReturnType<typeof createStep>>,
+  TError,
+  { data?: CreateStepRequest },
+  TContext
 > => {
-	const mutationKey = ["createStep"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["createStep"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createStep>>,
-		{ data?: CreateStepRequest }
-	> = (props) => {
-		const { data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createStep>>,
+    { data?: CreateStepRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
-		return createStep(data, requestOptions);
-	};
+    return createStep(data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type CreateStepMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createStep>>
->;
+export type CreateStepMutationResult = NonNullable<Awaited<ReturnType<typeof createStep>>>;
 export type CreateStepMutationBody = CreateStepRequest | undefined;
 export type CreateStepMutationError = unknown;
 
@@ -311,26 +262,26 @@ export type CreateStepMutationError = unknown;
  * @summary Create step
  */
 export const useCreateStep = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof createStep>>,
-			TError,
-			{ data?: CreateStepRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createStep>>,
+      TError,
+      { data?: CreateStepRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof createStep>>,
-	TError,
-	{ data?: CreateStepRequest },
-	TContext
+  Awaited<ReturnType<typeof createStep>>,
+  TError,
+  { data?: CreateStepRequest },
+  TContext
 > => {
-	return useMutation(getCreateStepMutationOptions(options), queryClient);
+  return useMutation(getCreateStepMutationOptions(options), queryClient);
 };
 export const getReorderStepsUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/steps/reorder`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/steps/reorder`;
 };
 
 /**
@@ -338,58 +289,51 @@ export const getReorderStepsUrl = () => {
  * @summary Reorder steps
  */
 export const reorderSteps = async (
-	reorderStepsRequest?: ReorderStepsRequest,
-	options?: Parameters<typeof customFetch>[1],
+  reorderStepsRequest?: ReorderStepsRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<ReorderStepsResponse> => {
-	return customFetch<ReorderStepsResponse>(getReorderStepsUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(reorderStepsRequest),
-	});
+  return customFetch<ReorderStepsResponse>(getReorderStepsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reorderStepsRequest),
+  });
 };
 
-export const getReorderStepsMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof reorderSteps>>,
-		TError,
-		{ data?: ReorderStepsRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getReorderStepsMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reorderSteps>>,
+    TError,
+    { data?: ReorderStepsRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof reorderSteps>>,
-	TError,
-	{ data?: ReorderStepsRequest },
-	TContext
+  Awaited<ReturnType<typeof reorderSteps>>,
+  TError,
+  { data?: ReorderStepsRequest },
+  TContext
 > => {
-	const mutationKey = ["reorderSteps"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["reorderSteps"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof reorderSteps>>,
-		{ data?: ReorderStepsRequest }
-	> = (props) => {
-		const { data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reorderSteps>>,
+    { data?: ReorderStepsRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
-		return reorderSteps(data, requestOptions);
-	};
+    return reorderSteps(data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type ReorderStepsMutationResult = NonNullable<
-	Awaited<ReturnType<typeof reorderSteps>>
->;
+export type ReorderStepsMutationResult = NonNullable<Awaited<ReturnType<typeof reorderSteps>>>;
 export type ReorderStepsMutationBody = ReorderStepsRequest | undefined;
 export type ReorderStepsMutationError = unknown;
 
@@ -397,26 +341,26 @@ export type ReorderStepsMutationError = unknown;
  * @summary Reorder steps
  */
 export const useReorderSteps = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof reorderSteps>>,
-			TError,
-			{ data?: ReorderStepsRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof reorderSteps>>,
+      TError,
+      { data?: ReorderStepsRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof reorderSteps>>,
-	TError,
-	{ data?: ReorderStepsRequest },
-	TContext
+  Awaited<ReturnType<typeof reorderSteps>>,
+  TError,
+  { data?: ReorderStepsRequest },
+  TContext
 > => {
-	return useMutation(getReorderStepsMutationOptions(options), queryClient);
+  return useMutation(getReorderStepsMutationOptions(options), queryClient);
 };
 export const getGetStepByIdUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/steps/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/steps/${id}`;
 };
 
 /**
@@ -424,148 +368,112 @@ export const getGetStepByIdUrl = (id: string) => {
  * @summary Get step by ID
  */
 export const getStepById = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<GetStepByIDResponse> => {
-	return customFetch<GetStepByIDResponse>(getGetStepByIdUrl(id), {
-		...options,
-		method: "GET",
-	});
+  return customFetch<GetStepByIDResponse>(getGetStepByIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
 };
 
 export const getGetStepByIdQueryKey = (id: string) => {
-	return [`${import.meta.env.VITE_API_URL}/api/v1/steps/${id}`] as const;
+  return [`${import.meta.env.VITE_API_URL}/api/v1/steps/${id}`] as const;
 };
 
 export const getGetStepByIdQueryOptions = <
-	TData = Awaited<ReturnType<typeof getStepById>>,
-	TError = unknown,
+  TData = Awaited<ReturnType<typeof getStepById>>,
+  TError = unknown,
 >(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
 ) => {
-	const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetStepByIdQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getGetStepByIdQueryKey(id);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getStepById>>> = ({
-		signal,
-	}) => getStepById(id, { signal, ...requestOptions });
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getStepById>>> = ({ signal }) =>
+    getStepById(id, { signal, ...requestOptions });
 
-	return {
-		queryKey,
-		queryFn,
-		enabled: id !== null && id !== undefined,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getStepById>>,
-		TError,
-		TData
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 };
 
-export type GetStepByIdQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getStepById>>
->;
+export type GetStepByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getStepById>>>;
 export type GetStepByIdQueryError = unknown;
 
-export function useGetStepById<
-	TData = Awaited<ReturnType<typeof getStepById>>,
-	TError = unknown,
->(
-	id: string,
-	options: {
-		query: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>
-		> &
-			Pick<
-				DefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getStepById>>,
-					TError,
-					Awaited<ReturnType<typeof getStepById>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetStepById<
-	TData = Awaited<ReturnType<typeof getStepById>>,
-	TError = unknown,
->(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>
-		> &
-			Pick<
-				UndefinedInitialDataOptions<
-					Awaited<ReturnType<typeof getStepById>>,
-					TError,
-					Awaited<ReturnType<typeof getStepById>>
-				>,
-				"initialData"
-			>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGetStepById<
-	TData = Awaited<ReturnType<typeof getStepById>>,
-	TError = unknown,
->(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-};
+export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, TError = unknown>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getStepById>>,
+          TError,
+          Awaited<ReturnType<typeof getStepById>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getStepById>>,
+          TError,
+          Awaited<ReturnType<typeof getStepById>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary Get step by ID
  */
 
-export function useGetStepById<
-	TData = Awaited<ReturnType<typeof getStepById>>,
-	TError = unknown,
->(
-	id: string,
-	options?: {
-		query?: Partial<
-			UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-	queryKey: DataTag<QueryKey, TData, TError>;
-} {
-	const queryOptions = getGetStepByIdQueryOptions(id, options);
+export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getStepById>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetStepByIdQueryOptions(id, options);
 
-	const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-		TData,
-		TError
-	> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-	return withQueryKey(query, queryOptions.queryKey);
+  return withQueryKey(query, queryOptions.queryKey);
 }
 
 export const getDeleteStepUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/steps/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/steps/${id}`;
 };
 
 /**
@@ -573,56 +481,48 @@ export const getDeleteStepUrl = (id: string) => {
  * @summary Delete step
  */
 export const deleteStep = async (
-	id: string,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<DeleteStepResponse> => {
-	return customFetch<DeleteStepResponse>(getDeleteStepUrl(id), {
-		...options,
-		method: "DELETE",
-	});
+  return customFetch<DeleteStepResponse>(getDeleteStepUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
 };
 
-export const getDeleteStepMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteStep>>,
-		TError,
-		{ id: string },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getDeleteStepMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteStep>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteStep>>,
-	TError,
-	{ id: string },
-	TContext
+  Awaited<ReturnType<typeof deleteStep>>,
+  TError,
+  { id: string },
+  TContext
 > => {
-	const mutationKey = ["deleteStep"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["deleteStep"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteStep>>,
-		{ id: string }
-	> = (props) => {
-		const { id } = props ?? {};
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteStep>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-		return deleteStep(id, requestOptions);
-	};
+    return deleteStep(id, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type DeleteStepMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteStep>>
->;
+export type DeleteStepMutationResult = NonNullable<Awaited<ReturnType<typeof deleteStep>>>;
 
 export type DeleteStepMutationError = unknown;
 
@@ -630,26 +530,21 @@ export type DeleteStepMutationError = unknown;
  * @summary Delete step
  */
 export const useDeleteStep = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof deleteStep>>,
-			TError,
-			{ id: string },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
-): UseMutationResult<
-	Awaited<ReturnType<typeof deleteStep>>,
-	TError,
-	{ id: string },
-	TContext
-> => {
-	return useMutation(getDeleteStepMutationOptions(options), queryClient);
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteStep>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof deleteStep>>, TError, { id: string }, TContext> => {
+  return useMutation(getDeleteStepMutationOptions(options), queryClient);
 };
 export const getUpdateStepUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/steps/${id}`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/steps/${id}`;
 };
 
 /**
@@ -657,59 +552,52 @@ export const getUpdateStepUrl = (id: string) => {
  * @summary Update step
  */
 export const updateStep = async (
-	id: string,
-	updateStepRequest?: UpdateStepRequest,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  updateStepRequest?: UpdateStepRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<UpdateStepResponse> => {
-	return customFetch<UpdateStepResponse>(getUpdateStepUrl(id), {
-		...options,
-		method: "PATCH",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(updateStepRequest),
-	});
+  return customFetch<UpdateStepResponse>(getUpdateStepUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateStepRequest),
+  });
 };
 
-export const getUpdateStepMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateStep>>,
-		TError,
-		{ id: string; data?: UpdateStepRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getUpdateStepMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStep>>,
+    TError,
+    { id: string; data?: UpdateStepRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof updateStep>>,
-	TError,
-	{ id: string; data?: UpdateStepRequest },
-	TContext
+  Awaited<ReturnType<typeof updateStep>>,
+  TError,
+  { id: string; data?: UpdateStepRequest },
+  TContext
 > => {
-	const mutationKey = ["updateStep"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["updateStep"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateStep>>,
-		{ id: string; data?: UpdateStepRequest }
-	> = (props) => {
-		const { id, data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateStep>>,
+    { id: string; data?: UpdateStepRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
-		return updateStep(id, data, requestOptions);
-	};
+    return updateStep(id, data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type UpdateStepMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateStep>>
->;
+export type UpdateStepMutationResult = NonNullable<Awaited<ReturnType<typeof updateStep>>>;
 export type UpdateStepMutationBody = UpdateStepRequest | undefined;
 export type UpdateStepMutationError = unknown;
 
@@ -717,26 +605,26 @@ export type UpdateStepMutationError = unknown;
  * @summary Update step
  */
 export const useUpdateStep = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof updateStep>>,
-			TError,
-			{ id: string; data?: UpdateStepRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateStep>>,
+      TError,
+      { id: string; data?: UpdateStepRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof updateStep>>,
-	TError,
-	{ id: string; data?: UpdateStepRequest },
-	TContext
+  Awaited<ReturnType<typeof updateStep>>,
+  TError,
+  { id: string; data?: UpdateStepRequest },
+  TContext
 > => {
-	return useMutation(getUpdateStepMutationOptions(options), queryClient);
+  return useMutation(getUpdateStepMutationOptions(options), queryClient);
 };
 export const getDuplicateStepUrl = (id: string) => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/steps/${id}/duplicate`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/steps/${id}/duplicate`;
 };
 
 /**
@@ -744,59 +632,52 @@ export const getDuplicateStepUrl = (id: string) => {
  * @summary Duplicate step
  */
 export const duplicateStep = async (
-	id: string,
-	duplicateStepRequest?: DuplicateStepRequest,
-	options?: Parameters<typeof customFetch>[1],
+  id: string,
+  duplicateStepRequest?: DuplicateStepRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<DuplicateStepResponse> => {
-	return customFetch<DuplicateStepResponse>(getDuplicateStepUrl(id), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(duplicateStepRequest),
-	});
+  return customFetch<DuplicateStepResponse>(getDuplicateStepUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(duplicateStepRequest),
+  });
 };
 
-export const getDuplicateStepMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof duplicateStep>>,
-		TError,
-		{ id: string; data?: DuplicateStepRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getDuplicateStepMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof duplicateStep>>,
+    TError,
+    { id: string; data?: DuplicateStepRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof duplicateStep>>,
-	TError,
-	{ id: string; data?: DuplicateStepRequest },
-	TContext
+  Awaited<ReturnType<typeof duplicateStep>>,
+  TError,
+  { id: string; data?: DuplicateStepRequest },
+  TContext
 > => {
-	const mutationKey = ["duplicateStep"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["duplicateStep"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof duplicateStep>>,
-		{ id: string; data?: DuplicateStepRequest }
-	> = (props) => {
-		const { id, data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof duplicateStep>>,
+    { id: string; data?: DuplicateStepRequest }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
-		return duplicateStep(id, data, requestOptions);
-	};
+    return duplicateStep(id, data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type DuplicateStepMutationResult = NonNullable<
-	Awaited<ReturnType<typeof duplicateStep>>
->;
+export type DuplicateStepMutationResult = NonNullable<Awaited<ReturnType<typeof duplicateStep>>>;
 export type DuplicateStepMutationBody = DuplicateStepRequest | undefined;
 export type DuplicateStepMutationError = unknown;
 
@@ -804,21 +685,21 @@ export type DuplicateStepMutationError = unknown;
  * @summary Duplicate step
  */
 export const useDuplicateStep = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof duplicateStep>>,
-			TError,
-			{ id: string; data?: DuplicateStepRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof duplicateStep>>,
+      TError,
+      { id: string; data?: DuplicateStepRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof duplicateStep>>,
-	TError,
-	{ id: string; data?: DuplicateStepRequest },
-	TContext
+  Awaited<ReturnType<typeof duplicateStep>>,
+  TError,
+  { id: string; data?: DuplicateStepRequest },
+  TContext
 > => {
-	return useMutation(getDuplicateStepMutationOptions(options), queryClient);
+  return useMutation(getDuplicateStepMutationOptions(options), queryClient);
 };

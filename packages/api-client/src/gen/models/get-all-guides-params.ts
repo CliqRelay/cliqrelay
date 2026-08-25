@@ -9,14 +9,14 @@ import type { GuideSortField } from "./guide-sort-field";
 import type { GuideStatus } from "./guide-status";
 
 export type GetAllGuidesParams = {
-	team_id?: string;
-	status?: null | GuideStatus;
-	exclude_archived?: boolean;
-	page?: number;
-	limit?: number;
-	sort_by?: null | GuideSortField;
-	/**
-	 * @nullable
-	 */
-	sort_dir?: string | null;
+  team_id?: string;
+  status?: null | GuideStatus;
+  exclude_archived?: boolean;
+  page?: number;
+  limit?: number;
+  sort_by?: null | GuideSortField;
+  /**
+   * @nullable
+   */
+  sort_dir?: string | null;
 };

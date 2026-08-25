@@ -6,11 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 export const GuideCreator = zod.object({
-	email: zod.string(),
-	id: zod.string(),
-	image: zod.string().nullish(),
-	metadata: zod.record(zod.string(), zod.unknown()).nullish(),
-	name: zod.string(),
+  email: zod.string(),
+  id: zod.string(),
+  image: zod.string().nullish(),
+  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
+  name: zod.string(),
 });
 
 export type GuideCreator = zod.input<typeof GuideCreator>;
@@ -22,647 +22,569 @@ export type Uuid = zod.input<typeof Uuid>;
 export type UuidOutput = zod.output<typeof Uuid>;
 
 export const GuideStatus = zod
-	.enum(["draft", "published", "archived", "deleted"])
-	.describe("The status of the guide");
+  .enum(["draft", "published", "archived", "deleted"])
+  .describe("The status of the guide");
 
 export type GuideStatus = zod.input<typeof GuideStatus>;
 export type GuideStatusOutput = zod.output<typeof GuideStatus>;
 
 export const Visibility = zod
-	.enum(["private", "team", "public"])
-	.describe("The visibility of the guide");
+  .enum(["private", "team", "public"])
+  .describe("The visibility of the guide");
 
 export type Visibility = zod.input<typeof Visibility>;
 export type VisibilityOutput = zod.output<typeof Visibility>;
 
 export const Guide = zod.object({
-	archivedAt: zod.iso.datetime({ offset: true }).nullish(),
-	createdAt: zod.iso.datetime({ offset: true }),
-	creator: zod.union([zod.null(), GuideCreator]).optional(),
-	creatorId: zod.string().nullable(),
-	deletedAt: zod.iso.datetime({ offset: true }).nullish(),
-	description: zod.string().nullish(),
-	durationSeconds: zod.int(),
-	id: Uuid,
-	isStarred: zod.boolean(),
-	publishedAt: zod.iso.datetime({ offset: true }).nullish(),
-	purgeRequestedAt: zod.iso.datetime({ offset: true }).nullish(),
-	restoredAt: zod.iso.datetime({ offset: true }).nullish(),
-	status: GuideStatus,
-	teamId: Uuid,
-	title: zod.string(),
-	updatedAt: zod.iso.datetime({ offset: true }),
-	visibility: Visibility,
+  archivedAt: zod.iso.datetime({ offset: true }).nullish(),
+  createdAt: zod.iso.datetime({ offset: true }),
+  creator: zod.union([zod.null(), GuideCreator]).optional(),
+  creatorId: zod.string().nullable(),
+  deletedAt: zod.iso.datetime({ offset: true }).nullish(),
+  description: zod.string().nullish(),
+  durationSeconds: zod.int(),
+  id: Uuid,
+  isStarred: zod.boolean(),
+  publishedAt: zod.iso.datetime({ offset: true }).nullish(),
+  purgeRequestedAt: zod.iso.datetime({ offset: true }).nullish(),
+  restoredAt: zod.iso.datetime({ offset: true }).nullish(),
+  status: GuideStatus,
+  teamId: Uuid,
+  title: zod.string(),
+  updatedAt: zod.iso.datetime({ offset: true }),
+  visibility: Visibility,
 });
 
 export type Guide = zod.input<typeof Guide>;
 export type GuideOutput = zod.output<typeof Guide>;
 
 export const ArchiveGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
 export type ArchiveGuideResponse = zod.input<typeof ArchiveGuideResponse>;
-export type ArchiveGuideResponseOutput = zod.output<
-	typeof ArchiveGuideResponse
->;
+export type ArchiveGuideResponseOutput = zod.output<typeof ArchiveGuideResponse>;
 
 export const BulkGuidesRequest = zod.object({
-	ids: zod.array(zod.string()).nullish(),
-	teamId: zod.string().optional(),
+  ids: zod.array(zod.string()).nullish(),
+  teamId: zod.string().optional(),
 });
 
 export type BulkGuidesRequest = zod.input<typeof BulkGuidesRequest>;
 export type BulkGuidesRequestOutput = zod.output<typeof BulkGuidesRequest>;
 
 export const BulkGuidesResponse = zod.object({
-	message: zod.string(),
+  message: zod.string(),
 });
 
 export type BulkGuidesResponse = zod.input<typeof BulkGuidesResponse>;
 export type BulkGuidesResponseOutput = zod.output<typeof BulkGuidesResponse>;
 
 export const CompleteUploadRequest = zod.object({
-	fileSize: zod.int().nullish(),
-	height: zod.int().nullish(),
-	mimeType: zod.string().nullish(),
-	stepId: zod.string().optional(),
-	storagePath: zod.string().optional(),
-	thumbnail: zod.string().nullish(),
-	width: zod.int().nullish(),
+  fileSize: zod.int().nullish(),
+  height: zod.int().nullish(),
+  mimeType: zod.string().nullish(),
+  stepId: zod.string().optional(),
+  storagePath: zod.string().optional(),
+  thumbnail: zod.string().nullish(),
+  width: zod.int().nullish(),
 });
 
 export type CompleteUploadRequest = zod.input<typeof CompleteUploadRequest>;
-export type CompleteUploadRequestOutput = zod.output<
-	typeof CompleteUploadRequest
->;
+export type CompleteUploadRequestOutput = zod.output<typeof CompleteUploadRequest>;
 
 export const CompleteUploadResponse = zod.object({
-	storagePath: zod.string(),
-	url: zod.string(),
+  storagePath: zod.string(),
+  url: zod.string(),
 });
 
 export type CompleteUploadResponse = zod.input<typeof CompleteUploadResponse>;
-export type CompleteUploadResponseOutput = zod.output<
-	typeof CompleteUploadResponse
->;
+export type CompleteUploadResponseOutput = zod.output<typeof CompleteUploadResponse>;
 
 export const CreateDemoGuideRequest = zod.object({
-	teamId: Uuid,
+  teamId: Uuid,
 });
 
 export type CreateDemoGuideRequest = zod.input<typeof CreateDemoGuideRequest>;
-export type CreateDemoGuideRequestOutput = zod.output<
-	typeof CreateDemoGuideRequest
->;
+export type CreateDemoGuideRequestOutput = zod.output<typeof CreateDemoGuideRequest>;
 
 export const CreateDemoGuideResponse = zod.object({
-	guideId: zod.string(),
+  guideId: zod.string(),
 });
 
 export type CreateDemoGuideResponse = zod.input<typeof CreateDemoGuideResponse>;
-export type CreateDemoGuideResponseOutput = zod.output<
-	typeof CreateDemoGuideResponse
->;
+export type CreateDemoGuideResponseOutput = zod.output<typeof CreateDemoGuideResponse>;
 
 export const CreateGuideRequest = zod.object({
-	description: zod.string().nullish(),
-	teamId: Uuid,
-	title: zod.string(),
+  description: zod.string().nullish(),
+  teamId: Uuid,
+  title: zod.string(),
 });
 
 export type CreateGuideRequest = zod.input<typeof CreateGuideRequest>;
 export type CreateGuideRequestOutput = zod.output<typeof CreateGuideRequest>;
 
 export const CreateGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
 export type CreateGuideResponse = zod.input<typeof CreateGuideResponse>;
 export type CreateGuideResponseOutput = zod.output<typeof CreateGuideResponse>;
 
 export const CreateMediaAssetRequest = zod.object({
-	altText: zod.string().nullish(),
-	byteSize: zod.int().nullish(),
-	height: zod.int().nullish(),
-	mimeType: zod.string().nullish(),
-	stepId: Uuid,
-	storagePath: zod.string(),
-	thumbnail: zod.string().nullish(),
-	width: zod.int().nullish(),
+  altText: zod.string().nullish(),
+  byteSize: zod.int().nullish(),
+  height: zod.int().nullish(),
+  mimeType: zod.string().nullish(),
+  stepId: Uuid,
+  storagePath: zod.string(),
+  thumbnail: zod.string().nullish(),
+  width: zod.int().nullish(),
 });
 
 export type CreateMediaAssetRequest = zod.input<typeof CreateMediaAssetRequest>;
-export type CreateMediaAssetRequestOutput = zod.output<
-	typeof CreateMediaAssetRequest
->;
+export type CreateMediaAssetRequestOutput = zod.output<typeof CreateMediaAssetRequest>;
 
 export const MediaAsset = zod.object({
-	altText: zod.string().nullish(),
-	byteSize: zod.int().nullish(),
-	createdAt: zod.iso.datetime({ offset: true }),
-	height: zod.int().nullish(),
-	id: Uuid,
-	mimeType: zod.string().nullish(),
-	stepId: Uuid,
-	storagePath: zod.string(),
-	thumbnail: zod.string().nullish(),
-	updatedAt: zod.iso.datetime({ offset: true }),
-	url: zod.string().nullish(),
-	width: zod.int().nullish(),
+  altText: zod.string().nullish(),
+  byteSize: zod.int().nullish(),
+  createdAt: zod.iso.datetime({ offset: true }),
+  height: zod.int().nullish(),
+  id: Uuid,
+  mimeType: zod.string().nullish(),
+  stepId: Uuid,
+  storagePath: zod.string(),
+  thumbnail: zod.string().nullish(),
+  updatedAt: zod.iso.datetime({ offset: true }),
+  url: zod.string().nullish(),
+  width: zod.int().nullish(),
 });
 
 export type MediaAsset = zod.input<typeof MediaAsset>;
 export type MediaAssetOutput = zod.output<typeof MediaAsset>;
 
 export const CreateMediaAssetResponse = zod.object({
-	mediaAsset: MediaAsset,
+  mediaAsset: MediaAsset,
 });
 
-export type CreateMediaAssetResponse = zod.input<
-	typeof CreateMediaAssetResponse
->;
-export type CreateMediaAssetResponseOutput = zod.output<
-	typeof CreateMediaAssetResponse
->;
+export type CreateMediaAssetResponse = zod.input<typeof CreateMediaAssetResponse>;
+export type CreateMediaAssetResponseOutput = zod.output<typeof CreateMediaAssetResponse>;
 
 export const StepAction = zod
-	.enum(["click", "input", "navigation", "keypress"])
-	.describe("The browser interaction type captured for the step");
+  .enum(["click", "input", "navigation", "keypress"])
+  .describe("The browser interaction type captured for the step");
 
 export type StepAction = zod.input<typeof StepAction>;
 export type StepActionOutput = zod.output<typeof StepAction>;
 
 export const StepCanvasType = zod
-	.enum(["callout", "alert", "tip", "header"])
-	.describe("The type of the canvas element");
+  .enum(["callout", "alert", "tip", "header"])
+  .describe("The type of the canvas element");
 
 export type StepCanvasType = zod.input<typeof StepCanvasType>;
 export type StepCanvasTypeOutput = zod.output<typeof StepCanvasType>;
 
 export const StepCanvasContent = zod.object({
-	bodyText: zod.string().nullish(),
-	headingText: zod.string().nullish(),
-	type: StepCanvasType,
+  bodyText: zod.string().nullish(),
+  headingText: zod.string().nullish(),
+  type: StepCanvasType,
 });
 
 export type StepCanvasContent = zod.input<typeof StepCanvasContent>;
 export type StepCanvasContentOutput = zod.output<typeof StepCanvasContent>;
 
 export const StepType = zod
-	.enum(["interaction", "canvas"])
-	.describe("The browser interaction type captured for the step");
+  .enum(["interaction", "canvas"])
+  .describe("The browser interaction type captured for the step");
 
 export type StepType = zod.input<typeof StepType>;
 export type StepTypeOutput = zod.output<typeof StepType>;
 
 export const CreateStepRequest = zod.object({
-	action: StepAction.optional(),
-	actionText: zod.string().nullish(),
-	canvasContent: zod.union([zod.null(), StepCanvasContent]).optional(),
-	guideId: Uuid,
-	insertAfterStepId: zod.string().nullish(),
-	insertBeforeStepId: zod.string().nullish(),
-	notes: zod.string().nullish(),
-	targetElement: zod.record(zod.string(), zod.unknown()).nullish(),
-	type: StepType,
-	url: zod.string().nullish(),
+  action: StepAction.optional(),
+  actionText: zod.string().nullish(),
+  canvasContent: zod.union([zod.null(), StepCanvasContent]).optional(),
+  guideId: Uuid,
+  insertAfterStepId: zod.string().nullish(),
+  insertBeforeStepId: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  targetElement: zod.record(zod.string(), zod.unknown()).nullish(),
+  type: StepType,
+  url: zod.string().nullish(),
 });
 
 export type CreateStepRequest = zod.input<typeof CreateStepRequest>;
 export type CreateStepRequestOutput = zod.output<typeof CreateStepRequest>;
 
 export const Step = zod.object({
-	action: zod.union([zod.null(), StepAction]).optional(),
-	actionText: zod.string().nullish(),
-	canvasContent: zod.union([zod.null(), StepCanvasContent]).optional(),
-	createdAt: zod.iso.datetime({ offset: true }),
-	guideId: Uuid,
-	id: Uuid,
-	mediaAssets: zod.array(MediaAsset).optional(),
-	notes: zod.string().nullish(),
-	sortOrder: zod.string(),
-	targetElement: zod.record(zod.string(), zod.unknown()).nullish(),
-	type: StepType,
-	updatedAt: zod.iso.datetime({ offset: true }),
-	url: zod.string().nullish(),
+  action: zod.union([zod.null(), StepAction]).optional(),
+  actionText: zod.string().nullish(),
+  canvasContent: zod.union([zod.null(), StepCanvasContent]).optional(),
+  createdAt: zod.iso.datetime({ offset: true }),
+  guideId: Uuid,
+  id: Uuid,
+  mediaAssets: zod.array(MediaAsset).optional(),
+  notes: zod.string().nullish(),
+  sortOrder: zod.string(),
+  targetElement: zod.record(zod.string(), zod.unknown()).nullish(),
+  type: StepType,
+  updatedAt: zod.iso.datetime({ offset: true }),
+  url: zod.string().nullish(),
 });
 
 export type Step = zod.input<typeof Step>;
 export type StepOutput = zod.output<typeof Step>;
 
 export const CreateStepResponse = zod.object({
-	step: Step,
+  step: Step,
 });
 
 export type CreateStepResponse = zod.input<typeof CreateStepResponse>;
 export type CreateStepResponseOutput = zod.output<typeof CreateStepResponse>;
 
 export const DeleteGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
 export type DeleteGuideResponse = zod.input<typeof DeleteGuideResponse>;
 export type DeleteGuideResponseOutput = zod.output<typeof DeleteGuideResponse>;
 
 export const DeleteMediaAssetResponse = zod.object({
-	message: zod.string(),
+  message: zod.string(),
 });
 
-export type DeleteMediaAssetResponse = zod.input<
-	typeof DeleteMediaAssetResponse
->;
-export type DeleteMediaAssetResponseOutput = zod.output<
-	typeof DeleteMediaAssetResponse
->;
+export type DeleteMediaAssetResponse = zod.input<typeof DeleteMediaAssetResponse>;
+export type DeleteMediaAssetResponseOutput = zod.output<typeof DeleteMediaAssetResponse>;
 
 export const DeleteStepResponse = zod.object({
-	message: zod.string(),
+  message: zod.string(),
 });
 
 export type DeleteStepResponse = zod.input<typeof DeleteStepResponse>;
 export type DeleteStepResponseOutput = zod.output<typeof DeleteStepResponse>;
 
 export const DuplicateStepRequest = zod.object({
-	insertAfterStepId: zod.string().nullish(),
-	insertBeforeStepId: zod.string().nullish(),
+  insertAfterStepId: zod.string().nullish(),
+  insertBeforeStepId: zod.string().nullish(),
 });
 
 export type DuplicateStepRequest = zod.input<typeof DuplicateStepRequest>;
-export type DuplicateStepRequestOutput = zod.output<
-	typeof DuplicateStepRequest
->;
+export type DuplicateStepRequestOutput = zod.output<typeof DuplicateStepRequest>;
 
 export const DuplicateStepResponse = zod.object({
-	step: Step,
+  step: Step,
 });
 
 export type DuplicateStepResponse = zod.input<typeof DuplicateStepResponse>;
-export type DuplicateStepResponseOutput = zod.output<
-	typeof DuplicateStepResponse
->;
+export type DuplicateStepResponseOutput = zod.output<typeof DuplicateStepResponse>;
 
 export const ExportGuideFormat = zod
-	.enum(["pdf", "markdown", "html"])
-	.describe("The type of the guide document to export");
+  .enum(["pdf", "markdown", "html"])
+  .describe("The type of the guide document to export");
 
 export type ExportGuideFormat = zod.input<typeof ExportGuideFormat>;
 export type ExportGuideFormatOutput = zod.output<typeof ExportGuideFormat>;
 
 export const ExportGuideRequest = zod.object({
-	format: ExportGuideFormat,
+  format: ExportGuideFormat,
 });
 
 export type ExportGuideRequest = zod.input<typeof ExportGuideRequest>;
 export type ExportGuideRequestOutput = zod.output<typeof ExportGuideRequest>;
 
 export const ExportGuideResponse = zod.object({
-	exportId: zod.string(),
-	status: zod.string(),
+  exportId: zod.string(),
+  status: zod.string(),
 });
 
 export type ExportGuideResponse = zod.input<typeof ExportGuideResponse>;
 export type ExportGuideResponseOutput = zod.output<typeof ExportGuideResponse>;
 
 export const GetAllGuidesResponse = zod.object({
-	data: zod.array(Guide),
-	limit: zod.int(),
-	page: zod.int(),
-	total: zod.int(),
+  data: zod.array(Guide),
+  limit: zod.int(),
+  page: zod.int(),
+  total: zod.int(),
 });
 
 export type GetAllGuidesResponse = zod.input<typeof GetAllGuidesResponse>;
-export type GetAllGuidesResponseOutput = zod.output<
-	typeof GetAllGuidesResponse
->;
+export type GetAllGuidesResponseOutput = zod.output<typeof GetAllGuidesResponse>;
 
 export const GetAllMediaAssetsResponse = zod.object({
-	mediaAssets: zod.array(MediaAsset),
+  mediaAssets: zod.array(MediaAsset),
 });
 
-export type GetAllMediaAssetsResponse = zod.input<
-	typeof GetAllMediaAssetsResponse
->;
-export type GetAllMediaAssetsResponseOutput = zod.output<
-	typeof GetAllMediaAssetsResponse
->;
+export type GetAllMediaAssetsResponse = zod.input<typeof GetAllMediaAssetsResponse>;
+export type GetAllMediaAssetsResponseOutput = zod.output<typeof GetAllMediaAssetsResponse>;
 
 export const GetAllStepsResponse = zod.object({
-	steps: zod.array(Step),
+  steps: zod.array(Step),
 });
 
 export type GetAllStepsResponse = zod.input<typeof GetAllStepsResponse>;
 export type GetAllStepsResponseOutput = zod.output<typeof GetAllStepsResponse>;
 
 export const Team = zod
-	.object({
-		createdAt: zod.string(),
-		id: zod.string(),
-		name: zod.string(),
-		organizationId: zod.string(),
-		ownerId: zod.string(),
-		updatedAt: zod.string(),
-	})
-	.describe("A team within an organization");
+  .object({
+    createdAt: zod.string(),
+    id: zod.string(),
+    name: zod.string(),
+    organizationId: zod.string(),
+    ownerId: zod.string(),
+    updatedAt: zod.string(),
+  })
+  .describe("A team within an organization");
 
 export type Team = zod.input<typeof Team>;
 export type TeamOutput = zod.output<typeof Team>;
 
 export const GetAllTeamsResponse = zod
-	.object({
-		teams: zod.array(Team),
-	})
-	.describe("Response containing all teams");
+  .object({
+    teams: zod.array(Team),
+  })
+  .describe("Response containing all teams");
 
 export type GetAllTeamsResponse = zod.input<typeof GetAllTeamsResponse>;
 export type GetAllTeamsResponseOutput = zod.output<typeof GetAllTeamsResponse>;
 
 export const GuideExport = zod.object({
-	createdAt: zod.iso.datetime({ offset: true }),
-	downloadUrl: zod.string().nullish(),
-	errorMessage: zod.string().nullish(),
-	format: ExportGuideFormat,
-	guideId: Uuid,
-	id: Uuid,
-	status: zod.string(),
-	storagePath: zod.string().nullish(),
-	updatedAt: zod.iso.datetime({ offset: true }),
-	userId: zod.string(),
+  createdAt: zod.iso.datetime({ offset: true }),
+  downloadUrl: zod.string().nullish(),
+  errorMessage: zod.string().nullish(),
+  format: ExportGuideFormat,
+  guideId: Uuid,
+  id: Uuid,
+  status: zod.string(),
+  storagePath: zod.string().nullish(),
+  updatedAt: zod.iso.datetime({ offset: true }),
+  userId: zod.string(),
 });
 
 export type GuideExport = zod.input<typeof GuideExport>;
 export type GuideExportOutput = zod.output<typeof GuideExport>;
 
 export const GetExportStatusResponse = zod.object({
-	export: zod.union([zod.null(), GuideExport]),
+  export: zod.union([zod.null(), GuideExport]),
 });
 
 export type GetExportStatusResponse = zod.input<typeof GetExportStatusResponse>;
-export type GetExportStatusResponseOutput = zod.output<
-	typeof GetExportStatusResponse
->;
+export type GetExportStatusResponseOutput = zod.output<typeof GetExportStatusResponse>;
 
 export const GetGuideByIDResponse = zod.object({
-	guide: zod.union([zod.null(), Guide]),
+  guide: zod.union([zod.null(), Guide]),
 });
 
 export type GetGuideByIDResponse = zod.input<typeof GetGuideByIDResponse>;
-export type GetGuideByIDResponseOutput = zod.output<
-	typeof GetGuideByIDResponse
->;
+export type GetGuideByIDResponseOutput = zod.output<typeof GetGuideByIDResponse>;
 
 export const GetGuideViewsCountResponse = zod.object({
-	count: zod.int(),
+  count: zod.int(),
 });
 
-export type GetGuideViewsCountResponse = zod.input<
-	typeof GetGuideViewsCountResponse
->;
-export type GetGuideViewsCountResponseOutput = zod.output<
-	typeof GetGuideViewsCountResponse
->;
+export type GetGuideViewsCountResponse = zod.input<typeof GetGuideViewsCountResponse>;
+export type GetGuideViewsCountResponseOutput = zod.output<typeof GetGuideViewsCountResponse>;
 
 export const GetGuidesCountResponse = zod.object({
-	count: zod.int(),
+  count: zod.int(),
 });
 
 export type GetGuidesCountResponse = zod.input<typeof GetGuidesCountResponse>;
-export type GetGuidesCountResponseOutput = zod.output<
-	typeof GetGuidesCountResponse
->;
+export type GetGuidesCountResponseOutput = zod.output<typeof GetGuidesCountResponse>;
 
 export const GetMediaAssetByIDResponse = zod.object({
-	mediaAsset: zod.union([zod.null(), MediaAsset]),
+  mediaAsset: zod.union([zod.null(), MediaAsset]),
 });
 
-export type GetMediaAssetByIDResponse = zod.input<
-	typeof GetMediaAssetByIDResponse
->;
-export type GetMediaAssetByIDResponseOutput = zod.output<
-	typeof GetMediaAssetByIDResponse
->;
+export type GetMediaAssetByIDResponse = zod.input<typeof GetMediaAssetByIDResponse>;
+export type GetMediaAssetByIDResponseOutput = zod.output<typeof GetMediaAssetByIDResponse>;
 
 export const GetStarredGuidesResponse = zod.object({
-	data: zod.array(Guide),
-	limit: zod.int(),
-	page: zod.int(),
-	total: zod.int(),
+  data: zod.array(Guide),
+  limit: zod.int(),
+  page: zod.int(),
+  total: zod.int(),
 });
 
-export type GetStarredGuidesResponse = zod.input<
-	typeof GetStarredGuidesResponse
->;
-export type GetStarredGuidesResponseOutput = zod.output<
-	typeof GetStarredGuidesResponse
->;
+export type GetStarredGuidesResponse = zod.input<typeof GetStarredGuidesResponse>;
+export type GetStarredGuidesResponseOutput = zod.output<typeof GetStarredGuidesResponse>;
 
 export const GetStepByIDResponse = zod.object({
-	step: zod.union([zod.null(), Step]),
+  step: zod.union([zod.null(), Step]),
 });
 
 export type GetStepByIDResponse = zod.input<typeof GetStepByIDResponse>;
 export type GetStepByIDResponseOutput = zod.output<typeof GetStepByIDResponse>;
 
 export const GetTimeSavedResponse = zod.object({
-	timeSavedHours: zod.number(),
-	timeSavedSeconds: zod.int(),
+  timeSavedHours: zod.number(),
+  timeSavedSeconds: zod.int(),
 });
 
 export type GetTimeSavedResponse = zod.input<typeof GetTimeSavedResponse>;
-export type GetTimeSavedResponseOutput = zod.output<
-	typeof GetTimeSavedResponse
->;
+export type GetTimeSavedResponseOutput = zod.output<typeof GetTimeSavedResponse>;
 
 export const GuideSortField = zod
-	.enum(["created_at", "updated_at"])
-	.describe("The field to sort guides by");
+  .enum(["created_at", "updated_at"])
+  .describe("The field to sort guides by");
 
 export type GuideSortField = zod.input<typeof GuideSortField>;
 export type GuideSortFieldOutput = zod.output<typeof GuideSortField>;
 
 export const HealthResponse = zod.object({
-	status: zod.string(),
+  status: zod.string(),
 });
 
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
 export const PermanentlyDeleteGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
-export type PermanentlyDeleteGuideResponse = zod.input<
-	typeof PermanentlyDeleteGuideResponse
->;
+export type PermanentlyDeleteGuideResponse = zod.input<typeof PermanentlyDeleteGuideResponse>;
 export type PermanentlyDeleteGuideResponseOutput = zod.output<
-	typeof PermanentlyDeleteGuideResponse
+  typeof PermanentlyDeleteGuideResponse
 >;
 
 export const PresignUploadRequest = zod.object({
-	guideId: zod.string().optional(),
-	stepId: zod.string().optional(),
+  guideId: zod.string().optional(),
+  stepId: zod.string().optional(),
 });
 
 export type PresignUploadRequest = zod.input<typeof PresignUploadRequest>;
-export type PresignUploadRequestOutput = zod.output<
-	typeof PresignUploadRequest
->;
+export type PresignUploadRequestOutput = zod.output<typeof PresignUploadRequest>;
 
 export const PresignUploadResponse = zod.object({
-	presignedUrl: zod.string(),
-	storagePath: zod.string(),
+  presignedUrl: zod.string(),
+  storagePath: zod.string(),
 });
 
 export type PresignUploadResponse = zod.input<typeof PresignUploadResponse>;
-export type PresignUploadResponseOutput = zod.output<
-	typeof PresignUploadResponse
->;
+export type PresignUploadResponseOutput = zod.output<typeof PresignUploadResponse>;
 
 export const PublishGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
 export type PublishGuideResponse = zod.input<typeof PublishGuideResponse>;
-export type PublishGuideResponseOutput = zod.output<
-	typeof PublishGuideResponse
->;
+export type PublishGuideResponseOutput = zod.output<typeof PublishGuideResponse>;
 
 export const RecalculateDurationResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
-export type RecalculateDurationResponse = zod.input<
-	typeof RecalculateDurationResponse
->;
-export type RecalculateDurationResponseOutput = zod.output<
-	typeof RecalculateDurationResponse
->;
+export type RecalculateDurationResponse = zod.input<typeof RecalculateDurationResponse>;
+export type RecalculateDurationResponseOutput = zod.output<typeof RecalculateDurationResponse>;
 
 export const RecordGuideViewResponse = zod.object({
-	message: zod.string(),
+  message: zod.string(),
 });
 
 export type RecordGuideViewResponse = zod.input<typeof RecordGuideViewResponse>;
-export type RecordGuideViewResponseOutput = zod.output<
-	typeof RecordGuideViewResponse
->;
+export type RecordGuideViewResponseOutput = zod.output<typeof RecordGuideViewResponse>;
 
 export const ReorderStepsRequest = zod.object({
-	guideId: Uuid,
-	nextStepId: zod.string().nullish(),
-	prevStepId: zod.string().nullish(),
-	targetStepId: zod.string(),
+  guideId: Uuid,
+  nextStepId: zod.string().nullish(),
+  prevStepId: zod.string().nullish(),
+  targetStepId: zod.string(),
 });
 
 export type ReorderStepsRequest = zod.input<typeof ReorderStepsRequest>;
 export type ReorderStepsRequestOutput = zod.output<typeof ReorderStepsRequest>;
 
 export const ReorderStepsResponse = zod.object({
-	steps: zod.array(Step),
+  steps: zod.array(Step),
 });
 
 export type ReorderStepsResponse = zod.input<typeof ReorderStepsResponse>;
-export type ReorderStepsResponseOutput = zod.output<
-	typeof ReorderStepsResponse
->;
+export type ReorderStepsResponseOutput = zod.output<typeof ReorderStepsResponse>;
 
 export const RestoreGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
 export type RestoreGuideResponse = zod.input<typeof RestoreGuideResponse>;
-export type RestoreGuideResponseOutput = zod.output<
-	typeof RestoreGuideResponse
->;
+export type RestoreGuideResponseOutput = zod.output<typeof RestoreGuideResponse>;
 
 export const StarGuideResponse = zod.object({
-	message: zod.string(),
+  message: zod.string(),
 });
 
 export type StarGuideResponse = zod.input<typeof StarGuideResponse>;
 export type StarGuideResponseOutput = zod.output<typeof StarGuideResponse>;
 
 export const UnarchiveGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
 export type UnarchiveGuideResponse = zod.input<typeof UnarchiveGuideResponse>;
-export type UnarchiveGuideResponseOutput = zod.output<
-	typeof UnarchiveGuideResponse
->;
+export type UnarchiveGuideResponseOutput = zod.output<typeof UnarchiveGuideResponse>;
 
 export const UnpublishGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
 export type UnpublishGuideResponse = zod.input<typeof UnpublishGuideResponse>;
-export type UnpublishGuideResponseOutput = zod.output<
-	typeof UnpublishGuideResponse
->;
+export type UnpublishGuideResponseOutput = zod.output<typeof UnpublishGuideResponse>;
 
 export const UnstarGuideResponse = zod.object({
-	message: zod.string(),
+  message: zod.string(),
 });
 
 export type UnstarGuideResponse = zod.input<typeof UnstarGuideResponse>;
 export type UnstarGuideResponseOutput = zod.output<typeof UnstarGuideResponse>;
 
 export const UpdateGuideRequest = zod.object({
-	description: zod.string().nullish(),
-	title: zod.string().nullish(),
-	visibility: zod.union([zod.null(), Visibility]).optional(),
+  description: zod.string().nullish(),
+  title: zod.string().nullish(),
+  visibility: zod.union([zod.null(), Visibility]).optional(),
 });
 
 export type UpdateGuideRequest = zod.input<typeof UpdateGuideRequest>;
 export type UpdateGuideRequestOutput = zod.output<typeof UpdateGuideRequest>;
 
 export const UpdateGuideResponse = zod.object({
-	guide: Guide,
+  guide: Guide,
 });
 
 export type UpdateGuideResponse = zod.input<typeof UpdateGuideResponse>;
 export type UpdateGuideResponseOutput = zod.output<typeof UpdateGuideResponse>;
 
 export const UpdateMediaAssetRequest = zod.object({
-	altText: zod.string().nullish(),
-	byteSize: zod.int().nullish(),
-	height: zod.int().nullish(),
-	mimeType: zod.string().nullish(),
-	thumbnail: zod.string().nullish(),
-	width: zod.int().nullish(),
+  altText: zod.string().nullish(),
+  byteSize: zod.int().nullish(),
+  height: zod.int().nullish(),
+  mimeType: zod.string().nullish(),
+  thumbnail: zod.string().nullish(),
+  width: zod.int().nullish(),
 });
 
 export type UpdateMediaAssetRequest = zod.input<typeof UpdateMediaAssetRequest>;
-export type UpdateMediaAssetRequestOutput = zod.output<
-	typeof UpdateMediaAssetRequest
->;
+export type UpdateMediaAssetRequestOutput = zod.output<typeof UpdateMediaAssetRequest>;
 
 export const UpdateMediaAssetResponse = zod.object({
-	mediaAsset: MediaAsset,
+  mediaAsset: MediaAsset,
 });
 
-export type UpdateMediaAssetResponse = zod.input<
-	typeof UpdateMediaAssetResponse
->;
-export type UpdateMediaAssetResponseOutput = zod.output<
-	typeof UpdateMediaAssetResponse
->;
+export type UpdateMediaAssetResponse = zod.input<typeof UpdateMediaAssetResponse>;
+export type UpdateMediaAssetResponseOutput = zod.output<typeof UpdateMediaAssetResponse>;
 
 export const UpdateStepRequest = zod.object({
-	action: StepAction.optional(),
-	actionText: zod.string().nullish(),
-	canvasContent: zod.union([zod.null(), StepCanvasContent]).optional(),
-	notes: zod.string().nullish(),
-	targetElement: zod.record(zod.string(), zod.unknown()).nullish(),
-	type: StepType.optional(),
-	url: zod.string().nullish(),
+  action: StepAction.optional(),
+  actionText: zod.string().nullish(),
+  canvasContent: zod.union([zod.null(), StepCanvasContent]).optional(),
+  notes: zod.string().nullish(),
+  targetElement: zod.record(zod.string(), zod.unknown()).nullish(),
+  type: StepType.optional(),
+  url: zod.string().nullish(),
 });
 
 export type UpdateStepRequest = zod.input<typeof UpdateStepRequest>;
 export type UpdateStepRequestOutput = zod.output<typeof UpdateStepRequest>;
 
 export const UpdateStepResponse = zod.object({
-	step: Step,
+  step: Step,
 });
 
 export type UpdateStepResponse = zod.input<typeof UpdateStepResponse>;
