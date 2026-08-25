@@ -7,5 +7,5 @@
  */
 
 export type GetGuideViewsCountResponse = {
-	count: number;
+  count: number;
 };

@@ -8,5 +8,5 @@
 import type { Step } from "./step";
 
 export type GetStepByIDResponse = {
-	step: null | Step;
+  step: null | Step;
 };

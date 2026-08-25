@@ -11,5 +11,5 @@ import type { Team } from "./team";
  * Response containing all teams
  */
 export type GetAllTeamsResponse = {
-	teams: Team[];
+  teams: Team[];
 };

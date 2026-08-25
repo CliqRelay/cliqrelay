@@ -7,5 +7,5 @@
  */
 
 export type UnstarGuideResponse = {
-	message: string;
+  message: string;
 };

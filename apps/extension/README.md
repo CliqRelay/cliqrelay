@@ -1,4 +1,4 @@
-# CliqRelay Extension
+# Extension
 
 Browser extension for capturing clicks, input, keypresses, navigation and more as well as metadata from any page.
 
@@ -19,6 +19,7 @@ CliqRelay
 This table shows which components communicate with each other and how they do it:
 
 Legend:
+
 - **Web App**: The main CliqRelay application running in a browser tab.
 - **Content Script**: The script injected into web pages to capture events and interact with the page DOM. A.K.A "Browser Tab" in the diagram.
 - **Background Script (Service Worker MV3)**: The background process that manages state and facilitates communication between content scripts and the web app.
@@ -26,16 +27,16 @@ Legend:
 
 #### Chrome Extension Manifest V3 Messaging Matrix
 
-| From (Sender) | To (Receiver) | Method (Outgoing) | Method (Incoming / Event Listener) | Context / Notes |
-| --- | --- | --- | --- | --- |
-| **Web App** | Background Script | `chrome.runtime.sendMessage(extId, msg)` | `chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {})` | Requires `externally_connectable` configured in `manifest.json`. |
-| **Web App** | Content Script | `window.postMessage(msg, "*")` | `window.addEventListener("message", (event) => {})` | Shared DOM context. Highly recommended to verify `event.source` and `event.origin` for security. |
-| **Content Script** | Web App | `window.postMessage(msg, "*")` or `document.dispatchEvent(new CustomEvent(name))` | `window.addEventListener("message", ...)` or `document.addEventListener(name, ...)` | Allows the isolated Content Script to pass scraped DOM context back to your main app. |
-| **Content Script** | Background, Sidepanel, or Popup | `chrome.runtime.sendMessage(msg)` | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})` | Standard internal extension message pipeline. Broadcasts instantly to all active internal views. |
-| **Background Script** | Content Script | `chrome.tabs.sendMessage(tabId, msg)` | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})` | Requires an active, explicit `tabId` target to route the payload downward. |
-| **Background Script** | Sidepanel / Popup | `chrome.runtime.sendMessage(msg)` | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})` | Internal messaging channel. If both are open, both catch the event unless scoped in your payload. |
-| **Sidepanel / Popup** | Content Script | `chrome.tabs.sendMessage(tabId, msg)` | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})` | Used to pass active control instructions (like "Start highlighting clicked elements") down to the page DOM. |
-| **Sidepanel / Popup** | Background Script | `chrome.runtime.sendMessage(msg)` | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})` | Used to tell the background service worker to write data to long-term state or dispatch a network payload. |
+| From (Sender)         | To (Receiver)                   | Method (Outgoing)                                                                 | Method (Incoming / Event Listener)                                                  | Context / Notes                                                                                             |
+| --------------------- | ------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Web App**           | Background Script               | `chrome.runtime.sendMessage(extId, msg)`                                          | `chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {})`   | Requires `externally_connectable` configured in `manifest.json`.                                            |
+| **Web App**           | Content Script                  | `window.postMessage(msg, "*")`                                                    | `window.addEventListener("message", (event) => {})`                                 | Shared DOM context. Highly recommended to verify `event.source` and `event.origin` for security.            |
+| **Content Script**    | Web App                         | `window.postMessage(msg, "*")` or `document.dispatchEvent(new CustomEvent(name))` | `window.addEventListener("message", ...)` or `document.addEventListener(name, ...)` | Allows the isolated Content Script to pass scraped DOM context back to your main app.                       |
+| **Content Script**    | Background, Sidepanel, or Popup | `chrome.runtime.sendMessage(msg)`                                                 | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Standard internal extension message pipeline. Broadcasts instantly to all active internal views.            |
+| **Background Script** | Content Script                  | `chrome.tabs.sendMessage(tabId, msg)`                                             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Requires an active, explicit `tabId` target to route the payload downward.                                  |
+| **Background Script** | Sidepanel / Popup               | `chrome.runtime.sendMessage(msg)`                                                 | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Internal messaging channel. If both are open, both catch the event unless scoped in your payload.           |
+| **Sidepanel / Popup** | Content Script                  | `chrome.tabs.sendMessage(tabId, msg)`                                             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Used to pass active control instructions (like "Start highlighting clicked elements") down to the page DOM. |
+| **Sidepanel / Popup** | Background Script               | `chrome.runtime.sendMessage(msg)`                                                 | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Used to tell the background service worker to write data to long-term state or dispatch a network payload.  |
 
 ## Development
 
@@ -46,7 +47,7 @@ Make a copy of the `.env.example` file and name it `.env` and fill in the values
 $ pnpm i
 
 # Start development server with hot reload
-$ pnpm run dev
+$ pnpm dev
 
 # Now you can drop the `dist/chrome-mv3-dev` folder into Chrome as an unpacked extension and it will automatically reload on changes.
 ```
@@ -54,10 +55,19 @@ $ pnpm run dev
 ## Build
 
 ```bash
-$ pnpm run build
+$ pnpm build
 ```
 
 The production build is emitted to `dist/chrome-mv3/`.
+
+## Testing
+
+```bash
+$ pnpm test
+
+# Run tests in a UI
+$ pnpm test:ui
+```
 
 ## Install
 
@@ -76,3 +86,4 @@ The production build is emitted to `dist/chrome-mv3/`.
 ## Notes
 
 - The WXT extension is the source of truth for extension development.
+- `fmt:check` package.json script command is removed intentionally for now to allow the project to pass tests and to incrementally format files as we develop since we've migrated to Oxc now.

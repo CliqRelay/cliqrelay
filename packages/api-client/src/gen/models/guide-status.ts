@@ -12,8 +12,8 @@
 export type GuideStatus = (typeof GuideStatus)[keyof typeof GuideStatus];
 
 export const GuideStatus = {
-	draft: "draft",
-	published: "published",
-	archived: "archived",
-	deleted: "deleted",
+  draft: "draft",
+  published: "published",
+  archived: "archived",
+  deleted: "deleted",
 } as const;

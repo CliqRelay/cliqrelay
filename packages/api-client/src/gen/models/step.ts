@@ -13,21 +13,21 @@ import type { StepType } from "./step-type";
 import type { Uuid } from "./uuid";
 
 export type Step = {
-	action?: null | StepAction;
-	/** @nullable */
-	actionText?: string | null;
-	canvasContent?: null | StepCanvasContent;
-	createdAt: string;
-	guideId: Uuid;
-	id: Uuid;
-	mediaAssets?: MediaAsset[];
-	/** @nullable */
-	notes?: string | null;
-	sortOrder: string;
-	/** @nullable */
-	targetElement?: StepTargetElement;
-	type: StepType;
-	updatedAt: string;
-	/** @nullable */
-	url?: string | null;
+  action?: null | StepAction;
+  /** @nullable */
+  actionText?: string | null;
+  canvasContent?: null | StepCanvasContent;
+  createdAt: string;
+  guideId: Uuid;
+  id: Uuid;
+  mediaAssets?: MediaAsset[];
+  /** @nullable */
+  notes?: string | null;
+  sortOrder: string;
+  /** @nullable */
+  targetElement?: StepTargetElement;
+  type: StepType;
+  updatedAt: string;
+  /** @nullable */
+  url?: string | null;
 };

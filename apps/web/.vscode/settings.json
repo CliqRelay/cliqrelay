@@ -9,27 +9,24 @@
 		"**/routeTree.gen.ts": true
 	},
 	"[javascript]": {
-		"editor.defaultFormatter": "biomejs.biome"
+		"editor.defaultFormatter": "oxc.oxc-vscode"
 	},
 	"[javascriptreact]": {
-		"editor.defaultFormatter": "biomejs.biome"
+		"editor.defaultFormatter": "oxc.oxc-vscode"
 	},
 	"[typescript]": {
-		"editor.defaultFormatter": "biomejs.biome"
+		"editor.defaultFormatter": "oxc.oxc-vscode"
 	},
 	"[typescriptreact]": {
-		"editor.defaultFormatter": "biomejs.biome"
+		"editor.defaultFormatter": "oxc.oxc-vscode"
 	},
 	"[json]": {
-		"editor.defaultFormatter": "biomejs.biome"
+		"editor.defaultFormatter": "oxc.oxc-vscode"
 	},
 	"[jsonc]": {
-		"editor.defaultFormatter": "biomejs.biome"
+		"editor.defaultFormatter": "oxc.oxc-vscode"
 	},
 	"[css]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit"
+		"editor.defaultFormatter": "oxc.oxc-vscode"
 	}
 }

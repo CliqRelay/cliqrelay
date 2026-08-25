@@ -1,20 +1,22 @@
 {
-	"name": "cliqrelay",
-	"private": true,
-	"packageManager": "pnpm@11.21.0",
-	"engines": {
-		"node": ">=24"
-	},
-	"scripts": {
-		"build": "turbo run build",
-		"dev": "turbo run dev",
-		"lint": "turbo run lint",
-		"format": "turbo run format",
-		"check-types": "turbo run check-types"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.5.7",
-		"turbo": "^2.10.9",
-		"typescript": "^6.0.3"
-	}
+  "name": "cliqrelay",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "fmt:check": "turbo run fmt:check",
+    "check-types": "turbo run check-types",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
+    "turbo": "^2.10.11",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.21.0"
 }

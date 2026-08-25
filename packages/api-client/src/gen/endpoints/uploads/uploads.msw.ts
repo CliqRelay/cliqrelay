@@ -5,72 +5,60 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
-
-import type { RequestHandlerOptions } from "msw";
 import { HttpResponse, http } from "msw";
+import type { RequestHandlerOptions } from "msw";
 
-import type {
-	CompleteUploadResponse,
-	PresignUploadResponse,
-} from "../../models";
-import {
-	getCompleteUploadResponseMock,
-	getPresignUploadResponseMock,
-} from "./uploads.faker";
+import type { CompleteUploadResponse, PresignUploadResponse } from "../../models";
 
-export {
-	getCompleteUploadResponseMock,
-	getPresignUploadResponseMock,
-} from "./uploads.faker";
+import { getCompleteUploadResponseMock, getPresignUploadResponseMock } from "./uploads.faker";
+
+export { getCompleteUploadResponseMock, getPresignUploadResponseMock } from "./uploads.faker";
 
 export const getCompleteUploadMockHandler = (
-	overrideResponse?:
-		| CompleteUploadResponse
-		| ((
-				info: Parameters<Parameters<typeof http.post>[1]>[0],
-		  ) => Promise<CompleteUploadResponse> | CompleteUploadResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | CompleteUploadResponse
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<CompleteUploadResponse> | CompleteUploadResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.post(
-		"*/api/v1/uploads/complete",
-		async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getCompleteUploadResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
+  return http.post(
+    "*/api/v1/uploads/complete",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getCompleteUploadResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
 };
 
 export const getPresignUploadMockHandler = (
-	overrideResponse?:
-		| PresignUploadResponse
-		| ((
-				info: Parameters<Parameters<typeof http.post>[1]>[0],
-		  ) => Promise<PresignUploadResponse> | PresignUploadResponse),
-	options?: RequestHandlerOptions,
+  overrideResponse?:
+    | PresignUploadResponse
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<PresignUploadResponse> | PresignUploadResponse),
+  options?: RequestHandlerOptions,
 ) => {
-	return http.post(
-		"*/api/v1/uploads/presign",
-		async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-			return HttpResponse.json(
-				overrideResponse !== undefined
-					? typeof overrideResponse === "function"
-						? await overrideResponse(info)
-						: overrideResponse
-					: getPresignUploadResponseMock(),
-				{ status: 200 },
-			);
-		},
-		options,
-	);
+  return http.post(
+    "*/api/v1/uploads/presign",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getPresignUploadResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
 };
-export const getUploadsMock = () => [
-	getCompleteUploadMockHandler(),
-	getPresignUploadMockHandler(),
-];
+export const getUploadsMock = () => [getCompleteUploadMockHandler(), getPresignUploadMockHandler()];

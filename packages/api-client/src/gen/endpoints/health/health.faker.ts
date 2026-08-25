@@ -10,8 +10,8 @@ import { faker } from "@faker-js/faker";
 import type { HealthResponse } from "../../models";
 
 export const getGetHealthResponseMock = (
-	overrideResponse: Partial<Extract<HealthResponse, object>> = {},
+  overrideResponse: Partial<Extract<HealthResponse, object>> = {},
 ): HealthResponse => ({
-	status: faker.string.alpha({ length: { min: 10, max: 20 } }),
-	...overrideResponse,
+  status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
 });

@@ -7,5 +7,5 @@
  */
 
 export type BulkGuidesActionParams = {
-	action?: string;
+  action?: string;
 };

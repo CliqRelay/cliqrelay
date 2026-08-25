@@ -5,27 +5,27 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import { useMutation } from "@tanstack/react-query";
+import type {
+  MutationFunction,
+  QueryClient,
+  UseMutationOptions,
+  UseMutationResult,
+} from "@tanstack/react-query";
 
 import type {
-	MutationFunction,
-	QueryClient,
-	UseMutationOptions,
-	UseMutationResult,
-} from "@tanstack/react-query";
-import { useMutation } from "@tanstack/react-query";
+  CompleteUploadRequest,
+  CompleteUploadResponse,
+  PresignUploadRequest,
+  PresignUploadResponse,
+} from "../../models";
 
 import { customFetch } from "../../../mutators/custom-fetch";
-import type {
-	CompleteUploadRequest,
-	CompleteUploadResponse,
-	PresignUploadRequest,
-	PresignUploadResponse,
-} from "../../models";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 export const getCompleteUploadUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/uploads/complete`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/uploads/complete`;
 };
 
 /**
@@ -33,58 +33,51 @@ export const getCompleteUploadUrl = () => {
  * @summary Complete upload
  */
 export const completeUpload = async (
-	completeUploadRequest?: CompleteUploadRequest,
-	options?: Parameters<typeof customFetch>[1],
+  completeUploadRequest?: CompleteUploadRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<CompleteUploadResponse> => {
-	return customFetch<CompleteUploadResponse>(getCompleteUploadUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(completeUploadRequest),
-	});
+  return customFetch<CompleteUploadResponse>(getCompleteUploadUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(completeUploadRequest),
+  });
 };
 
-export const getCompleteUploadMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof completeUpload>>,
-		TError,
-		{ data?: CompleteUploadRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getCompleteUploadMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeUpload>>,
+    TError,
+    { data?: CompleteUploadRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof completeUpload>>,
-	TError,
-	{ data?: CompleteUploadRequest },
-	TContext
+  Awaited<ReturnType<typeof completeUpload>>,
+  TError,
+  { data?: CompleteUploadRequest },
+  TContext
 > => {
-	const mutationKey = ["completeUpload"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["completeUpload"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof completeUpload>>,
-		{ data?: CompleteUploadRequest }
-	> = (props) => {
-		const { data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof completeUpload>>,
+    { data?: CompleteUploadRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
-		return completeUpload(data, requestOptions);
-	};
+    return completeUpload(data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type CompleteUploadMutationResult = NonNullable<
-	Awaited<ReturnType<typeof completeUpload>>
->;
+export type CompleteUploadMutationResult = NonNullable<Awaited<ReturnType<typeof completeUpload>>>;
 export type CompleteUploadMutationBody = CompleteUploadRequest | undefined;
 export type CompleteUploadMutationError = unknown;
 
@@ -92,26 +85,26 @@ export type CompleteUploadMutationError = unknown;
  * @summary Complete upload
  */
 export const useCompleteUpload = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof completeUpload>>,
-			TError,
-			{ data?: CompleteUploadRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof completeUpload>>,
+      TError,
+      { data?: CompleteUploadRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof completeUpload>>,
-	TError,
-	{ data?: CompleteUploadRequest },
-	TContext
+  Awaited<ReturnType<typeof completeUpload>>,
+  TError,
+  { data?: CompleteUploadRequest },
+  TContext
 > => {
-	return useMutation(getCompleteUploadMutationOptions(options), queryClient);
+  return useMutation(getCompleteUploadMutationOptions(options), queryClient);
 };
 export const getPresignUploadUrl = () => {
-	return `${import.meta.env.VITE_API_URL}/api/v1/uploads/presign`;
+  return `${import.meta.env.VITE_API_URL}/api/v1/uploads/presign`;
 };
 
 /**
@@ -119,58 +112,51 @@ export const getPresignUploadUrl = () => {
  * @summary Presign upload URL
  */
 export const presignUpload = async (
-	presignUploadRequest?: PresignUploadRequest,
-	options?: Parameters<typeof customFetch>[1],
+  presignUploadRequest?: PresignUploadRequest,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<PresignUploadResponse> => {
-	return customFetch<PresignUploadResponse>(getPresignUploadUrl(), {
-		...options,
-		method: "POST",
-		headers: { "Content-Type": "application/json", ...options?.headers },
-		body: JSON.stringify(presignUploadRequest),
-	});
+  return customFetch<PresignUploadResponse>(getPresignUploadUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(presignUploadRequest),
+  });
 };
 
-export const getPresignUploadMutationOptions = <
-	TError = unknown,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof presignUpload>>,
-		TError,
-		{ data?: PresignUploadRequest },
-		TContext
-	>;
-	request?: SecondParameter<typeof customFetch>;
+export const getPresignUploadMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof presignUpload>>,
+    TError,
+    { data?: PresignUploadRequest },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof presignUpload>>,
-	TError,
-	{ data?: PresignUploadRequest },
-	TContext
+  Awaited<ReturnType<typeof presignUpload>>,
+  TError,
+  { data?: PresignUploadRequest },
+  TContext
 > => {
-	const mutationKey = ["presignUpload"];
-	const { mutation: mutationOptions, request: requestOptions } = options
-		? options.mutation &&
-			"mutationKey" in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey }, request: undefined };
+  const mutationKey = ["presignUpload"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
 
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof presignUpload>>,
-		{ data?: PresignUploadRequest }
-	> = (props) => {
-		const { data } = props ?? {};
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof presignUpload>>,
+    { data?: PresignUploadRequest }
+  > = (props) => {
+    const { data } = props ?? {};
 
-		return presignUpload(data, requestOptions);
-	};
+    return presignUpload(data, requestOptions);
+  };
 
-	return { mutationFn, ...mutationOptions };
+  return { mutationFn, ...mutationOptions };
 };
 
-export type PresignUploadMutationResult = NonNullable<
-	Awaited<ReturnType<typeof presignUpload>>
->;
+export type PresignUploadMutationResult = NonNullable<Awaited<ReturnType<typeof presignUpload>>>;
 export type PresignUploadMutationBody = PresignUploadRequest | undefined;
 export type PresignUploadMutationError = unknown;
 
@@ -178,21 +164,21 @@ export type PresignUploadMutationError = unknown;
  * @summary Presign upload URL
  */
 export const usePresignUpload = <TError = unknown, TContext = unknown>(
-	options?: {
-		mutation?: UseMutationOptions<
-			Awaited<ReturnType<typeof presignUpload>>,
-			TError,
-			{ data?: PresignUploadRequest },
-			TContext
-		>;
-		request?: SecondParameter<typeof customFetch>;
-	},
-	queryClient?: QueryClient,
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof presignUpload>>,
+      TError,
+      { data?: PresignUploadRequest },
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
 ): UseMutationResult<
-	Awaited<ReturnType<typeof presignUpload>>,
-	TError,
-	{ data?: PresignUploadRequest },
-	TContext
+  Awaited<ReturnType<typeof presignUpload>>,
+  TError,
+  { data?: PresignUploadRequest },
+  TContext
 > => {
-	return useMutation(getPresignUploadMutationOptions(options), queryClient);
+  return useMutation(getPresignUploadMutationOptions(options), queryClient);
 };

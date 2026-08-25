@@ -8,5 +8,5 @@
 import type { Guide } from "./guide";
 
 export type GetGuideByIDResponse = {
-	guide: null | Guide;
+  guide: null | Guide;
 };

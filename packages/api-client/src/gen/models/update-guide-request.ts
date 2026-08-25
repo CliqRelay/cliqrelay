@@ -8,9 +8,9 @@
 import type { Visibility } from "./visibility";
 
 export type UpdateGuideRequest = {
-	/** @nullable */
-	description?: string | null;
-	/** @nullable */
-	title?: string | null;
-	visibility?: null | Visibility;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  title?: string | null;
+  visibility?: null | Visibility;
 };

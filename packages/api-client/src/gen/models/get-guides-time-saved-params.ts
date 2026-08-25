@@ -8,9 +8,9 @@
 import type { Uuid } from "./uuid";
 
 export type GetGuidesTimeSavedParams = {
-	team_id?: Uuid;
-	/**
-	 * @nullable
-	 */
-	since?: string | null;
+  team_id?: Uuid;
+  /**
+   * @nullable
+   */
+  since?: string | null;
 };

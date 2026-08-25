@@ -1,4 +1,4 @@
-# CliqRelay API
+# API
 
 The Go backend server for CliqRelay.
 
@@ -70,27 +70,27 @@ open output.pdf
 
 All commands are available via `make`:
 
-| Command | Description |
-|---|---|
-| `make run` | Run the application |
-| `make dev` | Run with live reloading via [air](https://github.com/air-verse/air) |
-| `make build` | Build the package (library check) |
-| `make build-exe` | Build the binary to `./tmp/cliqrelay-api` |
-| `make test` | Run all tests with race detection |
-| `make test-coverage` | Run tests with coverage report |
-| `make test-pg-up` | Start a test Postgres container |
-| `make test-pg-down` | Stop and remove the test Postgres container |
-| `make test-pg` | Run repository tests against Postgres |
-| `make lint` | Run golangci-lint |
-| `make fmt` | Format code with `go fmt` |
-| `make vet` | Run `go vet` |
-| `make check` | Full quality check (fmt + vet + lint + test) |
-| `make quick-check` | Quick check (fmt + vet + test) |
-| `make ci` | Full CI pipeline (clean + install + check) |
-| `make clean` | Remove build artifacts |
-| `make install` | Download and tidy dependencies |
-| `make setup` | Install dev tools (golangci-lint, air) and dependencies |
-| `make openapi-export` | Export the OpenAPI spec to a file |
+| Command               | Description                                                         |
+| --------------------- | ------------------------------------------------------------------- |
+| `make run`            | Run the application                                                 |
+| `make dev`            | Run with live reloading via [air](https://github.com/air-verse/air) |
+| `make build`          | Build the package (library check)                                   |
+| `make build-exe`      | Build the binary to `./tmp/cliqrelay-api`                           |
+| `make test`           | Run all tests with race detection                                   |
+| `make test-coverage`  | Run tests with coverage report                                      |
+| `make test-pg-up`     | Start a test Postgres container                                     |
+| `make test-pg-down`   | Stop and remove the test Postgres container                         |
+| `make test-pg`        | Run repository tests against Postgres                               |
+| `make lint`           | Run golangci-lint                                                   |
+| `make fmt`            | Format code with `go fmt`                                           |
+| `make vet`            | Run `go vet`                                                        |
+| `make check`          | Full quality check (fmt + vet + lint + test)                        |
+| `make quick-check`    | Quick check (fmt + vet + test)                                      |
+| `make ci`             | Full CI pipeline (clean + install + check)                          |
+| `make clean`          | Remove build artifacts                                              |
+| `make install`        | Download and tidy dependencies                                      |
+| `make setup`          | Install dev tools (golangci-lint, air) and dependencies             |
+| `make openapi-export` | Export the OpenAPI spec to a file                                   |
 
 ## Testing
 

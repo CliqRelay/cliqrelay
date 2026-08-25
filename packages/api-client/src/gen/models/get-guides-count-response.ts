@@ -7,5 +7,5 @@
  */
 
 export type GetGuidesCountResponse = {
-	count: number;
+  count: number;
 };

@@ -8,5 +8,5 @@
 import type { Uuid } from "./uuid";
 
 export type GetGuideViewsCountParams = {
-	team_id?: Uuid;
+  team_id?: Uuid;
 };

@@ -8,5 +8,5 @@
 import type { ExportGuideFormat } from "./export-guide-format";
 
 export type ExportGuideRequest = {
-	format: ExportGuideFormat;
+  format: ExportGuideFormat;
 };

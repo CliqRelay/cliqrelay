@@ -12,9 +12,9 @@ export * from "./gen/endpoints/uploads/uploads.faker";
 export { ApiError, getCachedCsrfToken } from "./mutators/custom-fetch";
 
 export const api = {
-	health,
-	teams,
-	guides,
-	steps,
-	uploads,
+  health,
+  teams,
+  guides,
+  steps,
+  uploads,
 };

@@ -7,16 +7,16 @@
  */
 
 export type CompleteUploadRequest = {
-	/** @nullable */
-	fileSize?: number | null;
-	/** @nullable */
-	height?: number | null;
-	/** @nullable */
-	mimeType?: string | null;
-	stepId?: string;
-	storagePath?: string;
-	/** @nullable */
-	thumbnail?: string | null;
-	/** @nullable */
-	width?: number | null;
+  /** @nullable */
+  fileSize?: number | null;
+  /** @nullable */
+  height?: number | null;
+  /** @nullable */
+  mimeType?: string | null;
+  stepId?: string;
+  storagePath?: string;
+  /** @nullable */
+  thumbnail?: string | null;
+  /** @nullable */
+  width?: number | null;
 };

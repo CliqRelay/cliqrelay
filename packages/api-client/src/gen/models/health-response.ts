@@ -7,5 +7,5 @@
  */
 
 export type HealthResponse = {
-	status: string;
+  status: string;
 };

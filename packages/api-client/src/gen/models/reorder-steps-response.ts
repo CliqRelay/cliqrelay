@@ -8,5 +8,5 @@
 import type { Step } from "./step";
 
 export type ReorderStepsResponse = {
-	steps: Step[];
+  steps: Step[];
 };

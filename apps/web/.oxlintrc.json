@@ -1,0 +1,5 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "ignorePatterns": [".output/**"],
+  "plugins": ["react"],
+}

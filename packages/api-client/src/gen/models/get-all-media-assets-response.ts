@@ -8,5 +8,5 @@
 import type { MediaAsset } from "./media-asset";
 
 export type GetAllMediaAssetsResponse = {
-	mediaAssets: MediaAsset[];
+  mediaAssets: MediaAsset[];
 };

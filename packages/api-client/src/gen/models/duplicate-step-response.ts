@@ -8,5 +8,5 @@
 import type { Step } from "./step";
 
 export type DuplicateStepResponse = {
-	step: Step;
+  step: Step;
 };

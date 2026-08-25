@@ -21,7 +21,7 @@
 				"editor.tabSize": 2,
 				"editor.formatOnSave": true,
 				"files.insertFinalNewline": true,
-				"editor.defaultFormatter": "biomejs.biome",
+				"editor.defaultFormatter": "oxc.oxc-vscode",
 				"js/ts.updateImportsOnFileMove.enabled": "always",
 				"telemetry.telemetryLevel": "off",
 				"editor.bracketPairColorization.enabled": true,
@@ -30,7 +30,7 @@
 			"extensions": [
 				"aaron-bond.better-comments",
 				"andys8.jest-snippets",
-				"biomejs.biome",
+				"oxc.oxc-vscode",
 				"dbaeumer.vscode-eslint",
 				"bradlc.vscode-tailwindcss",
 				"codeandstuff.package-json-upgrade",

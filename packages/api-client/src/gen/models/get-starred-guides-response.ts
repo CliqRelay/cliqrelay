@@ -8,8 +8,8 @@
 import type { Guide } from "./guide";
 
 export type GetStarredGuidesResponse = {
-	data: Guide[];
-	limit: number;
-	page: number;
-	total: number;
+  data: Guide[];
+  limit: number;
+  page: number;
+  total: number;
 };

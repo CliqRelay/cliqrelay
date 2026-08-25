@@ -7,5 +7,5 @@
  */
 
 export type DeleteStepResponse = {
-	message: string;
+  message: string;
 };

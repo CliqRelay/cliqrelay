@@ -8,5 +8,5 @@
 import type { Step } from "./step";
 
 export type CreateStepResponse = {
-	step: Step;
+  step: Step;
 };

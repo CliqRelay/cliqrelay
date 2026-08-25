@@ -8,5 +8,5 @@
 import type { GuideExport } from "./guide-export";
 
 export type GetExportStatusResponse = {
-	export: null | GuideExport;
+  export: null | GuideExport;
 };

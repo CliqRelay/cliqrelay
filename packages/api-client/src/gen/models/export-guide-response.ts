@@ -7,6 +7,6 @@
  */
 
 export type ExportGuideResponse = {
-	exportId: string;
-	status: string;
+  exportId: string;
+  status: string;
 };

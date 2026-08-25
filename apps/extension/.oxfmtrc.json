@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "tabWidth": 2,
+  "sortTailwindcss": {
+    "stylesheet": "./src/styles/globals.css",
+    "functions": ["clsx", "cn"],
+    "preserveWhitespace": true
+  }
+}

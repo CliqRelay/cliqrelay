@@ -12,7 +12,7 @@
 export type Visibility = (typeof Visibility)[keyof typeof Visibility];
 
 export const Visibility = {
-	private: "private",
-	team: "team",
-	public: "public",
+  private: "private",
+  team: "team",
+  public: "public",
 } as const;

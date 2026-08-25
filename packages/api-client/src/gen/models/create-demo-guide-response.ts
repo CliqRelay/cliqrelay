@@ -7,5 +7,5 @@
  */
 
 export type CreateDemoGuideResponse = {
-	guideId: string;
+  guideId: string;
 };

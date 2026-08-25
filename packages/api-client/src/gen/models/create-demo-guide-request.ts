@@ -8,5 +8,5 @@
 import type { Uuid } from "./uuid";
 
 export type CreateDemoGuideRequest = {
-	teamId: Uuid;
+  teamId: Uuid;
 };

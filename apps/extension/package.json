@@ -1,7 +1,7 @@
 {
   "name": "extension",
-  "private": true,
   "version": "0.1.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -13,9 +13,10 @@
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare",
     "test": "vitest run",
-    "format": "biome format --write",
-    "lint": "biome lint",
-    "check": "biome check"
+    "test:ui": "vitest --ui",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1106.0",
@@ -46,7 +47,6 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.7",
     "@faker-js/faker": "^10.5.0",
     "@tailwindcss/typography": "^0.5.20",
     "@tanstack/devtools-vite": "^0.8.3",
@@ -57,18 +57,16 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/ui": "^4.1.10",
     "@wxt-dev/module-react": "^1.2.2",
     "jsdom": "^30.0.1",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.2.1",
     "vitest": "^4.1.10",
     "wxt": "^0.21.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
   }
 }

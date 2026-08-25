@@ -7,5 +7,5 @@
  */
 
 export type DeleteMediaAssetResponse = {
-	message: string;
+  message: string;
 };

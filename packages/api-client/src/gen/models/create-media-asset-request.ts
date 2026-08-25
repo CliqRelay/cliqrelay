@@ -8,18 +8,18 @@
 import type { Uuid } from "./uuid";
 
 export type CreateMediaAssetRequest = {
-	/** @nullable */
-	altText?: string | null;
-	/** @nullable */
-	byteSize?: number | null;
-	/** @nullable */
-	height?: number | null;
-	/** @nullable */
-	mimeType?: string | null;
-	stepId: Uuid;
-	storagePath: string;
-	/** @nullable */
-	thumbnail?: string | null;
-	/** @nullable */
-	width?: number | null;
+  /** @nullable */
+  altText?: string | null;
+  /** @nullable */
+  byteSize?: number | null;
+  /** @nullable */
+  height?: number | null;
+  /** @nullable */
+  mimeType?: string | null;
+  stepId: Uuid;
+  storagePath: string;
+  /** @nullable */
+  thumbnail?: string | null;
+  /** @nullable */
+  width?: number | null;
 };

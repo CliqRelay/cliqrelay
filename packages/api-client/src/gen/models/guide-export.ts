@@ -9,17 +9,17 @@ import type { ExportGuideFormat } from "./export-guide-format";
 import type { Uuid } from "./uuid";
 
 export type GuideExport = {
-	createdAt: string;
-	/** @nullable */
-	downloadUrl?: string | null;
-	/** @nullable */
-	errorMessage?: string | null;
-	format: ExportGuideFormat;
-	guideId: Uuid;
-	id: Uuid;
-	status: string;
-	/** @nullable */
-	storagePath?: string | null;
-	updatedAt: string;
-	userId: string;
+  createdAt: string;
+  /** @nullable */
+  downloadUrl?: string | null;
+  /** @nullable */
+  errorMessage?: string | null;
+  format: ExportGuideFormat;
+  guideId: Uuid;
+  id: Uuid;
+  status: string;
+  /** @nullable */
+  storagePath?: string | null;
+  updatedAt: string;
+  userId: string;
 };

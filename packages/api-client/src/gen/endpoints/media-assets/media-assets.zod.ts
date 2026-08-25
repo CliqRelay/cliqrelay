@@ -8,13 +8,13 @@
 import * as zod from "zod";
 
 import {
-	CreateMediaAssetRequest,
-	CreateMediaAssetResponse,
-	DeleteMediaAssetResponse,
-	GetAllMediaAssetsResponse,
-	GetMediaAssetByIDResponse,
-	UpdateMediaAssetRequest,
-	UpdateMediaAssetResponse,
+  CreateMediaAssetRequest,
+  CreateMediaAssetResponse,
+  DeleteMediaAssetResponse,
+  GetAllMediaAssetsResponse,
+  GetMediaAssetByIDResponse,
+  UpdateMediaAssetRequest,
+  UpdateMediaAssetResponse,
 } from "../cliqrelay-api.schemas.zod";
 
 /**
@@ -22,7 +22,7 @@ import {
  * @summary Get all media assets by step ID
  */
 export const GetAllMediaAssetsByStepIdQueryParams = zod.object({
-	step_id: zod.string().optional(),
+  step_id: zod.string().optional(),
 });
 
 export const GetAllMediaAssetsByStepIdResponse = GetAllMediaAssetsResponse;
@@ -40,7 +40,7 @@ export const CreateMediaAssetResponseSchema = CreateMediaAssetResponse;
  * @summary Get media asset by ID
  */
 export const GetMediaAssetByIdParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const GetMediaAssetByIdResponse = GetMediaAssetByIDResponse;
@@ -50,7 +50,7 @@ export const GetMediaAssetByIdResponse = GetMediaAssetByIDResponse;
  * @summary Delete media asset
  */
 export const DeleteMediaAssetParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const DeleteMediaAssetResponseSchema = DeleteMediaAssetResponse;
@@ -60,7 +60,7 @@ export const DeleteMediaAssetResponseSchema = DeleteMediaAssetResponse;
  * @summary Update media asset
  */
 export const UpdateMediaAssetParams = zod.object({
-	id: zod.string(),
+  id: zod.string(),
 });
 
 export const UpdateMediaAssetBody = UpdateMediaAssetRequest;
