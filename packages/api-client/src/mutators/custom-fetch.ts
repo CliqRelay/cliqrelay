@@ -1,5 +1,7 @@
 import { toCamelCaseKeys, toSnakeCaseKeys } from "es-toolkit";
 
+import { COOKIE_CONSTANTS } from "@repo/data-commons";
+
 /**
  * Custom HTTP client used by Orval-generated fetch functions.
  * Returns the resolved data for every response or throws an error.
@@ -11,15 +13,22 @@ import { toCamelCaseKeys, toSnakeCaseKeys } from "es-toolkit";
  *   to match the generated TypeScript types.
  */
 
-const CSRF_COOKIE_NAME = "authula_csrf_token";
+const CSRF_COOKIE_NAME = COOKIE_CONSTANTS.csrf.name;
+
+// Browser-only. On the server this module is a process singleton shared by
+// every concurrent SSR request, so caching a token here would let one user's
+// token be attached to another user's request. Server-side callers always pass
+// an explicit cookie header instead.
+const isBrowser = (): boolean => typeof window !== "undefined";
 
 let cachedCsrfToken: string | undefined;
 
 function extractCsrfFromSetCookieHeaders(headers: Headers): void {
+	if (!isBrowser()) return;
+
 	try {
-		const setCookie = typeof headers.getSetCookie === "function"
-			? headers.getSetCookie()
-			: [];
+		const setCookie =
+			typeof headers.getSetCookie === "function" ? headers.getSetCookie() : [];
 		for (const cookie of setCookie) {
 			const match = cookie.match(
 				new RegExp(`(?:^|;\\s*)${CSRF_COOKIE_NAME}=([^;]+)`),
@@ -35,7 +44,7 @@ function extractCsrfFromSetCookieHeaders(headers: Headers): void {
 }
 
 export function getCachedCsrfToken(): string | undefined {
-	return cachedCsrfToken;
+	return isBrowser() ? cachedCsrfToken : undefined;
 }
 
 // A dedicated error class makes it easy to type check and handle in UI layers
