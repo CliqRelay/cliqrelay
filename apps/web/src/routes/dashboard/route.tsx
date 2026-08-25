@@ -6,6 +6,7 @@ import {
 	Outlet,
 	redirect,
 } from "@tanstack/react-router";
+import type { ListOrganizationMembersResponse } from "authula";
 
 import { authulaClient } from "@/lib/authula-client";
 import { getActiveOrgCookie, setActiveOrgCookie } from "@/lib/org-cookie";
@@ -59,13 +60,16 @@ export const Route = createFileRoute("/dashboard")({
 		}
 
 		try {
-			const organizations =
+			const organizationsResponse =
 				await authulaClient.organizations.listOrganizations();
 
 			const isInvitationPage =
 				location.pathname === "/dashboard/organizations/invitation";
 
-			if (!organizations || organizations.length === 0) {
+			if (
+				!organizationsResponse?.data ||
+				organizationsResponse.data.length === 0
+			) {
 				if (!isInvitationPage) {
 					throw redirect({ to: "/create-organization" });
 				}
@@ -77,6 +81,7 @@ export const Route = createFileRoute("/dashboard")({
 				};
 			}
 
+			const organizations = organizationsResponse.data;
 			const org = organizations[0];
 			const cookieOrgId = getActiveOrgCookie(cookieHeader);
 			const isOrgValid = organizations.some(
@@ -95,9 +100,10 @@ export const Route = createFileRoute("/dashboard")({
 				const members =
 					(await authulaClient.organizations.listOrganizationMembers(
 						activeOrg.id,
-					)) as AppOrganizationMemberResponse[] | null;
-				currentMember =
-					members?.find((m) => m.user.id === userResponse.user.id) ?? null;
+					)) as ListOrganizationMembersResponse | null;
+				currentMember = (members?.data?.find(
+					(m) => m.user.id === userResponse.user.id,
+				) ?? null) as unknown as AppOrganizationMemberResponse;
 			} catch {
 				// Non-critical
 			}

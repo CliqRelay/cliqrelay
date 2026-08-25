@@ -36,10 +36,10 @@ export const Route = createFileRoute("/create-organization")({
 		}
 
 		try {
-			const organizations =
+			const organizationsResponse =
 				await authulaClient.organizations.listOrganizations();
 
-			if (organizations && organizations.length > 0) {
+			if (organizationsResponse?.data?.length > 0) {
 				throw redirect({ to: "/dashboard" });
 			}
 		} catch (error: unknown) {

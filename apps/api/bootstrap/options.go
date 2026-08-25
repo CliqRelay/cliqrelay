@@ -29,6 +29,7 @@ type options struct {
 	mediaAssetsRepo   interfaces.MediaAssetsRepository
 	guideExportsRepo  interfaces.GuideExportsRepository
 	guideViewsRepo    interfaces.GuideViewsRepository
+	teamsRepo         interfaces.TeamsRepository
 
 	guideHooks *interfaces.GuideHooks
 	stepHooks  *interfaces.StepHooks
@@ -116,6 +117,10 @@ func WithGuideExportsRepository(repo interfaces.GuideExportsRepository) Option {
 
 func WithGuideViewsRepository(repo interfaces.GuideViewsRepository) Option {
 	return func(o *options) { o.guideViewsRepo = repo }
+}
+
+func WithTeamsRepository(repo interfaces.TeamsRepository) Option {
+	return func(o *options) { o.teamsRepo = repo }
 }
 
 func WithGuideHooks(hooks *interfaces.GuideHooks) Option {

@@ -17,25 +17,18 @@ import (
 func seedSimpleStep(t *testing.T, db bun.IDB) (uuid.UUID, uuid.UUID) {
 	t.Helper()
 
-	userID := uuid.New().String()
-	_, err := db.NewRaw("INSERT INTO users (id) VALUES (?)", userID).Exec(context.Background())
-	require.NoError(t, err)
-
-	orgID := uuid.New().String()
-	_, err = db.NewRaw("INSERT INTO organizations (id) VALUES (?)", orgID).Exec(context.Background())
-	require.NoError(t, err)
-	teamID := uuid.New()
-	_, err = db.NewRaw("INSERT INTO organization_teams (id, organization_id, name, slug) VALUES (?, ?, ?, ?)", teamID, orgID, "Test Team", "test-team").Exec(context.Background())
-	require.NoError(t, err)
+	userID := insertTestUser(context.Background(), db, t)
+	orgID := createTestOrganization(context.Background(), db, t)
+	teamID := uuid.MustParse(insertTestTeam(context.Background(), db, t, orgID, "Test Team", nil))
 
 	guide := &models.Guide{
 		ID:        uuid.New(),
 		TeamID:    teamID,
-		CreatorID: new(userID),
+		CreatorID: &userID,
 		Title:     "test guide",
 		Status:    models.StatusDraft,
 	}
-	_, err = db.NewInsert().Model(guide).Exec(context.Background())
+	_, err := db.NewInsert().Model(guide).Exec(context.Background())
 	require.NoError(t, err)
 
 	step := &models.Step{

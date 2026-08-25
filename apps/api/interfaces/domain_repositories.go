@@ -7,4 +7,5 @@ type Repositories struct {
 	MediaAssets   MediaAssetsRepository
 	GuideExports  GuideExportsRepository
 	GuideViews    GuideViewsRepository
+	Teams         TeamsRepository
 }

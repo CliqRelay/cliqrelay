@@ -8,3 +8,5 @@ allowBuilds:
   sharp: true
   spawn-sync: true
   tesseract.js: true
+minimumReleaseAgeExclude:
+  - authula@0.7.12

@@ -22,13 +22,14 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 		if !ok {
 			return nil, nil, errors.New("bootstrap: organizations plugin not found")
 		}
-		authorizationService = authservice.NewDefaultAuthorizationService(*orgPlugin.Api)
+		authorizationService = authservice.NewDefaultAuthorizationService(*orgPlugin.Api, svcs.Domain.TeamsService)
 	}
 
 	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.StarredGuidesService, svcs.Domain.ExportService)
 	guideViewsUseCase := usecases.NewGuideViewsUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.GuideViewsService)
 	stepsUseCase := usecases.NewStepsUseCase(authorizationService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
 	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, svcs.Domain.MediaAssetsService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
+	teamsUseCase := usecases.NewTeamsUseCase(svcs.Domain.TeamsService)
 	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, svcs.Domain.UploadsService, svcs.Domain.GuidesService, svcs.Domain.StepsService)
 
 	return &interfaces.DomainUseCases{
@@ -37,5 +38,6 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 		StepsUseCase:       stepsUseCase,
 		MediaAssetsUseCase: mediaAssetsUseCase,
 		UploadsUseCase:     uploadsUseCase,
+		TeamsUseCase:       teamsUseCase,
 	}, authorizationService, nil
 }
