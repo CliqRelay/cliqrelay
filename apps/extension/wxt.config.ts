@@ -30,7 +30,14 @@ export default defineConfig({
           generatedRouteTree: "./src/entrypoints/sidepanel/routeTree.gen.ts",
           autoCodeSplitting: true,
         }),
-        viteReact(),
+        viteReact({
+          compiler: true,
+          // Scope the React Compiler to this app's `src` folder only. pnpm workspace deps
+          // resolve to their real paths (packages/*/src/...), so they bypass the
+          // plugin's default node_modules exclude and would otherwise get compiled —
+          // injecting a `react/compiler-runtime` import those packages can't resolve.
+          include: /[\\/]apps[\\/]extension[\\/]src[\\/].*\.[tj]sx?$/,
+        }),
       ],
       server: {
         port: parseInt(port),
@@ -42,13 +49,7 @@ export default defineConfig({
     const isChrome = browser === "chrome";
     const isFirefox = browser === "firefox";
 
-    const permissions: string[] = [
-      "cookies",
-      "storage",
-      "activeTab",
-      "tabs",
-      "webNavigation",
-    ];
+    const permissions: string[] = ["cookies", "storage", "activeTab", "tabs", "webNavigation"];
 
     if (isChrome) {
       permissions.push("scripting", "offscreen", "sidePanel");
@@ -58,11 +59,11 @@ export default defineConfig({
 
     const webAccessibleResources = isChrome
       ? [
-        {
-          resources: ["offscreen.html"],
-          matches: ["<all_urls>"],
-        },
-      ]
+          {
+            resources: ["offscreen.html"],
+            matches: ["<all_urls>"],
+          },
+        ]
       : [];
 
     // 🔒 Dynamic Content Security Policy Resolution Strategy
@@ -78,14 +79,17 @@ export default defineConfig({
       permissions,
       host_permissions: ["<all_urls>"],
       name: "CliqRelay",
-      description: "Transforms page clicks and interactions into beautiful, step-by-step visual documentation. An alternative to Scribe, Tango and others.",
+      description:
+        "Transforms page clicks and interactions into beautiful, step-by-step visual documentation. An alternative to Scribe, Tango and others.",
       action: {},
       content_security_policy: {
         extension_pages: extensionPagesCSP,
         // ⚠️ Notice: "sandbox" property is completely omitted here.
         // It's manually attached below ONLY if the compilation target is Chromium/Chrome.
       },
-      ...(webAccessibleResources.length > 0 && { web_accessible_resources: webAccessibleResources }),
+      ...(webAccessibleResources.length > 0 && {
+        web_accessible_resources: webAccessibleResources,
+      }),
     };
 
     if (isChrome) {
@@ -100,16 +104,13 @@ export default defineConfig({
           default_path: "sidepanel.html",
         },
         externally_connectable: {
-          matches: [
-            "http://localhost/*",
-            "http://host.docker.internal/*",
-          ],
+          matches: ["http://localhost/*", "http://host.docker.internal/*"],
         },
       };
     } else {
       return {
         ...baseConfig,
-        // Firefox Manifest V3 strictly requires an explicit id block inside browser_specific_settings 
+        // Firefox Manifest V3 strictly requires an explicit id block inside browser_specific_settings
         // to load sidebar panels without crashing or breaking development lifecycle anchors.
         browser_specific_settings: {
           gecko: {

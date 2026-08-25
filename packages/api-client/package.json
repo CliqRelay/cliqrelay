@@ -19,13 +19,13 @@
   "devDependencies": {
     "@faker-js/faker": "^10.5.0",
     "@types/node": "^26.2.0",
-    "@vitest/coverage-v8": "^4.1.10",
-    "@vitest/ui": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/ui": "^4.1.11",
     "orval": "^8.23.0",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.101.2",
