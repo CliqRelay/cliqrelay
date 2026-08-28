@@ -10,23 +10,15 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
-    "check-types": {
-      "dependsOn": ["^check-types"]
+    "test": {
+      "dependsOn": ["^test"]
+    },
+    "fmt:check": {
+      "dependsOn": ["^fmt:check"]
     },
     "dev": {
       "cache": false,
       "persistent": true
-    },
-    "test": {
-      "dependsOn": ["^test"]
-    },
-    "test:e2e": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "persistent": true
-    },
-    "fmt:check": {
-      "dependsOn": ["^fmt:check"]
     }
   }
 }
