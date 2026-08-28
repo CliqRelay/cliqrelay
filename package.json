@@ -7,12 +7,15 @@
     "lint": "turbo run lint",
     "fmt:check": "turbo run fmt:check",
     "check-types": "turbo run check-types",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "check-npm-deps-freshness": "tsx ./scripts/check-npm-dep-freshness.ts"
   },
   "devDependencies": {
+    "@types/node": "^26.4.0",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
-    "turbo": "^2.10.11",
+    "tsx": "^4.23.12",
+    "turbo": "^2.10.12",
     "typescript": "^6.0.3"
   },
   "engines": {

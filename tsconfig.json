@@ -1,0 +1,16 @@
+{
+  "include": ["**/*.ts", "**/*.tsx"],
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  }
+}

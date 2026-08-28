@@ -17,8 +17,8 @@
     "@repo/data-commons": "workspace:*"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.5.0",
-    "@types/node": "^26.2.0",
+    "@faker-js/faker": "^10.6.0",
+    "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "^4.1.11",
     "@vitest/ui": "^4.1.11",
     "orval": "^8.23.0",
@@ -29,7 +29,7 @@
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.101.2",
-    "es-toolkit": "^1.50.0",
+    "es-toolkit": "^1.51.0",
     "zod": "^4.4.3"
   }
 }

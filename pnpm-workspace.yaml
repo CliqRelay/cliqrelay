@@ -9,4 +9,4 @@ allowBuilds:
   spawn-sync: true
   tesseract.js: true
 minimumReleaseAgeExclude:
-  - authula@0.7.12
+  - authula@0.7.13
