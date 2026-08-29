@@ -1,7 +1,41 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { formatCompactNumber, formatGuideCreationTime, formatGuideDuration } from "./guide.utils";
+
+import {
+  createGuideTitle,
+  formatCompactNumber,
+  formatGuideCreationTime,
+  formatGuideDuration,
+} from "./guide.utils";
 
 describe("Guide Utils", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  describe("createGuideTitle", () => {
+    test("should return a guide-prefixed epoch timestamp when called", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-17T14:30:22.000Z"));
+
+      const title = createGuideTitle();
+
+      expect(title).toMatch(/^guide-\d+$/);
+      expect(title).toBe(`guide-${new Date("2026-08-17T14:30:22.000Z").getTime()}`);
+    });
+
+    test("should return different titles when the clock advances", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-17T14:30:22.000Z"));
+      const first = createGuideTitle();
+
+      vi.setSystemTime(new Date("2026-08-17T14:30:23.000Z"));
+      const second = createGuideTitle();
+
+      expect(first).not.toBe(second);
+    });
+  });
+
   describe("formatGuideDuration", () => {
     it("returns '0ms' for 0 seconds", () => {
       expect(formatGuideDuration(0)).toBe("0ms");

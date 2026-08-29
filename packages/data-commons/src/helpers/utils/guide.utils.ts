@@ -1,5 +1,7 @@
 import ms from "ms";
 
+export const createGuideTitle = (): string => `guide-${Date.now()}`;
+
 export const formatGuideDuration = (totalSeconds: number): string => {
   return ms(totalSeconds * 1000);
 };
