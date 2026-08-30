@@ -37,17 +37,8 @@ func createDefaultTeamAndAssignAdminRole(ctx context.Context, actor *authulamode
 		return fmt.Errorf("organizations plugin not found")
 	}
 
-	systemActor := &authulamodels.Actor{
-		ID:     actor.ID,
-		Type:   authulamodels.ActorMachine,
-		Scopes: []string{"*"},
-		Claims: map[string]any{
-			"organization_id": organization.ID,
-		},
-	}
-
-	_, err := organizationsPlugin.Api.CreateTeam(ctx, systemActor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
-		Name: "New Team",
+	_, err := organizationsPlugin.Api.CreateTeam(ctx, actor, organization.ID, organizationsplugintypes.CreateOrganizationTeamRequest{
+		Name: fmt.Sprintf("%s's Team", organization.Name),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create team: %w", err)
