@@ -132,6 +132,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         </ThemeProvider>
         <TanStackDevtools
           config={{
+            triggerMode: "fixed",
             position: "bottom-right",
           }}
           plugins={[
