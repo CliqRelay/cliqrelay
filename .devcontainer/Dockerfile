@@ -38,48 +38,9 @@ RUN npm i -g pnpm@11.24.0
 # --------------------------------------
 
 # --------------------------------------
-# Python
-# --------------------------------------
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="$PATH:/root/.local/bin"
-# --------------------------------------
-
-# --------------------------------------
-# Docker
-# --------------------------------------
-# Recreate apt lists because we cleaned them earlier
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    gnupg \
-  && rm -rf /var/lib/apt/lists/*
-
-# Add Docker's official GPG key (keyring method)
-RUN install -m 0755 -d /etc/apt/keyrings \
-  && curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc \
-  && chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add the Docker apt source using docker.sources
-RUN . /etc/os-release \
-  && echo "Types: deb" > /etc/apt/sources.list.d/docker.sources \
-  && echo "URIs: https://download.docker.com/linux/debian" >> /etc/apt/sources.list.d/docker.sources \
-  && echo "Suites: ${VERSION_CODENAME}" >> /etc/apt/sources.list.d/docker.sources \
-  && echo "Components: stable" >> /etc/apt/sources.list.d/docker.sources \
-  && echo "Signed-By: /etc/apt/keyrings/docker.asc" >> /etc/apt/sources.list.d/docker.sources
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    docker-ce \
-    docker-ce-cli \
-    containerd.io \
-    docker-buildx-plugin \
-    docker-compose-plugin \
-  && rm -rf /var/lib/apt/lists/*
-# --------------------------------------
-
-# --------------------------------------
 # Go & tools
 # --------------------------------------
-RUN curl -sSL https://go.dev/dl/go1.26.5.linux-amd64.tar.gz | tar -C /usr/local -xz
+RUN curl -sSL https://go.dev/dl/go1.26.4.linux-amd64.tar.gz | tar -C /usr/local -xz
 ENV PATH="${PATH}:/usr/local/go/bin"
 
 # Install Go tools useful for dev

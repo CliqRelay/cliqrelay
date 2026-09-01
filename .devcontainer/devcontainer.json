@@ -6,7 +6,9 @@
   },
   "workspaceFolder": "/workspaces/cliqrelay",
   "forwardPorts": [3000, 3002, 8080],
-  "mounts": ["source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:4": {}
+  },
   "customizations": {
     "vscode": {
       "settings": {
