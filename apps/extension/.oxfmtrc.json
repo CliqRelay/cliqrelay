@@ -10,7 +10,7 @@
     "customGroups": [
       {
         "groupName": "react-libs",
-        "elementNamePattern": ["react", "react-**", "@tanstack/**"]
+        "elementNamePattern": ["react", "react-**"]
       },
       {
         "groupName": "tanstack-libs",
