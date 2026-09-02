@@ -5,5 +5,28 @@
     "stylesheet": "./src/styles.css",
     "functions": ["clsx", "cn"],
     "preserveWhitespace": true
+  },
+  "sortImports": {
+    "customGroups": [
+      {
+        "groupName": "react-libs",
+        "elementNamePattern": ["react", "react-**", "@tanstack/**"]
+      },
+      {
+        "groupName": "tanstack-libs",
+        "elementNamePattern": ["@tanstack/**"]
+      }
+    ],
+    "groups": [
+      "react-libs",
+      "tanstack-libs",
+      "type-import",
+      ["value-builtin", "value-external"],
+      "type-internal",
+      "value-internal",
+      ["type-parent", "type-sibling", "type-index"],
+      ["value-parent", "value-sibling", "value-index"],
+      "unknown"
+    ]
   }
 }
