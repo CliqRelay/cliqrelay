@@ -7,6 +7,7 @@ export enum ExtensionSlotKeys {
 	GUIDE_MOVE_TO_TEAM = "guide-move-to-team",
 
 	// Dashboard
+	DASHBOARD_BANNER = "dashboard-banner",
 	DASHBOARD_ACTIVITY_FEED = "dashboard-activity-feed",
 	DASHBOARD_SIDEBAR_PRO_UPGRADE_COLLAPSED = "dashboard-sidebar-pro-upgrade-collapsed",
 	DASHBOARD_SIDEBAR_PRO_UPGRADE = "dashboard-sidebar-pro-upgrade",
