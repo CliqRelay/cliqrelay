@@ -58,6 +58,9 @@ export const offscreenEventSchema = z.discriminatedUnion("type", [
 		jobId: z.string(),
 		error: z.string(),
 		attempt: z.number(),
+		// The API rejected the upload because the session is gone. Retrying
+		// cannot help, and the panel needs to go back to the sign-in screen.
+		isUnauthorized: z.boolean().optional(),
 	}),
 	z.object({
 		type: z.literal("session_state"),

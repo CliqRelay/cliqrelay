@@ -1,5 +1,6 @@
 import { AsyncQueuer } from "@tanstack/pacer";
 
+import { isUnauthorizedError } from "@/lib/api-error";
 import type {
 	OffscreenEvent,
 	OffscreenJob,
@@ -34,7 +35,18 @@ export const createUploadQueue = (
 			asyncRetryerOptions: {
 				backoff: "exponential",
 				baseWait: 1000,
-				maxAttempts: UPLOAD_MAX_ATTEMPTS,
+				// A 401/403 will not turn into a 200 by waiting. Dropping the limit
+				// to the attempt already made ends the retry loop straight away, so
+				// a dead session surfaces as an error instead of minutes of backoff.
+				maxAttempts: (retryer) =>
+					isUnauthorizedError(retryer.store.state.lastError)
+						? 1
+						: UPLOAD_MAX_ATTEMPTS,
+				// The retryer's default (`"last"`) only rethrows when the attempt it
+				// stopped on is the configured maximum, which shrinking `maxAttempts`
+				// mid-flight makes false — the job would then be reported as a
+				// success with no result. Always rethrowing keeps `onError` honest.
+				throwOnError: true,
 				jitter: 0.2,
 			},
 			onSuccess: (_result, job) => {
@@ -56,11 +68,17 @@ export const createUploadQueue = (
 				});
 			},
 			onError: (error, job) => {
+				const isUnauthorized = isUnauthorizedError(error);
 				onProgress({
 					type: "job_failed",
 					jobId: job.jobId,
-					error: error instanceof Error ? error.message : String(error),
+					error: isUnauthorized
+						? "You are signed out. Sign in again to keep capturing."
+						: error instanceof Error
+							? error.message
+							: String(error),
 					attempt: queue.store.state.errorCount,
+					...(isUnauthorized ? { isUnauthorized: true } : {}),
 				});
 			},
 			onSettled: () => {

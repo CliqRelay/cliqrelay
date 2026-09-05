@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { motion } from "framer-motion";
-import { ChevronRight, FileText, LogIn, RotateCw, Star } from "lucide-react";
+import { ChevronRight, FileText, RotateCw, Star, Users } from "lucide-react";
 
 import type { Guide } from "@repo/api-client";
 import {
@@ -26,7 +26,7 @@ type Props = {
 };
 
 export function RecentGuidesList({ onSelectGuide }: Props) {
-	const { guides, isLoading, error, isSignedOut, refetch } = useRecentGuides();
+	const { guides, isLoading, error, hasNoTeam, refetch } = useRecentGuides();
 
 	return (
 		<section className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
@@ -45,7 +45,7 @@ export function RecentGuidesList({ onSelectGuide }: Props) {
 					guides={guides}
 					isLoading={isLoading}
 					error={error}
-					isSignedOut={isSignedOut}
+					hasNoTeam={hasNoTeam}
 					refetch={refetch}
 					onSelectGuide={onSelectGuide}
 				/>
@@ -58,14 +58,14 @@ function RecentGuidesBody({
 	guides,
 	isLoading,
 	error,
-	isSignedOut,
+	hasNoTeam,
 	refetch,
 	onSelectGuide,
 }: {
 	guides: Guide[];
 	isLoading: boolean;
 	error: Error | null;
-	isSignedOut: boolean;
+	hasNoTeam: boolean;
 	refetch: () => void;
 	onSelectGuide: (guideId: string) => void;
 }) {
@@ -86,11 +86,11 @@ function RecentGuidesBody({
 		);
 	}
 
-	if (isSignedOut) {
+	if (hasNoTeam) {
 		return (
 			<EmptyState
-				icon={<LogIn className="size-8 text-muted-foreground/30" />}
-				message="Sign in to CliqRelay to see your guides."
+				icon={<Users className="size-8 text-muted-foreground/30" />}
+				message="No team selected. Open CliqRelay in your browser to pick one."
 			/>
 		);
 	}

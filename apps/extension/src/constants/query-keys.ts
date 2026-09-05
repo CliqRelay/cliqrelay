@@ -6,4 +6,5 @@
  */
 export enum QueryKeys {
 	ACTIVE_TEAM_ID = "active_team_id",
+	AUTH_SESSION = "auth_session",
 }

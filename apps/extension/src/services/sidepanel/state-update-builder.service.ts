@@ -12,6 +12,7 @@ export const createStateUpdateBuilder = (
 	getActiveGuideId: () => Promise<string | undefined>,
 	getJobProgress: () => StepJobProgress[],
 	getIsDraining: () => boolean,
+	getIsSignedOut: () => boolean,
 ): StateUpdateBuilder => {
 	return async (): Promise<SidePanelStateUpdate> => {
 		const snapshot = getRecordingSnapshot();
@@ -21,6 +22,7 @@ export const createStateUpdateBuilder = (
 			status: snapshot.status,
 			bufferedCount: snapshot.bufferedCount,
 			isDraining: getIsDraining(),
+			isSignedOut: getIsSignedOut(),
 			activeGuideId: await getActiveGuideId(),
 			uploadQueue: {
 				pending: queueSnapshot.pending,

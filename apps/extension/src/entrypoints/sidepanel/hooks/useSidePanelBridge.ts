@@ -17,6 +17,7 @@ export const useSidePanelBridge = () => {
 	const setStatus = useSidePanelStore((s) => s.setStatus);
 	const setBufferedCount = useSidePanelStore((s) => s.setBufferedCount);
 	const setIsDraining = useSidePanelStore((s) => s.setIsDraining);
+	const setIsSignedOut = useSidePanelStore((s) => s.setIsSignedOut);
 	const setSettings = useSidePanelStore((s) => s.setSettings);
 	const setUploadQueue = useSidePanelStore((s) => s.setUploadQueue);
 	const setActiveGuideId = useSidePanelStore((s) => s.setActiveGuideId);
@@ -40,6 +41,10 @@ export const useSidePanelBridge = () => {
 		if (update.status === "stopped" && update.activeGuideId === null) {
 			clear();
 		}
+		// Last, because a signed-out teardown stops the recording and drops the
+		// active guide — which is exactly the shape that triggers `clear()`, and
+		// clearing would otherwise throw the flag away before anything read it.
+		setIsSignedOut(update.isSignedOut ?? false);
 	};
 
 	const sendCommand = async (

@@ -10,6 +10,7 @@ export { RecentGuidesList } from "./RecentGuidesList";
 export { RecordingControls } from "./RecordingControls";
 export { RecordingIndicator } from "./RecordingIndicator";
 export { SettingsView } from "./SettingsView";
+export { SignInView } from "./SignInView";
 export { StepActionBadge } from "./StepActionBadge";
 export { StepCardRecording } from "./StepCardRecording";
 export { StepCardView } from "./StepCardView";

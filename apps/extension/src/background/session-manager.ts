@@ -1,8 +1,6 @@
 import { api } from "@repo/api-client";
 import { createGuideTitle } from "@repo/data-commons";
 
-import { getActiveTeamId } from "@/lib/active-team";
-import { withCsrf } from "@/lib/csrf";
 import type {
   CaptureBridgeMessage,
   CaptureMetadataEntry,
@@ -12,10 +10,14 @@ import type {
   SidePanelCommand,
   StepJobProgress,
 } from "@/models";
-import type { PortManager } from "@/services/sidepanel/port-manager.service";
-import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
-import { createOffscreenManager } from "@/services/background/offscreen-manager.service";
 import type { GetSettings, UpdateSettings } from "@/services/settings";
+import type { PortManager } from "@/services/sidepanel/port-manager.service";
+
+import { getActiveTeamId } from "@/lib/active-team";
+import { isUnauthorizedError } from "@/lib/api-error";
+import { withCsrf } from "@/lib/csrf";
+import { createOffscreenManager } from "@/services/background/offscreen-manager.service";
+import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
 import { buildActionText } from "@/utils/action-text";
 import { generateCaptureId } from "@/utils/id";
 
@@ -29,6 +31,7 @@ export const createSessionManager = (
   const captureMetadataMap = new Map<string, CaptureMetadataEntry>();
   const dismissedJobIds = new Set<string>();
   let isDraining = false;
+  let isSignedOut = false;
   let currentPortManager: PortManager | null = null;
   let clearDedupe: (() => void) | undefined;
   let clearPendingActivations: (() => void) | undefined;
@@ -50,12 +53,43 @@ export const createSessionManager = (
       return { guideId: activeGuideId, isNew: false };
     }
     const teamId = await getActiveTeamId();
-    const guideResponse = await api.guides.createGuide(
-      { title: createGuideTitle(), teamId: teamId ?? "" },
-      await withCsrf(),
-    );
-    await sessionService.setActiveGuideId(guideResponse.guide.id);
-    return { guideId: guideResponse.guide.id, isNew: true };
+    try {
+      const guideResponse = await api.guides.createGuide(
+        { title: createGuideTitle(), teamId: teamId ?? "" },
+        await withCsrf(),
+      );
+      await sessionService.setActiveGuideId(guideResponse.guide.id);
+      return { guideId: guideResponse.guide.id, isNew: true };
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        // Without this the state machine would keep saying "recording" while
+        // every capture is rejected, so the user would think it was working.
+        await handleSessionExpired();
+      }
+      throw error;
+    }
+  };
+
+  /**
+   * Tears the session down when the API says there is no longer a session.
+   *
+   * The side panel's route guard only covers "signed out when the panel
+   * opens"; this is the mid-recording case. The `isSignedOut` flag rides the
+   * next state update so the panel can route itself back to sign-in.
+   */
+  const handleSessionExpired = async () => {
+    if (isSignedOut) {
+      return;
+    }
+    isSignedOut = true;
+    isDraining = false;
+
+    recording.stop();
+    await offscreenManager.stopSession();
+    await offscreenManager.closeDocument();
+    await sessionService.setActiveGuideId(null);
+    clearProgressMap();
+    await broadcastUpdate();
   };
 
   const setPortManager = (pm: PortManager) => {
@@ -116,6 +150,7 @@ export const createSessionManager = (
     () => sessionService.getActiveGuideId(),
     () => Array.from(jobProgressMap.values()),
     () => isDraining,
+    () => isSignedOut,
   );
 
   const broadcastUpdate = async () => {
@@ -175,6 +210,10 @@ export const createSessionManager = (
         break;
       }
       case "job_failed": {
+        if (event.isUnauthorized) {
+          await handleSessionExpired();
+          break;
+        }
         if (dismissedJobIds.has(event.jobId)) {
           dismissedJobIds.delete(event.jobId);
           captureMetadataMap.delete(event.jobId);
@@ -303,6 +342,7 @@ export const createSessionManager = (
   const handleSidePanelCommand = async (message: SidePanelCommand) => {
     if (message.command === "start_recording") {
       isDraining = false;
+      isSignedOut = false;
       jobProgressMap.clear();
       captureMetadataMap.clear();
       clearPendingFreeTyping();
@@ -317,6 +357,10 @@ export const createSessionManager = (
       void offscreenManager.stopSession();
     }
     if (message.command === "get_status") {
+      // The panel only asks for status when it mounts, and a panel that is
+      // mounting has already been through the route guard. Clearing the notice
+      // here keeps it from being replayed at every later open.
+      isSignedOut = false;
       const snapshot = recording.getSnapshot();
       if (snapshot.status !== "recording" && !isDraining) {
         await sessionService.setActiveGuideId(null);

@@ -9,6 +9,11 @@ export const COOKIE_CONSTANTS = {
   csrf: {
     name: "authula_csrf_token",
   },
+  // Mirrors `SessionConfig.CookieName` in `apps/api/auth/auth.go`. Go cannot
+  // import this constant, so the two have to be kept in sync by hand.
+  session: {
+    name: "authula.session_token",
+  },
   activeTeamId: {
     name: "cliqrelay_active_team_id",
     maxAge: 60 * 60 * 24 * 7, // 7 days

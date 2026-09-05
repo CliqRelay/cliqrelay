@@ -2,6 +2,8 @@ import { useCallback, useState } from "react";
 
 import { api, type Step } from "@repo/api-client";
 
+import { isUnauthorizedError } from "@/lib/api-error";
+
 type UseGuideStepsResult = {
 	steps: Step[];
 	isLoading: boolean;
@@ -33,7 +35,14 @@ export function useGuideSteps(guideId: string | null): UseGuideStepsResult {
 	const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
 	const steps = query.data?.steps ?? [];
-	const queryError = query.error instanceof Error ? query.error : null;
+
+	// A 401/403 means the session is gone, and the panel is already routing back
+	// to sign-in. Surfacing it here would only add a misleading "failed to load
+	// steps" on top of that.
+	const queryError =
+		!isUnauthorizedError(query.error) && query.error instanceof Error
+			? query.error
+			: null;
 
 	const deleteStep = useCallback(
 		async (stepId: string) => {

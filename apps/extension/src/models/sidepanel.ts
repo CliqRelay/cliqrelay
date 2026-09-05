@@ -70,6 +70,10 @@ export const sidePanelStateUpdateSchema = z.object({
 	status: recordingStatusSchema,
 	bufferedCount: z.number(),
 	isDraining: z.boolean().optional(),
+	// Set once the API has rejected a recording request for lack of a session.
+	// The route guard only covers "signed out when the panel opens"; this covers
+	// a session that expires mid-recording.
+	isSignedOut: z.boolean().optional(),
 	uploadQueue: uploadQueueInfoSchema.optional(),
 	activeGuideId: z.string().nullish(),
 	jobProgress: z.array(stepJobProgressSchema).optional(),
@@ -90,6 +94,7 @@ export type SidePanelState = {
 	status: RecordingStatus | undefined;
 	bufferedCount: number;
 	isDraining: boolean;
+	isSignedOut: boolean;
 	settings: ExtensionSettings | undefined;
 	uploadQueue: UploadQueueInfo;
 	activeGuideId: string | null;
@@ -100,6 +105,7 @@ export type SidePanelActions = {
 	setStatus: (status: RecordingStatus) => void;
 	setBufferedCount: (count: number) => void;
 	setIsDraining: (isDraining: boolean) => void;
+	setIsSignedOut: (isSignedOut: boolean) => void;
 	setSettings: (settings: ExtensionSettings) => void;
 	setUploadQueue: (queue: UploadQueueInfo) => void;
 	setActiveGuideId: (id: string | null) => void;

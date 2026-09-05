@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { api } from "@repo/api-client";
 
@@ -15,14 +15,25 @@ import {
 	StepList,
 	ViewedGuidePanel,
 } from "../components";
+import { authSessionQueryOptions } from "../hooks/useAuthSession";
 import { useSidePanelBridge } from "../hooks/useSidePanelBridge";
+import { useSignedOutRedirect } from "../hooks/useSignedOutRedirect";
 import { useSidePanelStore } from "../stores/sidepanel-store";
 
 export const Route = createFileRoute("/")({
+	beforeLoad: async ({ context }) => {
+		try {
+			await context.queryClient.ensureQueryData(authSessionQueryOptions);
+		} catch {
+			throw redirect({ to: "/sign-in" });
+		}
+	},
 	component: Home,
 });
 
 function Home() {
+	useSignedOutRedirect();
+
 	const bridge = useSidePanelBridge();
 	const status = useSidePanelStore((s) => s.status);
 	const isDraining = useSidePanelStore((s) => s.isDraining);
