@@ -7,5 +7,7 @@
   "env": {
     "builtin": true
   },
-  "rules": {}
+  "rules": {
+    "vitest/require-mock-type-parameters": "off"
+  }
 }
