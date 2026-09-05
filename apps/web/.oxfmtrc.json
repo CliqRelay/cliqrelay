@@ -3,7 +3,7 @@
   "tabWidth": 2,
   "sortTailwindcss": {
     "stylesheet": "./src/styles.css",
-    "functions": ["clsx", "cn"],
+    "functions": ["cn"],
     "preserveWhitespace": true
   },
   "sortImports": {
