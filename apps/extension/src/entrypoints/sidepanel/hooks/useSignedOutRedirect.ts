@@ -3,9 +3,8 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 
-import { QueryKeys } from "@/constants/query-keys";
 import { useSidePanelStore } from "../stores/sidepanel-store";
-import { authSessionQueryOptions } from "./useAuthSession";
+import { fetchAuthSession } from "./useAuthSession";
 
 /**
  * Sends the panel back to the sign-in screen when the background reports that
@@ -19,24 +18,21 @@ import { authSessionQueryOptions } from "./useAuthSession";
  * signed in straight back to the sign-in screen.
  */
 export function useSignedOutRedirect() {
-	const isSignedOut = useSidePanelStore((s) => s.isSignedOut);
-	const router = useRouter();
-	const queryClient = useQueryClient();
+  const isSignedOut = useSidePanelStore((s) => s.isSignedOut);
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-	useEffect(() => {
-		if (!isSignedOut) return;
+  useEffect(() => {
+    if (!isSignedOut) return;
 
-		const confirmAndRedirect = async () => {
-			await queryClient.invalidateQueries({
-				queryKey: [QueryKeys.AUTH_SESSION],
-			});
-			try {
-				await queryClient.ensureQueryData(authSessionQueryOptions);
-			} catch {
-				await router.navigate({ to: "/sign-in" });
-			}
-		};
+    const confirmAndRedirect = async () => {
+      try {
+        await fetchAuthSession(queryClient);
+      } catch {
+        await router.navigate({ to: "/sign-in" });
+      }
+    };
 
-		void confirmAndRedirect();
-	}, [isSignedOut, queryClient, router]);
+    void confirmAndRedirect();
+  }, [isSignedOut, queryClient, router]);
 }

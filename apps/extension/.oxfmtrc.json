@@ -15,6 +15,10 @@
       {
         "groupName": "tanstack-libs",
         "elementNamePattern": ["@tanstack/**"]
+      },
+      {
+        "groupName": "our-libs",
+        "elementNamePattern": ["@repo/**"]
       }
     ],
     "groups": [
@@ -22,6 +26,7 @@
       "tanstack-libs",
       "type-import",
       ["value-builtin", "value-external"],
+      "our-libs",
       "type-internal",
       "value-internal",
       ["type-parent", "type-sibling", "type-index"],

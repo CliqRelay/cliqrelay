@@ -391,6 +391,7 @@ export const createSessionManager = (
     setPortManager,
     setClearDedupe,
     setClearPendingActivations,
+    handleSessionExpired,
     handleSidePanelCommand,
     handleOffscreenEvent,
     handleFreeTypingCapture,
