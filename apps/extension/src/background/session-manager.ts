@@ -1,6 +1,9 @@
 import { api } from "@repo/api-client";
 import { createGuideTitle } from "@repo/data-commons";
 
+import { getActiveTeamId } from "@/lib/active-team";
+import { isUnauthorizedError } from "@/lib/api-error";
+import { withCsrf } from "@/lib/csrf";
 import type {
   CaptureBridgeMessage,
   CaptureMetadataEntry,
@@ -10,14 +13,10 @@ import type {
   SidePanelCommand,
   StepJobProgress,
 } from "@/models";
-import type { GetSettings, UpdateSettings } from "@/services/settings";
-import type { PortManager } from "@/services/sidepanel/port-manager.service";
-
-import { getActiveTeamId } from "@/lib/active-team";
-import { isUnauthorizedError } from "@/lib/api-error";
-import { withCsrf } from "@/lib/csrf";
 import { createOffscreenManager } from "@/services/background/offscreen-manager.service";
+import type { GetSettings, UpdateSettings } from "@/services/settings";
 import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
+import type { PortManager } from "@/services/sidepanel/port-manager.service";
 import { buildActionText } from "@/utils/action-text";
 import { generateCaptureId } from "@/utils/id";
 
@@ -70,13 +69,6 @@ export const createSessionManager = (
     }
   };
 
-  /**
-   * Tears the session down when the API says there is no longer a session.
-   *
-   * The side panel's route guard only covers "signed out when the panel
-   * opens"; this is the mid-recording case. The `isSignedOut` flag rides the
-   * next state update so the panel can route itself back to sign-in.
-   */
   const handleSessionExpired = async () => {
     if (isSignedOut) {
       return;
@@ -357,9 +349,6 @@ export const createSessionManager = (
       void offscreenManager.stopSession();
     }
     if (message.command === "get_status") {
-      // The panel only asks for status when it mounts, and a panel that is
-      // mounting has already been through the route guard. Clearing the notice
-      // here keeps it from being replayed at every later open.
       isSignedOut = false;
       const snapshot = recording.getSnapshot();
       if (snapshot.status !== "recording" && !isDraining) {

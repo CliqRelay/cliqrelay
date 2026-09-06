@@ -3,11 +3,10 @@ import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router
 
 import { Settings } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
 import { useAuthSession } from "../hooks/useAuthSession";
 import { useSessionCookieSync } from "../hooks/useSessionCookieSync";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import "../styles.css";
 
 export type SidePanelRouterContext = {
@@ -19,12 +18,7 @@ export const Route = createRootRouteWithContext<SidePanelRouterContext>()({
 });
 
 function RootComponent() {
-  // Mounted at the root so signing in or out in the web app reaches the panel
-  // whatever route it happens to be on.
   useSessionCookieSync();
-
-  // Reads the same cache entry the route guards fill, so this costs no extra
-  // request — it just keeps the gear out of a signed-out panel.
   const { isAuthenticated } = useAuthSession();
 
   return (

@@ -129,9 +129,6 @@ export default defineBackground(() => {
     }
   });
 
-  // Signing out in the web app has to stop an in-flight recording too, not just
-  // move the panel. Otherwise the session keeps buffering captures that the API
-  // is guaranteed to reject.
   browser.cookies.onChanged.addListener((change) => {
     if (!isSessionCookieCleared(change)) {
       return;
