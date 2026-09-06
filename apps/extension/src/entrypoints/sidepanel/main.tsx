@@ -6,7 +6,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { getRouter } from "./router";
 
 const queryClient = new QueryClient();
-const router = getRouter();
+const router = getRouter(queryClient);
 
 const rootElement = document.getElementById("app")!;
 

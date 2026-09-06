@@ -3,7 +3,7 @@
   "tabWidth": 2,
   "sortTailwindcss": {
     "stylesheet": "./src/styles.css",
-    "functions": ["clsx", "cn"],
+    "functions": ["cn"],
     "preserveWhitespace": true
   },
   "sortImports": {
@@ -15,6 +15,14 @@
       {
         "groupName": "tanstack-libs",
         "elementNamePattern": ["@tanstack/**"]
+      },
+      {
+        "groupName": "custom-libs",
+        "elementNamePattern": ["@repo/**"]
+      },
+      {
+        "groupName": "local-libs",
+        "elementNamePattern": ["@/**", "./**", "../**"]
       }
     ],
     "groups": [
@@ -22,10 +30,8 @@
       "tanstack-libs",
       "type-import",
       ["value-builtin", "value-external"],
-      "type-internal",
-      "value-internal",
-      ["type-parent", "type-sibling", "type-index"],
-      ["value-parent", "value-sibling", "value-index"],
+      "custom-libs",
+      "local-libs",
       "unknown"
     ]
   }

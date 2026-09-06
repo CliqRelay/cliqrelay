@@ -5,9 +5,10 @@ import { COOKIE_CONSTANTS } from "@repo/data-commons";
 import { createCaptureHandler } from "@/background/capture-handler";
 import { handleOnMessageExternalEvents } from "@/background/external-messages-handler";
 import { createSessionManager } from "@/background/session-manager";
-import { RUNTIME_MESSAGE_TYPES } from "@/constants/runtime-message-types";
 import { env } from "@/constants/env";
 import { firefoxBrowser } from "@/constants/firefox-browser";
+import { RUNTIME_MESSAGE_TYPES } from "@/constants/runtime-message-types";
+import { isSessionCookieCleared } from "@/lib/auth-session";
 import { SIDEPANEL_PORT_NAME } from "@/models/sidepanel";
 import { createNavigationListener } from "@/services/background";
 import { createRecordingStateMachine } from "@/services/recording";
@@ -19,145 +20,142 @@ import { generateCaptureId } from "@/utils/id";
 import { isOffscreenEvent, isSidePanelCommand } from "@/utils/message";
 
 export default defineBackground(() => {
-	const recording = createRecordingStateMachine("idle");
+  const recording = createRecordingStateMachine("idle");
 
-	const sessionManager = createSessionManager(
-		recording,
-		sessionService,
-		getSettings,
-		updateSettings,
-	);
+  const sessionManager = createSessionManager(
+    recording,
+    sessionService,
+    getSettings,
+    updateSettings,
+  );
 
-	const { stateUpdateBuilder } = sessionManager;
+  const { stateUpdateBuilder } = sessionManager;
 
-	const portManager = createPortManager(async () => {
-		return await stateUpdateBuilder();
-	});
+  const portManager = createPortManager(async () => {
+    return await stateUpdateBuilder();
+  });
 
-	sessionManager.setPortManager(portManager);
+  sessionManager.setPortManager(portManager);
 
-	const captureHandler = createCaptureHandler(
-		screenshotService,
-		sessionManager.offscreenManager,
-		recording,
-		stateUpdateBuilder,
-		portManager,
-		sessionManager.captureMetadataMap,
-		sessionManager.handleFreeTypingCapture,
-		sessionManager.clearPendingFreeTyping,
-	);
+  const captureHandler = createCaptureHandler(
+    screenshotService,
+    sessionManager.offscreenManager,
+    recording,
+    stateUpdateBuilder,
+    portManager,
+    sessionManager.captureMetadataMap,
+    sessionManager.handleFreeTypingCapture,
+    sessionManager.clearPendingFreeTyping,
+  );
 
-	recording.setProcessBufferedCapture(async (captures) => {
-		for (const capture of captures) {
-			try {
-				const dataUrl = await screenshotService.captureWithThrottle(
-					capture.tabId,
-				);
-				if (!dataUrl) continue;
-				await sessionManager.offscreenManager.sendJob(
-					capture.message.payload.captureId!,
-					capture.message,
-					dataUrl,
-					capture.tabId,
-				);
-			} catch (error) {
-				console.warn("[background] Failed to process buffered capture:", error);
-			}
-		}
-		const stateUpdate = await stateUpdateBuilder();
-		portManager.broadcast({ type: "state_update", state: stateUpdate });
-	});
+  recording.setProcessBufferedCapture(async (captures) => {
+    for (const capture of captures) {
+      try {
+        const dataUrl = await screenshotService.captureWithThrottle(capture.tabId);
+        if (!dataUrl) continue;
+        await sessionManager.offscreenManager.sendJob(
+          capture.message.payload.captureId!,
+          capture.message,
+          dataUrl,
+          capture.tabId,
+        );
+      } catch (error) {
+        console.warn("[background] Failed to process buffered capture:", error);
+      }
+    }
+    const stateUpdate = await stateUpdateBuilder();
+    portManager.broadcast({ type: "state_update", state: stateUpdate });
+  });
 
-	const navigationListener = createNavigationListener(
-		recording,
-		screenshotService,
-		sessionManager.offscreenManager,
-		sessionManager.captureMetadataMap,
-		generateCaptureId,
-	);
+  const navigationListener = createNavigationListener(
+    recording,
+    screenshotService,
+    sessionManager.offscreenManager,
+    sessionManager.captureMetadataMap,
+    generateCaptureId,
+  );
 
-	const { clearDedupe, clearPendingActivations } = navigationListener.start();
-	sessionManager.setClearDedupe(clearDedupe);
-	sessionManager.setClearPendingActivations(clearPendingActivations);
+  const { clearDedupe, clearPendingActivations } = navigationListener.start();
+  sessionManager.setClearDedupe(clearDedupe);
+  sessionManager.setClearPendingActivations(clearPendingActivations);
 
-	browser.runtime.onMessage.addListener(
-		async (message: unknown, sender, sendResponse) => {
-			if (
-				typeof message === "object" &&
-				message !== null &&
-				(message as Record<string, unknown>).type ===
-					RUNTIME_MESSAGE_TYPES.GET_CSRF_TOKEN
-			) {
-				try {
-					const cookie = await browser.cookies.get({
-						url: env.VITE_API_URL,
-						name: COOKIE_CONSTANTS.csrf.name,
-					});
-					return cookie?.value;
-				} catch {
-					return undefined;
-				}
-			}
+  browser.runtime.onMessage.addListener(async (message: unknown, sender, sendResponse) => {
+    if (
+      typeof message === "object" &&
+      message !== null &&
+      (message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_CSRF_TOKEN
+    ) {
+      try {
+        const cookie = await browser.cookies.get({
+          url: env.VITE_API_URL,
+          name: COOKIE_CONSTANTS.csrf.name,
+        });
+        return cookie?.value;
+      } catch {
+        return undefined;
+      }
+    }
 
-			if (
-				typeof message === "object" &&
-				message !== null &&
-				(message as Record<string, unknown>).type ===
-					RUNTIME_MESSAGE_TYPES.GET_ACTIVE_TEAM_ID
-			) {
-				try {
-					const cookie = await browser.cookies.get({
-						url: env.VITE_API_URL,
-						name: COOKIE_CONSTANTS.activeTeamId.name,
-					});
-					return cookie?.value;
-				} catch {
-					return undefined;
-				}
-			}
+    if (
+      typeof message === "object" &&
+      message !== null &&
+      (message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_ACTIVE_TEAM_ID
+    ) {
+      try {
+        const cookie = await browser.cookies.get({
+          url: env.VITE_API_URL,
+          name: COOKIE_CONSTANTS.activeTeamId.name,
+        });
+        return cookie?.value;
+      } catch {
+        return undefined;
+      }
+    }
 
-			if (captureHandler.handleCapture(message, sender)) {
-				return;
-			}
+    if (captureHandler.handleCapture(message, sender)) {
+      return;
+    }
 
-			if (isSidePanelCommand(message)) {
-				return sessionManager.handleSidePanelCommand(message);
-			}
+    if (isSidePanelCommand(message)) {
+      return sessionManager.handleSidePanelCommand(message);
+    }
 
-			if (isOffscreenEvent(message)) {
-				void sessionManager.handleOffscreenEvent(message);
-			}
+    if (isOffscreenEvent(message)) {
+      void sessionManager.handleOffscreenEvent(message);
+    }
 
-			if (
-				typeof message === "object" &&
-				message !== null &&
-				"action" in message
-			) {
-				return handleOnMessageExternalEvents(message, sender, sendResponse);
-			}
-		},
-	);
+    if (typeof message === "object" && message !== null && "action" in message) {
+      return handleOnMessageExternalEvents(message, sender, sendResponse);
+    }
+  });
 
-	browser.runtime.onConnect.addListener((port) => {
-		if (port.name !== SIDEPANEL_PORT_NAME) {
-			return;
-		}
-		portManager.registerPort(port);
-	});
+  browser.cookies.onChanged.addListener((change) => {
+    if (!isSessionCookieCleared(change)) {
+      return;
+    }
+    void sessionManager.handleSessionExpired();
+  });
 
-	browser.action.onClicked.addListener(async (tab) => {
-		try {
-			const isChrome = "sidePanel" in browser;
+  browser.runtime.onConnect.addListener((port) => {
+    if (port.name !== SIDEPANEL_PORT_NAME) {
+      return;
+    }
+    portManager.registerPort(port);
+  });
 
-			if (isChrome) {
-				await browser.sidePanel.open({ windowId: tab.windowId });
-			} else {
-				await firefoxBrowser.sidebarAction.open();
-			}
-		} catch (error) {
-			console.warn("[background] Failed to open side panel:", error);
-		}
-	});
+  browser.action.onClicked.addListener(async (tab) => {
+    try {
+      const isChrome = "sidePanel" in browser;
 
-	browser.runtime.onMessageExternal.addListener(handleOnMessageExternalEvents);
+      if (isChrome) {
+        await browser.sidePanel.open({ windowId: tab.windowId });
+      } else {
+        await firefoxBrowser.sidebarAction.open();
+      }
+    } catch (error) {
+      console.warn("[background] Failed to open side panel:", error);
+    }
+  });
+
+  browser.runtime.onMessageExternal.addListener(handleOnMessageExternalEvents);
 });
