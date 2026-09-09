@@ -4,7 +4,7 @@
 
 <div align="center">
 
-### [Become a Sponsor!](https://buy.polar.sh/polar_cl_rCWK2EGUoQFDeBQmObwQi4NRLEHCBRSpicW0m10vLjo)
+### [Become a Sponsor!](https://dub.sh/tLh3JgA)
 
 </div>
 
@@ -36,6 +36,7 @@
 You can run the full CliqRelay stack locally or on your own infrastructure.
 
 **Prerequisites:**
+
 - [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
 **1. Start the backend stack:**
@@ -68,9 +69,9 @@ Join our growing community for support, discussions, and updates:
 
 - [Discord Server](https://discord.gg/FBM65P7GpZ)
 
-If you'd like to support the ongoing development of this project, consider subscribing on Polar!
+If you'd like to support the ongoing development of this project, consider sponsoring us!
 
-[![Subscribe on Polar](https://img.shields.io/badge/Subscribe-on%20Polar-00d1ff?style=for-the-badge&logo=polar&logoColor=white)](https://buy.polar.sh/polar_cl_rCWK2EGUoQFDeBQmObwQi4NRLEHCBRSpicW0m10vLjo)
+[![Sponsor](https://img.shields.io/badge/Sponsor-00d1ff?style=for-the-badge&logoColor=white)](https://dub.sh/tLh3JgA)
 
 ---
 
