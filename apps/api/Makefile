@@ -79,7 +79,7 @@ library-test: test # Run library mode tests
 # Development setup
 setup: install # Setup development environment
 	@echo "Setting up development environment..."
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@curl -sSfL https://golangci-lint.run/install.sh | sh -s v2.13.2
 	@go install github.com/air-verse/air@latest
 	@echo "Development environment setup complete!"
 
@@ -93,7 +93,7 @@ clean: # Clean build artifacts
 # Code quality
 lint: # Run linter
 	@echo "Running linter..."
-	@golangci-lint run
+	@./bin/golangci-lint run
 
 format: # Format code
 	@echo "Formatting code..."
