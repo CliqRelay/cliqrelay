@@ -8,7 +8,7 @@
     "fmt:check": "turbo run fmt:check",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
-    "check-npm-deps-freshness": "tsx ./scripts/check-npm-dep-freshness.ts"
+    "update-npm-deps": "tsx ./scripts/update-npm-deps.ts"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
