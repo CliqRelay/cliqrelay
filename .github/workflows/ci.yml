@@ -1,0 +1,210 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build API
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: apps/api/go.mod
+          cache: true
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Build
+        run: make build
+
+  test:
+    name: Test API
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: apps/api/go.mod
+          cache: true
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Run tests
+        run: make test
+
+  lint:
+    name: Lint API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: apps/api/go.mod
+          cache: true
+          cache-dependency-path: apps/api/go.sum
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13.2
+          working-directory: apps/api
+
+  format:
+    name: Format Check API
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: apps/api/go.mod
+          cache: true
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Check formatting
+        run: make format
+
+      - name: Verify no formatting changes
+        run: git diff --exit-code
+
+  vet:
+    name: Vet API
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: apps/api/go.mod
+          cache: true
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Run go vet
+        run: make vet
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache turbo artifacts
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-web-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-web-${{ runner.os }}-
+
+      - name: Build
+        run: pnpm turbo run build --filter=web
+
+  build-extension:
+    name: Build Extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache turbo artifacts
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-extension-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-extension-${{ runner.os }}-
+
+      - name: Build
+        run: pnpm turbo run build --filter=extension
+
+      - name: Build (Firefox)
+        run: pnpm --filter=extension run build:firefox
+
+  ci:
+    name: Full CI Check
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [build, test, lint, format, vet, build-web, build-extension]
+
+    steps:
+      - name: Verify CI results
+        run: |
+          if [[ "${{ needs.build.result }}" != "success" ||
+                "${{ needs.test.result }}" != "success" ||
+                "${{ needs.lint.result }}" != "success" ||
+                "${{ needs.format.result }}" != "success" ||
+                "${{ needs.vet.result }}" != "success" ||
+                "${{ needs.build-web.result }}" != "success" ||
+                "${{ needs.build-extension.result }}" != "success" ]]; then
+            echo "❌ One or more CI checks failed."
+            exit 1
+          fi
+
+          echo "✅ All CI checks passed successfully!"
