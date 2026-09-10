@@ -100,7 +100,7 @@ type Report = {
   errors: FailedLookup[];
 };
 
-const USAGE = `Usage: pnpm run check-npm-deps-freshness [options] [path/to/package.json]
+const USAGE = `Usage: pnpm run update-npm-deps [options] [path/to/package.json]
 
 Resolves the latest release of every registry-backed dependency and writes the ones
 that have been published for at least --hours back into the package.json.
@@ -114,8 +114,8 @@ Options:
       --help               Show this help
 
 Examples:
-  pnpm run check-npm-deps-freshness apps/web/package.json
-  pnpm run check-npm-deps-freshness --hours 72 --dry-run package.json`;
+  pnpm run update-npm-deps apps/web/package.json
+  pnpm run update-npm-deps --hours 72 --dry-run package.json`;
 
 const isFailedLookup = (result: LookupResult): result is FailedLookup => "error" in result;
 
