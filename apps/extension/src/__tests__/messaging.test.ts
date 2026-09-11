@@ -1,57 +1,50 @@
 // @vitest-environment jsdom
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	describe,
-	expect,
-	test,
-	vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const startMock = vi.fn();
 
 vi.mock("wxt/browser", () => ({
-	browser: {
-		runtime: {
-			sendMessage: vi.fn(),
-			onMessage: {
-				addListener: vi.fn(),
-			},
-		},
-		storage: {
-			local: vi.fn(),
-		},
-	},
+  browser: {
+    runtime: {
+      sendMessage: vi.fn(),
+      onMessage: {
+        addListener: vi.fn(),
+      },
+    },
+    storage: {
+      local: vi.fn(),
+    },
+  },
 }));
 
-vi.mock("../services/capture/capture.service", () => ({
-	createCaptureService: vi.fn(() => ({
-		start: startMock,
-	})),
+vi.mock("@/services/capture", () => ({
+  createCaptureService: vi.fn(() => ({
+    start: startMock,
+  })),
 }));
 
-beforeAll(async () => {
-	vi.stubGlobal(
-		"defineContentScript",
-		vi.fn((config: { main: () => void }) => {
-			config.main();
-		}),
-	);
-
-	await import("../entrypoints/content");
-});
-
-afterEach(() => {
-	vi.restoreAllMocks();
-});
-
-afterAll(() => {
-	vi.unstubAllGlobals();
-});
+const loadContentScript = async () => {
+  vi.resetModules();
+  await import("@/entrypoints/content");
+};
 
 describe("content script", () => {
-	test("creates capture service and starts it", () => {
-		expect(startMock).toHaveBeenCalledTimes(1);
-	});
+  beforeEach(() => {
+    vi.stubGlobal(
+      "defineContentScript",
+      vi.fn((config: { main: () => void }) => {
+        config.main();
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("creates capture service and starts it", async () => {
+    await loadContentScript();
+
+    expect(startMock).toHaveBeenCalledTimes(1);
+  });
 });
