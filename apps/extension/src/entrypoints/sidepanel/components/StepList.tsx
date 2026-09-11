@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { type ReactNode, type Ref, useEffect, useRef } from "react";
 
 import { motion } from "framer-motion";
 import { FileTextIcon, MousePointerClick } from "lucide-react";
@@ -89,19 +89,17 @@ function RecordingStepList({
 	}
 
 	return (
-		<ScrollArea viewportRef={viewportRef} type="auto" className="h-full w-full">
-			<div className="flex flex-col gap-4 p-4">
-				{sorted.map((step, index) => (
-					<StepCardRecording
-						key={step.jobId}
-						step={step}
-						stepNumber={index + 1}
-						onDelete={onDeleteStep}
-						onDismiss={onDismiss}
-					/>
-				))}
-			</div>
-		</ScrollArea>
+		<StepListScroll viewportRef={viewportRef}>
+			{sorted.map((step, index) => (
+				<StepCardRecording
+					key={step.jobId}
+					step={step}
+					stepNumber={index + 1}
+					onDelete={onDeleteStep}
+					onDismiss={onDismiss}
+				/>
+			))}
+		</StepListScroll>
 	);
 }
 
@@ -119,18 +117,21 @@ function ViewStepList({
 	if (isLoading) {
 		const skeletonKeys = ["skeleton-1", "skeleton-2", "skeleton-3"];
 		return (
-			<div className="flex flex-col gap-3 py-0.5">
+			<StepListScroll>
 				{skeletonKeys.map((key) => (
-					<div key={key} className="flex flex-col gap-2 rounded-lg border p-3">
-						<div className="flex items-center gap-2">
-							<Skeleton className="size-6 rounded-full" />
+					<div
+						key={key}
+						className="flex flex-col gap-1.5 rounded-xl bg-card p-3 ring-1 ring-foreground/10"
+					>
+						<div className="flex items-center gap-1.5">
+							<Skeleton className="size-5 rounded-full" />
 							<Skeleton className="h-4 w-16 rounded-md" />
 						</div>
-						<Skeleton className="h-4 w-48" />
+						<Skeleton className="h-4 w-48 max-w-full" />
 						<Skeleton className="aspect-4/3 w-full rounded-lg" />
 					</div>
 				))}
-			</div>
+			</StepListScroll>
 		);
 	}
 
@@ -165,17 +166,29 @@ function ViewStepList({
 	);
 
 	return (
-		<ScrollArea type="auto" className="h-full min-h-0 min-w-0">
-			<div className="flex flex-col gap-3 p-0.5">
-				{sorted.map((step, index) => (
-					<StepCardView
-						key={step.id}
-						step={step}
-						stepNumber={index + 1}
-						onDelete={onDeleteStep}
-					/>
-				))}
-			</div>
+		<StepListScroll>
+			{sorted.map((step, index) => (
+				<StepCardView
+					key={step.id}
+					step={step}
+					stepNumber={index + 1}
+					onDelete={onDeleteStep}
+				/>
+			))}
+		</StepListScroll>
+	);
+}
+
+function StepListScroll({
+	viewportRef,
+	children,
+}: {
+	viewportRef?: Ref<HTMLDivElement>;
+	children: ReactNode;
+}) {
+	return (
+		<ScrollArea viewportRef={viewportRef} type="auto" className="h-full w-full min-w-0">
+			<div className="flex w-full min-w-0 flex-col gap-4 p-4">{children}</div>
 		</ScrollArea>
 	);
 }

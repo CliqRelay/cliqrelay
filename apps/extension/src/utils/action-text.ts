@@ -189,3 +189,15 @@ export const buildActionText = (
 
 	return undefined;
 };
+
+export const getStepActionText = (
+	actionText: string | null | undefined,
+	action: string | null | undefined,
+	url: string | null | undefined,
+): string => {
+	if (actionText) return actionText;
+	const readableAction =
+		(action && mapCaptureActionToReadableAction(action as StepAction)) ||
+		"Capture";
+	return `${readableAction} "${url || "unknown"}"`;
+};

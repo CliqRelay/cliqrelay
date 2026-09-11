@@ -1,6 +1,7 @@
 import type { StepJobProgress } from "@/models";
-import { CompletedStepCard } from "./CompletedStepCard";
-import { ProgressStepCard } from "./ProgressStepCard";
+import { AnimatedPhaseBadge } from "./AnimatedPhaseBadge";
+import { StepCard } from "./StepCard";
+import { StepCardMenu } from "./StepCardMenu";
 
 type Props = {
 	step: StepJobProgress;
@@ -10,24 +11,34 @@ type Props = {
 };
 
 export function StepCardRecording({ step, stepNumber, onDelete, onDismiss }: Props) {
-	const isCompleted = step.phase === "completed";
-	const persistedStepId = step.stepId;
+	const persistedStepId = step.phase === "completed" ? step.stepId : undefined;
 
-	if (isCompleted && persistedStepId) {
-		return (
-			<CompletedStepCard
-				step={step}
-				stepNumber={stepNumber}
-				onDelete={onDelete}
+	const trailing = persistedStepId ? (
+		onDelete && (
+			<StepCardMenu
+				label="Delete"
+				onSelect={() => onDelete(persistedStepId, step.actionText)}
 			/>
-		);
-	}
+		)
+	) : (
+		<>
+			<AnimatedPhaseBadge phase={step.phase} error={step.error} />
+			{onDismiss && (
+				<StepCardMenu label="Dismiss" onSelect={() => onDismiss(step.jobId)} />
+			)}
+		</>
+	);
 
 	return (
-		<ProgressStepCard
-			step={step}
+		<StepCard
 			stepNumber={stepNumber}
-			onDismiss={onDismiss}
+			action={step.action}
+			actionText={step.actionText}
+			url={step.url}
+			screenshotUrl={step.screenshotUrl}
+			thumbnail={step.thumbnail}
+			targetElement={step.targetElement}
+			trailing={trailing}
 		/>
 	);
 }

@@ -13,7 +13,6 @@ import {
   RecentGuidesList,
   RecordingControls,
   StepList,
-  ViewedGuidePanel,
 } from "../components";
 import { fetchAuthSession } from "../hooks/useAuthSession";
 import { useSidePanelBridge } from "../hooks/useSidePanelBridge";
@@ -196,7 +195,12 @@ function Home() {
   }
 
   if (viewingGuideId) {
-    return <ViewedGuidePanel guideId={viewingGuideId} onBack={() => setViewingGuideId(null)} />;
+    return (
+      <PersistedGuideView
+        activeGuideId={viewingGuideId}
+        onBack={() => setViewingGuideId(null)}
+      />
+    );
   }
 
   if (showPersistedView && activeGuideId) {

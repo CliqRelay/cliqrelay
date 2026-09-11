@@ -16,11 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useRecentGuides } from "../hooks/useRecentGuides";
 
-// Radix renders the viewport's content wrapper as `display: table`, which
-// inflates the scrollable height and lets the last rows scroll out of the
-// clipped area. Forcing it back to a block keeps scrollHeight honest.
-const VIEWPORT_CONTENT_FIX = "[&_[data-slot=scroll-area-viewport]>div]:block!";
-
 type Props = {
 	onSelectGuide: (guideId: string) => void;
 };
@@ -126,10 +121,7 @@ function RecentGuidesBody({
 	}
 
 	return (
-		<ScrollArea
-			type="auto"
-			className={cn("h-full min-h-0 min-w-0", VIEWPORT_CONTENT_FIX)}
-		>
+		<ScrollArea type="auto" className="h-full min-h-0 min-w-0">
 			<div className="flex min-w-0 flex-col gap-2 px-0.5 pb-1">
 				{guides.map((guide, index) => (
 					<RecentGuideRow
