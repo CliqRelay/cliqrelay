@@ -1,7 +1,8 @@
-import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { index, rootRoute, route, type VirtualRootRoute } from "@tanstack/virtual-file-routes";
+
+import tailwindcss from "@tailwindcss/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig, type PluginOption } from "vite";
@@ -48,7 +49,6 @@ export async function buildVirtualRouteConfig(
             ),
           ],
         ),
-        route("/invitation", "dashboard/organizations/invitation/index.tsx"),
       ]),
     ]),
   ]);
