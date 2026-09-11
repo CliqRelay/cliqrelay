@@ -122,8 +122,8 @@ jobs:
       - name: Run go vet
         run: make vet
 
-  build-web:
-    name: Build Web
+  web:
+    name: Web CI
     runs-on: ubuntu-latest
 
     steps:
@@ -153,8 +153,11 @@ jobs:
       - name: Build
         run: pnpm turbo run build --filter=web
 
-  build-extension:
-    name: Build Extension
+      - name: Test
+        run: pnpm turbo run test --filter=web
+
+  extension:
+    name: Extension CI
     runs-on: ubuntu-latest
 
     steps:
@@ -187,11 +190,14 @@ jobs:
       - name: Build (Firefox)
         run: pnpm --filter=extension run build:firefox
 
+      - name: Test
+        run: pnpm turbo run test --filter=extension
+
   ci:
     name: Full CI Check
     runs-on: ubuntu-latest
     if: always()
-    needs: [build, test, lint, format, vet, build-web, build-extension]
+    needs: [build, test, lint, format, vet, web, extension]
 
     steps:
       - name: Verify CI results
@@ -201,8 +207,8 @@ jobs:
                 "${{ needs.lint.result }}" != "success" ||
                 "${{ needs.format.result }}" != "success" ||
                 "${{ needs.vet.result }}" != "success" ||
-                "${{ needs.build-web.result }}" != "success" ||
-                "${{ needs.build-extension.result }}" != "success" ]]; then
+                "${{ needs.web.result }}" != "success" ||
+                "${{ needs.extension.result }}" != "success" ]]; then
             echo "❌ One or more CI checks failed."
             exit 1
           fi
