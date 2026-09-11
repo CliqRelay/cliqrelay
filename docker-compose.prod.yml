@@ -20,7 +20,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:8.8
+    image: redis:8.10
     container_name: cliqrelay-redis
     command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     ports:
