@@ -1,8 +1,9 @@
-import { defineConfig, type UserManifest } from "wxt";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import viteReact from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
+
+import tailwindcss from "@tailwindcss/vite";
+import viteReact from "@vitejs/plugin-react";
+import { defineConfig, type UserManifest } from "wxt";
 
 export default defineConfig({
   manifestVersion: 3,
@@ -80,7 +81,7 @@ export default defineConfig({
       host_permissions: ["<all_urls>"],
       name: "CliqRelay",
       description:
-        "Transforms page clicks and interactions into beautiful, step-by-step visual documentation. An alternative to Scribe, Tango and others.",
+        "Transforms page clicks and interactions into beautiful, step-by-step visual documentation.",
       action: {},
       content_security_policy: {
         extension_pages: extensionPagesCSP,
