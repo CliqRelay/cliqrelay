@@ -3,7 +3,7 @@ module github.com/CliqRelay/cliqrelay
 go 1.26.4
 
 require (
-	github.com/Authula/authula v1.45.0
+	github.com/Authula/authula v1.46.0-dev.1
 	github.com/alicebob/miniredis/v2 v2.39.0
 	github.com/aws/aws-sdk-go-v2 v1.47.0
 	github.com/aws/aws-sdk-go-v2/config v1.33.4
