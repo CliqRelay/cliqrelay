@@ -29,6 +29,7 @@ import (
 
 func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServiceHooks) *authula.Auth {
 	apiBasePath := "/api/v1"
+	isProd := envConfig.GoEnvironment == "production"
 
 	// Init Authula Config
 	config := authulaconfig.NewConfig(
@@ -48,7 +49,7 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			ExpiresIn:          24 * time.Hour,
 			UpdateAge:          5 * time.Minute,
 			CookieMaxAge:       24 * time.Hour,
-			Secure:             false,
+			Secure:             isProd,
 			HttpOnly:           true,
 			SameSite:           "lax",
 			MaxSessionsPerUser: 5,
