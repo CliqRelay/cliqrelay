@@ -34,6 +34,7 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 	config := authulaconfig.NewConfig(
 		authulaconfig.WithAppName("CliqRelay"),
 		authulaconfig.WithSecret(envConfig.AuthulaSecret),
+		authulaconfig.WithBaseURL(envConfig.BaseURL),
 		authulaconfig.WithBasePath(fmt.Sprintf("%s/auth", apiBasePath)),
 		authulaconfig.WithDatabase(authulamodels.DatabaseConfig{
 			Provider: "postgres",
