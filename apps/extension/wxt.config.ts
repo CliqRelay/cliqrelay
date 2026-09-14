@@ -76,7 +76,7 @@ export default defineConfig({
         : "script-src 'self'; object-src 'self'";
 
     const baseConfig: UserManifest = {
-      version: "0.1.1",
+      version: "0.1.0",
       permissions,
       host_permissions: ["<all_urls>"],
       name: "CliqRelay",
