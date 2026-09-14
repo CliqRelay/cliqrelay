@@ -3,6 +3,9 @@ APP_NAME=cliqrelay
 BINARY_PATH=./tmp/$(APP_NAME)
 OPENAPI_EXPORT_BINARY=./tmp/openapi-export
 WORKER_BINARY=./tmp/$(APP_NAME)-worker
+BIN_DIR=$(CURDIR)/bin
+GOLANGCI_LINT_VERSION?=v2.13.2
+AIR_VERSION?=latest
 
 .PHONY: help build build-exe run dev test clean install setup
 .PHONY: test-coverage
@@ -32,7 +35,7 @@ run: # Run the application
 
 dev: # Run the application with live reloading using air
 	@rm -f ./tmp/$(APP_NAME)
-	@go run ./cmd/core/main.go
+	@CGO_ENABLED=0 ./bin/air --build.cmd "go build -o ./tmp/$(APP_NAME) ./cmd/core/main.go" --build.entrypoint "./tmp/$(APP_NAME)"
 
 build-worker: # Build the worker binary
 	@mkdir -p ./tmp
@@ -77,11 +80,15 @@ deps-update: # Update dependencies
 library-test: test # Run library mode tests
 
 # Development setup
-setup: install # Setup development environment
-	@echo "Setting up development environment..."
-	@curl -sSfL https://golangci-lint.run/install.sh | sh -s v2.13.2
-	@go install github.com/air-verse/air@latest
+setup: install tools # Setup development environment (deps, tools in ./bin)
 	@echo "Development environment setup complete!"
+
+tools: # Install development tools (golangci-lint, air) into ./bin
+	@echo "Installing development tools into $(BIN_DIR)..."
+	@mkdir -p $(BIN_DIR)
+	@curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(BIN_DIR) $(GOLANGCI_LINT_VERSION)
+	@GOBIN=$(BIN_DIR) go install github.com/air-verse/air@$(AIR_VERSION)
+	@echo "Tools installed: $(BIN_DIR)/golangci-lint, $(BIN_DIR)/air"
 
 # Clean commands
 clean: # Clean build artifacts
