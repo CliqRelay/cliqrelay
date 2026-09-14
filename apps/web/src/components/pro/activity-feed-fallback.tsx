@@ -1,11 +1,8 @@
-import { useState } from "react";
-
 import type { LucideIcon } from "lucide-react";
 
 import { Activity, GitCommit, UserPlus } from "lucide-react";
 
-import { Button } from "../ui/button";
-import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
+import { UpgradeToProButton } from "@/components/shared/upgrade-to-pro-button";
 
 type Feature = {
   icon: LucideIcon;
@@ -29,16 +26,6 @@ const FEATURES: Feature[] = [
 ];
 
 export function ActivityFeedFallback({ isUpgradeAvailable, onUpgrade }: Props) {
-  const [isPending, setIsPending] = useState<boolean>(false);
-
-  const handleUpgrade = async (): Promise<void> => {
-    if (onUpgrade) {
-      setIsPending(true);
-      await onUpgrade();
-      setIsPending(false);
-    }
-  };
-
   return (
     <div className="flex flex-col surface-card rounded-[20px] p-5">
       <div className="flex items-center justify-between">
@@ -67,19 +54,11 @@ export function ActivityFeedFallback({ isUpgradeAvailable, onUpgrade }: Props) {
         </ul>
       </div>
       <div className="mt-auto [&>button]:w-full">
-        {isUpgradeAvailable ? (
-          <Button
-            type="button"
-            variant="default"
-            className="w-full border border-[rgba(120,170,255,0.18)] bg-[linear-gradient(140deg,oklch(0.58_0.19_258),oklch(0.42_0.18_262))] shadow-(--shadow-primary)"
-            disabled={isPending}
-            onClick={handleUpgrade}
-          >
-            {isPending ? "Upgrading..." : "Upgrade to Pro"}
-          </Button>
-        ) : (
-          <LearnAboutProButton />
-        )}
+        <UpgradeToProButton
+          isUpgradeAvailable={isUpgradeAvailable}
+          onUpgrade={onUpgrade}
+          className="w-full"
+        />
       </div>
     </div>
   );

@@ -1,10 +1,8 @@
 import { Lock } from "lucide-react";
 
-import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Separator } from "../ui/separator";
+import { UpgradeToProButton } from "@/components/shared/upgrade-to-pro-button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Props = {
   isUpgradeAvailable: boolean;
@@ -47,13 +45,12 @@ export function OrgSettingsBrandingFallback({ isUpgradeAvailable = false, onUpgr
             </li>
           </ul>
           <Separator />
-          {isUpgradeAvailable ? (
-            <Button className="w-full" onClick={() => onUpgrade?.()}>
-              Upgrade Now
-            </Button>
-          ) : (
-            <LearnAboutProButton />
-          )}
+          <UpgradeToProButton
+            isUpgradeAvailable={isUpgradeAvailable}
+            onUpgrade={onUpgrade}
+            label="Upgrade Now"
+            className="w-full"
+          />
         </CardContent>
       </Card>
     </div>

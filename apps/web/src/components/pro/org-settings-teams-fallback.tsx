@@ -1,8 +1,7 @@
 import { Lock } from "lucide-react";
 
 import { Separator } from "../ui/separator";
-import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
-import { Button } from "@/components/ui/button";
+import { UpgradeToProButton } from "@/components/shared/upgrade-to-pro-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Props = {
@@ -48,13 +47,11 @@ export function OrgSettingsTeamsFallback({ isUpgradeAvailable = false, onUpgrade
             </li>
           </ul>
           <Separator />
-          {isUpgradeAvailable ? (
-            <Button className="w-full" onClick={() => onUpgrade?.()}>
-              Upgrade to Pro
-            </Button>
-          ) : (
-            <LearnAboutProButton />
-          )}
+          <UpgradeToProButton
+            isUpgradeAvailable={isUpgradeAvailable}
+            onUpgrade={onUpgrade}
+            className="w-full"
+          />
         </CardContent>
       </Card>
     </div>

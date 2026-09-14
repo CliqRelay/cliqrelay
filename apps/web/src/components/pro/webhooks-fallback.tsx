@@ -1,6 +1,6 @@
 import { Webhook, Zap } from "lucide-react";
 
-import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
+import { UpgradeToProButton } from "@/components/shared/upgrade-to-pro-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -65,13 +65,7 @@ export function WebhooksFallback({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          {isUpgradeAvailable ? (
-            <Button type="button" onClick={() => onUpgrade?.()}>
-              Upgrade to Pro
-            </Button>
-          ) : (
-            <LearnAboutProButton />
-          )}
+          <UpgradeToProButton isUpgradeAvailable={isUpgradeAvailable} onUpgrade={onUpgrade} />
         </DialogFooter>
       </DialogContent>
     </Dialog>
