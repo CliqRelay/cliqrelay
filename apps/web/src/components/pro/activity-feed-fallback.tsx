@@ -2,16 +2,11 @@ import type { LucideIcon } from "lucide-react";
 
 import { Activity, GitCommit, UserPlus } from "lucide-react";
 
-import { UpgradeToProButton } from "@/components/shared/upgrade-to-pro-button";
+import { ComingSoon } from "@/components/shared/coming-soon";
 
 type Feature = {
   icon: LucideIcon;
   label: string;
-};
-
-type Props = {
-  isUpgradeAvailable: boolean;
-  onUpgrade?: () => Promise<void>;
 };
 
 const FEATURES: Feature[] = [
@@ -25,7 +20,7 @@ const FEATURES: Feature[] = [
   },
 ];
 
-export function ActivityFeedFallback({ isUpgradeAvailable, onUpgrade }: Props) {
+export function ActivityFeedFallback() {
   return (
     <div className="flex flex-col surface-card rounded-[20px] p-5">
       <div className="flex items-center justify-between">
@@ -53,12 +48,8 @@ export function ActivityFeedFallback({ isUpgradeAvailable, onUpgrade }: Props) {
           })}
         </ul>
       </div>
-      <div className="mt-auto [&>button]:w-full">
-        <UpgradeToProButton
-          isUpgradeAvailable={isUpgradeAvailable}
-          onUpgrade={onUpgrade}
-          className="w-full"
-        />
+      <div className="mt-auto">
+        <ComingSoon description="Real-time activity tracking is on its way." />
       </div>
     </div>
   );
