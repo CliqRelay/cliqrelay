@@ -269,10 +269,8 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			HeaderName: "X-AUTHULA-CSRF-TOKEN",
 		}),
 		emailplugin.New(emailplugintypes.EmailPluginConfig{
-			Enabled:     true,
-			Provider:    emailplugintypes.ProviderSMTP,
-			FromAddress: "noreply@example.com",
-			TLSMode:     emailplugintypes.SMTPTLSModeStartTLS,
+			Enabled: true,
+			TLSMode: emailplugintypes.SMTPTLSModeStartTLS,
 		}),
 		emailpasswordplugin.New(emailpasswordplugintypes.EmailPasswordPluginConfig{
 			Enabled:                     true,
