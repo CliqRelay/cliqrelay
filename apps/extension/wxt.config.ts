@@ -53,7 +53,7 @@ export default defineConfig({
     const permissions: string[] = ["cookies", "storage", "activeTab", "tabs", "webNavigation"];
 
     if (isChrome) {
-      permissions.push("scripting", "offscreen", "sidePanel");
+      permissions.push("offscreen", "sidePanel");
     } else if (isFirefox) {
       permissions.push("webRequest");
     }
@@ -76,7 +76,7 @@ export default defineConfig({
         : "script-src 'self'; object-src 'self'";
 
     const baseConfig: UserManifest = {
-      version: "0.1.0",
+      version: "0.1.1",
       permissions,
       host_permissions: ["<all_urls>"],
       name: "CliqRelay",
