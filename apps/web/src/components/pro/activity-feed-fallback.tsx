@@ -4,9 +4,8 @@ import type { LucideIcon } from "lucide-react";
 
 import { Activity, GitCommit, UserPlus } from "lucide-react";
 
-import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
-
 import { Button } from "../ui/button";
+import { LearnAboutProButton } from "@/components/shared/learn-about-pro-button";
 
 type Feature = {
   icon: LucideIcon;
