@@ -4,21 +4,17 @@
 
 <div align="center">
 
+<p align="center">
+  <img src="./app-screenshot.png" width="700" alt="App Screenshot"/>
+</p>
+
 ### [Become a Sponsor!](https://dub.sh/tLh3JgA)
 
 </div>
 
----
+## CliqRelay
 
-<br/>
-
-<p align="center">
-  <img src="./app-screenshot.png" width="700" alt="Project Banner"/>
-</p>
-
-### Overview
-
-**CliqRelay** is an open-source platform that transforms page clicks and interactions into beautiful, step-by-step visual documentation. By coupling a native browser capture extension with a high-performance backend, CliqRelay tracks exact DOM interactions and contextual screenshots thereby instantly automating the heavy lifting of writing technical guides and docs. Capture and refine workflows instantly to help your teams perform at their best.
+An open-source platform that transforms page clicks and interactions into beautiful, step-by-step visual documentation. By coupling a native browser capture extension with a high-performance backend, CliqRelay tracks exact DOM interactions and contextual screenshots thereby instantly automating the heavy lifting of writing technical guides and docs. Capture and refine workflows instantly to help your teams perform at their best.
 
 ---
 
@@ -68,21 +64,5 @@ Your contributions are welcome! Here's how you can get involved:
 Join our growing community for support, discussions, and updates:
 
 - [Discord Server](https://discord.gg/FBM65P7GpZ)
-
-If you'd like to support the ongoing development of this project, consider sponsoring us!
-
-[![Sponsor](https://img.shields.io/badge/Sponsor-00d1ff?style=for-the-badge&logoColor=white)](https://dub.sh/tLh3JgA)
-
----
-
-### Our Sponsors
-
-#### 🏢 Corporate Sponsors
-
-#### 🥇 Gold Sponsors
-
-#### 🥈 Silver Sponsors
-
-#### 🥉 Bronze Sponsors
 
 ---
