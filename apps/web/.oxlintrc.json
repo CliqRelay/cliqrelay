@@ -1,6 +1,6 @@
 {
   "extends": ["../../.oxlintrc.json"],
-  "ignorePatterns": [".output/**"],
+  "ignorePatterns": [".output/**", "src/components/ui/**", "src/components/motion/**"],
   "plugins": ["react"],
   "rules": {
     "react/no-children-prop": "warn"

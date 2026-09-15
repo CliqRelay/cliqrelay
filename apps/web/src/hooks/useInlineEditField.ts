@@ -1,73 +1,75 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { debounce } from "es-toolkit";
+import { type DebouncedFunction, debounce } from "es-toolkit";
 
 export function useInlineEditField(
-	externalValue: string,
-	onSave: (value: string) => void,
-	delay = 500,
+  externalValue: string,
+  onSave: (value: string) => void,
+  delay = 500,
 ) {
-	const [localValue, setLocalValue] = useState(externalValue);
-	const beforeEditRef = useRef(externalValue);
-	const lastSavedRef = useRef(externalValue);
-	const onSaveRef = useRef(onSave);
-	onSaveRef.current = onSave;
+  const [localValue, setLocalValue] = useState(externalValue);
+  const beforeEditRef = useRef(externalValue);
+  const lastSavedRef = useRef(externalValue);
+  const onSaveRef = useRef(onSave);
+  const debouncedSaveRef = useRef<DebouncedFunction<(value: string) => void> | null>(null);
 
-	const debouncedSave = useRef(
-		debounce((value: string) => {
-			onSaveRef.current(value);
-			lastSavedRef.current = value;
-		}, delay),
-	).current;
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
 
-	useEffect(() => {
-		if (externalValue !== lastSavedRef.current) {
-			setLocalValue(externalValue);
-			lastSavedRef.current = externalValue;
-		}
-	}, [externalValue]);
+  useEffect(() => {
+    const debouncedSave = debounce((value: string) => {
+      onSaveRef.current(value);
+      lastSavedRef.current = value;
+    }, delay);
+    debouncedSaveRef.current = debouncedSave;
+    return () => {
+      debouncedSave.cancel();
+      debouncedSaveRef.current = null;
+    };
+  }, [delay]);
 
-	useEffect(() => {
-		return () => debouncedSave.cancel();
-	}, [debouncedSave]);
+  useEffect(() => {
+    if (externalValue !== lastSavedRef.current) {
+      setLocalValue(externalValue);
+      lastSavedRef.current = externalValue;
+    }
+  }, [externalValue]);
 
-	const startEditing = useCallback(() => {
-		beforeEditRef.current = localValue;
-	}, [localValue]);
+  const startEditing = () => {
+    beforeEditRef.current = localValue;
+  };
 
-	const handleChange = useCallback(
-		(value: string) => {
-			setLocalValue(value);
-			if (value === lastSavedRef.current) {
-				debouncedSave.cancel();
-				return;
-			}
-			debouncedSave(value);
-		},
-		[debouncedSave],
-	);
+  const handleChange = (value: string) => {
+    setLocalValue(value);
+    if (value === lastSavedRef.current) {
+      debouncedSaveRef.current?.cancel();
+      return;
+    }
+    debouncedSaveRef.current?.(value);
+  };
 
-	const flush = useCallback(() => {
-		debouncedSave.cancel();
-		const trimmed = localValue.trim();
-		if (trimmed !== lastSavedRef.current) {
-			onSaveRef.current(trimmed);
-			lastSavedRef.current = trimmed;
-		}
-	}, [localValue, debouncedSave]);
+  const flush = () => {
+    debouncedSaveRef.current?.cancel();
+    const trimmed = localValue.trim();
+    if (trimmed !== lastSavedRef.current) {
+      onSaveRef.current(trimmed);
+      lastSavedRef.current = trimmed;
+    }
+  };
 
-	const cancelEditing = useCallback(() => {
-		setLocalValue(beforeEditRef.current);
-		debouncedSave.cancel();
-	}, [debouncedSave]);
+  const cancelEditing = () => {
+    setLocalValue(beforeEditRef.current);
+    debouncedSaveRef.current?.cancel();
+  };
 
-	return {
-		localValue,
-		setLocalValue,
-		beforeEditRef,
-		startEditing,
-		handleChange,
-		flush,
-		cancelEditing,
-	};
+  return {
+    localValue,
+    setLocalValue,
+    beforeEditRef,
+    startEditing,
+    handleChange,
+    flush,
+    cancelEditing,
+  };
 }
