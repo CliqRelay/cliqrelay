@@ -35,6 +35,14 @@ func (m *MockStepsRepository) GetByGuideID(ctx context.Context, guideID string) 
 	return args.Get(0).([]*models.Step), args.Error(1)
 }
 
+func (m *MockStepsRepository) ListByGuideID(ctx context.Context, params *types.ListStepsParams) (*types.StepsPage, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*types.StepsPage), args.Error(1)
+}
+
 func (m *MockStepsRepository) Update(ctx context.Context, dto *types.UpdateStepDTO) (*models.Step, error) {
 	args := m.Called(ctx, dto)
 	if args.Get(0) == nil {

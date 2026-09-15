@@ -47,7 +47,7 @@ func createOrgWithTeams(t *testing.T, db bun.IDB, numTeams int) (string, []uuid.
 	orgID := createTestOrganization(context.Background(), db, t)
 
 	teams := make([]uuid.UUID, 0, numTeams)
-	for i := 0; i < numTeams; i++ {
+	for i := range numTeams {
 		teamID := uuid.MustParse(insertTestTeam(context.Background(), db, t, orgID, fmt.Sprintf("Team %d", i+1), nil))
 		teams = append(teams, teamID)
 	}

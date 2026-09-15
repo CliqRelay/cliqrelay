@@ -13,8 +13,6 @@ import (
 	teamsrepo "github.com/CliqRelay/cliqrelay/repositories/teams"
 )
 
-func ptr[T any](v T) *T { return &v }
-
 type teamAccessFixture struct {
 	OrgID          string
 	OwnerID        string
@@ -192,13 +190,13 @@ func TestBunTeamsRepository_GetAllAccessibleByUserIDOrdersOrganizationsThenTeams
 	ownerID := insertTestUser(ctx, teamsDB, t)
 	base := time.Now()
 
-	olderOrg := insertTestOrganizationOwnedBy(ctx, teamsDB, t, ownerID, ptr(base.Add(-2*time.Hour)))
-	newerOrg := insertTestOrganizationOwnedBy(ctx, teamsDB, t, ownerID, ptr(base.Add(-time.Hour)))
+	olderOrg := insertTestOrganizationOwnedBy(ctx, teamsDB, t, ownerID, new(base.Add(-2*time.Hour)))
+	newerOrg := insertTestOrganizationOwnedBy(ctx, teamsDB, t, ownerID, new(base.Add(-time.Hour)))
 
-	olderOrgOldTeam := insertTestTeam(ctx, teamsDB, t, olderOrg, "older org old team", ptr(base.Add(-90*time.Minute)))
-	olderOrgNewTeam := insertTestTeam(ctx, teamsDB, t, olderOrg, "older org new team", ptr(base.Add(-80*time.Minute)))
-	newerOrgOldTeam := insertTestTeam(ctx, teamsDB, t, newerOrg, "newer org old team", ptr(base.Add(-50*time.Minute)))
-	newerOrgNewTeam := insertTestTeam(ctx, teamsDB, t, newerOrg, "newer org new team", ptr(base.Add(-40*time.Minute)))
+	olderOrgOldTeam := insertTestTeam(ctx, teamsDB, t, olderOrg, "older org old team", new(base.Add(-90*time.Minute)))
+	olderOrgNewTeam := insertTestTeam(ctx, teamsDB, t, olderOrg, "older org new team", new(base.Add(-80*time.Minute)))
+	newerOrgOldTeam := insertTestTeam(ctx, teamsDB, t, newerOrg, "newer org old team", new(base.Add(-50*time.Minute)))
+	newerOrgNewTeam := insertTestTeam(ctx, teamsDB, t, newerOrg, "newer org new team", new(base.Add(-40*time.Minute)))
 
 	// Act
 	teams, err := repo.GetAllAccessibleByUserID(ctx, ownerID)

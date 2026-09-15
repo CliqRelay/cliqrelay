@@ -279,6 +279,125 @@ func TestStepsService_GetByID(t *testing.T) {
 	}
 }
 
+func TestStepsService_ListByGuideID(t *testing.T) {
+	t.Parallel()
+
+	guideID := uuid.New()
+	guideIDStr := guideID.String()
+	storagePath := "uploads/guides/abc/steps/def/123"
+
+	cases := []struct {
+		name           string
+		params         *types.ListStepsParams
+		setup          func(*tests.MockStepsRepository, *tests.MockPresignService)
+		wantErr        error
+		wantLen        int
+		wantTotal      int
+		wantNextCursor *string
+	}{
+		{
+			name:   "returns a page and passes cursor metadata through",
+			params: &types.ListStepsParams{GuideID: guideIDStr, Cursor: new("a0"), Limit: 2},
+			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
+				mockStepsRepo.On("ListByGuideID", mock.Anything, mock.MatchedBy(func(p *types.ListStepsParams) bool {
+					return p.GuideID == guideIDStr && p.Cursor != nil && *p.Cursor == "a0" && p.Limit == 2
+				})).
+					Return(&types.StepsPage{
+						Steps: []*models.Step{
+							{ID: uuid.New(), GuideID: guideID, SortOrder: "a1"},
+							{ID: uuid.New(), GuideID: guideID, SortOrder: "a2"},
+						},
+						NextCursor: new("a2"),
+						Total:      7,
+					}, nil).
+					Once()
+			},
+			wantLen:        2,
+			wantTotal:      7,
+			wantNextCursor: new("a2"),
+		},
+		{
+			name:   "enriches media assets with presigned URLs",
+			params: &types.ListStepsParams{GuideID: guideIDStr, Limit: 20},
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockPresignClient *tests.MockPresignService) {
+				mockStepsRepo.On("ListByGuideID", mock.Anything, mock.Anything).
+					Return(&types.StepsPage{
+						Steps: []*models.Step{{
+							ID:      uuid.New(),
+							GuideID: guideID,
+							MediaAssets: []*models.MediaAsset{
+								{ID: uuid.New(), StepID: uuid.New(), StoragePath: storagePath, MimeType: new("image/png")},
+							},
+						}},
+						Total: 1,
+					}, nil).
+					Once()
+				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", storagePath).
+					Return("https://presigned.test/asset", nil).
+					Once()
+			},
+			wantLen:   1,
+			wantTotal: 1,
+		},
+		{
+			name:    "returns error for empty guide ID",
+			params:  &types.ListStepsParams{GuideID: "  ", Limit: 20},
+			setup:   func(*tests.MockStepsRepository, *tests.MockPresignService) {},
+			wantErr: constants.ErrInvalidGuideID,
+		},
+		{
+			name:    "returns error for nil params",
+			params:  nil,
+			setup:   func(*tests.MockStepsRepository, *tests.MockPresignService) {},
+			wantErr: constants.ErrInvalidGuideID,
+		},
+		{
+			name:   "propagates repository error",
+			params: &types.ListStepsParams{GuideID: guideIDStr, Limit: 20},
+			setup: func(mockStepsRepo *tests.MockStepsRepository, _ *tests.MockPresignService) {
+				mockStepsRepo.On("ListByGuideID", mock.Anything, mock.Anything).
+					Return(nil, assert.AnError).
+					Once()
+			},
+			wantErr: assert.AnError,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+			mockStepsRepo := new(tests.MockStepsRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
+			mockPresignClient := new(tests.MockPresignService)
+			tt.setup(mockStepsRepo, mockPresignClient)
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", logger, (*interfaces.StepHooks)(nil))
+
+			page, err := svc.ListByGuideID(context.Background(), tt.params)
+
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+				assert.Nil(t, page)
+			} else {
+				require.NoError(t, err)
+				assert.Len(t, page.Steps, tt.wantLen)
+				assert.Equal(t, tt.wantTotal, page.Total)
+				assert.Equal(t, tt.wantNextCursor, page.NextCursor)
+				for _, step := range page.Steps {
+					for _, asset := range step.MediaAssets {
+						require.NotNil(t, asset.URL)
+						assert.Equal(t, "https://presigned.test/asset", *asset.URL)
+					}
+				}
+			}
+
+			mockStepsRepo.AssertExpectations(t)
+			mockPresignClient.AssertExpectations(t)
+		})
+	}
+}
+
 func TestStepsService_GetByGuideID(t *testing.T) {
 	t.Parallel()
 

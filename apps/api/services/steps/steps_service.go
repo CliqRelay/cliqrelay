@@ -161,6 +161,21 @@ func (s *StepsService) GetByGuideID(ctx context.Context, guideID string) ([]*mod
 	return steps, nil
 }
 
+func (s *StepsService) ListByGuideID(ctx context.Context, params *types.ListStepsParams) (*types.StepsPage, error) {
+	if params == nil || strings.TrimSpace(params.GuideID) == "" {
+		return nil, constants.ErrInvalidGuideID
+	}
+
+	page, err := s.stepsRepo.ListByGuideID(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	s.enrichMediaAssets(ctx, page.Steps...)
+
+	return page, nil
+}
+
 func (s *StepsService) Update(ctx context.Context, stepID string, req *types.UpdateStepRequest) (*models.Step, error) {
 	if strings.TrimSpace(stepID) == "" {
 		return nil, constants.ErrInvalidStepID

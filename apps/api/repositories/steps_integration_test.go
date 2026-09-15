@@ -424,6 +424,145 @@ func TestBunStepsRepository_GetByGuideID(t *testing.T) {
 	}
 }
 
+func TestBunStepsRepository_ListByGuideID(t *testing.T) {
+	t.Parallel()
+
+	seedOrdered := func(db *bun.DB, sortOrders ...string) (*models.Guide, []*models.Step) {
+		guide := seedGuide(t, db, "", "Test Guide")
+		steps := make([]*models.Step, 0, len(sortOrders))
+		for _, sortOrder := range sortOrders {
+			steps = append(steps, seedStep(t, db, guide.ID, models.StepTypeInteraction, sortOrder, models.StepActionClick, nil))
+		}
+		return guide, steps
+	}
+
+	cases := []struct {
+		name           string
+		setup          func(*bun.DB) *types.ListStepsParams
+		wantSortOrders []string
+		wantTotal      int
+		wantNextCursor *string
+		check          func(*testing.T, *types.StepsPage)
+	}{
+		{
+			name: "first page reports a cursor when more steps exist",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide, _ := seedOrdered(db, "a0", "a1", "a2", "a3", "a4")
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Limit: 2}
+			},
+			wantSortOrders: []string{"a0", "a1"},
+			wantTotal:      5,
+			wantNextCursor: new("a1"),
+		},
+		{
+			name: "continues from the cursor",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide, _ := seedOrdered(db, "a0", "a1", "a2", "a3", "a4")
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Cursor: new("a1"), Limit: 2}
+			},
+			wantSortOrders: []string{"a2", "a3"},
+			wantTotal:      5,
+			wantNextCursor: new("a3"),
+		},
+		{
+			name: "last partial page has no cursor",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide, _ := seedOrdered(db, "a0", "a1", "a2", "a3", "a4")
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Cursor: new("a3"), Limit: 2}
+			},
+			wantSortOrders: []string{"a4"},
+			wantTotal:      5,
+		},
+		{
+			name: "last full page has no cursor when total is an exact multiple of limit",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide, _ := seedOrdered(db, "a0", "a1", "a2", "a3")
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Cursor: new("a1"), Limit: 2}
+			},
+			wantSortOrders: []string{"a2", "a3"},
+			wantTotal:      4,
+		},
+		{
+			name: "cursor past the end returns an empty page with the real total",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide, _ := seedOrdered(db, "a0", "a1", "a2")
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Cursor: new("zzz"), Limit: 2}
+			},
+			wantSortOrders: []string{},
+			wantTotal:      3,
+		},
+		{
+			name: "empty guide",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide := seedGuide(t, db, "", "Test Guide")
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Limit: 20}
+			},
+			wantSortOrders: []string{},
+			wantTotal:      0,
+		},
+		{
+			name: "only counts and returns steps for the given guide",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide, _ := seedOrdered(db, "a0")
+				other := seedGuide(t, db, "", "Other Guide")
+				seedStep(t, db, other.ID, models.StepTypeInteraction, "a0", models.StepActionClick, nil)
+				seedStep(t, db, other.ID, models.StepTypeInteraction, "a1", models.StepActionClick, nil)
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Limit: 20}
+			},
+			wantSortOrders: []string{"a0"},
+			wantTotal:      1,
+		},
+		{
+			name: "eagerly loads media assets",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide, steps := seedOrdered(db, "a0", "a1")
+				seedMediaAsset(t, db, steps[1].ID, "/path/to/list-by-guide-id.png")
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Limit: 20}
+			},
+			wantSortOrders: []string{"a0", "a1"},
+			wantTotal:      2,
+			check: func(t *testing.T, page *types.StepsPage) {
+				require.Len(t, page.Steps[1].MediaAssets, 1)
+				assert.Equal(t, "/path/to/list-by-guide-id.png", page.Steps[1].MediaAssets[0].StoragePath)
+			},
+		},
+		{
+			name: "orders and paginates with bytewise collation",
+			setup: func(db *bun.DB) *types.ListStepsParams {
+				guide, _ := seedOrdered(db, "a0", "Zz", "A0")
+				return &types.ListStepsParams{GuideID: guide.ID.String(), Cursor: new("A0"), Limit: 1}
+			},
+			wantSortOrders: []string{"Zz"},
+			wantTotal:      3,
+			wantNextCursor: new("Zz"),
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db := stepsDB
+			repo := stepsrepositories.NewBunStepsRepository(db)
+			params := tt.setup(db)
+
+			page, err := repo.ListByGuideID(context.Background(), params)
+
+			require.NoError(t, err)
+			sortOrders := make([]string, 0, len(page.Steps))
+			for _, step := range page.Steps {
+				sortOrders = append(sortOrders, step.SortOrder)
+			}
+			assert.Equal(t, tt.wantSortOrders, sortOrders)
+			assert.Equal(t, tt.wantTotal, page.Total)
+			assert.Equal(t, tt.wantNextCursor, page.NextCursor)
+			if tt.check != nil {
+				tt.check(t, page)
+			}
+		})
+	}
+}
+
 func TestBunStepsRepository_Update(t *testing.T) {
 	t.Parallel()
 
@@ -762,6 +901,28 @@ func TestBunStepsRepository_Reorder(t *testing.T) {
 				require.Len(t, steps, 2)
 				assert.Equal(t, "input", string(*steps[0].Action))
 				assert.Equal(t, "click", string(*steps[1].Action))
+			},
+		},
+		{
+			name: "nil next after prev with following steps places target directly after prev",
+			setup: func(db *bun.DB, repo *stepsrepositories.BunStepsRepository) (string, string, *string, *string) {
+				ctx := context.Background()
+				guide := seedGuide(t, db, "", "Test Guide")
+
+				step1, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionClick)})
+				_, _ = repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionInput)})
+				step3, _ := repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionNavigation)})
+				_, _ = repo.Create(ctx, &types.CreateStepDTO{GuideID: guide.ID, Action: new(models.StepActionKeypress)})
+
+				sid3 := step3.ID.String()
+				return guide.ID.String(), step1.ID.String(), &sid3, nil
+			},
+			check: func(t *testing.T, steps []*models.Step) {
+				require.Len(t, steps, 4)
+				assert.Equal(t, "input", string(*steps[0].Action))
+				assert.Equal(t, "navigation", string(*steps[1].Action))
+				assert.Equal(t, "click", string(*steps[2].Action))
+				assert.Equal(t, "keypress", string(*steps[3].Action))
 			},
 		},
 	}

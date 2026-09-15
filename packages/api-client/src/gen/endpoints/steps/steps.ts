@@ -5,16 +5,20 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import type {
   DataTag,
   DefinedInitialDataOptions,
+  DefinedUseInfiniteQueryResult,
   DefinedUseQueryResult,
+  InfiniteData,
   MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseInfiniteQueryOptions,
+  UseInfiniteQueryResult,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -72,7 +76,7 @@ export const getGetAllStepsByGuideIdUrl = (params?: GetAllStepsByGuideIdParams) 
 };
 
 /**
- * Retrieves all steps for a given guide, ordered by sort_order
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
  * @summary Get all steps by guide ID
  */
 export const getAllStepsByGuideId = async (
@@ -85,9 +89,186 @@ export const getAllStepsByGuideId = async (
   });
 };
 
+export const getGetAllStepsByGuideIdInfiniteQueryKey = (params?: GetAllStepsByGuideIdParams) => {
+  return [
+    "infinite",
+    `${import.meta.env.VITE_API_URL}/api/v1/steps`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
 export const getGetAllStepsByGuideIdQueryKey = (params?: GetAllStepsByGuideIdParams) => {
   return [`${import.meta.env.VITE_API_URL}/api/v1/steps`, ...(params ? [params] : [])] as const;
 };
+
+export const getGetAllStepsByGuideIdInfiniteQueryOptions = <
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+    GetAllStepsByGuideIdParams["cursor"]
+  >,
+  TError = unknown,
+>(
+  params?: GetAllStepsByGuideIdParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+        TError,
+        TData,
+        QueryKey,
+        GetAllStepsByGuideIdParams["cursor"]
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAllStepsByGuideIdInfiniteQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+    QueryKey,
+    GetAllStepsByGuideIdParams["cursor"]
+  > = ({ signal, pageParam }) =>
+    getAllStepsByGuideId(
+      { ...params, cursor: pageParam ?? params?.["cursor"] },
+      { signal, ...requestOptions },
+    );
+
+  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+    TError,
+    TData,
+    QueryKey,
+    GetAllStepsByGuideIdParams["cursor"]
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAllStepsByGuideIdInfiniteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAllStepsByGuideId>>
+>;
+export type GetAllStepsByGuideIdInfiniteQueryError = unknown;
+
+export function useGetAllStepsByGuideIdInfinite<
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+    GetAllStepsByGuideIdParams["cursor"]
+  >,
+  TError = unknown,
+>(
+  params: undefined | GetAllStepsByGuideIdParams,
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+        TError,
+        TData,
+        QueryKey,
+        GetAllStepsByGuideIdParams["cursor"]
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+          TError,
+          Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+          QueryKey
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetAllStepsByGuideIdInfinite<
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+    GetAllStepsByGuideIdParams["cursor"]
+  >,
+  TError = unknown,
+>(
+  params?: GetAllStepsByGuideIdParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+        TError,
+        TData,
+        QueryKey,
+        GetAllStepsByGuideIdParams["cursor"]
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+          TError,
+          Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+          QueryKey
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetAllStepsByGuideIdInfinite<
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+    GetAllStepsByGuideIdParams["cursor"]
+  >,
+  TError = unknown,
+>(
+  params?: GetAllStepsByGuideIdParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+        TError,
+        TData,
+        QueryKey,
+        GetAllStepsByGuideIdParams["cursor"]
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Get all steps by guide ID
+ */
+
+export function useGetAllStepsByGuideIdInfinite<
+  TData = InfiniteData<
+    Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+    GetAllStepsByGuideIdParams["cursor"]
+  >,
+  TError = unknown,
+>(
+  params?: GetAllStepsByGuideIdParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getAllStepsByGuideId>>,
+        TError,
+        TData,
+        QueryKey,
+        GetAllStepsByGuideIdParams["cursor"]
+      >
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetAllStepsByGuideIdInfiniteQueryOptions(params, options);
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as UseInfiniteQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export const getGetAllStepsByGuideIdQueryOptions = <
   TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,

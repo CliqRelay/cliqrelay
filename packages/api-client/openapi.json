@@ -13,7 +13,9 @@
   "paths": {
     "/api/v1/guide-exports/{exportID}": {
       "get": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Get export status",
         "description": "Polls the status of a guide export",
         "operationId": "getExportStatus",
@@ -43,7 +45,9 @@
     },
     "/api/v1/guides": {
       "get": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Get all guides",
         "description": "Get all guides for a user",
         "operationId": "getAllGuides",
@@ -108,7 +112,10 @@
             "name": "sort_dir",
             "in": "query",
             "schema": {
-              "type": ["null", "string"]
+              "type": [
+                "null",
+                "string"
+              ]
             }
           }
         ],
@@ -126,7 +133,9 @@
         }
       },
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Create guide",
         "description": "Creates a new guide",
         "operationId": "createGuide",
@@ -155,7 +164,9 @@
     },
     "/api/v1/guides/bulk": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Bulk action on guides",
         "description": "Performs a bulk action (delete, restore, permanently-delete) on multiple guides",
         "operationId": "bulkGuidesAction",
@@ -193,7 +204,9 @@
     },
     "/api/v1/guides/count": {
       "get": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Get guides count",
         "description": "Returns the total count of non-deleted guides for the authenticated user, scoped to a team or an organization",
         "operationId": "getGuidesCount",
@@ -229,7 +242,9 @@
     },
     "/api/v1/guides/demo": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Create demo guide",
         "description": "Creates a demo guide with predefined steps",
         "operationId": "createDemoGuide",
@@ -258,7 +273,9 @@
     },
     "/api/v1/guides/starred": {
       "get": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Get starred guides",
         "description": "Get all guides starred by the current user",
         "operationId": "getStarredGuides",
@@ -301,7 +318,9 @@
     },
     "/api/v1/guides/time-saved": {
       "get": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Get guides time saved",
         "description": "Returns the total time saved from guide views for a team",
         "operationId": "getGuidesTimeSaved",
@@ -318,7 +337,10 @@
             "in": "query",
             "schema": {
               "format": "date-time",
-              "type": ["null", "string"]
+              "type": [
+                "null",
+                "string"
+              ]
             }
           }
         ],
@@ -338,7 +360,9 @@
     },
     "/api/v1/guides/views/count": {
       "get": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Get guide views count",
         "description": "Returns the total count of guide views for a team",
         "operationId": "getGuideViewsCount",
@@ -367,7 +391,9 @@
     },
     "/api/v1/guides/{id}": {
       "get": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Get guide by ID",
         "description": "Retrieves a single guide by its ID",
         "operationId": "getGuideById",
@@ -395,7 +421,9 @@
         }
       },
       "delete": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Delete guide",
         "description": "Soft-deletes a guide",
         "operationId": "deleteGuide",
@@ -423,7 +451,9 @@
         }
       },
       "patch": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Update guide",
         "description": "Updates an existing guide",
         "operationId": "updateGuide",
@@ -462,7 +492,9 @@
     },
     "/api/v1/guides/{id}/archive": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Archive guide",
         "description": "Archives a guide",
         "operationId": "archiveGuide",
@@ -492,7 +524,9 @@
     },
     "/api/v1/guides/{id}/export": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Export guide",
         "description": "Triggers an async export of a guide (e.g. PDF)",
         "operationId": "exportGuide",
@@ -531,7 +565,9 @@
     },
     "/api/v1/guides/{id}/permanently-delete": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Permanently delete guide",
         "description": "Permanently deletes a soft-deleted guide",
         "operationId": "permanentlyDeleteGuide",
@@ -561,7 +597,9 @@
     },
     "/api/v1/guides/{id}/publish": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Publish guide",
         "description": "Publishes a guide",
         "operationId": "publishGuide",
@@ -591,7 +629,9 @@
     },
     "/api/v1/guides/{id}/recalculate-duration": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Recalculate guide duration",
         "description": "Recalculates the synthetic duration for a guide based on its steps",
         "operationId": "recalculateGuideDuration",
@@ -621,7 +661,9 @@
     },
     "/api/v1/guides/{id}/restore": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Restore guide",
         "description": "Restores a previously deleted guide",
         "operationId": "restoreGuide",
@@ -651,7 +693,9 @@
     },
     "/api/v1/guides/{id}/star": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Star guide",
         "description": "Stars a guide for the current user",
         "operationId": "starGuide",
@@ -679,7 +723,9 @@
         }
       },
       "delete": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Unstar guide",
         "description": "Unstars a guide for the current user",
         "operationId": "unstarGuide",
@@ -709,7 +755,9 @@
     },
     "/api/v1/guides/{id}/unarchive": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Unarchive guide",
         "description": "Unarchives a guide and returns it to draft status",
         "operationId": "unarchiveGuide",
@@ -739,7 +787,9 @@
     },
     "/api/v1/guides/{id}/unpublish": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Unpublish guide",
         "description": "Unpublishes a guide and returns it to draft status",
         "operationId": "unpublishGuide",
@@ -769,7 +819,9 @@
     },
     "/api/v1/guides/{id}/view": {
       "post": {
-        "tags": ["Guides"],
+        "tags": [
+          "Guides"
+        ],
         "summary": "Record guide view",
         "description": "Records a view of a guide.",
         "operationId": "recordGuideView",
@@ -799,7 +851,9 @@
     },
     "/api/v1/health": {
       "get": {
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "summary": "Health check",
         "description": "Returns the health status of the API",
         "operationId": "getHealth",
@@ -819,7 +873,9 @@
     },
     "/api/v1/media-assets": {
       "get": {
-        "tags": ["Media Assets"],
+        "tags": [
+          "Media Assets"
+        ],
         "summary": "Get all media assets by step ID",
         "description": "Retrieves all media assets for a given step",
         "operationId": "getAllMediaAssetsByStepId",
@@ -846,7 +902,9 @@
         }
       },
       "post": {
-        "tags": ["Media Assets"],
+        "tags": [
+          "Media Assets"
+        ],
         "summary": "Create media asset",
         "description": "Creates a new media asset associated with a step",
         "operationId": "createMediaAsset",
@@ -875,7 +933,9 @@
     },
     "/api/v1/media-assets/{id}": {
       "get": {
-        "tags": ["Media Assets"],
+        "tags": [
+          "Media Assets"
+        ],
         "summary": "Get media asset by ID",
         "description": "Retrieves a single media asset by its ID",
         "operationId": "getMediaAssetById",
@@ -903,7 +963,9 @@
         }
       },
       "delete": {
-        "tags": ["Media Assets"],
+        "tags": [
+          "Media Assets"
+        ],
         "summary": "Delete media asset",
         "description": "Hard-deletes a media asset",
         "operationId": "deleteMediaAsset",
@@ -931,7 +993,9 @@
         }
       },
       "patch": {
-        "tags": ["Media Assets"],
+        "tags": [
+          "Media Assets"
+        ],
         "summary": "Update media asset",
         "description": "Updates an existing media asset's metadata",
         "operationId": "updateMediaAsset",
@@ -970,9 +1034,11 @@
     },
     "/api/v1/steps": {
       "get": {
-        "tags": ["Steps"],
+        "tags": [
+          "Steps"
+        ],
         "summary": "Get all steps by guide ID",
-        "description": "Retrieves all steps for a given guide, ordered by sort_order",
+        "description": "Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.",
         "operationId": "getAllStepsByGuideId",
         "parameters": [
           {
@@ -980,6 +1046,20 @@
             "in": "query",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
             }
           }
         ],
@@ -997,7 +1077,9 @@
         }
       },
       "post": {
-        "tags": ["Steps"],
+        "tags": [
+          "Steps"
+        ],
         "summary": "Create step",
         "description": "Creates a new step within a guide",
         "operationId": "createStep",
@@ -1026,7 +1108,9 @@
     },
     "/api/v1/steps/reorder": {
       "post": {
-        "tags": ["Steps"],
+        "tags": [
+          "Steps"
+        ],
         "summary": "Reorder steps",
         "description": "Reorders steps within a guide",
         "operationId": "reorderSteps",
@@ -1055,7 +1139,9 @@
     },
     "/api/v1/steps/{id}": {
       "get": {
-        "tags": ["Steps"],
+        "tags": [
+          "Steps"
+        ],
         "summary": "Get step by ID",
         "description": "Retrieves a single step by its ID",
         "operationId": "getStepById",
@@ -1083,7 +1169,9 @@
         }
       },
       "delete": {
-        "tags": ["Steps"],
+        "tags": [
+          "Steps"
+        ],
         "summary": "Delete step",
         "description": "Hard-deletes a step",
         "operationId": "deleteStep",
@@ -1111,7 +1199,9 @@
         }
       },
       "patch": {
-        "tags": ["Steps"],
+        "tags": [
+          "Steps"
+        ],
         "summary": "Update step",
         "description": "Updates an existing step",
         "operationId": "updateStep",
@@ -1150,7 +1240,9 @@
     },
     "/api/v1/steps/{id}/duplicate": {
       "post": {
-        "tags": ["Steps"],
+        "tags": [
+          "Steps"
+        ],
         "summary": "Duplicate step",
         "description": "Duplicates a step including its media assets",
         "operationId": "duplicateStep",
@@ -1189,7 +1281,9 @@
     },
     "/api/v1/teams": {
       "get": {
-        "tags": ["Teams"],
+        "tags": [
+          "Teams"
+        ],
         "summary": "Get all teams for a user.",
         "description": "Returns all teams the user belongs to.",
         "operationId": "getTeams",
@@ -1209,7 +1303,9 @@
     },
     "/api/v1/uploads/complete": {
       "post": {
-        "tags": ["Uploads"],
+        "tags": [
+          "Uploads"
+        ],
         "summary": "Complete upload",
         "description": "Creates a media asset record after the upload finishes",
         "operationId": "completeUpload",
@@ -1238,7 +1334,9 @@
     },
     "/api/v1/uploads/presign": {
       "post": {
-        "tags": ["Uploads"],
+        "tags": [
+          "Uploads"
+        ],
         "summary": "Presign upload URL",
         "description": "Generates a presigned S3 URL for uploading a screenshot",
         "operationId": "presignUpload",
@@ -1274,7 +1372,9 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "BulkGuidesRequest": {
@@ -1283,7 +1383,10 @@
             "items": {
               "type": "string"
             },
-            "type": ["array", "null"]
+            "type": [
+              "array",
+              "null"
+            ]
           },
           "team_id": {
             "type": "string"
@@ -1297,19 +1400,30 @@
             "type": "string"
           }
         },
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "type": "object"
       },
       "CompleteUploadRequest": {
         "properties": {
           "file_size": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           },
           "height": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           },
           "mime_type": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "step_id": {
             "type": "string"
@@ -1318,10 +1432,16 @@
             "type": "string"
           },
           "thumbnail": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "width": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           }
         },
         "type": "object"
@@ -1335,7 +1455,10 @@
             "type": "string"
           }
         },
-        "required": ["url", "storage_path"],
+        "required": [
+          "url",
+          "storage_path"
+        ],
         "type": "object"
       },
       "CreateDemoGuideRequest": {
@@ -1344,7 +1467,9 @@
             "$ref": "#/components/schemas/UUID"
           }
         },
-        "required": ["team_id"],
+        "required": [
+          "team_id"
+        ],
         "type": "object"
       },
       "CreateDemoGuideResponse": {
@@ -1353,13 +1478,18 @@
             "type": "string"
           }
         },
-        "required": ["guide_id"],
+        "required": [
+          "guide_id"
+        ],
         "type": "object"
       },
       "CreateGuideRequest": {
         "properties": {
           "description": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "team_id": {
             "$ref": "#/components/schemas/UUID"
@@ -1368,7 +1498,10 @@
             "type": "string"
           }
         },
-        "required": ["team_id", "title"],
+        "required": [
+          "team_id",
+          "title"
+        ],
         "type": "object"
       },
       "CreateGuideResponse": {
@@ -1377,22 +1510,36 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "CreateMediaAssetRequest": {
         "properties": {
           "alt_text": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "byte_size": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           },
           "height": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           },
           "mime_type": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "step_id": {
             "$ref": "#/components/schemas/UUID"
@@ -1401,13 +1548,22 @@
             "type": "string"
           },
           "thumbnail": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "width": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           }
         },
-        "required": ["step_id", "storage_path"],
+        "required": [
+          "step_id",
+          "storage_path"
+        ],
         "type": "object"
       },
       "CreateMediaAssetResponse": {
@@ -1416,7 +1572,9 @@
             "$ref": "#/components/schemas/MediaAsset"
           }
         },
-        "required": ["media_asset"],
+        "required": [
+          "media_asset"
+        ],
         "type": "object"
       },
       "CreateStepRequest": {
@@ -1425,7 +1583,10 @@
             "$ref": "#/components/schemas/StepAction"
           },
           "action_text": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "canvas_content": {
             "anyOf": [
@@ -1441,26 +1602,44 @@
             "$ref": "#/components/schemas/UUID"
           },
           "insert_after_step_id": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "insert_before_step_id": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "notes": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "target_element": {
             "additionalProperties": {},
-            "type": ["object", "null"]
+            "type": [
+              "object",
+              "null"
+            ]
           },
           "type": {
             "$ref": "#/components/schemas/StepType"
           },
           "url": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "required": ["guide_id", "type"],
+        "required": [
+          "guide_id",
+          "type"
+        ],
         "type": "object"
       },
       "CreateStepResponse": {
@@ -1469,7 +1648,9 @@
             "$ref": "#/components/schemas/Step"
           }
         },
-        "required": ["step"],
+        "required": [
+          "step"
+        ],
         "type": "object"
       },
       "DeleteGuideResponse": {
@@ -1478,7 +1659,9 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "DeleteMediaAssetResponse": {
@@ -1487,7 +1670,9 @@
             "type": "string"
           }
         },
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "type": "object"
       },
       "DeleteStepResponse": {
@@ -1496,16 +1681,24 @@
             "type": "string"
           }
         },
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "type": "object"
       },
       "DuplicateStepRequest": {
         "properties": {
           "insert_after_step_id": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "insert_before_step_id": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "type": "object"
@@ -1516,12 +1709,18 @@
             "$ref": "#/components/schemas/Step"
           }
         },
-        "required": ["step"],
+        "required": [
+          "step"
+        ],
         "type": "object"
       },
       "ExportGuideFormat": {
         "description": "The type of the guide document to export",
-        "enum": ["pdf", "markdown", "html"],
+        "enum": [
+          "pdf",
+          "markdown",
+          "html"
+        ],
         "type": "string"
       },
       "ExportGuideRequest": {
@@ -1530,7 +1729,9 @@
             "$ref": "#/components/schemas/ExportGuideFormat"
           }
         },
-        "required": ["format"],
+        "required": [
+          "format"
+        ],
         "type": "object"
       },
       "ExportGuideResponse": {
@@ -1542,7 +1743,10 @@
             "type": "string"
           }
         },
-        "required": ["export_id", "status"],
+        "required": [
+          "export_id",
+          "status"
+        ],
         "type": "object"
       },
       "GetAllGuidesResponse": {
@@ -1563,7 +1767,12 @@
             "type": "integer"
           }
         },
-        "required": ["data", "total", "page", "limit"],
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit"
+        ],
         "type": "object"
       },
       "GetAllMediaAssetsResponse": {
@@ -1575,19 +1784,34 @@
             "type": "array"
           }
         },
-        "required": ["media_assets"],
+        "required": [
+          "media_assets"
+        ],
         "type": "object"
       },
       "GetAllStepsResponse": {
         "properties": {
+          "next_cursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "steps": {
             "items": {
               "$ref": "#/components/schemas/Step"
             },
             "type": "array"
+          },
+          "total": {
+            "type": "integer"
           }
         },
-        "required": ["steps"],
+        "required": [
+          "steps",
+          "next_cursor",
+          "total"
+        ],
         "type": "object"
       },
       "GetAllTeamsResponse": {
@@ -1600,7 +1824,9 @@
             "type": "array"
           }
         },
-        "required": ["teams"],
+        "required": [
+          "teams"
+        ],
         "type": "object"
       },
       "GetExportStatusResponse": {
@@ -1616,7 +1842,9 @@
             ]
           }
         },
-        "required": ["export"],
+        "required": [
+          "export"
+        ],
         "type": "object"
       },
       "GetGuideByIDResponse": {
@@ -1632,7 +1860,9 @@
             ]
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "GetGuideViewsCountResponse": {
@@ -1641,7 +1871,9 @@
             "type": "integer"
           }
         },
-        "required": ["count"],
+        "required": [
+          "count"
+        ],
         "type": "object"
       },
       "GetGuidesCountResponse": {
@@ -1650,7 +1882,9 @@
             "type": "integer"
           }
         },
-        "required": ["count"],
+        "required": [
+          "count"
+        ],
         "type": "object"
       },
       "GetMediaAssetByIDResponse": {
@@ -1666,7 +1900,9 @@
             ]
           }
         },
-        "required": ["media_asset"],
+        "required": [
+          "media_asset"
+        ],
         "type": "object"
       },
       "GetStarredGuidesResponse": {
@@ -1687,7 +1923,12 @@
             "type": "integer"
           }
         },
-        "required": ["data", "total", "page", "limit"],
+        "required": [
+          "data",
+          "total",
+          "page",
+          "limit"
+        ],
         "type": "object"
       },
       "GetStepByIDResponse": {
@@ -1703,7 +1944,9 @@
             ]
           }
         },
-        "required": ["step"],
+        "required": [
+          "step"
+        ],
         "type": "object"
       },
       "GetTimeSavedResponse": {
@@ -1716,14 +1959,20 @@
             "type": "integer"
           }
         },
-        "required": ["time_saved_seconds", "time_saved_hours"],
+        "required": [
+          "time_saved_seconds",
+          "time_saved_hours"
+        ],
         "type": "object"
       },
       "Guide": {
         "properties": {
           "archived_at": {
             "format": "date-time",
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "created_at": {
             "format": "date-time",
@@ -1740,14 +1989,23 @@
             ]
           },
           "creator_id": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "deleted_at": {
             "format": "date-time",
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "description": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "duration_seconds": {
             "type": "integer"
@@ -1760,15 +2018,24 @@
           },
           "published_at": {
             "format": "date-time",
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "purge_requested_at": {
             "format": "date-time",
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "restored_at": {
             "format": "date-time",
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "status": {
             "$ref": "#/components/schemas/GuideStatus"
@@ -1810,17 +2077,27 @@
             "type": "string"
           },
           "image": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "metadata": {
             "additionalProperties": {},
-            "type": ["object", "null"]
+            "type": [
+              "object",
+              "null"
+            ]
           },
           "name": {
             "type": "string"
           }
         },
-        "required": ["id", "name", "email"],
+        "required": [
+          "id",
+          "name",
+          "email"
+        ],
         "type": "object"
       },
       "GuideExport": {
@@ -1830,10 +2107,16 @@
             "type": "string"
           },
           "download_url": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "error_message": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "format": {
             "$ref": "#/components/schemas/ExportGuideFormat"
@@ -1848,7 +2131,10 @@
             "type": "string"
           },
           "storage_path": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "updated_at": {
             "format": "date-time",
@@ -1858,17 +2144,33 @@
             "type": "string"
           }
         },
-        "required": ["id", "guide_id", "user_id", "format", "status", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "guide_id",
+          "user_id",
+          "format",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
         "type": "object"
       },
       "GuideSortField": {
         "description": "The field to sort guides by",
-        "enum": ["created_at", "updated_at"],
+        "enum": [
+          "created_at",
+          "updated_at"
+        ],
         "type": "string"
       },
       "GuideStatus": {
         "description": "The status of the guide",
-        "enum": ["draft", "published", "archived", "deleted"],
+        "enum": [
+          "draft",
+          "published",
+          "archived",
+          "deleted"
+        ],
         "type": "string"
       },
       "HealthResponse": {
@@ -1877,29 +2179,43 @@
             "type": "string"
           }
         },
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "type": "object"
       },
       "MediaAsset": {
         "properties": {
           "alt_text": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "byte_size": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           },
           "created_at": {
             "format": "date-time",
             "type": "string"
           },
           "height": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           },
           "id": {
             "$ref": "#/components/schemas/UUID"
           },
           "mime_type": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "step_id": {
             "$ref": "#/components/schemas/UUID"
@@ -1908,20 +2224,35 @@
             "type": "string"
           },
           "thumbnail": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "updated_at": {
             "format": "date-time",
             "type": "string"
           },
           "url": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "width": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           }
         },
-        "required": ["id", "step_id", "storage_path", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "step_id",
+          "storage_path",
+          "created_at",
+          "updated_at"
+        ],
         "type": "object"
       },
       "PermanentlyDeleteGuideResponse": {
@@ -1930,7 +2261,9 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "PresignUploadRequest": {
@@ -1953,7 +2286,10 @@
             "type": "string"
           }
         },
-        "required": ["presigned_url", "storage_path"],
+        "required": [
+          "presigned_url",
+          "storage_path"
+        ],
         "type": "object"
       },
       "PublishGuideResponse": {
@@ -1962,7 +2298,9 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "RecalculateDurationResponse": {
@@ -1971,7 +2309,9 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "RecordGuideViewResponse": {
@@ -1980,7 +2320,9 @@
             "type": "string"
           }
         },
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "type": "object"
       },
       "ReorderStepsRequest": {
@@ -1989,16 +2331,25 @@
             "$ref": "#/components/schemas/UUID"
           },
           "next_step_id": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "prev_step_id": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "target_step_id": {
             "type": "string"
           }
         },
-        "required": ["guide_id", "target_step_id"],
+        "required": [
+          "guide_id",
+          "target_step_id"
+        ],
         "type": "object"
       },
       "ReorderStepsResponse": {
@@ -2010,7 +2361,9 @@
             "type": "array"
           }
         },
-        "required": ["steps"],
+        "required": [
+          "steps"
+        ],
         "type": "object"
       },
       "RestoreGuideResponse": {
@@ -2019,7 +2372,9 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "StarGuideResponse": {
@@ -2028,7 +2383,9 @@
             "type": "string"
           }
         },
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "type": "object"
       },
       "Step": {
@@ -2044,7 +2401,10 @@
             ]
           },
           "action_text": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "canvas_content": {
             "anyOf": [
@@ -2073,14 +2433,20 @@
             "type": "array"
           },
           "notes": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "sort_order": {
             "type": "string"
           },
           "target_element": {
             "additionalProperties": {},
-            "type": ["object", "null"]
+            "type": [
+              "object",
+              "null"
+            ]
           },
           "type": {
             "$ref": "#/components/schemas/StepType"
@@ -2090,40 +2456,71 @@
             "type": "string"
           },
           "url": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "required": ["id", "guide_id", "type", "sort_order", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "guide_id",
+          "type",
+          "sort_order",
+          "created_at",
+          "updated_at"
+        ],
         "type": "object"
       },
       "StepAction": {
         "description": "The browser interaction type captured for the step",
-        "enum": ["click", "input", "navigation", "keypress"],
+        "enum": [
+          "click",
+          "input",
+          "navigation",
+          "keypress"
+        ],
         "type": "string"
       },
       "StepCanvasContent": {
         "properties": {
           "body_text": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "heading_text": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "type": {
             "$ref": "#/components/schemas/StepCanvasType"
           }
         },
-        "required": ["type"],
+        "required": [
+          "type"
+        ],
         "type": "object"
       },
       "StepCanvasType": {
         "description": "The type of the canvas element",
-        "enum": ["callout", "alert", "tip", "header"],
+        "enum": [
+          "callout",
+          "alert",
+          "tip",
+          "header"
+        ],
         "type": "string"
       },
       "StepType": {
         "description": "The browser interaction type captured for the step",
-        "enum": ["interaction", "canvas"],
+        "enum": [
+          "interaction",
+          "canvas"
+        ],
         "type": "string"
       },
       "Team": {
@@ -2148,11 +2545,20 @@
             "type": "string"
           }
         },
-        "required": ["id", "name", "organization_id", "owner_id", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "name",
+          "organization_id",
+          "owner_id",
+          "created_at",
+          "updated_at"
+        ],
         "type": "object"
       },
       "UUID": {
-        "examples": ["248df4b7-aa70-47b8-a036-33ac447e668d"],
+        "examples": [
+          "248df4b7-aa70-47b8-a036-33ac447e668d"
+        ],
         "format": "uuid",
         "type": "string"
       },
@@ -2162,7 +2568,9 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "UnpublishGuideResponse": {
@@ -2171,7 +2579,9 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "UnstarGuideResponse": {
@@ -2180,16 +2590,24 @@
             "type": "string"
           }
         },
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "type": "object"
       },
       "UpdateGuideRequest": {
         "properties": {
           "description": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "title": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "visibility": {
             "anyOf": [
@@ -2210,28 +2628,48 @@
             "$ref": "#/components/schemas/Guide"
           }
         },
-        "required": ["guide"],
+        "required": [
+          "guide"
+        ],
         "type": "object"
       },
       "UpdateMediaAssetRequest": {
         "properties": {
           "alt_text": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "byte_size": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           },
           "height": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           },
           "mime_type": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "thumbnail": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "width": {
-            "type": ["null", "integer"]
+            "type": [
+              "null",
+              "integer"
+            ]
           }
         },
         "type": "object"
@@ -2242,7 +2680,9 @@
             "$ref": "#/components/schemas/MediaAsset"
           }
         },
-        "required": ["media_asset"],
+        "required": [
+          "media_asset"
+        ],
         "type": "object"
       },
       "UpdateStepRequest": {
@@ -2251,7 +2691,10 @@
             "$ref": "#/components/schemas/StepAction"
           },
           "action_text": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "canvas_content": {
             "anyOf": [
@@ -2264,17 +2707,26 @@
             ]
           },
           "notes": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "target_element": {
             "additionalProperties": {},
-            "type": ["object", "null"]
+            "type": [
+              "object",
+              "null"
+            ]
           },
           "type": {
             "$ref": "#/components/schemas/StepType"
           },
           "url": {
-            "type": ["null", "string"]
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
         "type": "object"
@@ -2285,12 +2737,18 @@
             "$ref": "#/components/schemas/Step"
           }
         },
-        "required": ["step"],
+        "required": [
+          "step"
+        ],
         "type": "object"
       },
       "Visibility": {
         "description": "The visibility of the guide",
-        "enum": ["private", "team", "public"],
+        "enum": [
+          "private",
+          "team",
+          "public"
+        ],
         "type": "string"
       }
     }

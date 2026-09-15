@@ -22,11 +22,13 @@ import {
 } from "../cliqrelay-api.schemas.zod";
 
 /**
- * Retrieves all steps for a given guide, ordered by sort_order
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
  * @summary Get all steps by guide ID
  */
 export const GetAllStepsByGuideIdQueryParams = zod.object({
   guide_id: zod.string().optional(),
+  cursor: zod.string().optional(),
+  limit: zod.int().optional(),
 });
 
 export const GetAllStepsByGuideIdResponse = GetAllStepsResponse;

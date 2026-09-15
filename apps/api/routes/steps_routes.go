@@ -92,7 +92,7 @@ func RegisterStepsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		fmt.Sprintf("%s/steps", basePath),
 		openapi.WithOperationID("getAllStepsByGuideId"),
 		openapi.WithSummary("Get all steps by guide ID"),
-		openapi.WithDescription("Retrieves all steps for a given guide, ordered by sort_order"),
+		openapi.WithDescription("Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue."),
 		openapi.WithTags("Steps"),
 		openapi.WithRequest(&types.StepsByGuideIDQuery{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.GetAllStepsResponse{}),

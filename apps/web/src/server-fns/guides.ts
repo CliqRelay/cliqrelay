@@ -4,336 +4,291 @@ import { getCookie } from "@tanstack/react-start/server";
 import { api, type Visibility } from "@repo/api-client";
 import { COOKIE_CONSTANTS } from "@repo/data-commons";
 
-import { authMiddleware } from "@/middleware/auth.middleware";
 import { getCsrfTokenHeader } from "../utils/http.utils";
+import { authMiddleware } from "@/middleware/auth.middleware";
 
 export const createGuide = createServerFn({ method: "POST", strict: false })
-	.validator(
-		(input: { title: string; description?: string; teamId: string }) => input,
-	)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const response = await api.guides.createGuide(
-				{
-					title: data.title,
-					description: data.description ?? null,
-					teamId: data.teamId,
-				},
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
+  .validator((input: { title: string; description?: string; teamId: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const response = await api.guides.createGuide(
+        {
+          title: data.title,
+          description: data.description ?? null,
+          teamId: data.teamId,
+        },
+        {
+          headers: {
+            Cookie: context.headers.get("Cookie") ?? "",
+            ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+          },
+        },
+      );
 
-			return response.guide;
-		} catch (error) {
-			console.error("Failed to create guide:", error);
-			throw error;
-		}
-	});
+      return response.guide;
+    } catch (error) {
+      console.error("Failed to create guide:", error);
+      throw error;
+    }
+  });
 
 export const getAllGuides = createServerFn({
-	method: "GET",
-	strict: false,
+  method: "GET",
+  strict: false,
 })
-	.validator((input?: { teamId?: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const teamId =
-				data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name) ?? "";
-			const guidesResponse = await api.guides.getAllGuides(
-				{ team_id: teamId, limit: 1000 },
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
-			const guides = guidesResponse.data;
-			return guides;
-		} catch (error) {
-			console.error("Failed to fetch guides:", error);
-			return [];
-		}
-	});
+  .validator((input?: { teamId?: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const teamId = data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name) ?? "";
+      const guidesResponse = await api.guides.getAllGuides(
+        { team_id: teamId, limit: 1000 },
+        {
+          headers: {
+            Cookie: context.headers.get("Cookie") ?? "",
+            ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+          },
+        },
+      );
+      const guides = guidesResponse.data;
+      return guides;
+    } catch (error) {
+      console.error("Failed to fetch guides:", error);
+      return [];
+    }
+  });
 
 export const getGuideById = createServerFn({
-	method: "GET",
-	strict: false,
+  method: "GET",
+  strict: false,
 })
-	.validator((guideId: string) => guideId)
-	.middleware([authMiddleware])
-	.handler(async ({ data: guideId, context }) => {
-		try {
-			const guideResponse = await api.guides.getGuideById(guideId, {
-				headers: {
-					Cookie: context.headers.get("Cookie") ?? "",
-				},
-			});
-			return guideResponse.guide;
-		} catch (error) {
-			console.error("Failed to fetch guide:", error);
-			return null;
-		}
-	});
+  .validator((guideId: string) => guideId)
+  .middleware([authMiddleware])
+  .handler(async ({ data: guideId, context }) => {
+    try {
+      const guideResponse = await api.guides.getGuideById(guideId, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+        },
+      });
+      return guideResponse.guide;
+    } catch (error) {
+      console.error("Failed to fetch guide:", error);
+      return null;
+    }
+  });
 
 export const updateGuide = createServerFn({ method: "POST", strict: false })
-	.validator(
-		(input: { guideId: string; input: Record<string, unknown> }) => input,
-	)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const updatedGuideResponse = await api.guides.updateGuide(
-				data.guideId,
-				data.input,
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
-			return updatedGuideResponse.guide;
-		} catch (error) {
-			console.error("Failed to update guide:", error);
-			return null;
-		}
-	});
+  .validator((input: { guideId: string; input: Record<string, unknown> }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const updatedGuideResponse = await api.guides.updateGuide(data.guideId, data.input, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+          ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+        },
+      });
+      return updatedGuideResponse.guide;
+    } catch (error) {
+      console.error("Failed to update guide:", error);
+      return null;
+    }
+  });
 
 export const updateGuideVisibility = createServerFn({
-	method: "POST",
-	strict: false,
+  method: "POST",
+  strict: false,
 })
-	.validator((input: { guideId: string; visibility: Visibility }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		const response = await api.guides.updateGuide(
-			data.guideId,
-			{ visibility: data.visibility },
-			{
-				headers: {
-					Cookie: context.headers.get("Cookie") ?? "",
-					...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-				},
-			},
-		);
-		return response.guide;
-	});
+  .validator((input: { guideId: string; visibility: Visibility }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    const response = await api.guides.updateGuide(
+      data.guideId,
+      { visibility: data.visibility },
+      {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+          ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+        },
+      },
+    );
+    return response.guide;
+  });
 
 export const deleteGuide = createServerFn({ method: "POST", strict: false })
-	.validator((input: { guideId: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const deletedGuideResponse = await api.guides.deleteGuide(data.guideId, {
-				headers: {
-					Cookie: context.headers.get("Cookie") ?? "",
-				},
-			});
-			return deletedGuideResponse.guide;
-		} catch (error) {
-			console.error("Failed to delete guide:", error);
-			return null;
-		}
-	});
+  .validator((input: { guideId: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const deletedGuideResponse = await api.guides.deleteGuide(data.guideId, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+        },
+      });
+      return deletedGuideResponse.guide;
+    } catch (error) {
+      console.error("Failed to delete guide:", error);
+      return null;
+    }
+  });
 
 export const publishGuide = createServerFn({ method: "POST", strict: false })
-	.validator((input: { guideId: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const publishedGuideResponse = await api.guides.publishGuide(
-				data.guideId,
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
-			return publishedGuideResponse.guide;
-		} catch (error) {
-			console.error("Failed to publish guide:", error);
-			return null;
-		}
-	});
+  .validator((input: { guideId: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const publishedGuideResponse = await api.guides.publishGuide(data.guideId, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+          ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+        },
+      });
+      return publishedGuideResponse.guide;
+    } catch (error) {
+      console.error("Failed to publish guide:", error);
+      return null;
+    }
+  });
 
 export const unpublishGuide = createServerFn({ method: "POST", strict: false })
-	.validator((input: { guideId: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const unpublishedGuideResponse = await api.guides.unpublishGuide(
-				data.guideId,
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
-			return unpublishedGuideResponse.guide;
-		} catch (error) {
-			console.error("Failed to unpublish guide:", error);
-			return null;
-		}
-	});
+  .validator((input: { guideId: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const unpublishedGuideResponse = await api.guides.unpublishGuide(data.guideId, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+          ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+        },
+      });
+      return unpublishedGuideResponse.guide;
+    } catch (error) {
+      console.error("Failed to unpublish guide:", error);
+      return null;
+    }
+  });
 
 export const archiveGuide = createServerFn({ method: "POST", strict: false })
-	.validator((input: { guideId: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const archivedGuideResponse = await api.guides.archiveGuide(
-				data.guideId,
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
-			return archivedGuideResponse.guide;
-		} catch (error) {
-			console.error("Failed to archive guide:", error);
-			return null;
-		}
-	});
+  .validator((input: { guideId: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const archivedGuideResponse = await api.guides.archiveGuide(data.guideId, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+          ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+        },
+      });
+      return archivedGuideResponse.guide;
+    } catch (error) {
+      console.error("Failed to archive guide:", error);
+      return null;
+    }
+  });
 
 export const unarchiveGuide = createServerFn({ method: "POST", strict: false })
-	.validator((input: { guideId: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const unarchivedGuideResponse = await api.guides.unarchiveGuide(
-				data.guideId,
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
-			return unarchivedGuideResponse.guide;
-		} catch (error) {
-			console.error("Failed to unarchive guide:", error);
-			return null;
-		}
-	});
+  .validator((input: { guideId: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const unarchivedGuideResponse = await api.guides.unarchiveGuide(data.guideId, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+          ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+        },
+      });
+      return unarchivedGuideResponse.guide;
+    } catch (error) {
+      console.error("Failed to unarchive guide:", error);
+      return null;
+    }
+  });
 
 export const restoreGuide = createServerFn({ method: "POST", strict: false })
-	.validator((input: { guideId: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const restoredGuideResponse = await api.guides.restoreGuide(
-				data.guideId,
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
-			return restoredGuideResponse.guide;
-		} catch (error) {
-			console.error("Failed to restore guide:", error);
-			return null;
-		}
-	});
+  .validator((input: { guideId: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const restoredGuideResponse = await api.guides.restoreGuide(data.guideId, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+          ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+        },
+      });
+      return restoredGuideResponse.guide;
+    } catch (error) {
+      console.error("Failed to restore guide:", error);
+      return null;
+    }
+  });
 
 export const permanentlyDeleteGuide = createServerFn({
-	method: "POST",
-	strict: false,
+  method: "POST",
+  strict: false,
 })
-	.validator((input: { guideId: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const response = await api.guides.permanentlyDeleteGuide(data.guideId, {
-				headers: {
-					Cookie: context.headers.get("Cookie") ?? "",
-					...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-				},
-			});
-			return response.guide;
-		} catch (error) {
-			console.error("Failed to permanently delete guide:", error);
-			return null;
-		}
-	});
-
-export const getStepsByGuideId = createServerFn({
-	method: "GET",
-	strict: false,
-})
-	.validator((guideId: string) => guideId)
-	.middleware([authMiddleware])
-	.handler(async ({ data: guideId, context }) => {
-		try {
-			const response = await api.steps.getAllStepsByGuideId(
-				{ guide_id: guideId },
-				{ headers: { Cookie: context.headers.get("Cookie") ?? "" } },
-			);
-			return response.steps;
-		} catch (error) {
-			console.error("Failed to fetch steps:", error);
-			return [];
-		}
-	});
+  .validator((input: { guideId: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const response = await api.guides.permanentlyDeleteGuide(data.guideId, {
+        headers: {
+          Cookie: context.headers.get("Cookie") ?? "",
+          ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+        },
+      });
+      return response.guide;
+    } catch (error) {
+      console.error("Failed to permanently delete guide:", error);
+      return null;
+    }
+  });
 
 export const getTrashGuides = createServerFn({ method: "GET", strict: false })
-	.validator((input?: { teamId?: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const teamId =
-				data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name) ?? "";
-			const guidesResponse = await api.guides.getAllGuides(
-				{ status: "deleted", team_id: teamId },
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-					},
-				},
-			);
-			return guidesResponse.data;
-		} catch (error) {
-			console.error("Failed to fetch trash guides:", error);
-			return [];
-		}
-	});
+  .validator((input?: { teamId?: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const teamId = data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name) ?? "";
+      const guidesResponse = await api.guides.getAllGuides(
+        { status: "deleted", team_id: teamId },
+        {
+          headers: {
+            Cookie: context.headers.get("Cookie") ?? "",
+          },
+        },
+      );
+      return guidesResponse.data;
+    } catch (error) {
+      console.error("Failed to fetch trash guides:", error);
+      return [];
+    }
+  });
 
 export const createDemoGuide = createServerFn({ method: "POST", strict: false })
-	.validator((input?: { teamId?: string }) => input)
-	.middleware([authMiddleware])
-	.handler(async ({ data, context }) => {
-		try {
-			const teamId =
-				data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name);
-			if (!teamId) {
-				return null;
-			}
+  .validator((input?: { teamId?: string }) => input)
+  .middleware([authMiddleware])
+  .handler(async ({ data, context }) => {
+    try {
+      const teamId = data?.teamId ?? getCookie(COOKIE_CONSTANTS.activeTeamId.name);
+      if (!teamId) {
+        return null;
+      }
 
-			const response = await api.guides.createDemoGuide(
-				{ teamId },
-				{
-					headers: {
-						Cookie: context.headers.get("Cookie") ?? "",
-						...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
-					},
-				},
-			);
+      const response = await api.guides.createDemoGuide(
+        { teamId },
+        {
+          headers: {
+            Cookie: context.headers.get("Cookie") ?? "",
+            ...getCsrfTokenHeader(context.headers.get("Cookie") ?? ""),
+          },
+        },
+      );
 
-			return response.guideId;
-		} catch (error) {
-			console.error("Failed to create demo guide:", error);
-			return null;
-		}
-	});
+      return response.guideId;
+    } catch (error) {
+      console.error("Failed to create demo guide:", error);
+      return null;
+    }
+  });
