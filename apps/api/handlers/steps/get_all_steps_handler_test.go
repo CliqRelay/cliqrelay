@@ -269,7 +269,8 @@ func TestGetAllStepsHandler(t *testing.T) {
 
 			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)
 
-			if tt.expectedStatus == http.StatusOK {
+			switch tt.expectedStatus {
+			case http.StatusOK:
 				var resp types.GetAllStepsResponse
 				tests.DecodeResponsePayload(t, req.ReqCtx, &resp)
 				assert.Len(t, resp.Steps, tt.expectedLen)
@@ -279,11 +280,11 @@ func TestGetAllStepsHandler(t *testing.T) {
 					require.Len(t, resp.Steps[0].MediaAssets, 1)
 					assert.Equal(t, "/path/to/image.png", resp.Steps[0].MediaAssets[0].StoragePath)
 				}
-			} else if tt.expectedStatus == http.StatusUnprocessableEntity {
+			case http.StatusUnprocessableEntity:
 				var resp map[string]string
 				tests.DecodeResponsePayload(t, req.ReqCtx, &resp)
 				assert.Contains(t, resp["message"], tt.expectedMessage)
-			} else {
+			default:
 				tests.AssertResponseMessage(t, req.ReqCtx, tt.expectedMessage)
 			}
 
