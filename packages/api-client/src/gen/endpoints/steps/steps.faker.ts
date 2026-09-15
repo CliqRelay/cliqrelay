@@ -21,6 +21,10 @@ import type {
 export const getGetAllStepsByGuideIdResponseMock = (
   overrideResponse: Partial<Extract<GetAllStepsResponse, object>> = {},
 ): GetAllStepsResponse => ({
+  nextCursor: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
   steps: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
     action: faker.helpers.arrayElement([
       faker.helpers.arrayElement([null, faker.helpers.arrayElement(Object.values(StepAction))]),
@@ -115,6 +119,7 @@ export const getGetAllStepsByGuideIdResponseMock = (
       undefined,
     ]),
   })),
+  total: faker.number.int(),
   ...overrideResponse,
 });
 

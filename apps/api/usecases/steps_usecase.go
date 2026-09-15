@@ -40,8 +40,8 @@ func (uc *StepsUseCase) Create(ctx context.Context, actor *authulamodels.Actor, 
 	return uc.stepsService.Create(ctx, req)
 }
 
-func (uc *StepsUseCase) ListByGuide(ctx context.Context, actor *authulamodels.Actor, guideID string) ([]*models.Step, error) {
-	guide, err := uc.guidesService.GetByID(ctx, guideID)
+func (uc *StepsUseCase) ListByGuide(ctx context.Context, actor *authulamodels.Actor, params *types.ListStepsParams) (*types.StepsPage, error) {
+	guide, err := uc.guidesService.GetByID(ctx, params.GuideID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (uc *StepsUseCase) ListByGuide(ctx context.Context, actor *authulamodels.Ac
 		return nil, err
 	}
 
-	return uc.stepsService.GetByGuideID(ctx, guideID)
+	return uc.stepsService.ListByGuideID(ctx, params)
 }
 
 func (uc *StepsUseCase) Get(ctx context.Context, actor *authulamodels.Actor, stepID string) (*models.Step, error) {

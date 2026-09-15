@@ -209,6 +209,39 @@ func (r *BunStepsRepository) GetByGuideID(ctx context.Context, guideID string) (
 	return steps, nil
 }
 
+func (r *BunStepsRepository) ListByGuideID(ctx context.Context, params *types.ListStepsParams) (*types.StepsPage, error) {
+	steps := make([]*models.Step, 0, params.Limit+1)
+
+	query := r.db.NewSelect().
+		Model(&steps).
+		Relation("MediaAssets").
+		Where("guide_id = ?", params.GuideID).
+		Order("sort_order ASC").
+		Limit(params.Limit + 1)
+	if params.Cursor != nil && *params.Cursor != "" {
+		query = query.Where("sort_order > ?", *params.Cursor)
+	}
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	total, err := r.db.NewSelect().
+		Model((*models.Step)(nil)).
+		Where("guide_id = ?", params.GuideID).
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	page := &types.StepsPage{Steps: steps, Total: total}
+	if len(steps) > params.Limit {
+		page.Steps = steps[:params.Limit]
+		page.NextCursor = &page.Steps[params.Limit-1].SortOrder
+	}
+
+	return page, nil
+}
+
 func (r *BunStepsRepository) Update(ctx context.Context, dto *types.UpdateStepDTO) (*models.Step, error) {
 	step := &models.Step{}
 
@@ -372,6 +405,22 @@ func (r *BunStepsRepository) reorderInTx(ctx context.Context, tx bun.Tx, guideID
 			Scan(ctx, &nextSort)
 		if err != nil {
 			return "", fmt.Errorf("get next step sort_order: %w", err)
+		}
+	} else if prevSort != "" {
+		// Clients may only have a partial view of the list, so "after prev" must mean
+		// directly after it rather than at the very end of the guide.
+		err := tx.NewSelect().
+			Model((*models.Step)(nil)).
+			Column("sort_order").
+			Where("guide_id = ?", guideID).
+			Where("id != ?", targetStepID).
+			Where("sort_order > ?", prevSort).
+			Order("sort_order ASC").
+			Limit(1).
+			For("UPDATE").
+			Scan(ctx, &nextSort)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("get following step sort_order: %w", err)
 		}
 	}
 

@@ -39,6 +39,15 @@ export default defineConfig({
         fetch: {
           includeHttpResponseReturnType: false,
         },
+        operations: {
+          getAllStepsByGuideId: {
+            query: {
+              useQuery: true,
+              useInfinite: true,
+              useInfiniteQueryParam: "cursor",
+            },
+          },
+        },
       },
     },
     hooks: {

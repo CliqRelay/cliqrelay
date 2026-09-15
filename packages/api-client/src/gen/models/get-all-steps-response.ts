@@ -8,5 +8,8 @@
 import type { Step } from "./step";
 
 export type GetAllStepsResponse = {
+  /** @nullable */
+  nextCursor: string | null;
   steps: Step[];
+  total: number;
 };

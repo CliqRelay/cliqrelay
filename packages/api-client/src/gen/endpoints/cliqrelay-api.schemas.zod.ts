@@ -318,7 +318,9 @@ export type GetAllMediaAssetsResponse = zod.input<typeof GetAllMediaAssetsRespon
 export type GetAllMediaAssetsResponseOutput = zod.output<typeof GetAllMediaAssetsResponse>;
 
 export const GetAllStepsResponse = zod.object({
+  nextCursor: zod.string().nullable(),
   steps: zod.array(Step),
+  total: zod.int(),
 });
 
 export type GetAllStepsResponse = zod.input<typeof GetAllStepsResponse>;

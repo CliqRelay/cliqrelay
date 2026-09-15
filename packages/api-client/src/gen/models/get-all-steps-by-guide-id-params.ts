@@ -8,4 +8,6 @@
 
 export type GetAllStepsByGuideIdParams = {
   guide_id?: string;
+  cursor?: string;
+  limit?: number;
 };

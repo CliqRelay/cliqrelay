@@ -11,7 +11,7 @@ import (
 
 type StepsUseCase interface {
 	Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateStepRequest) (*models.Step, error)
-	ListByGuide(ctx context.Context, actor *authulamodels.Actor, guideID string) ([]*models.Step, error)
+	ListByGuide(ctx context.Context, actor *authulamodels.Actor, params *types.ListStepsParams) (*types.StepsPage, error)
 	Get(ctx context.Context, actor *authulamodels.Actor, stepID string) (*models.Step, error)
 	Update(ctx context.Context, actor *authulamodels.Actor, stepID string, req *types.UpdateStepRequest) (*models.Step, error)
 	Delete(ctx context.Context, actor *authulamodels.Actor, stepID string) error

@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -75,14 +76,32 @@ type CreateStepResponse struct {
 
 type StepsByGuideIDQuery struct {
 	GuideID string `query:"guide_id" validate:"required,uuid"`
+	Cursor  string `query:"cursor" validate:"omitempty"`
+	Limit   int    `query:"limit" validate:"omitempty,gt=0" nullable:"true"`
 }
 
 func (r *StepsByGuideIDQuery) Validate() error {
+	r.GuideID = strings.TrimSpace(r.GuideID)
+	r.Cursor = strings.TrimSpace(r.Cursor)
 	return validator.Validate.Struct(r)
 }
 
+type ListStepsParams struct {
+	GuideID string
+	Cursor  *string
+	Limit   int
+}
+
+type StepsPage struct {
+	Steps      []*models.Step
+	NextCursor *string
+	Total      int
+}
+
 type GetAllStepsResponse struct {
-	Steps []*models.Step `json:"steps" required:"true" nullable:"false"`
+	Steps      []*models.Step `json:"steps" required:"true" nullable:"false"`
+	NextCursor *string        `json:"next_cursor" required:"true" nullable:"true"`
+	Total      int            `json:"total" required:"true" nullable:"false"`
 }
 
 type GetStepByIDResponse struct {
