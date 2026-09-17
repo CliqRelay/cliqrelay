@@ -103,7 +103,7 @@ export default defineBackground(() => {
     ) {
       try {
         const cookie = await browser.cookies.get({
-          url: env.VITE_API_URL,
+          url: env.VITE_WEB_URL,
           name: COOKIE_CONSTANTS.activeTeamId.name,
         });
         return cookie?.value;

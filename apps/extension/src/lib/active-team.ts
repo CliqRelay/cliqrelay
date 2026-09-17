@@ -24,7 +24,7 @@ const getActiveTeamIdFromBackground = async (): Promise<
 export const getActiveTeamId = async (): Promise<string | undefined> => {
 	try {
 		const cookie = await browser.cookies.get({
-			url: env.VITE_API_URL,
+			url: env.VITE_WEB_URL,
 			name: COOKIE_CONSTANTS.activeTeamId.name,
 		});
 		if (cookie?.value) {
