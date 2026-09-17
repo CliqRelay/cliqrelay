@@ -185,6 +185,7 @@ export const createSessionManager = (
           if (!jobProgressMap.has(navJobId)) {
             const navCapturedAt = event.navCapturedAt ?? new Date().toISOString();
             const navTime = new Date(navCapturedAt).getTime() - 1;
+            const { viewportWidth, viewportHeight } = meta?.targetElement ?? {};
             jobProgressMap.set(navJobId, {
               jobId: navJobId,
               stepId: event.navStepId,
@@ -196,6 +197,9 @@ export const createSessionManager = (
               phase: "completed",
               screenshotUrl: event.navScreenshotUrl,
               thumbnail: event.navThumbnail,
+              ...(viewportWidth != null && viewportHeight != null
+                ? { targetElement: { viewportWidth, viewportHeight } }
+                : {}),
             });
           }
         }

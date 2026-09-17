@@ -1,4 +1,4 @@
-import { type ReactNode, type Ref, type RefObject, useEffect, useRef } from "react";
+import { type ReactNode, type Ref, type RefObject, useRef } from "react";
 
 import { motion } from "framer-motion";
 import { FileTextIcon, MousePointerClick } from "lucide-react";
@@ -6,8 +6,10 @@ import { FileTextIcon, MousePointerClick } from "lucide-react";
 import type { Step } from "@repo/api-client";
 
 import { useInfiniteScrollSentinel } from "../hooks/useInfiniteScrollSentinel";
+import { useStickToBottom } from "../hooks/useStickToBottom";
 import { StepCardRecording } from "./StepCardRecording";
 import { StepCardView } from "./StepCardView";
+import { StepListJumpToLatest } from "./StepListJumpToLatest";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StepJobProgress } from "@/models";
@@ -51,28 +53,13 @@ function RecordingStepList({
   onDeleteStep?: (stepId: string, actionText?: string | null) => void;
   onDismiss?: (jobId: string) => void;
 }) {
-  const viewportRef = useRef<HTMLDivElement>(null);
   const sorted = [...steps].sort(
     (a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime(),
   );
 
-  const prevLengthRef = useRef(sorted.length);
-
-  useEffect(() => {
-    const prevLen = prevLengthRef.current;
-    prevLengthRef.current = sorted.length;
-    if (sorted.length <= prevLen) return;
-
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 150;
-    if (!isNearBottom) return;
-
-    requestAnimationFrame(() => {
-      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
-    });
-  }, [sorted.length]);
+  const { viewportRef, contentRef, isPinned, scrollToBottom } = useStickToBottom({
+    enabled: sorted.length > 0,
+  });
 
   if (sorted.length === 0 && bufferedCount === 0) {
     return (
@@ -91,17 +78,20 @@ function RecordingStepList({
   }
 
   return (
-    <StepListScroll viewportRef={viewportRef}>
-      {sorted.map((step, index) => (
-        <StepCardRecording
-          key={step.jobId}
-          step={step}
-          stepNumber={index + 1}
-          onDelete={onDeleteStep}
-          onDismiss={onDismiss}
-        />
-      ))}
-    </StepListScroll>
+    <div className="relative h-full w-full min-w-0">
+      <StepListScroll viewportRef={viewportRef} contentRef={contentRef}>
+        {sorted.map((step, index) => (
+          <StepCardRecording
+            key={step.jobId}
+            step={step}
+            stepNumber={index + 1}
+            onDelete={onDeleteStep}
+            onDismiss={onDismiss}
+          />
+        ))}
+      </StepListScroll>
+      <StepListJumpToLatest visible={!isPinned} onClick={scrollToBottom} />
+    </div>
   );
 }
 
@@ -218,14 +208,18 @@ function StepListLoadMore({
 
 function StepListScroll({
   viewportRef,
+  contentRef,
   children,
 }: {
   viewportRef?: Ref<HTMLDivElement>;
+  contentRef?: Ref<HTMLDivElement>;
   children: ReactNode;
 }) {
   return (
     <ScrollArea viewportRef={viewportRef} type="auto" className="h-full w-full min-w-0">
-      <div className="flex w-full min-w-0 flex-col gap-4 p-4">{children}</div>
+      <div ref={contentRef} className="flex w-full min-w-0 flex-col gap-4 p-4">
+        {children}
+      </div>
     </ScrollArea>
   );
 }

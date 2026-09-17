@@ -15,4 +15,5 @@ export { StepCardMenu } from "./StepCardMenu";
 export { StepCardRecording } from "./StepCardRecording";
 export { StepCardView } from "./StepCardView";
 export { StepList } from "./StepList";
+export { StepListJumpToLatest } from "./StepListJumpToLatest";
 export { UploadStatusBadges } from "./UploadStatusBadges";

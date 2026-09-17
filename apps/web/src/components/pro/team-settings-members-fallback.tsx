@@ -1,4 +1,4 @@
-import { Lock, Users } from "lucide-react";
+import { Lock } from "lucide-react";
 
 import { Separator } from "../ui/separator";
 import { UpgradeToProButton } from "@/components/shared/upgrade-to-pro-button";
@@ -33,7 +33,6 @@ export function TeamSettingsMembersFallback({ isUpgradeAvailable = false, onUpgr
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-primary" />
-              <Users size={14} className="shrink-0" />
               Add organization members to specific teams
             </li>
             <li className="flex items-center gap-2">
