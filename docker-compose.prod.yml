@@ -37,7 +37,7 @@ services:
       retries: 5
 
   rustfs:
-    image: rustfs/rustfs:1.0.0-rc.4
+    image: rustfs/rustfs:1.0.0
     container_name: cliqrelay-rustfs
     ports:
       - "${RUSTFS_PORT}:9000"
@@ -90,9 +90,9 @@ services:
       S3_REGION: ${S3_REGION}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       SMTP_HOST: ${SMTP_HOST}
-      SMTP_PASS: ${SMTP_PASS}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
       STANDALONE_MODE: ${STANDALONE_MODE}
     depends_on:
       postgres:
@@ -122,9 +122,9 @@ services:
       S3_REGION: ${S3_REGION}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
       SMTP_HOST: ${SMTP_HOST}
-      SMTP_PASS: ${SMTP_PASS}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
     depends_on:
       postgres:
         condition: service_healthy
@@ -143,6 +143,7 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_APP_NAME: ${VITE_APP_NAME}
+        VITE_APP_SITE_URL: ${VITE_APP_SITE_URL}
         VITE_AUTHULA_URL: ${VITE_AUTHULA_URL}
         VITE_BASE_URL: ${VITE_BASE_URL}
         VITE_EXTENSION_ID: ${VITE_EXTENSION_ID}

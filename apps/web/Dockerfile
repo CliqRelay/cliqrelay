@@ -5,7 +5,7 @@ WORKDIR /app
 
 RUN apk add --no-cache libc6-compat
 
-RUN corepack enable & corepack prepare pnpm@12.4.1 --activate
+RUN corepack enable && corepack prepare pnpm@12.4.1 --activate
 
 # ---------- Prune (Turborepo) ----------
 FROM base AS pruner
@@ -35,6 +35,7 @@ ARG VITE_EXTENSION_ID
 ARG VITE_AUTHULA_URL
 ARG VITE_API_URL
 ARG VITE_BASE_URL
+ARG VITE_APP_SITE_URL
 ARG VITE_APP_NAME
 
 # "loose" env mode enables turbo to pass through ARGs & ENVs to the underlying command or else they are blocked by default. 
