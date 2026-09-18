@@ -1,164 +1,271 @@
-import { Check, Loader2, Pause, Play, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import type {
-	RecordingStatus,
-	StepJobProgress,
-	UploadQueueInfo,
-} from "@/models";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AlertCircle, Check, Loader2, Pause, Play, Trash2 } from "lucide-react";
+
 import { RecordingIndicator } from "./RecordingIndicator";
 import { StepList } from "./StepList";
 import { UploadStatusBadges } from "./UploadStatusBadges";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import type { RecordingStatus, StepJobProgress, UploadQueueInfo } from "@/models";
 
 type CaptureSessionPanelProps = {
-	status: RecordingStatus;
-	jobProgress: StepJobProgress[];
-	bufferedCount: number;
-	uploadQueue: UploadQueueInfo;
-	isDraining: boolean;
-	activeGuideId: string | null;
-	stepCount: number;
-	isPending: boolean;
-	error: string | null;
-	onPause: () => Promise<void>;
-	onResume: () => Promise<void>;
-	onStop: () => Promise<void>;
-	onDeleteStep: (id: string, actionText?: string | null) => void;
-	onDismiss: (jobId: string) => void;
-	onDeleteGuide: () => void;
+  status: RecordingStatus;
+  jobProgress: StepJobProgress[];
+  bufferedCount: number;
+  uploadQueue: UploadQueueInfo;
+  isDraining: boolean;
+  activeGuideId: string | null;
+  stepCount: number;
+  isPending: boolean;
+  error: string | null;
+  onPause: () => Promise<void>;
+  onResume: () => Promise<void>;
+  onStop: () => Promise<void>;
+  onDeleteStep: (id: string, actionText?: string | null) => void;
+  onDismiss: (jobId: string) => void;
+  onDeleteGuide: () => void;
 };
 
 export function CaptureSessionPanel({
-	status,
-	jobProgress,
-	bufferedCount,
-	uploadQueue,
-	isDraining,
-	activeGuideId,
-	stepCount,
-	isPending,
-	error,
-	onPause,
-	onResume,
-	onStop,
-	onDeleteStep,
-	onDismiss,
-	onDeleteGuide,
+  status,
+  jobProgress,
+  bufferedCount,
+  uploadQueue,
+  isDraining,
+  activeGuideId,
+  stepCount,
+  isPending,
+  error,
+  onPause,
+  onResume,
+  onStop,
+  onDeleteStep,
+  onDismiss,
+  onDeleteGuide,
 }: CaptureSessionPanelProps) {
-	const isPaused = status === "paused";
-	const handlePauseResume = isPaused ? onResume : onPause;
+  const isPaused = status === "paused";
+  const handlePauseResume = isPaused ? onResume : onPause;
 
-	return (
-		<div className="flex flex-1 flex-col min-h-0 overflow-hidden">
-			<div className="flex shrink-0 items-center justify-between px-4 py-2">
-				<span className="text-[13px] font-semibold text-foreground/80">
-					Capture Session
-				</span>
-				<RecordingIndicator status={status} />
-			</div>
+  const hasUploads =
+    uploadQueue.pending + uploadQueue.inProgress + uploadQueue.failed + uploadQueue.completed > 0;
 
-			<Separator />
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <SessionHeader
+        status={status}
+        isPaused={isPaused}
+        stepCount={stepCount}
+        activeGuideId={activeGuideId}
+      />
 
-			{/* Scrollable step list */}
-			<div className="flex-1 min-h-0">
-				<StepList
-					mode="recording"
-					steps={jobProgress}
-					bufferedCount={bufferedCount}
-					onDeleteStep={onDeleteStep}
-					onDismiss={onDismiss}
-				/>
-			</div>
+      <div className="min-h-0 flex-1">
+        <StepList
+          mode="recording"
+          steps={jobProgress}
+          bufferedCount={bufferedCount}
+          onDeleteStep={onDeleteStep}
+          onDismiss={onDismiss}
+        />
+      </div>
 
-			{/* Bottom control card */}
-			<div className="shrink-0 border-t border-border/50">
-				<Card className="border-border/50 rounded">
-					<CardContent className="flex flex-col gap-3">
-						{/* Status row */}
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-2">
-								{stepCount > 0 && (
-									<Badge
-										variant="secondary"
-										className="h-5 gap-1 px-1.5 text-[10px] font-normal"
-									>
-										{stepCount} step{stepCount !== 1 ? "s" : ""}
-									</Badge>
-								)}
-								{activeGuideId && (
-									<Badge
-										variant="outline"
-										className="h-5 px-1.5 text-[10px] font-normal font-mono"
-									>
-										{activeGuideId.slice(0, 8)}…
-									</Badge>
-								)}
-							</div>
-							<UploadStatusBadges uploadQueue={uploadQueue} />
-						</div>
+      <div className="shrink-0 border-t border-border/60 bg-card/70 backdrop-blur-sm">
+        <div className="flex flex-col gap-2.5 p-3">
+          <AnimatePresence initial={false}>
+            {isDraining && (
+              <Collapsible key="draining">
+                <StatusStrip>
+                  <Loader2 className="size-3.5 animate-spin text-muted-foreground/70" />
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    Finalizing uploads…
+                  </span>
+                </StatusStrip>
+              </Collapsible>
+            )}
 
-						{isDraining && (
-							<div className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
-								<Loader2 className="size-3.5 animate-spin text-muted-foreground/60" />
-								<span className="text-[11px] font-medium text-muted-foreground/70">
-									Finalizing uploads...
-								</span>
-							</div>
-						)}
+            {hasUploads && !isDraining && (
+              <Collapsible key="uploads">
+                <StatusStrip>
+                  <UploadStatusBadges uploadQueue={uploadQueue} />
+                </StatusStrip>
+              </Collapsible>
+            )}
 
-						<Separator />
+            {error && (
+              <Collapsible key="error">
+                <div className="flex items-start gap-2 rounded-lg bg-destructive/10 px-2.5 py-2 ring-1 ring-destructive/20 ring-inset">
+                  <AlertCircle className="mt-px size-3.5 shrink-0 text-destructive" />
+                  <p className="text-[11px] leading-relaxed text-destructive">{error}</p>
+                </div>
+              </Collapsible>
+            )}
+          </AnimatePresence>
 
-						{/* Action buttons */}
-						<div className="flex flex-col gap-4">
-							<div className="flex items-center gap-2">
-								<Button
-									variant="outline"
-									className="gap-1.5"
-									onClick={handlePauseResume}
-									disabled={isPending}
-								>
-									{isPaused ? (
-										<Play className="size-4" />
-									) : (
-										<Pause className="size-4" />
-									)}
-									{isPaused ? "Resume" : "Pause"}
-								</Button>
-								<Button
-									variant="outline"
-									className="ml-auto gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-									onClick={onDeleteGuide}
-									disabled={isPending}
-								>
-									<Trash2 className="size-3" />
-									Delete Guide
-								</Button>
-							</div>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <CircleAction
+              label={isPaused ? "Resume capture" : "Pause capture"}
+              disabled={isPending}
+              onClick={handlePauseResume}
+            >
+              {isPaused ? <Play /> : <Pause />}
+            </CircleAction>
 
-							<div className="w-full">
-								<Button
-									variant="default"
-									className="w-full p-6 gap-1.5"
-									onClick={onStop}
-									disabled={isPending}
-								>
-									<Check className="size-8" />
-									<span className="text-lg">Complete Capture</span>
-								</Button>
-							</div>
-						</div>
+            <span className="mx-0.5 h-5 w-px shrink-0 bg-border" />
 
-						{error && (
-							<p className="text-[11px] text-destructive text-center leading-relaxed">
-								{error}
-							</p>
-						)}
-					</CardContent>
-				</Card>
-			</div>
-		</div>
-	);
+            <CircleAction
+              label="Delete guide"
+              tone="destructive"
+              disabled={isPending}
+              onClick={onDeleteGuide}
+            >
+              <Trash2 />
+            </CircleAction>
+          </div>
+
+          <Button
+            className="h-11 w-full gap-2 rounded-xl text-sm font-semibold shadow-sm shadow-primary/25"
+            onClick={onStop}
+            disabled={isPending}
+          >
+            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+            Complete capture
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CircleAction({
+  label,
+  tone = "default",
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  tone?: "default" | "destructive";
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label={label}
+          disabled={disabled}
+          onClick={onClick}
+          className={cn(
+            "size-10 rounded-full shadow-xs",
+            tone === "destructive" &&
+              "text-destructive/80 hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive",
+          )}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-[11px]">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function SessionHeader({
+  status,
+  isPaused,
+  stepCount,
+  activeGuideId,
+}: {
+  status: RecordingStatus;
+  isPaused: boolean;
+  stepCount: number;
+  activeGuideId: string | null;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative shrink-0 overflow-hidden border-b border-border/60 px-4 py-3 transition-colors duration-500",
+        isPaused ? "bg-amber-500/10" : "bg-destructive/5",
+      )}
+    >
+      <LiveRail isPaused={isPaused} />
+
+      <div className="flex items-center gap-2">
+        <RecordingIndicator status={status} />
+        <span className="ml-auto text-[11px] font-medium text-muted-foreground tabular-nums">
+          {stepCount} step{stepCount !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      <div className="mt-1.5 flex items-end gap-2">
+        <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-muted-foreground/70">
+          {isPaused
+            ? "Paused — actions on the page aren't captured."
+            : "Capturing clicks and inputs on the active tab."}
+        </p>
+        {activeGuideId && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="shrink-0 font-mono text-[10px] text-muted-foreground/50">
+                {activeGuideId.slice(0, 8)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="font-mono text-[11px]">
+              {activeGuideId}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LiveRail({ isPaused }: { isPaused: boolean }) {
+  const shouldReduceMotion = useReducedMotion();
+
+  if (isPaused) {
+    return <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-500/40" />;
+  }
+
+  if (shouldReduceMotion) {
+    return <div className="absolute inset-x-0 top-0 h-0.5 bg-destructive/40" />;
+  }
+
+  return (
+    <div className="absolute inset-x-0 top-0 h-0.5 overflow-hidden bg-destructive/10">
+      <motion.div
+        className="h-full w-1/3 bg-linear-to-r from-transparent via-destructive to-transparent"
+        animate={{ x: ["-100%", "300%"] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
+
+function Collapsible({ children }: { children: ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.18 }}
+      className="overflow-hidden"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function StatusStrip({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-2.5 py-1.5 ring-1 ring-border/60 ring-inset">
+      {children}
+    </div>
+  );
 }
