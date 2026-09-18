@@ -54,10 +54,6 @@ export function ApiKeysFallback({
                 <span className="size-1.5 shrink-0 rounded-full bg-primary" />
                 Build custom integrations with our REST API
               </li>
-              <li className="flex items-center gap-2">
-                <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-                Rate limiting and usage tracking for each key
-              </li>
             </ul>
           </div>
         </div>

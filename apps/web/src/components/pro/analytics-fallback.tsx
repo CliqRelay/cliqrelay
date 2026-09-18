@@ -52,11 +52,7 @@ export function AnalyticsFallback({
               </li>
               <li className="flex items-center gap-2">
                 <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-                Understand your audience with visitor insights
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-                Identify your most popular guides and content
+                Identify your most popular guides
               </li>
               <li className="flex items-center gap-2">
                 <span className="size-1.5 shrink-0 rounded-full bg-primary" />
