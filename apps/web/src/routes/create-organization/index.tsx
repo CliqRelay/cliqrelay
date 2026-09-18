@@ -18,6 +18,7 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authulaClient } from "@/lib/authula-client";
+import { setActiveOrgCookie } from "@/lib/org-cookie";
 import { toast } from "@/lib/toast";
 
 export const Route = createFileRoute("/create-organization")({
@@ -72,10 +73,12 @@ function CreateOrganization() {
 		},
 		onSubmit: async ({ value }) => {
 			try {
-				await authulaClient.organizations.createOrganization({
-					name: value.name,
-					role: "admin",
-				});
+				const organization =
+					await authulaClient.organizations.createOrganization({
+						name: value.name,
+						role: "admin",
+					});
+				setActiveOrgCookie(organization.id);
 
 				toast("Success", {
 					description: "Your organization has been created.",
