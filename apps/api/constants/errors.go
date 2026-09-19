@@ -18,6 +18,7 @@ var (
 	ErrInvalidMediaAssetID   = errors.New("invalid media asset ID")
 	ErrMediaAssetNotFound    = errors.New("media asset not found")
 	ErrInvalidContentType    = errors.New("invalid content type")
+	ErrInvalidFileSize       = errors.New("invalid file size")
 	ErrStepNotInGuide        = errors.New("step does not belong to the specified guide")
 	ErrMediaAssetCopyFailed  = errors.New("failed to copy media asset")
 	ErrStepMediaNotSupported = errors.New("step does not support media")
