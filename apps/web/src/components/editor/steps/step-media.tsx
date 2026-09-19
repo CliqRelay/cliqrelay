@@ -16,9 +16,10 @@ type Props = {
   step: Step;
   onReplaceMedia?: () => void;
   isReplacing?: boolean;
+  className?: string;
 };
 
-export function StepMedia({ step, onReplaceMedia, isReplacing }: Props) {
+export function StepMedia({ step, onReplaceMedia, isReplacing, className }: Props) {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [showOverlay, setShowOverlay] = useState<boolean>(false);
@@ -66,7 +67,10 @@ export function StepMedia({ step, onReplaceMedia, isReplacing }: Props) {
       if (hasAspectRatio) {
         return (
           <div
-            className="group relative mb-4 overflow-hidden rounded-sm border bg-muted/20 shadow-xs"
+            className={cn(
+              "group relative mb-4 overflow-hidden rounded-sm border bg-muted/20 shadow-xs",
+              className,
+            )}
             style={{ aspectRatio: containerAspectRatio }}
           >
             {mediaToolbar}
@@ -130,7 +134,12 @@ export function StepMedia({ step, onReplaceMedia, isReplacing }: Props) {
       }
 
       return (
-        <div className="group relative mb-4 overflow-hidden rounded-sm border bg-muted/20 shadow-xs">
+        <div
+          className={cn(
+            "group relative mb-4 overflow-hidden rounded-sm border bg-muted/20 shadow-xs",
+            className,
+          )}
+        >
           {mediaToolbar}
           {!loaded && (
             <div className="flex items-center justify-center py-6">

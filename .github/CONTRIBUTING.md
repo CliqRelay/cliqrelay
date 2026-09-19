@@ -110,6 +110,19 @@ These packages/apps are 100% [TypeScript](https://www.typescriptlang.org/).
 
 `Node.js`:
 
+Unit tests and Storybook component tests run together with Vitest. The component tests execute each story's `play` function in headless Chromium, so Playwright's browser must be installed once:
+
+```bash
+# Install Chromium (and its system libraries on Linux)
+pnpm --filter web exec playwright install --with-deps chromium
+
+# Run all web tests
+pnpm --filter web test
+
+# Only the Storybook component tests
+pnpm --filter web exec vitest run --project storybook
+```
+
 E2E tests validate the capture-to-editor pipeline — the messaging bridge, ingestion hooks, and guide creation flow — against the full stack (DB, Redis, S3).
 
 **Prerequisites:**

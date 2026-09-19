@@ -49,6 +49,9 @@ type Props = {
   ) => void;
 };
 
+// Radix portals (Select, DropdownMenu, Tooltip) render outside the timeline but belong to it
+const FLOATING_LAYER_SELECTOR = "[data-radix-popper-content-wrapper], [data-slot='select-content']";
+
 export function GuideWorkflowTimeline({
   steps,
   hasNextPage = false,
@@ -78,7 +81,12 @@ export function GuideWorkflowTimeline({
     if (!selectedStepId) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (timelineRef.current && !timelineRef.current.contains(e.target as Node)) {
+      const target = e.target as Element;
+      if (
+        timelineRef.current &&
+        !timelineRef.current.contains(target) &&
+        !target.closest(FLOATING_LAYER_SELECTOR)
+      ) {
         onSelectStep?.(null);
       }
     };

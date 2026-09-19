@@ -47,14 +47,7 @@ export function StepItemForm({ step, onUpdate, onReplaceMedia, isReplacing }: St
   const debouncedSave = useDebouncedSave(step.id, onUpdate ?? (() => {}));
 
   if (step.type === "canvas") {
-    return (
-      <CanvasStepForm
-        step={step}
-        onUpdate={onUpdate}
-        onReplaceMedia={onReplaceMedia}
-        isReplacing={isReplacing}
-      />
-    );
+    return <CanvasStepForm step={step} onUpdate={onUpdate} />;
   }
 
   return (
