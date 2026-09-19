@@ -1,38 +1,54 @@
 # Project Guidelines
 
-## Folder Structure
+## Repository Layout
 
-Turborepo is used as the monorepo tool for this project, and the folder structure is organized as follows:
+Turborepo manages this monorepo.
 
 ```
 /apps
-  /api <-- Go backend API server
-  /extension <-- wxt.dev browser extension
-  /web <-- TanStack Start app
+  /api        <-- Go backend API server
+  /extension  <-- wxt.dev browser extension
+  /web        <-- TanStack Start app
 /packages
-  /api-client <-- TypeScript SDK for the API generated using orval.dev
-  /data-commons <-- shared types and utilities
+  /api-client     <-- TypeScript SDK for the API, generated with orval.dev
+  /data-commons   <-- shared types and utilities
+  /extensions-sdk <-- React slot/nav registry for building frontend extensions
 ...
 ```
 
 ## Tech Stack
 
-- **Monorepo**: Turborepo
-- **Frontend**:
-  - pnpm, TanStack Start, React, Tailwind CSS, Shadcn UI, Zustand, Tanstack Form, Tanstack Query, TypeScript, Zod, Vitest, Storybook
-- **Backend**: Go, Authula, PostgreSQL
-
-## General Principles
-
-- Respect existing patterns in the codebase
-- Prioritize readability and maintainability
-- Always follow the agent skills for the relevant domain when writing new code or refactoring old code. For the `web` and `extension` projects, always follow the `frontend` agent skills. For the `api` project, follow the `backend` agent skills. This is crucial to maintain consistency and code quality across the codebase.
-- In react apps, don't use hooks such as `useMemo`, `useCallback` and the likes because the react compiler already handles it.
-- For shared types, utilities and code that is used across multiple typescript projects in this monorepo, put it in the `packages/data-commons/models` package. For code that is specific to one project, put it in the `models` folder of that project in its own dedicated domain file e.g. `guides.ts, steps.ts` etc. This way we keep this whole codebase consistent and maintainable. For example, if you are adding a new type for a step, add it to `packages/data-commons/models/steps.ts` if it's supposed to be shared across the monorepo, if not then just add it to the project specific folder e.g. `apps/web/src/models/steps.ts` file and export it from the index file of that folder. The same goes for Zod schemas and any other code.
-- Always follow the `.agents/skills/frontend` skills when working within the `extension` and `web` projects and follow the `.agents/skills/backend` skills when working within the `api` project. This is crucial to maintain consistency and code quality across the codebase.
-- DON'T write too many comments. Only comment code that is not obvious. If you feel the need to comment a piece of code, it probably means that the code is not clear enough and should be refactored to be more readable and maintainable. Always prioritize readability and maintainability over comments.
+| Area | Tools |
+| --- | --- |
+| Monorepo | Turborepo |
+| Frontend | pnpm, TanStack Start, React, TypeScript, Tailwind CSS, Shadcn UI, Zustand, TanStack Form, TanStack Query, Zod, Vitest, Storybook |
+| Backend | Go, Authula, PostgreSQL |
 
 ## Agent Skills
 
-- Always follow the Agent Skills located in the folder `.agents/skills/` as it contains all the skills and playbooks you need to follow to make sure you are adhering to the project guidelines and best practices.
-- Always use the `don't waffle` skill when writing and generating plans.
+Skills live in `.agents/skills/` and contain the playbooks to follow for each domain. They are not optional.
+
+- `web` and `extension` work → follow the **frontend** skills.
+- `api` work → follow the **backend** skills.
+- Writing or generating a plan → use the **don't waffle** skill.
+
+## General Principles
+
+- Respect existing patterns in the codebase.
+- Prioritise readability and maintainability above all else.
+- Comment sparingly. Only explain what is genuinely non-obvious — if code needs a comment to be understood, refactor it instead.
+
+## Frontend (TypeScript)
+
+- Don't use `useMemo`, `useCallback` or similar memoisation hooks; the React compiler handles this.
+- Place code by scope:
+  - Shared across projects → `packages/data-commons/models/<domain>.ts` (e.g. `steps.ts`).
+  - Project-specific → that project's `models` folder, in its own domain file (e.g. `apps/web/src/models/steps.ts`), exported from the folder's index.
+  - This applies to types, Zod schemas, utilities — everything.
+- Format every file you touch with `oxfmt`.
+- Write component tests as Storybook stories run through Vitest, not plain React Testing Library.
+- Reserve Playwright e2e tests (`apps/web/e2e`, run with `pnpm --filter web test:e2e`) for high-level critical journeys — auth, guide creation, publishing and similar. Everything below that belongs in component or unit tests.
+
+## Backend (Go)
+
+- Use the existing `Makefile` targets rather than writing commands by hand.
