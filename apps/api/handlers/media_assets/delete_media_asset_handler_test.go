@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	handlersmediaassets "github.com/CliqRelay/cliqrelay/handlers/media_assets"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -102,6 +103,17 @@ func TestDeleteMediaAssetHandler(t *testing.T) {
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   assert.AnError.Error(),
 		},
+		{
+			name:    "media asset not found",
+			assetID: uuid.New().String(),
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				mockMediaAssetsRepo.On("GetByID", mock.Anything, mock.Anything).
+					Return(nil, nil).
+					Once()
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   constants.ErrMediaAssetNotFound.Error(),
+		},
 	}
 
 	for _, tt := range cases {
@@ -117,7 +129,7 @@ func TestDeleteMediaAssetHandler(t *testing.T) {
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanEditGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			maSvc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			maSvc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, tests.NewTestRedisClient(t), nil, (*interfaces.MediaAssetHooks)(nil))
 			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewMediaAssetsUseCase(mockAuthz, maSvc, stepsSvc, guidesSvc)

@@ -64,6 +64,8 @@ export * from "./recalculate-duration-response";
 export * from "./record-guide-view-response";
 export * from "./reorder-steps-request";
 export * from "./reorder-steps-response";
+export * from "./replace-upload-request";
+export * from "./replace-upload-response";
 export * from "./restore-guide-response";
 export * from "./star-guide-response";
 export * from "./step-action";

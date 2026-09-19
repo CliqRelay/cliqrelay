@@ -7,7 +7,11 @@
  */
 import { faker } from "@faker-js/faker";
 
-import type { CompleteUploadResponse, PresignUploadResponse } from "../../models";
+import type {
+  CompleteUploadResponse,
+  PresignUploadResponse,
+  ReplaceUploadResponse,
+} from "../../models";
 
 export const getCompleteUploadResponseMock = (
   overrideResponse: Partial<Extract<CompleteUploadResponse, object>> = {},
@@ -22,5 +26,48 @@ export const getPresignUploadResponseMock = (
 ): PresignUploadResponse => ({
   presignedUrl: faker.string.alpha({ length: { min: 10, max: 20 } }),
   storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  ...overrideResponse,
+});
+
+export const getReplaceUploadResponseMock = (
+  overrideResponse: Partial<Extract<ReplaceUploadResponse, object>> = {},
+): ReplaceUploadResponse => ({
+  mediaAsset: {
+    altText: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+      undefined,
+    ]),
+    byteSize: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+    createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+    height: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+    id: faker.string.uuid(),
+    mimeType: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+      undefined,
+    ]),
+    stepId: faker.string.uuid(),
+    storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    thumbnail: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+      undefined,
+    ]),
+    updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
+    url: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+      undefined,
+    ]),
+    width: faker.helpers.arrayElement([
+      faker.helpers.arrayElement([faker.number.int(), null]),
+      undefined,
+    ]),
+  },
+  storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  url: faker.string.alpha({ length: { min: 10, max: 20 } }),
   ...overrideResponse,
 });

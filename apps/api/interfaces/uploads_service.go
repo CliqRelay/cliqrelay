@@ -9,4 +9,5 @@ import (
 type UploadsService interface {
 	GeneratePresignedPutURL(ctx context.Context, guideID, stepID string) (*types.PresignedURLResult, error)
 	CompleteUpload(ctx context.Context, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error)
+	ReplaceUpload(ctx context.Context, dto *types.ReplaceUploadDTO) (*types.ReplaceUploadResponse, error)
 }

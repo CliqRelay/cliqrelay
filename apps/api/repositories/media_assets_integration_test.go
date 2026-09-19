@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	mediaassetsrepositories "github.com/CliqRelay/cliqrelay/repositories/media_assets"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -392,4 +393,88 @@ func TestBunMediaAssetsRepository_Delete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBunMediaAssetsRepository_DeleteByStepID(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns the deleted rows", func(t *testing.T) {
+		t.Parallel()
+		db := mediaAssetsDB
+		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+		stepID, _ := seedSimpleStep(t, db)
+		seedMediaAsset(t, db, stepID, "/uploads/delete-by-step-1.png")
+		seedMediaAsset(t, db, stepID, "/uploads/delete-by-step-2.png")
+
+		removed, err := repo.DeleteByStepID(context.Background(), stepID.String())
+
+		require.NoError(t, err)
+		assert.Len(t, removed, 2)
+		remaining, err := repo.GetByStepID(context.Background(), stepID.String())
+		require.NoError(t, err)
+		assert.Empty(t, remaining)
+	})
+
+	t.Run("returns empty slice when nothing to delete", func(t *testing.T) {
+		t.Parallel()
+		db := mediaAssetsDB
+		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+		stepID, _ := seedSimpleStep(t, db)
+
+		removed, err := repo.DeleteByStepID(context.Background(), stepID.String())
+
+		require.NoError(t, err)
+		assert.NotNil(t, removed)
+		assert.Empty(t, removed)
+	})
+}
+
+func TestBunMediaAssetsRepository_Tx(t *testing.T) {
+	t.Parallel()
+
+	t.Run("commits delete and create together", func(t *testing.T) {
+		t.Parallel()
+		db := mediaAssetsDB
+		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+		stepID, _ := seedSimpleStep(t, db)
+		seedMediaAsset(t, db, stepID, "/uploads/tx-old.png")
+
+		err := repo.Tx(context.Background(), func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
+			if _, err := txRepo.DeleteByStepID(ctx, stepID.String()); err != nil {
+				return err
+			}
+			_, err := txRepo.Create(ctx, &types.CreateMediaAssetDTO{StepID: stepID, StoragePath: "/uploads/tx-new.png"})
+			return err
+		})
+
+		require.NoError(t, err)
+		assets, err := repo.GetByStepID(context.Background(), stepID.String())
+		require.NoError(t, err)
+		require.Len(t, assets, 1)
+		assert.Equal(t, "/uploads/tx-new.png", assets[0].StoragePath)
+	})
+
+	t.Run("rolls back when callback fails", func(t *testing.T) {
+		t.Parallel()
+		db := mediaAssetsDB
+		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+		stepID, _ := seedSimpleStep(t, db)
+		seedMediaAsset(t, db, stepID, "/uploads/tx-rollback-old.png")
+
+		err := repo.Tx(context.Background(), func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
+			if _, err := txRepo.DeleteByStepID(ctx, stepID.String()); err != nil {
+				return err
+			}
+			if _, err := txRepo.Create(ctx, &types.CreateMediaAssetDTO{StepID: stepID, StoragePath: "/uploads/tx-rollback-new.png"}); err != nil {
+				return err
+			}
+			return assert.AnError
+		})
+
+		require.ErrorIs(t, err, assert.AnError)
+		assets, err := repo.GetByStepID(context.Background(), stepID.String())
+		require.NoError(t, err)
+		require.Len(t, assets, 1)
+		assert.Equal(t, "/uploads/tx-rollback-old.png", assets[0].StoragePath)
+	})
 }

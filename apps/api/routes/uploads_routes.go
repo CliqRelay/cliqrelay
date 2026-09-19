@@ -17,6 +17,7 @@ import (
 func UploadRoutes(cfg *config.HTTPConfig, uploadUseCase interfaces.UploadsUseCase) []authulamodels.Route {
 	presignUploadHandler := handlersuploads.NewPresignUploadHandler(uploadUseCase)
 	completeUploadHandler := handlersuploads.NewCompleteUploadHandler(uploadUseCase)
+	replaceUploadHandler := handlersuploads.NewReplaceUploadHandler(uploadUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
@@ -36,6 +37,12 @@ func UploadRoutes(cfg *config.HTTPConfig, uploadUseCase interfaces.UploadsUseCas
 			Path:       fmt.Sprintf("%s/uploads/complete", base),
 			Middleware: authMiddleware,
 			Handler:    completeUploadHandler.Handle(),
+		},
+		{
+			Method:     "POST",
+			Path:       fmt.Sprintf("%s/uploads/replace", base),
+			Middleware: authMiddleware,
+			Handler:    replaceUploadHandler.Handle(),
 		},
 	}
 }
@@ -60,5 +67,15 @@ func RegisterUploadsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithTags("Uploads"),
 		openapi.WithRequest(&types.CompleteUploadRequest{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.CompleteUploadResponse{}),
+	)
+	_ = svc.AddOperation(
+		http.MethodPost,
+		fmt.Sprintf("%s/uploads/replace", basePath),
+		openapi.WithOperationID("replaceUpload"),
+		openapi.WithSummary("Replace upload"),
+		openapi.WithDescription("Replaces the step's media asset with the uploaded file and queues the old file for deletion"),
+		openapi.WithTags("Uploads"),
+		openapi.WithRequest(&types.ReplaceUploadRequest{}),
+		openapi.WithResponseStatus(http.StatusOK, &types.ReplaceUploadResponse{}),
 	)
 }

@@ -18,6 +18,8 @@ import type {
   CompleteUploadResponse,
   PresignUploadRequest,
   PresignUploadResponse,
+  ReplaceUploadRequest,
+  ReplaceUploadResponse,
 } from "../../models";
 
 import { customFetch } from "../../../mutators/custom-fetch";
@@ -199,4 +201,92 @@ export const usePresignUpload = <TError = unknown, TContext = unknown>(
   TContext
 > => {
   return useMutation(getPresignUploadMutationOptions(options), queryClient);
+};
+export const getReplaceUploadUrl = () => {
+  return `${import.meta.env.VITE_API_URL}/api/v1/uploads/replace`;
+};
+
+/**
+ * Replaces the step's media asset with the uploaded file and queues the old file for deletion
+ * @summary Replace upload
+ */
+export const replaceUpload = async (
+  replaceUploadRequest?: ReplaceUploadRequest,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ReplaceUploadResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit["headers"]>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Array.isArray(h)) return Object.fromEntries(h);
+    return h;
+  };
+  return customFetch<ReplaceUploadResponse>(getReplaceUploadUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    body: JSON.stringify(replaceUploadRequest),
+  });
+};
+
+export const getReplaceUploadMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof replaceUpload>>,
+    TError,
+    ReplaceUploadMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof replaceUpload>>,
+  TError,
+  ReplaceUploadMutationVariables,
+  TContext
+> => {
+  const mutationKey = ["replaceUpload"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof replaceUpload>>,
+    ReplaceUploadMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return replaceUpload(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReplaceUploadMutationResult = NonNullable<Awaited<ReturnType<typeof replaceUpload>>>;
+export type ReplaceUploadMutationBody = ReplaceUploadRequest | undefined;
+export type ReplaceUploadMutationError = unknown;
+export type ReplaceUploadMutationVariables = { data?: ReplaceUploadRequest };
+
+/**
+ * @summary Replace upload
+ */
+export const useReplaceUpload = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof replaceUpload>>,
+      TError,
+      ReplaceUploadMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof replaceUpload>>,
+  TError,
+  ReplaceUploadMutationVariables,
+  TContext
+> => {
+  return useMutation(getReplaceUploadMutationOptions(options), queryClient);
 };

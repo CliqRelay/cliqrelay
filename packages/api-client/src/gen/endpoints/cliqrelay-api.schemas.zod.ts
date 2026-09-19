@@ -502,6 +502,28 @@ export const ReorderStepsResponse = zod.object({
 export type ReorderStepsResponse = zod.input<typeof ReorderStepsResponse>;
 export type ReorderStepsResponseOutput = zod.output<typeof ReorderStepsResponse>;
 
+export const ReplaceUploadRequest = zod.object({
+  fileSize: zod.int().nullish(),
+  height: zod.int().nullish(),
+  mimeType: zod.string().nullish(),
+  stepId: zod.string().optional(),
+  storagePath: zod.string().optional(),
+  thumbnail: zod.string().nullish(),
+  width: zod.int().nullish(),
+});
+
+export type ReplaceUploadRequest = zod.input<typeof ReplaceUploadRequest>;
+export type ReplaceUploadRequestOutput = zod.output<typeof ReplaceUploadRequest>;
+
+export const ReplaceUploadResponse = zod.object({
+  mediaAsset: MediaAsset,
+  storagePath: zod.string(),
+  url: zod.string(),
+});
+
+export type ReplaceUploadResponse = zod.input<typeof ReplaceUploadResponse>;
+export type ReplaceUploadResponseOutput = zod.output<typeof ReplaceUploadResponse>;
+
 export const RestoreGuideResponse = zod.object({
   guide: Guide,
 });
