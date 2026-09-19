@@ -15,6 +15,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type UploadsService struct {
@@ -50,10 +51,6 @@ func NewUploadsService(
 	}
 }
 
-func stepUploadPrefix(guideID, stepID string) string {
-	return fmt.Sprintf("uploads/guides/%s/steps/%s/", guideID, stepID)
-}
-
 func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, guideID, stepID string) (*types.PresignedURLResult, error) {
 	if strings.TrimSpace(guideID) == "" {
 		return nil, constants.ErrInvalidGuideID
@@ -70,7 +67,7 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, guideID, s
 		return nil, constants.ErrStepNotFound
 	}
 
-	key := fmt.Sprintf("%s%d.webp", stepUploadPrefix(guideID, stepID), time.Now().UnixNano())
+	key := fmt.Sprintf("%s%d.webp", utils.StepUploadPrefix(guideID, stepID), time.Now().UnixNano())
 
 	url, err := s.presignClient.PutURL(ctx, s.bucket, key, "image/webp")
 	if err != nil {
@@ -146,7 +143,7 @@ func (s *UploadsService) ReplaceUpload(ctx context.Context, dto *types.ReplaceUp
 		return nil, constants.ErrStepNotFound
 	}
 
-	if !strings.HasPrefix(dto.StoragePath, stepUploadPrefix(step.GuideID.String(), dto.StepID)) {
+	if !strings.HasPrefix(dto.StoragePath, utils.StepUploadPrefix(step.GuideID.String(), dto.StepID)) {
 		return nil, constants.ErrInvalidStoragePath
 	}
 

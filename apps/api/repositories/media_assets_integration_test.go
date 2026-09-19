@@ -478,3 +478,35 @@ func TestBunMediaAssetsRepository_Tx(t *testing.T) {
 		assert.Equal(t, "/uploads/tx-rollback-old.png", assets[0].StoragePath)
 	})
 }
+
+func TestBunMediaAssetsRepository_ExistingStoragePaths(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns only the paths that have a row", func(t *testing.T) {
+		t.Parallel()
+
+		db := mediaAssetsDB
+		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+		stepID, _ := seedSimpleStep(t, db)
+		kept := "uploads/guides/g/steps/" + stepID.String() + "/1.webp"
+		alsoKept := "uploads/guides/g/steps/" + stepID.String() + "/2.webp"
+		seedMediaAsset(t, db, stepID, kept)
+		seedMediaAsset(t, db, stepID, alsoKept)
+
+		existing, err := repo.ExistingStoragePaths(context.Background(), []string{kept, "uploads/guides/g/steps/x/orphan.webp", alsoKept})
+
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{kept, alsoKept}, existing)
+	})
+
+	t.Run("returns empty slice for empty input", func(t *testing.T) {
+		t.Parallel()
+
+		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(mediaAssetsDB)
+
+		existing, err := repo.ExistingStoragePaths(context.Background(), nil)
+
+		require.NoError(t, err)
+		assert.Empty(t, existing)
+	})
+}

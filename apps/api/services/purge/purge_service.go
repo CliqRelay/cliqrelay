@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type PurgeService struct {
@@ -44,7 +45,7 @@ func (s *PurgeService) PurgeGuide(ctx context.Context, guideID string) error {
 		return nil
 	}
 
-	prefix := fmt.Sprintf("uploads/guides/%s/steps/", guideID)
+	prefix := utils.GuideUploadsPrefix(guideID)
 	if err := s.storageService.DeleteObjectsByPrefix(ctx, s.bucket, prefix); err != nil {
 		slog.Error("failed to delete S3 objects", "guide_id", guideID, "prefix", prefix, "err", err)
 		return fmt.Errorf("delete S3 objects: %w", err)

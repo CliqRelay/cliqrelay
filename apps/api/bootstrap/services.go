@@ -8,6 +8,7 @@ import (
 	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	mediaassetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
+	orphaneduploadsservice "github.com/CliqRelay/cliqrelay/services/orphaned_uploads"
 	"github.com/CliqRelay/cliqrelay/services/presign"
 	"github.com/CliqRelay/cliqrelay/services/purge"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
@@ -36,20 +37,22 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 	guideViewsService := guideviewsservice.NewGuideViewsService(repos.GuideViews, o.infraCfg.RedisClient)
 	teamsService := teamsservice.NewTeamsService(repos.Teams)
 	purgeService := purge.NewPurgeService(repos.Guides, storageService, guideViewsService, o.infraCfg.S3Bucket)
+	orphanedUploadsService := orphaneduploadsservice.NewOrphanedUploadsService(repos.MediaAssets, storageService, o.infraCfg.S3Bucket)
 
 	return &builtServices{
 		Storage: storageService,
 		Presign: presignService,
 		Domain: &interfaces.DomainServices{
-			GuidesService:        guidesService,
-			StepsService:         stepsService,
-			StarredGuidesService: starredService,
-			MediaAssetsService:   mediaAssetsService,
-			GuideViewsService:    guideViewsService,
-			ExportService:        exportService,
-			UploadsService:       uploadsService,
-			PurgeService:         purgeService,
-			TeamsService:         teamsService,
+			GuidesService:          guidesService,
+			StepsService:           stepsService,
+			StarredGuidesService:   starredService,
+			MediaAssetsService:     mediaAssetsService,
+			GuideViewsService:      guideViewsService,
+			ExportService:          exportService,
+			UploadsService:         uploadsService,
+			PurgeService:           purgeService,
+			OrphanedUploadsService: orphanedUploadsService,
+			TeamsService:           teamsService,
 		},
 	}
 }
