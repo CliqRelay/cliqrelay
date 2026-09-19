@@ -69,7 +69,7 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, guideID, s
 
 	key := fmt.Sprintf("%s%d.webp", utils.StepUploadPrefix(guideID, stepID), time.Now().UnixNano())
 
-	url, err := s.presignClient.PutURL(ctx, s.bucket, key, "image/webp")
+	url, err := s.presignClient.PutURL(ctx, s.bucket, key, constants.StepUploadContentType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to presign put object: %w", err)
 	}
@@ -145,6 +145,12 @@ func (s *UploadsService) ReplaceUpload(ctx context.Context, dto *types.ReplaceUp
 
 	if !strings.HasPrefix(dto.StoragePath, utils.StepUploadPrefix(step.GuideID.String(), dto.StepID)) {
 		return nil, constants.ErrInvalidStoragePath
+	}
+	if dto.MimeType == nil || *dto.MimeType != constants.StepUploadContentType {
+		return nil, constants.ErrInvalidContentType
+	}
+	if dto.FileSize == nil || *dto.FileSize <= 0 || *dto.FileSize > constants.StepUploadMaxBytes {
+		return nil, constants.ErrInvalidFileSize
 	}
 
 	var removed []*models.MediaAsset

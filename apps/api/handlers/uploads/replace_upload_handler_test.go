@@ -30,6 +30,7 @@ func TestReplaceUploadHandler(t *testing.T) {
 	storagePath := fmt.Sprintf("uploads/guides/%s/steps/%s/200.webp", guideID, stepID)
 	oldPath := fmt.Sprintf("uploads/guides/%s/steps/%s/100.webp", guideID, stepID)
 	mimeType := "image/webp"
+	fileSize := 2048
 
 	step := &models.Step{ID: stepID, GuideID: guideID, SortOrder: "a0", Action: &stepAction}
 	guide := &models.Guide{ID: guideID, CreatorID: new(creatorUserID), Title: "Test Guide", Status: models.StatusDraft}
@@ -43,7 +44,7 @@ func TestReplaceUploadHandler(t *testing.T) {
 	}{
 		{
 			name:    "success",
-			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath, MimeType: &mimeType},
+			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath, MimeType: &mimeType, FileSize: &fileSize},
 			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step, nil).Twice()
 				guidesRepo.On("GetByID", mock.Anything, guideID.String()).Return(guide, nil).Once()
@@ -58,7 +59,7 @@ func TestReplaceUploadHandler(t *testing.T) {
 		},
 		{
 			name:    "header canvas step does not support media",
-			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath, MimeType: &mimeType},
+			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath, MimeType: &mimeType, FileSize: &fileSize},
 			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).
 					Return(&models.Step{ID: stepID, GuideID: guideID, SortOrder: "a0", Type: models.StepTypeCanvas, CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader}}, nil).Once()
@@ -90,6 +91,24 @@ func TestReplaceUploadHandler(t *testing.T) {
 		{
 			name:    "storage path outside step prefix",
 			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: "uploads/guides/other/steps/other/1.webp"},
+			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step, nil).Twice()
+				guidesRepo.On("GetByID", mock.Anything, guideID.String()).Return(guide, nil).Once()
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:    "wrong mime type",
+			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath, MimeType: ptr("image/png"), FileSize: &fileSize},
+			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step, nil).Twice()
+				guidesRepo.On("GetByID", mock.Anything, guideID.String()).Return(guide, nil).Once()
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:    "file too large",
+			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath, MimeType: &mimeType, FileSize: ptr(constants.StepUploadMaxBytes + 1)},
 			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step, nil).Twice()
 				guidesRepo.On("GetByID", mock.Anything, guideID.String()).Return(guide, nil).Once()
@@ -155,3 +174,5 @@ func TestReplaceUploadHandler(t *testing.T) {
 		})
 	}
 }
+
+func ptr[T any](v T) *T { return &v }

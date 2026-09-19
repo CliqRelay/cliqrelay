@@ -37,6 +37,9 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 	oldAsset := func() *models.MediaAsset {
 		return &models.MediaAsset{ID: uuid.New(), StepID: stepID, StoragePath: oldPath}
 	}
+	validDTO := func() *types.ReplaceUploadDTO {
+		return &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath, MimeType: &mimeType, FileSize: &fileSize}
+	}
 	newAsset := func() *models.MediaAsset {
 		return &models.MediaAsset{ID: uuid.New(), StepID: stepID, StoragePath: newPath, MimeType: &mimeType, ByteSize: &fileSize}
 	}
@@ -54,7 +57,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 	cases := []testCase{
 		{
 			name: "replaces existing asset and publishes one delete event",
-			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath, MimeType: &mimeType, FileSize: &fileSize},
+			dto:  validDTO(),
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
 				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
@@ -75,7 +78,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 		},
 		{
 			name: "creates asset when none exists and publishes nothing",
-			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
+			dto:  validDTO(),
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
 				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
@@ -87,7 +90,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 		},
 		{
 			name: "same-path retry publishes nothing",
-			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
+			dto:  validDTO(),
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
 				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
@@ -117,7 +120,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 		},
 		{
 			name: "returns not found when step is missing",
-			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
+			dto:  validDTO(),
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(nil, nil).Once()
 			},
@@ -125,7 +128,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 		},
 		{
 			name: "returns not found when the step is gone by the time the row is locked",
-			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
+			dto:  validDTO(),
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
 				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(constants.ErrStepNotFound).Once()
@@ -141,8 +144,48 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			wantErr: constants.ErrInvalidStoragePath,
 		},
 		{
+			name: "rejects missing mime type",
+			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath, FileSize: &fileSize},
+			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+			},
+			wantErr: constants.ErrInvalidContentType,
+		},
+		{
+			name: "rejects non-webp mime type",
+			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath, MimeType: ptr("image/png"), FileSize: &fileSize},
+			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+			},
+			wantErr: constants.ErrInvalidContentType,
+		},
+		{
+			name: "rejects missing file size",
+			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath, MimeType: &mimeType},
+			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+			},
+			wantErr: constants.ErrInvalidFileSize,
+		},
+		{
+			name: "rejects empty file",
+			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath, MimeType: &mimeType, FileSize: ptr(0)},
+			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+			},
+			wantErr: constants.ErrInvalidFileSize,
+		},
+		{
+			name: "rejects file over the size cap",
+			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath, MimeType: &mimeType, FileSize: ptr(constants.StepUploadMaxBytes + 1)},
+			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+			},
+			wantErr: constants.ErrInvalidFileSize,
+		},
+		{
 			name: "does not create when delete fails",
-			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
+			dto:  validDTO(),
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
 				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
@@ -152,7 +195,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 		},
 		{
 			name: "propagates create failure and publishes nothing",
-			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
+			dto:  validDTO(),
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
 				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
@@ -164,7 +207,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 		},
 		{
 			name:  "publish failure does not fail the request",
-			dto:   &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
+			dto:   validDTO(),
 			redis: tests.NewUnreachableRedis,
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
@@ -221,3 +264,5 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 		})
 	}
 }
+
+func ptr[T any](v T) *T { return &v }
