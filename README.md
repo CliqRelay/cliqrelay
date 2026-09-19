@@ -18,6 +18,15 @@ An open-source platform that transforms page clicks and interactions into beauti
 
 ---
 
+### ☁️ CliqRelay Cloud
+
+Don't want to self-host? CliqRelay Cloud is the hosted version of the platform, no infrastructure required. Sign up, install the extension, and start capturing guides in minutes.
+
+- **Platform**: [Get Started](https://app.cliqrelay.com)
+- **Chrome Extension**: [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/cliqrelay/lpflcbiaiffchbkehkningmmckhlibha)
+
+---
+
 ### Features
 
 - **Instant Capture**: Capture workflows in real-time with a Chrome/Firefox extension that listens for user interactions and captures them.
