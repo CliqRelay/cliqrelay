@@ -35,9 +35,11 @@ const CANVAS_TYPE_OPTIONS = [
 type CanvasStepFormProps = {
   step: Step;
   onUpdate?: (stepId: string, updates: Record<string, unknown>) => void;
+  onReplaceMedia?: () => void;
+  isReplacing?: boolean;
 };
 
-export function CanvasStepForm({ step, onUpdate }: CanvasStepFormProps) {
+export function CanvasStepForm({ step, onUpdate, onReplaceMedia, isReplacing }: CanvasStepFormProps) {
   const form = useForm({
     defaultValues: {
       headingText: step.canvasContent?.headingText ?? "",
@@ -135,7 +137,7 @@ export function CanvasStepForm({ step, onUpdate }: CanvasStepFormProps) {
             </form.Field>
           </div>
 
-          <StepMedia step={step} />
+          <StepMedia step={step} onReplaceMedia={onReplaceMedia} isReplacing={isReplacing} />
         </>
       )}
     </>

@@ -1,6 +1,13 @@
 import type { InfiniteData } from "@tanstack/react-query";
 
-import type { GetAllStepsResponse } from "@repo/api-client";
+import type { GetAllStepsResponse, Step } from "@repo/api-client";
+
+export function stepSupportsMedia(step: Pick<Step, "type" | "canvasContent">): boolean {
+  if (step.type !== "canvas") {
+    return true;
+  }
+  return step.canvasContent != null && step.canvasContent.type !== "header";
+}
 
 export type StepsInfiniteData = InfiniteData<GetAllStepsResponse, string | undefined>;
 

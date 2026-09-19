@@ -9,9 +9,11 @@ import { StepMedia } from "./step-media";
 
 type Props = {
 	step: Step;
+	onReplaceMedia?: () => void;
+	isReplacing?: boolean;
 };
 
-export function CanvasStepPreview({ step }: Props) {
+export function CanvasStepPreview({ step, onReplaceMedia, isReplacing }: Props) {
 	const canvasContent = step.canvasContent;
 	if (!canvasContent) {
 		return null;
@@ -86,7 +88,11 @@ export function CanvasStepPreview({ step }: Props) {
 					)}
 				</span>
 			</Alert>
-			<StepMedia step={step} />
+			<StepMedia
+				step={step}
+				onReplaceMedia={onReplaceMedia}
+				isReplacing={isReplacing}
+			/>
 		</>
 	);
 }

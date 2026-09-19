@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { MediaLayoutTarget } from "@/models";
 import { resolveMediaLayout } from "@/utils/media.utils";
+import { stepSupportsMedia } from "@/utils/steps.utils";
 import { StepMediaToolbar, StepMediaToolbarButton } from "./step-media-toolbar";
 import { StepOverlay } from "./step-overlay";
 
@@ -38,6 +39,11 @@ export function StepMedia({ step, onReplaceMedia, isReplacing }: Props) {
 	const hasOverlay = overlay != null;
 
 	const imgRef = useRef<HTMLImageElement>(null);
+	const mediaAltText =
+		media?.altText ??
+		step.actionText ??
+		step.canvasContent?.headingText ??
+		"Step screenshot";
 
 	useEffect(() => {
 		if (imgRef.current?.complete) {
@@ -102,7 +108,7 @@ export function StepMedia({ step, onReplaceMedia, isReplacing }: Props) {
 								<img
 									ref={imgRef}
 									src={media.url}
-									alt={media.altText ?? `Step ${step.actionText}`}
+									alt={mediaAltText}
 									className={cn(
 										"absolute inset-0 h-full w-full object-contain transition-opacity duration-500",
 										!loaded && !media.thumbnail && "opacity-0",
@@ -165,7 +171,7 @@ export function StepMedia({ step, onReplaceMedia, isReplacing }: Props) {
 							<img
 								ref={imgRef}
 								src={media.url}
-								alt={media.altText ?? `Step ${step.actionText}`}
+								alt={mediaAltText}
 								className={cn(
 									"w-full object-contain transition-opacity duration-500",
 									!loaded && !media.thumbnail && "opacity-0",
@@ -193,7 +199,7 @@ export function StepMedia({ step, onReplaceMedia, isReplacing }: Props) {
 		}
 	}
 
-	if (step.type !== "interaction" || !step.action) {
+	if (!stepSupportsMedia(step) || (step.type === "interaction" && !step.action)) {
 		return <></>;
 	}
 

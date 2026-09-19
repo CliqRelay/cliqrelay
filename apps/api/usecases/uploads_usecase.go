@@ -40,6 +40,20 @@ func (uc *UploadsUseCase) PresignUpload(ctx context.Context, actor *authulamodel
 		return nil, constants.ErrInvalidStepID
 	}
 
+	step, err := uc.stepsService.GetByID(ctx, req.StepID)
+	if err != nil {
+		return nil, err
+	}
+	if step == nil {
+		return nil, constants.ErrStepNotFound
+	}
+	if step.GuideID.String() != req.GuideID {
+		return nil, constants.ErrStepNotInGuide
+	}
+	if !step.SupportsMedia() {
+		return nil, constants.ErrStepMediaNotSupported
+	}
+
 	guide, err := uc.guidesService.GetByID(ctx, req.GuideID)
 	if err != nil {
 		return nil, err
@@ -76,6 +90,9 @@ func (uc *UploadsUseCase) CompleteUpload(ctx context.Context, actor *authulamode
 	if step == nil {
 		return nil, constants.ErrStepNotFound
 	}
+	if !step.SupportsMedia() {
+		return nil, constants.ErrStepMediaNotSupported
+	}
 
 	guide, err := uc.guidesService.GetByID(ctx, step.GuideID.String())
 	if err != nil {
@@ -104,6 +121,9 @@ func (uc *UploadsUseCase) ReplaceUpload(ctx context.Context, actor *authulamodel
 	}
 	if step == nil {
 		return nil, constants.ErrStepNotFound
+	}
+	if !step.SupportsMedia() {
+		return nil, constants.ErrStepMediaNotSupported
 	}
 
 	guide, err := uc.guidesService.GetByID(ctx, step.GuideID.String())

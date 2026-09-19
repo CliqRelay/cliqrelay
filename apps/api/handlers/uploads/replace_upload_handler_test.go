@@ -56,6 +56,15 @@ func TestReplaceUploadHandler(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
+			name:    "header canvas step does not support media",
+			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath, MimeType: &mimeType},
+			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{ID: stepID, GuideID: guideID, SortOrder: "a0", Type: models.StepTypeCanvas, CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader}}, nil).Once()
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
 			name:    "missing step id",
 			payload: types.ReplaceUploadRequest{StepID: "", StoragePath: storagePath},
 			setup: func(*tests.MockGuidesRepository, *tests.MockStepsRepository, *tests.MockMediaAssetsRepository, *tests.MockPresignService) {

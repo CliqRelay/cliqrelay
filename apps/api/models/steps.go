@@ -67,6 +67,13 @@ func (StepCanvasType) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
+func (s *Step) SupportsMedia() bool {
+	if s.Type != StepTypeCanvas {
+		return true
+	}
+	return s.CanvasContent != nil && s.CanvasContent.Type != StepCanvasTypeHeader
+}
+
 type StepCanvasContent struct {
 	Type        StepCanvasType `json:"type" validate:"required,oneof=callout alert tip header" required:"true" nullable:"false"`
 	HeadingText *string        `json:"heading_text,omitempty"`

@@ -43,7 +43,7 @@ func (h *PresignUploadHandler) Handle() http.HandlerFunc {
 			switch err {
 			case constants.ErrGuideNotFound, constants.ErrStepNotFound, constants.ErrStepNotInGuide:
 				status = http.StatusNotFound
-			case constants.ErrInvalidUserID, constants.ErrInvalidGuideID, constants.ErrInvalidStepID:
+			case constants.ErrInvalidUserID, constants.ErrInvalidGuideID, constants.ErrInvalidStepID, constants.ErrStepMediaNotSupported:
 				status = http.StatusBadRequest
 			}
 			reqCtx.SetJSONResponse(status, map[string]any{"message": err.Error()})

@@ -217,6 +217,15 @@ func (s *StepsService) Update(ctx context.Context, stepID string, req *types.Upd
 
 	s.recalculateGuideDuration(ctx, updated.GuideID.String())
 
+	if !updated.SupportsMedia() && len(updated.MediaAssets) > 0 {
+		deleted, err := s.mediaAssetsRepo.DeleteByStepID(ctx, stepID)
+		if err != nil {
+			return nil, err
+		}
+		s.publishMediaAssetsDeleted(ctx, stepID, deleted)
+		updated.MediaAssets = nil
+	}
+
 	s.enrichMediaAssets(ctx, updated)
 
 	if err := runStepHooks(s.hooks.AfterUpdateHooks(), ctx, updated); err != nil {
@@ -260,10 +269,12 @@ func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 		return err
 	}
 
-	if len(mediaAssets) <= 0 {
-		return nil
-	}
+	s.publishMediaAssetsDeleted(ctx, stepID, mediaAssets)
 
+	return nil
+}
+
+func (s *StepsService) publishMediaAssetsDeleted(ctx context.Context, stepID string, mediaAssets []*models.MediaAsset) {
 	for _, asset := range mediaAssets {
 		if err := events.Publish(ctx, s.redisClient, events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, &events.MediaAssetDeletePayload{
 			StepID:      stepID,
@@ -272,8 +283,6 @@ func (s *StepsService) Delete(ctx context.Context, stepID string) error {
 			s.logger.Error("publish event for asset", "err", err, "step_id", stepID, "storage_path", asset.StoragePath)
 		}
 	}
-
-	return nil
 }
 
 func (s *StepsService) Reorder(ctx context.Context, guideID string, targetStepID string, prevStepID *string, nextStepID *string) ([]*models.Step, error) {

@@ -11,7 +11,13 @@ type Props = {
 
 export function StepListItem({ step, onReplaceMedia, isReplacing }: Props) {
 	if (step.type === "canvas") {
-		return <CanvasStepPreview step={step} />;
+		return (
+			<CanvasStepPreview
+				step={step}
+				onReplaceMedia={onReplaceMedia}
+				isReplacing={isReplacing}
+			/>
+		);
 	}
 
 	return (
