@@ -1212,3 +1212,64 @@ func TestStepsService_Duplicate(t *testing.T) {
 		})
 	}
 }
+
+func TestStepsService_Update_MediaOnCanvasTypeChange(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name          string
+		canvasType    models.StepCanvasType
+		expectDeleted bool
+	}{
+		{name: "deletes media when step becomes a header", canvasType: models.StepCanvasTypeHeader, expectDeleted: true},
+		{name: "keeps media when step stays a callout", canvasType: models.StepCanvasTypeCallout, expectDeleted: false},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			stepID := uuid.New()
+			guideID := uuid.New()
+			asset := &models.MediaAsset{ID: uuid.New(), StepID: stepID, StoragePath: "uploads/test/asset.webp"}
+			req := &types.UpdateStepRequest{
+				CanvasContent: &models.StepCanvasContent{Type: tt.canvasType},
+			}
+
+			mockStepsRepo := new(tests.MockStepsRepository)
+			mockGuidesRepo := new(tests.MockGuidesRepository)
+			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
+			mockPresignClient := new(tests.MockPresignService)
+			mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+				Return(&models.Step{ID: stepID, GuideID: guideID, Type: models.StepTypeCanvas, CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeCallout}}, nil).
+				Once()
+			mockStepsRepo.On("Update", mock.Anything, mock.Anything).
+				Return(&models.Step{ID: stepID, GuideID: guideID, Type: models.StepTypeCanvas, CanvasContent: req.CanvasContent, MediaAssets: []*models.MediaAsset{asset}}, nil).
+				Once()
+			if tt.expectDeleted {
+				mockMediaAssetsRepo.On("DeleteByStepID", mock.Anything, stepID.String()).
+					Return([]*models.MediaAsset{asset}, nil).
+					Once()
+			} else {
+				mockPresignClient.On("GetURL", mock.Anything, "test-bucket", asset.StoragePath).
+					Return("https://example.com/asset.webp", nil).
+					Once()
+			}
+			tests.StubGuideDurationRecalculation(mockStepsRepo, mockGuidesRepo)
+			logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+			svc := stepsservice.NewStepsService(testRedisClient(), mockStepsRepo, mockGuidesRepo, mockPresignClient, new(tests.MockStorageService), mockMediaAssetsRepo, "test-bucket", logger, (*interfaces.StepHooks)(nil))
+
+			step, err := svc.Update(context.Background(), stepID.String(), req)
+
+			require.NoError(t, err)
+			require.NotNil(t, step)
+			if tt.expectDeleted {
+				assert.Empty(t, step.MediaAssets)
+			} else {
+				assert.Len(t, step.MediaAssets, 1)
+			}
+			mockMediaAssetsRepo.AssertExpectations(t)
+			mockPresignClient.AssertExpectations(t)
+		})
+	}
+}

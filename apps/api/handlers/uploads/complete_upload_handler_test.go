@@ -127,6 +127,26 @@ func TestCompleteUploadHandler(t *testing.T) {
 			expectedStatus: http.StatusNotFound,
 		},
 		{
+			name: "header canvas step does not support media",
+			payload: types.CompleteUploadRequest{
+				StepID:      stepID.String(),
+				StoragePath: storagePath,
+			},
+			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository) {
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:            stepID,
+						GuideID:       guideID,
+						SortOrder:     "a0",
+						Type:          models.StepTypeCanvas,
+						CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader},
+					}, nil).
+					Once()
+			},
+			presignSetup:   nil,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
 			name: "step not in user's guide",
 			payload: types.CompleteUploadRequest{
 				StepID:      stepID.String(),

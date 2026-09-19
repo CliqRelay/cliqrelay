@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { StepTypeOption } from "@/models";
+import { stepSupportsMedia } from "@/utils/steps.utils";
 import { StepItemForm } from "./step-item-form";
 import { StepListItem } from "./step-list-item";
 import { StepMediaPicker } from "./step-media-picker";
@@ -65,7 +66,7 @@ export function StepEditCard({
 		onAddStepBeforeWithType,
 	} = actions ?? {};
 	const filePickerRef = useRef<HTMLInputElement>(null);
-	const canReplaceMedia = onReplaceMedia != null && step.type !== "canvas";
+	const canReplaceMedia = onReplaceMedia != null && stepSupportsMedia(step);
 	const handleOpenFilePicker = () => {
 		filePickerRef.current?.click();
 	};

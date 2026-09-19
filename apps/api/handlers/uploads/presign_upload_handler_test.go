@@ -53,7 +53,7 @@ func TestPresignUploadHandler(t *testing.T) {
 						SortOrder: "a0",
 						Action:    &stepAction,
 					}, nil).
-					Once()
+					Twice()
 				mockPresignService.On("PutURL", mock.Anything, "test-bucket", mock.Anything, "image/webp").
 					Return("https://storage.example.com/presigned-url", nil).
 					Once()
@@ -94,14 +94,49 @@ func TestPresignUploadHandler(t *testing.T) {
 			name: "guide not found",
 			payload: types.PresignUploadRequest{
 				GuideID: guideID.String(),
-				StepID:  uuid.New().String(),
+				StepID:  stepID.String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{ID: stepID, GuideID: guideID, SortOrder: "a0", Action: &stepAction}, nil).
+					Once()
 				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
 					Return(nil, nil).
 					Once()
 			},
 			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "step belongs to another guide",
+			payload: types.PresignUploadRequest{
+				GuideID: guideID.String(),
+				StepID:  stepID.String(),
+			},
+			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{ID: stepID, GuideID: uuid.New(), SortOrder: "a0", Action: &stepAction}, nil).
+					Once()
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name: "header canvas step does not support media",
+			payload: types.PresignUploadRequest{
+				GuideID: guideID.String(),
+				StepID:  stepID.String(),
+			},
+			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
+					Return(&models.Step{
+						ID:            stepID,
+						GuideID:       guideID,
+						SortOrder:     "a0",
+						Type:          models.StepTypeCanvas,
+						CanvasContent: &models.StepCanvasContent{Type: models.StepCanvasTypeHeader},
+					}, nil).
+					Once()
+			},
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name: "step not found",
@@ -110,14 +145,6 @@ func TestPresignUploadHandler(t *testing.T) {
 				StepID:  stepID.String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
-					Return(&models.Guide{
-						ID:        guideID,
-						CreatorID: new("test-user-123"),
-						Title:     "Test Guide",
-						Status:    models.StatusDraft,
-					}, nil).
-					Once()
 				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
 					Return(nil, nil).
 					Once()
@@ -128,10 +155,10 @@ func TestPresignUploadHandler(t *testing.T) {
 			name: "service error",
 			payload: types.PresignUploadRequest{
 				GuideID: guideID.String(),
-				StepID:  uuid.New().String(),
+				StepID:  stepID.String(),
 			},
 			setup: func(mockGuidesRepo *tests.MockGuidesRepository, mockStepsRepo *tests.MockStepsRepository, mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockPresignClient *tests.MockPresignService) {
-				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+				mockStepsRepo.On("GetByID", mock.Anything, stepID.String()).
 					Return(nil, assert.AnError).
 					Once()
 			},

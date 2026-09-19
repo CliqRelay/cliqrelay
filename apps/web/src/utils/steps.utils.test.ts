@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import type { Step } from "@repo/api-client";
 
-import { reorderStepsInPages, type StepsInfiniteData } from "./steps.utils";
+import { reorderStepsInPages, stepSupportsMedia, type StepsInfiniteData } from "./steps.utils";
 
 const step = (id: string) => ({ id, sortOrder: id }) as Step;
 
@@ -92,5 +92,18 @@ describe("reorderStepsInPages", () => {
     reorderStepsInPages(input, "a", "b", "c");
 
     expect(ids(input)).toEqual(before);
+  });
+});
+
+describe("stepSupportsMedia", () => {
+  test.each([
+    { name: "interaction step", step: { type: "interaction" }, expected: true },
+    { name: "callout", step: { type: "canvas", canvasContent: { type: "callout" } }, expected: true },
+    { name: "tip", step: { type: "canvas", canvasContent: { type: "tip" } }, expected: true },
+    { name: "alert", step: { type: "canvas", canvasContent: { type: "alert" } }, expected: true },
+    { name: "header", step: { type: "canvas", canvasContent: { type: "header" } }, expected: false },
+    { name: "canvas without content", step: { type: "canvas", canvasContent: null }, expected: false },
+  ] as const)("$name", ({ step, expected }) => {
+    expect(stepSupportsMedia(step)).toBe(expected);
   });
 });
