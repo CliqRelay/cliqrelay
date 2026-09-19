@@ -11,7 +11,7 @@ import (
 
 func RegisterOrphanedUploadsSweepCron(scheduler gocron.Scheduler, svc interfaces.OrphanedUploadsService) error {
 	_, err := scheduler.NewJob(
-		gocron.CronJob("0 3 * * *", false),
+		gocron.CronJob("0 1 * * *", false),
 		gocron.NewTask(func() {
 			result, err := svc.Sweep(context.Background())
 			if err != nil {
