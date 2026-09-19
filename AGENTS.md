@@ -34,8 +34,5 @@ Turborepo is used as the monorepo tool for this project, and the folder structur
 
 ## Agent Skills
 
-Always follow the Agent Skills located in the folder `.agents/skills/` as it contains all the skills and playbooks you need to follow to make sure you are adhering to the project guidelines and best practices.
-
-## Extra notes
-
-Always use the `don't waffle` skill in every chat/session by default.
+- Always follow the Agent Skills located in the folder `.agents/skills/` as it contains all the skills and playbooks you need to follow to make sure you are adhering to the project guidelines and best practices.
+- Always use the `don't waffle` skill when writing and generating plans.
