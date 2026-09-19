@@ -6,7 +6,7 @@ export const MEDIA_REPLACE_MIME_TYPES = [
   "image/webp",
 ] as const;
 export const MEDIA_REPLACE_ACCEPT = MEDIA_REPLACE_MIME_TYPES.join(",");
-export const MEDIA_REPLACE_MAX_BYTES = 10 * 1024 * 1024;
+export const MEDIA_REPLACE_MAX_BYTES = 5 * 1024 * 1024;
 
 export const MEDIA_WEBP_QUALITY = 0.92;
 export const MEDIA_THUMBNAIL_WIDTH = 20;

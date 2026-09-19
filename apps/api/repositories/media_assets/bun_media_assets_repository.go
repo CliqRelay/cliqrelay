@@ -40,17 +40,15 @@ func (r *BunMediaAssetsRepository) Create(ctx context.Context, dto *types.Create
 		ByteSize:    dto.ByteSize,
 	}
 
-	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().Model(mediaAsset).Exec(ctx)
-		if err != nil {
-			return err
-		}
+	_, err := r.db.NewInsert().
+		Model(mediaAsset).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-		err = tx.NewSelect().Model(mediaAsset).WherePK().Scan(ctx)
-		return err
-	})
-
-	return mediaAsset, err
+	return mediaAsset, nil
 }
 
 func (r *BunMediaAssetsRepository) GetByID(ctx context.Context, id string) (*models.MediaAsset, error) {
@@ -88,79 +86,51 @@ func (r *BunMediaAssetsRepository) GetByStepID(ctx context.Context, stepID strin
 func (r *BunMediaAssetsRepository) Update(ctx context.Context, dto *types.UpdateMediaAssetDTO) (*models.MediaAsset, error) {
 	mediaAsset := &models.MediaAsset{}
 
-	err := r.db.NewSelect().
+	query := r.db.NewUpdate().
 		Model(mediaAsset).
 		Where("id = ?", dto.ID).
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
+		Returning("*")
 
+	hasChanges := false
+	set := func(column string, value any) {
+		hasChanges = true
+		query.Set("? = ?", bun.Ident(column), value)
+	}
 	if dto.AltText != nil {
-		mediaAsset.AltText = dto.AltText
+		set("alt_text", *dto.AltText)
 	}
 	if dto.Thumbnail != nil {
-		mediaAsset.Thumbnail = dto.Thumbnail
+		set("thumbnail", *dto.Thumbnail)
 	}
 	if dto.MimeType != nil {
-		mediaAsset.MimeType = dto.MimeType
+		set("mime_type", *dto.MimeType)
 	}
 	if dto.Height != nil {
-		mediaAsset.Height = dto.Height
+		set("height", *dto.Height)
 	}
 	if dto.Width != nil {
-		mediaAsset.Width = dto.Width
+		set("width", *dto.Width)
 	}
 	if dto.ByteSize != nil {
-		mediaAsset.ByteSize = dto.ByteSize
+		set("byte_size", *dto.ByteSize)
 	}
 
-	_, err = r.db.NewUpdate().
-		Model(mediaAsset).
-		WherePK().
-		Column("alt_text", "thumbnail", "mime_type", "height", "width", "byte_size").
-		Exec(ctx)
-	if err != nil {
-		return nil, err
+	if !hasChanges {
+		return r.GetByID(ctx, dto.ID.String())
 	}
 
-	err = r.db.NewSelect().
-		Model(mediaAsset).
-		WherePK().
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return mediaAsset, nil
+	return execReturningOne(ctx, query, mediaAsset)
 }
 
 func (r *BunMediaAssetsRepository) Delete(ctx context.Context, id string) (*models.MediaAsset, error) {
 	mediaAsset := &models.MediaAsset{}
 
-	err := r.db.NewSelect().
+	query := r.db.NewDelete().
 		Model(mediaAsset).
 		Where("id = ?", id).
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
+		Returning("*")
 
-	_, err = r.db.NewDelete().
-		Model(mediaAsset).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return mediaAsset, nil
+	return execReturningOne(ctx, query, mediaAsset)
 }
 
 func (r *BunMediaAssetsRepository) DeleteByStepID(ctx context.Context, stepID string) ([]*models.MediaAsset, error) {
@@ -176,4 +146,27 @@ func (r *BunMediaAssetsRepository) DeleteByStepID(ctx context.Context, stepID st
 	}
 
 	return mediaAssets, nil
+}
+
+type execer interface {
+	Exec(ctx context.Context, dest ...any) (sql.Result, error)
+}
+
+// Runs a single-row RETURNING * statement; bun leaves the model zeroed rather than
+// returning sql.ErrNoRows when nothing matched, so the row count decides not-found.
+func execReturningOne(ctx context.Context, query execer, mediaAsset *models.MediaAsset) (*models.MediaAsset, error) {
+	res, err := query.Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if affected == 0 {
+		return nil, nil
+	}
+
+	return mediaAsset, nil
 }
