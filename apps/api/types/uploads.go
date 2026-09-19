@@ -19,25 +19,6 @@ type PresignUploadResponse struct {
 	StoragePath  string `json:"storage_path"  required:"true"`
 }
 
-type CompleteUploadRequest struct {
-	StepID      string  `json:"step_id"       validate:"required,uuid"`
-	StoragePath string  `json:"storage_path"  validate:"required"`
-	FileSize    *int    `json:"file_size,omitempty"`
-	MimeType    *string `json:"mime_type,omitempty"`
-	Thumbnail   *string `json:"thumbnail,omitempty"`
-	Width       *int    `json:"width,omitempty"`
-	Height      *int    `json:"height,omitempty"`
-}
-
-func (r *CompleteUploadRequest) Validate() error {
-	return validator.Validate.Struct(r)
-}
-
-type CompleteUploadResponse struct {
-	URL         string `json:"url"         required:"true"`
-	StoragePath string `json:"storage_path" required:"true"`
-}
-
 type PresignedURLResult struct {
 	URL         string
 	StoragePath string

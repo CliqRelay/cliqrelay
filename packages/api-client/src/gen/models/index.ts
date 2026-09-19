@@ -10,8 +10,6 @@ export * from "./archive-guide-response";
 export * from "./bulk-guides-action-params";
 export * from "./bulk-guides-request";
 export * from "./bulk-guides-response";
-export * from "./complete-upload-request";
-export * from "./complete-upload-response";
 export * from "./create-demo-guide-request";
 export * from "./create-demo-guide-response";
 export * from "./create-guide-request";

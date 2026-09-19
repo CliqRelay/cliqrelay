@@ -6,21 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
-  CompleteUploadRequest,
-  CompleteUploadResponse,
   PresignUploadRequest,
   PresignUploadResponse,
   ReplaceUploadRequest,
   ReplaceUploadResponse,
 } from "../cliqrelay-api.schemas.zod";
-
-/**
- * Creates a media asset record after the upload finishes
- * @summary Complete upload
- */
-export const CompleteUploadBody = CompleteUploadRequest;
-
-export const CompleteUploadResponseSchema = CompleteUploadResponse;
 
 /**
  * Generates a presigned S3 URL for uploading a screenshot

@@ -16,7 +16,6 @@ import (
 
 func UploadRoutes(cfg *config.HTTPConfig, uploadUseCase interfaces.UploadsUseCase) []authulamodels.Route {
 	presignUploadHandler := handlersuploads.NewPresignUploadHandler(uploadUseCase)
-	completeUploadHandler := handlersuploads.NewCompleteUploadHandler(uploadUseCase)
 	replaceUploadHandler := handlersuploads.NewReplaceUploadHandler(uploadUseCase)
 
 	authMiddleware := []func(http.Handler) http.Handler{
@@ -31,12 +30,6 @@ func UploadRoutes(cfg *config.HTTPConfig, uploadUseCase interfaces.UploadsUseCas
 			Path:       fmt.Sprintf("%s/uploads/presign", base),
 			Middleware: authMiddleware,
 			Handler:    presignUploadHandler.Handle(),
-		},
-		{
-			Method:     "POST",
-			Path:       fmt.Sprintf("%s/uploads/complete", base),
-			Middleware: authMiddleware,
-			Handler:    completeUploadHandler.Handle(),
 		},
 		{
 			Method:     "POST",
@@ -57,16 +50,6 @@ func RegisterUploadsOpenAPIDocs(svc openapi.OpenAPIService, basePath string) {
 		openapi.WithTags("Uploads"),
 		openapi.WithRequest(&types.PresignUploadRequest{}),
 		openapi.WithResponseStatus(http.StatusOK, &types.PresignUploadResponse{}),
-	)
-	_ = svc.AddOperation(
-		http.MethodPost,
-		fmt.Sprintf("%s/uploads/complete", basePath),
-		openapi.WithOperationID("completeUpload"),
-		openapi.WithSummary("Complete upload"),
-		openapi.WithDescription("Creates a media asset record after the upload finishes"),
-		openapi.WithTags("Uploads"),
-		openapi.WithRequest(&types.CompleteUploadRequest{}),
-		openapi.WithResponseStatus(http.StatusOK, &types.CompleteUploadResponse{}),
 	)
 	_ = svc.AddOperation(
 		http.MethodPost,

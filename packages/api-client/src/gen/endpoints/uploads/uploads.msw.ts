@@ -8,47 +8,11 @@
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
-import type {
-  CompleteUploadResponse,
-  PresignUploadResponse,
-  ReplaceUploadResponse,
-} from "../../models";
+import type { PresignUploadResponse, ReplaceUploadResponse } from "../../models";
 
-import {
-  getCompleteUploadResponseMock,
-  getPresignUploadResponseMock,
-  getReplaceUploadResponseMock,
-} from "./uploads.faker";
+import { getPresignUploadResponseMock, getReplaceUploadResponseMock } from "./uploads.faker";
 
-export {
-  getCompleteUploadResponseMock,
-  getPresignUploadResponseMock,
-  getReplaceUploadResponseMock,
-} from "./uploads.faker";
-
-export const getCompleteUploadMockHandler = (
-  overrideResponse?:
-    | CompleteUploadResponse
-    | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
-      ) => Promise<CompleteUploadResponse> | CompleteUploadResponse),
-  options?: RequestHandlerOptions,
-) => {
-  return http.post(
-    "*/api/v1/uploads/complete",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
-      return HttpResponse.json(
-        overrideResponse !== undefined
-          ? typeof overrideResponse === "function"
-            ? await overrideResponse(info)
-            : overrideResponse
-          : getCompleteUploadResponseMock(),
-        { status: 200 },
-      );
-    },
-    options,
-  );
-};
+export { getPresignUploadResponseMock, getReplaceUploadResponseMock } from "./uploads.faker";
 
 export const getPresignUploadMockHandler = (
   overrideResponse?:
@@ -97,8 +61,4 @@ export const getReplaceUploadMockHandler = (
     options,
   );
 };
-export const getUploadsMock = () => [
-  getCompleteUploadMockHandler(),
-  getPresignUploadMockHandler(),
-  getReplaceUploadMockHandler(),
-];
+export const getUploadsMock = () => [getPresignUploadMockHandler(), getReplaceUploadMockHandler()];

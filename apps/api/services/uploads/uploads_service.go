@@ -80,48 +80,6 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, guideID, s
 	}, nil
 }
 
-func (s *UploadsService) CompleteUpload(ctx context.Context, stepID, storagePath string, fileSize *int, mimeType *string, thumbnail *string, width *int, height *int) (*types.CompleteUploadResponse, error) {
-	if strings.TrimSpace(stepID) == "" {
-		return nil, constants.ErrInvalidStepID
-	}
-
-	step, err := s.stepsRepo.GetByID(ctx, stepID)
-	if err != nil {
-		return nil, err
-	}
-	if step == nil {
-		return nil, constants.ErrStepNotFound
-	}
-
-	parsedStepID, err := uuid.Parse(stepID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid step ID: %w", err)
-	}
-
-	mediaAsset, err := s.mediaAssetsRepo.Create(ctx, &types.CreateMediaAssetDTO{
-		StepID:      parsedStepID,
-		StoragePath: storagePath,
-		MimeType:    mimeType,
-		Thumbnail:   thumbnail,
-		ByteSize:    fileSize,
-		Width:       width,
-		Height:      height,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create media asset: %w", err)
-	}
-
-	url, err := s.presignClient.GetURL(ctx, s.bucket, storagePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to presign get object: %w", err)
-	}
-
-	return &types.CompleteUploadResponse{
-		URL:         url,
-		StoragePath: mediaAsset.StoragePath,
-	}, nil
-}
-
 func (s *UploadsService) ReplaceUpload(ctx context.Context, dto *types.ReplaceUploadDTO) (*types.ReplaceUploadResponse, error) {
 	if strings.TrimSpace(dto.StepID) == "" {
 		return nil, constants.ErrInvalidStepID

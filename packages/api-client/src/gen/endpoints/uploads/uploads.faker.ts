@@ -7,19 +7,7 @@
  */
 import { faker } from "@faker-js/faker";
 
-import type {
-  CompleteUploadResponse,
-  PresignUploadResponse,
-  ReplaceUploadResponse,
-} from "../../models";
-
-export const getCompleteUploadResponseMock = (
-  overrideResponse: Partial<Extract<CompleteUploadResponse, object>> = {},
-): CompleteUploadResponse => ({
-  storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  url: faker.string.alpha({ length: { min: 10, max: 20 } }),
-  ...overrideResponse,
-});
+import type { PresignUploadResponse, ReplaceUploadResponse } from "../../models";
 
 export const getPresignUploadResponseMock = (
   overrideResponse: Partial<Extract<PresignUploadResponse, object>> = {},
