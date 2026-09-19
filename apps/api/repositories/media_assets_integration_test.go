@@ -2,6 +2,8 @@ package repositories_test
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -9,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	mediaassetsrepositories "github.com/CliqRelay/cliqrelay/repositories/media_assets"
@@ -398,115 +401,252 @@ func TestBunMediaAssetsRepository_Delete(t *testing.T) {
 func TestBunMediaAssetsRepository_DeleteByStepID(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns the deleted rows", func(t *testing.T) {
-		t.Parallel()
-		db := mediaAssetsDB
-		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
-		stepID, _ := seedSimpleStep(t, db)
-		seedMediaAsset(t, db, stepID, "/uploads/delete-by-step-1.png")
-		seedMediaAsset(t, db, stepID, "/uploads/delete-by-step-2.png")
+	cases := []struct {
+		name        string
+		setup       func(*bun.DB) uuid.UUID
+		wantRemoved int
+	}{
+		{
+			name: "returns the deleted rows",
+			setup: func(db *bun.DB) uuid.UUID {
+				stepID, _ := seedSimpleStep(t, db)
+				seedMediaAsset(t, db, stepID, "/uploads/delete-by-step-1.png")
+				seedMediaAsset(t, db, stepID, "/uploads/delete-by-step-2.png")
+				return stepID
+			},
+			wantRemoved: 2,
+		},
+		{
+			name: "returns empty slice when nothing to delete",
+			setup: func(db *bun.DB) uuid.UUID {
+				stepID, _ := seedSimpleStep(t, db)
+				return stepID
+			},
+			wantRemoved: 0,
+		},
+	}
 
-		removed, err := repo.DeleteByStepID(context.Background(), stepID.String())
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-		require.NoError(t, err)
-		assert.Len(t, removed, 2)
-		remaining, err := repo.GetByStepID(context.Background(), stepID.String())
-		require.NoError(t, err)
-		assert.Empty(t, remaining)
-	})
+			db := mediaAssetsDB
+			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+			ctx := context.Background()
+			stepID := tt.setup(db)
 
-	t.Run("returns empty slice when nothing to delete", func(t *testing.T) {
-		t.Parallel()
-		db := mediaAssetsDB
-		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
-		stepID, _ := seedSimpleStep(t, db)
+			removed, err := repo.DeleteByStepID(ctx, stepID.String())
 
-		removed, err := repo.DeleteByStepID(context.Background(), stepID.String())
+			require.NoError(t, err)
+			assert.NotNil(t, removed)
+			assert.Len(t, removed, tt.wantRemoved)
+			remaining, err := repo.GetByStepID(ctx, stepID.String())
+			require.NoError(t, err)
+			assert.Empty(t, remaining)
+		})
+	}
+}
 
-		require.NoError(t, err)
-		assert.NotNil(t, removed)
-		assert.Empty(t, removed)
-	})
+func TestBunMediaAssetsRepository_LockStepForUpdate(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		setup   func(*bun.DB) uuid.UUID
+		wantErr error
+	}{
+		{
+			name: "locks an existing step",
+			setup: func(db *bun.DB) uuid.UUID {
+				stepID, _ := seedSimpleStep(t, db)
+				return stepID
+			},
+		},
+		{
+			name:    "returns not found for a missing step",
+			setup:   func(*bun.DB) uuid.UUID { return uuid.New() },
+			wantErr: constants.ErrStepNotFound,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db := mediaAssetsDB
+			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+			stepID := tt.setup(db)
+
+			err := repo.Tx(context.Background(), func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
+				return txRepo.LockStepForUpdate(ctx, stepID)
+			})
+
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestBunMediaAssetsRepository_ReplaceConcurrent_StepLock(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		setup func(*bun.DB) uuid.UUID
+	}{
+		{
+			name: "step with no asset ends with exactly one row",
+			setup: func(db *bun.DB) uuid.UUID {
+				stepID, _ := seedSimpleStep(t, db)
+				return stepID
+			},
+		},
+		{
+			name: "step with an existing asset ends with exactly one row",
+			setup: func(db *bun.DB) uuid.UUID {
+				stepID, _ := seedSimpleStep(t, db)
+				seedMediaAsset(t, db, stepID, fmt.Sprintf("/uploads/concurrent-%s-old.png", stepID))
+				return stepID
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db := mediaAssetsDB
+			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+			ctx := context.Background()
+			stepID := tt.setup(db)
+
+			const workers = 5
+			var wg sync.WaitGroup
+			errs := make(chan error, workers)
+			for i := range workers {
+				path := fmt.Sprintf("/uploads/concurrent-%s-%d.png", stepID, i)
+				wg.Go(func() {
+					errs <- repo.Tx(ctx, func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
+						if err := txRepo.LockStepForUpdate(ctx, stepID); err != nil {
+							return err
+						}
+						if _, err := txRepo.DeleteByStepID(ctx, stepID.String()); err != nil {
+							return err
+						}
+						_, err := txRepo.Create(ctx, &types.CreateMediaAssetDTO{StepID: stepID, StoragePath: path})
+						return err
+					})
+				})
+			}
+			wg.Wait()
+			close(errs)
+
+			for err := range errs {
+				require.NoError(t, err)
+			}
+			assets, err := repo.GetByStepID(ctx, stepID.String())
+			require.NoError(t, err)
+			assert.Len(t, assets, 1, "step row lock must serialize concurrent replaces")
+		})
+	}
 }
 
 func TestBunMediaAssetsRepository_Tx(t *testing.T) {
 	t.Parallel()
 
-	t.Run("commits delete and create together", func(t *testing.T) {
-		t.Parallel()
-		db := mediaAssetsDB
-		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
-		stepID, _ := seedSimpleStep(t, db)
-		seedMediaAsset(t, db, stepID, "/uploads/tx-old.png")
+	const oldPath = "/uploads/tx-old.png"
+	const newPath = "/uploads/tx-new.png"
 
-		err := repo.Tx(context.Background(), func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
-			if _, err := txRepo.DeleteByStepID(ctx, stepID.String()); err != nil {
-				return err
+	cases := []struct {
+		name        string
+		callbackErr error
+		wantPath    string
+	}{
+		{
+			name:     "commits delete and create together",
+			wantPath: newPath,
+		},
+		{
+			name:        "rolls back when callback fails",
+			callbackErr: assert.AnError,
+			wantPath:    oldPath,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db := mediaAssetsDB
+			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+			ctx := context.Background()
+			stepID, _ := seedSimpleStep(t, db)
+			seedMediaAsset(t, db, stepID, fmt.Sprintf("%s-%s", oldPath, stepID))
+
+			err := repo.Tx(ctx, func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
+				if _, err := txRepo.DeleteByStepID(ctx, stepID.String()); err != nil {
+					return err
+				}
+				if _, err := txRepo.Create(ctx, &types.CreateMediaAssetDTO{StepID: stepID, StoragePath: fmt.Sprintf("%s-%s", newPath, stepID)}); err != nil {
+					return err
+				}
+				return tt.callbackErr
+			})
+
+			if tt.callbackErr != nil {
+				require.ErrorIs(t, err, tt.callbackErr)
+			} else {
+				require.NoError(t, err)
 			}
-			_, err := txRepo.Create(ctx, &types.CreateMediaAssetDTO{StepID: stepID, StoragePath: "/uploads/tx-new.png"})
-			return err
+			assets, err := repo.GetByStepID(ctx, stepID.String())
+			require.NoError(t, err)
+			require.Len(t, assets, 1)
+			assert.Equal(t, fmt.Sprintf("%s-%s", tt.wantPath, stepID), assets[0].StoragePath)
 		})
-
-		require.NoError(t, err)
-		assets, err := repo.GetByStepID(context.Background(), stepID.String())
-		require.NoError(t, err)
-		require.Len(t, assets, 1)
-		assert.Equal(t, "/uploads/tx-new.png", assets[0].StoragePath)
-	})
-
-	t.Run("rolls back when callback fails", func(t *testing.T) {
-		t.Parallel()
-		db := mediaAssetsDB
-		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
-		stepID, _ := seedSimpleStep(t, db)
-		seedMediaAsset(t, db, stepID, "/uploads/tx-rollback-old.png")
-
-		err := repo.Tx(context.Background(), func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
-			if _, err := txRepo.DeleteByStepID(ctx, stepID.String()); err != nil {
-				return err
-			}
-			if _, err := txRepo.Create(ctx, &types.CreateMediaAssetDTO{StepID: stepID, StoragePath: "/uploads/tx-rollback-new.png"}); err != nil {
-				return err
-			}
-			return assert.AnError
-		})
-
-		require.ErrorIs(t, err, assert.AnError)
-		assets, err := repo.GetByStepID(context.Background(), stepID.String())
-		require.NoError(t, err)
-		require.Len(t, assets, 1)
-		assert.Equal(t, "/uploads/tx-rollback-old.png", assets[0].StoragePath)
-	})
+	}
 }
 
 func TestBunMediaAssetsRepository_ExistingStoragePaths(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns only the paths that have a row", func(t *testing.T) {
-		t.Parallel()
+	cases := []struct {
+		name  string
+		setup func(*bun.DB) (input []string, want []string)
+	}{
+		{
+			name: "returns only the paths that have a row",
+			setup: func(db *bun.DB) ([]string, []string) {
+				stepID, _ := seedSimpleStep(t, db)
+				kept := "uploads/guides/g/steps/" + stepID.String() + "/1.webp"
+				alsoKept := "uploads/guides/g/steps/" + stepID.String() + "/2.webp"
+				seedMediaAsset(t, db, stepID, kept)
+				seedMediaAsset(t, db, stepID, alsoKept)
+				return []string{kept, "uploads/guides/g/steps/x/orphan.webp", alsoKept}, []string{kept, alsoKept}
+			},
+		},
+		{
+			name: "returns empty slice for empty input",
+			setup: func(*bun.DB) ([]string, []string) {
+				return nil, []string{}
+			},
+		},
+	}
 
-		db := mediaAssetsDB
-		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
-		stepID, _ := seedSimpleStep(t, db)
-		kept := "uploads/guides/g/steps/" + stepID.String() + "/1.webp"
-		alsoKept := "uploads/guides/g/steps/" + stepID.String() + "/2.webp"
-		seedMediaAsset(t, db, stepID, kept)
-		seedMediaAsset(t, db, stepID, alsoKept)
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-		existing, err := repo.ExistingStoragePaths(context.Background(), []string{kept, "uploads/guides/g/steps/x/orphan.webp", alsoKept})
+			db := mediaAssetsDB
+			repo := mediaassetsrepositories.NewBunMediaAssetsRepository(db)
+			input, want := tt.setup(db)
 
-		require.NoError(t, err)
-		assert.ElementsMatch(t, []string{kept, alsoKept}, existing)
-	})
+			existing, err := repo.ExistingStoragePaths(context.Background(), input)
 
-	t.Run("returns empty slice for empty input", func(t *testing.T) {
-		t.Parallel()
-
-		repo := mediaassetsrepositories.NewBunMediaAssetsRepository(mediaAssetsDB)
-
-		existing, err := repo.ExistingStoragePaths(context.Background(), nil)
-
-		require.NoError(t, err)
-		assert.Empty(t, existing)
-	})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, want, existing)
+		})
+	}
 }

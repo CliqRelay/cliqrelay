@@ -57,6 +57,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath, MimeType: &mimeType, FileSize: &fileSize},
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
 				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).Return([]*models.MediaAsset{oldAsset()}, nil).Once()
 				mediaRepo.On("Create", mock.Anything, mock.MatchedBy(func(dto *types.CreateMediaAssetDTO) bool {
 					return dto.StepID == stepID && dto.StoragePath == newPath && *dto.MimeType == mimeType && *dto.ByteSize == fileSize
@@ -77,6 +78,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
 				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).Return([]*models.MediaAsset{}, nil).Once()
 				mediaRepo.On("Create", mock.Anything, mock.Anything).Return(newAsset(), nil).Once()
 				presign.On("GetURL", mock.Anything, bucket, newPath).Return("https://cdn/"+newPath, nil).Once()
@@ -88,6 +90,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
 				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).Return([]*models.MediaAsset{newAsset()}, nil).Once()
 				mediaRepo.On("Create", mock.Anything, mock.Anything).Return(newAsset(), nil).Once()
 				presign.On("GetURL", mock.Anything, bucket, newPath).Return("https://cdn/"+newPath, nil).Once()
@@ -121,6 +124,15 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			wantErr: constants.ErrStepNotFound,
 		},
 		{
+			name: "returns not found when the step is gone by the time the row is locked",
+			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
+			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(constants.ErrStepNotFound).Once()
+			},
+			wantErr: constants.ErrStepNotFound,
+		},
+		{
 			name: "rejects storage path outside the step prefix",
 			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: fmt.Sprintf("uploads/guides/%s/steps/%s/1.webp", uuid.New(), uuid.New())},
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
@@ -133,6 +145,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
 				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).Return(nil, assert.AnError).Once()
 			},
 			wantErr: assert.AnError,
@@ -142,6 +155,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			dto:  &types.ReplaceUploadDTO{StepID: stepID.String(), StoragePath: newPath},
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
 				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).Return([]*models.MediaAsset{oldAsset()}, nil).Once()
 				mediaRepo.On("Create", mock.Anything, mock.Anything).Return(nil, assert.AnError).Once()
 			},
@@ -154,6 +168,7 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			redis: tests.NewUnreachableRedis,
 			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
 				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).Return([]*models.MediaAsset{oldAsset()}, nil).Once()
 				mediaRepo.On("Create", mock.Anything, mock.Anything).Return(newAsset(), nil).Once()
 				presign.On("GetURL", mock.Anything, bucket, newPath).Return("https://cdn/"+newPath, nil).Once()

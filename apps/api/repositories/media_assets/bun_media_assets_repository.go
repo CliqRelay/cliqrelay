@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -25,6 +26,20 @@ func (r *BunMediaAssetsRepository) Tx(ctx context.Context, fn func(ctx context.C
 	return r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		return fn(ctx, &BunMediaAssetsRepository{db: tx})
 	})
+}
+
+func (r *BunMediaAssetsRepository) LockStepForUpdate(ctx context.Context, stepID uuid.UUID) error {
+	var id uuid.UUID
+	err := r.db.NewSelect().
+		Column("s.id").
+		TableExpr("steps s").
+		Where("s.id = ?", stepID).
+		For("UPDATE").
+		Scan(ctx, &id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return constants.ErrStepNotFound
+	}
+	return err
 }
 
 func (r *BunMediaAssetsRepository) Create(ctx context.Context, dto *types.CreateMediaAssetDTO) (*models.MediaAsset, error) {

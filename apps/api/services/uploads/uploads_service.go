@@ -150,6 +150,9 @@ func (s *UploadsService) ReplaceUpload(ctx context.Context, dto *types.ReplaceUp
 	var removed []*models.MediaAsset
 	var created *models.MediaAsset
 	err = s.mediaAssetsRepo.Tx(ctx, func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
+		if err := txRepo.LockStepForUpdate(ctx, parsedStepID); err != nil {
+			return err
+		}
 		removed, err = txRepo.DeleteByStepID(ctx, dto.StepID)
 		if err != nil {
 			return err
