@@ -17,6 +17,7 @@ type EnvConfig struct {
 	S3SecretAccessKey     string
 	S3Bucket              string
 	S3PresignedURLExpiry  string
+	S3ManageBucketCORS    bool
 	SMTPHost              string
 	SMTPPort              string
 	AuthulaBaseURL        string
@@ -52,6 +53,7 @@ func LoadEnvConfig() *EnvConfig {
 		S3SecretAccessKey:     os.Getenv("S3_SECRET_ACCESS_KEY"),
 		S3Bucket:              os.Getenv("S3_BUCKET"),
 		S3PresignedURLExpiry:  defaultEnv("S3_PRESIGNED_URL_EXPIRY", "15m"),
+		S3ManageBucketCORS:    os.Getenv("S3_MANAGE_BUCKET_CORS") == "true",
 		SMTPHost:              os.Getenv("SMTP_HOST"),
 		SMTPPort:              os.Getenv("SMTP_PORT"),
 		AuthulaBaseURL:        os.Getenv("AUTHULA_BASE_URL"),

@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import { useDndContext } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -5,6 +7,7 @@ import {
 	Camera,
 	CopyIcon,
 	GripVerticalIcon,
+	ImageUpIcon,
 	MoreHorizontalIcon,
 	PlusIcon,
 	Trash2Icon,
@@ -24,6 +27,7 @@ import { cn } from "@/lib/utils";
 import type { StepTypeOption } from "@/models";
 import { StepItemForm } from "./step-item-form";
 import { StepListItem } from "./step-list-item";
+import { StepMediaPicker } from "./step-media-picker";
 import { StepTypeDock } from "./step-type-dock";
 
 type EditableStepItemActions = {
@@ -32,6 +36,7 @@ type EditableStepItemActions = {
 	onDelete?: (stepId: string) => void;
 	onDuplicate?: (stepId: string) => void;
 	onRecapture?: (stepId: string) => void;
+	onReplaceMedia?: (stepId: string, file: File) => void;
 	onAddStepBeforeWithType?: (stepId: string, type: StepTypeOption) => void;
 };
 
@@ -40,6 +45,7 @@ type Props = {
 	stepNumber: number;
 	selectedStepId?: string | null;
 	actions?: EditableStepItemActions;
+	isReplacing?: boolean;
 };
 
 export function StepEditCard({
@@ -47,6 +53,7 @@ export function StepEditCard({
 	stepNumber,
 	selectedStepId,
 	actions,
+	isReplacing,
 }: Props) {
 	const {
 		onSelect,
@@ -54,8 +61,14 @@ export function StepEditCard({
 		onDelete,
 		onDuplicate,
 		onRecapture,
+		onReplaceMedia,
 		onAddStepBeforeWithType,
 	} = actions ?? {};
+	const filePickerRef = useRef<HTMLInputElement>(null);
+	const canReplaceMedia = onReplaceMedia != null && step.type !== "canvas";
+	const handleOpenFilePicker = () => {
+		filePickerRef.current?.click();
+	};
 	const {
 		attributes,
 		listeners,
@@ -141,12 +154,25 @@ export function StepEditCard({
 								step={step}
 								index={stepNumber}
 								onUpdate={onUpdate}
+								onReplaceMedia={canReplaceMedia ? handleOpenFilePicker : undefined}
+								isReplacing={isReplacing}
 							/>
 						</div>
 						<div className={cn(isSelected && "hidden")}>
-							<StepListItem step={step} />
+							<StepListItem
+								step={step}
+								onReplaceMedia={canReplaceMedia ? handleOpenFilePicker : undefined}
+								isReplacing={isReplacing}
+							/>
 						</div>
 					</CardContent>
+
+					{canReplaceMedia && (
+						<StepMediaPicker
+							ref={filePickerRef}
+							onSelect={(file) => onReplaceMedia(step.id, file)}
+						/>
+					)}
 
 					<div className="absolute right-3 top-3 flex items-center gap-1">
 						<DropdownMenu>
@@ -176,6 +202,18 @@ export function StepEditCard({
 									>
 										<Camera className="h-3.5 w-3.5" />
 										Recapture
+									</DropdownMenuItem>
+								)}
+								{canReplaceMedia && (
+									<DropdownMenuItem
+										disabled={isReplacing}
+										onClick={(e) => {
+											e.stopPropagation();
+											handleOpenFilePicker();
+										}}
+									>
+										<ImageUpIcon className="h-3.5 w-3.5" />
+										Replace screenshot
 									</DropdownMenuItem>
 								)}
 								{onDuplicate && (

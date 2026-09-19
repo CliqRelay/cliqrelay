@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
 )
@@ -18,6 +19,12 @@ type BunMediaAssetsRepository struct {
 
 func NewBunMediaAssetsRepository(db bun.IDB) *BunMediaAssetsRepository {
 	return &BunMediaAssetsRepository{db: db}
+}
+
+func (r *BunMediaAssetsRepository) Tx(ctx context.Context, fn func(ctx context.Context, repo interfaces.MediaAssetsRepository) error) error {
+	return r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return fn(ctx, &BunMediaAssetsRepository{db: tx})
+	})
 }
 
 func (r *BunMediaAssetsRepository) Create(ctx context.Context, dto *types.CreateMediaAssetDTO) (*models.MediaAsset, error) {
@@ -69,6 +76,7 @@ func (r *BunMediaAssetsRepository) GetByStepID(ctx context.Context, stepID strin
 	err := r.db.NewSelect().
 		Model(&mediaAssets).
 		Where("step_id = ?", stepID).
+		Order("created_at DESC", "id DESC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -153,4 +161,19 @@ func (r *BunMediaAssetsRepository) Delete(ctx context.Context, id string) (*mode
 	}
 
 	return mediaAsset, nil
+}
+
+func (r *BunMediaAssetsRepository) DeleteByStepID(ctx context.Context, stepID string) ([]*models.MediaAsset, error) {
+	var mediaAssets = make([]*models.MediaAsset, 0)
+
+	_, err := r.db.NewDelete().
+		Model(&mediaAssets).
+		Where("step_id = ?", stepID).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mediaAssets, nil
 }

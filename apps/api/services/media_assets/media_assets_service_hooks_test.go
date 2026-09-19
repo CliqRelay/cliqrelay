@@ -61,7 +61,7 @@ func TestMediaAssetsService_Create_Hooks(t *testing.T) {
 			mockStepsRepo := new(tests.MockStepsRepository)
 			hooks := &interfaces.MediaAssetHooks{}
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, hooks)
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, new(tests.MockGuidesRepository), hooks)
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, new(tests.MockGuidesRepository), tests.NewTestRedisClient(t), nil, hooks)
 
 			// Act
 			asset, err := svc.Create(context.Background(), &types.CreateMediaAssetRequest{StepID: uuid.New()})

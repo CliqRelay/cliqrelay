@@ -92,3 +92,40 @@ func (uc *UploadsUseCase) CompleteUpload(ctx context.Context, actor *authulamode
 
 	return uc.uploadsService.CompleteUpload(ctx, req.StepID, req.StoragePath, req.FileSize, req.MimeType, req.Thumbnail, req.Width, req.Height)
 }
+
+func (uc *UploadsUseCase) ReplaceUpload(ctx context.Context, actor *authulamodels.Actor, req *types.ReplaceUploadRequest) (*types.ReplaceUploadResponse, error) {
+	if strings.TrimSpace(req.StepID) == "" {
+		return nil, constants.ErrInvalidStepID
+	}
+
+	step, err := uc.stepsService.GetByID(ctx, req.StepID)
+	if err != nil {
+		return nil, err
+	}
+	if step == nil {
+		return nil, constants.ErrStepNotFound
+	}
+
+	guide, err := uc.guidesService.GetByID(ctx, step.GuideID.String())
+	if err != nil {
+		return nil, err
+	}
+	if guide == nil {
+		return nil, constants.ErrGuideNotFound
+	}
+
+	teamID := guide.TeamID.String()
+	if err := uc.authzService.CanEditGuide(ctx, actor, teamID, guide); err != nil {
+		return nil, err
+	}
+
+	return uc.uploadsService.ReplaceUpload(ctx, &types.ReplaceUploadDTO{
+		StepID:      req.StepID,
+		StoragePath: req.StoragePath,
+		FileSize:    req.FileSize,
+		MimeType:    req.MimeType,
+		Thumbnail:   req.Thumbnail,
+		Width:       req.Width,
+		Height:      req.Height,
+	})
+}

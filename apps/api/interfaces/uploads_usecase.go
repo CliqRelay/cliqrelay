@@ -11,4 +11,5 @@ import (
 type UploadsUseCase interface {
 	PresignUpload(ctx context.Context, actor *authulamodels.Actor, req *types.PresignUploadRequest) (*types.PresignUploadResponse, error)
 	CompleteUpload(ctx context.Context, actor *authulamodels.Actor, req *types.CompleteUploadRequest) (*types.CompleteUploadResponse, error)
+	ReplaceUpload(ctx context.Context, actor *authulamodels.Actor, req *types.ReplaceUploadRequest) (*types.ReplaceUploadResponse, error)
 }

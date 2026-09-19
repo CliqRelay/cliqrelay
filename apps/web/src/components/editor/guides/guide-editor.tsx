@@ -7,6 +7,7 @@ import { GuideWorkflowEditMode } from "./guide-workflow-edit-mode";
 import { GuideWorkflowViewMode } from "./guide-workflow-view-mode";
 import { useGuideStepMutations } from "@/hooks/useGuideStepMutations";
 import { useStepEditor } from "@/hooks/useStepEditor";
+import { useStepMediaReplace } from "@/hooks/useStepMediaReplace";
 
 type Props = {
   guide: Guide;
@@ -29,6 +30,7 @@ export function GuideEditor({ guide, mode, onUpdateGuide }: Props) {
 
   const { handleAddStepWithType, handleSave, handleDelete, handleDuplicate, handleReorder } =
     useGuideStepMutations(guide.id);
+  const { handleReplaceMedia, replacingStepId } = useStepMediaReplace(guide.id);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
@@ -57,6 +59,8 @@ export function GuideEditor({ guide, mode, onUpdateGuide }: Props) {
           }
           onDeleteStep={(stepId) => handleDelete(stepId, selectedStepId, selectStep)}
           onDuplicateStep={(stepId) => handleDuplicate(stepId)}
+          onReplaceStepMedia={handleReplaceMedia}
+          replacingStepId={replacingStepId}
           onReorderSteps={handleReorder}
         />
       </Activity>

@@ -3,13 +3,17 @@ package uploads
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
@@ -18,6 +22,8 @@ type UploadsService struct {
 	stepsRepo       interfaces.StepsRepository
 	mediaAssetsRepo interfaces.MediaAssetsRepository
 	presignClient   interfaces.PresignService
+	redisClient     *redis.Client
+	logger          *slog.Logger
 	bucket          string
 }
 
@@ -26,15 +32,26 @@ func NewUploadsService(
 	stepsRepo interfaces.StepsRepository,
 	mediaAssetsRepo interfaces.MediaAssetsRepository,
 	presignClient interfaces.PresignService,
+	redisClient *redis.Client,
+	logger *slog.Logger,
 	bucket string,
 ) *UploadsService {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &UploadsService{
 		guidesRepo:      guidesRepo,
 		stepsRepo:       stepsRepo,
 		mediaAssetsRepo: mediaAssetsRepo,
 		presignClient:   presignClient,
+		redisClient:     redisClient,
+		logger:          logger,
 		bucket:          bucket,
 	}
+}
+
+func stepUploadPrefix(guideID, stepID string) string {
+	return fmt.Sprintf("uploads/guides/%s/steps/%s/", guideID, stepID)
 }
 
 func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, guideID, stepID string) (*types.PresignedURLResult, error) {
@@ -53,7 +70,7 @@ func (s *UploadsService) GeneratePresignedPutURL(ctx context.Context, guideID, s
 		return nil, constants.ErrStepNotFound
 	}
 
-	key := fmt.Sprintf("uploads/guides/%s/steps/%s/%d.webp", guideID, stepID, time.Now().UnixNano())
+	key := fmt.Sprintf("%s%d.webp", stepUploadPrefix(guideID, stepID), time.Now().UnixNano())
 
 	url, err := s.presignClient.PutURL(ctx, s.bucket, key, "image/webp")
 	if err != nil {
@@ -105,5 +122,77 @@ func (s *UploadsService) CompleteUpload(ctx context.Context, stepID, storagePath
 	return &types.CompleteUploadResponse{
 		URL:         url,
 		StoragePath: mediaAsset.StoragePath,
+	}, nil
+}
+
+func (s *UploadsService) ReplaceUpload(ctx context.Context, dto *types.ReplaceUploadDTO) (*types.ReplaceUploadResponse, error) {
+	if strings.TrimSpace(dto.StepID) == "" {
+		return nil, constants.ErrInvalidStepID
+	}
+	if strings.TrimSpace(dto.StoragePath) == "" {
+		return nil, constants.ErrInvalidStoragePath
+	}
+
+	parsedStepID, err := uuid.Parse(dto.StepID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", constants.ErrInvalidStepID, err)
+	}
+
+	step, err := s.stepsRepo.GetByID(ctx, dto.StepID)
+	if err != nil {
+		return nil, err
+	}
+	if step == nil {
+		return nil, constants.ErrStepNotFound
+	}
+
+	if !strings.HasPrefix(dto.StoragePath, stepUploadPrefix(step.GuideID.String(), dto.StepID)) {
+		return nil, constants.ErrInvalidStoragePath
+	}
+
+	var removed []*models.MediaAsset
+	var created *models.MediaAsset
+	err = s.mediaAssetsRepo.Tx(ctx, func(ctx context.Context, txRepo interfaces.MediaAssetsRepository) error {
+		removed, err = txRepo.DeleteByStepID(ctx, dto.StepID)
+		if err != nil {
+			return err
+		}
+		created, err = txRepo.Create(ctx, &types.CreateMediaAssetDTO{
+			StepID:      parsedStepID,
+			StoragePath: dto.StoragePath,
+			MimeType:    dto.MimeType,
+			Thumbnail:   dto.Thumbnail,
+			ByteSize:    dto.FileSize,
+			Width:       dto.Width,
+			Height:      dto.Height,
+		})
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to replace media asset: %w", err)
+	}
+
+	for _, asset := range removed {
+		if asset.StoragePath == created.StoragePath {
+			continue
+		}
+		if err := events.Publish(ctx, s.redisClient, events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, &events.MediaAssetDeletePayload{
+			StepID:      dto.StepID,
+			StoragePath: asset.StoragePath,
+		}); err != nil {
+			s.logger.Error("publish event for asset", "err", err, "step_id", dto.StepID, "storage_path", asset.StoragePath)
+		}
+	}
+
+	url, err := s.presignClient.GetURL(ctx, s.bucket, created.StoragePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to presign get object: %w", err)
+	}
+	created.URL = &url
+
+	return &types.ReplaceUploadResponse{
+		URL:         url,
+		StoragePath: created.StoragePath,
+		MediaAsset:  created,
 	}, nil
 }

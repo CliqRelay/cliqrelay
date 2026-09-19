@@ -121,7 +121,7 @@ func TestUploadsService_GeneratePresignedPutURL(t *testing.T) {
 			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
 			mockPresignClient := new(tests.MockPresignService)
 			tt.setup(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, tt.guideID, tt.stepID)
-			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, bucket)
+			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, tests.NewTestRedisClient(t), nil, bucket)
 
 			result, err := svc.GeneratePresignedPutURL(context.Background(), tt.guideID, tt.stepID)
 
@@ -273,7 +273,7 @@ func TestUploadsService_CompleteUpload(t *testing.T) {
 					Return("https://test-bucket.s3.amazonaws.com/"+tt.storagePath, nil).
 					Once()
 			}
-			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, bucket)
+			svc := uploadsservice.NewUploadsService(mockGuidesRepo, mockStepsRepo, mockMediaAssetsRepo, mockPresignClient, tests.NewTestRedisClient(t), nil, bucket)
 
 			result, err := svc.CompleteUpload(context.Background(), tt.stepID, tt.storagePath, tt.fileSize, tt.mimeType, tt.thumbnail, new(100), new(100))
 

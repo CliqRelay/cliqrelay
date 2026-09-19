@@ -111,7 +111,7 @@ func TestMediaAssetsService_Create(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			ctx := context.Background()
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, tests.NewTestRedisClient(t), nil, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAsset, err := svc.Create(ctx, tt.req)
 
@@ -191,7 +191,7 @@ func TestMediaAssetsService_GetByID(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			ctx := context.Background()
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, tests.NewTestRedisClient(t), nil, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAsset, err := svc.GetByID(ctx, tt.mediaAssetID)
 
@@ -265,7 +265,7 @@ func TestMediaAssetsService_GetByStepID(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			ctx := context.Background()
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, tests.NewTestRedisClient(t), nil, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAssets, err := svc.GetByStepID(ctx, tt.stepID)
 
@@ -395,7 +395,7 @@ func TestMediaAssetsService_Update(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			ctx := context.Background()
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, tests.NewTestRedisClient(t), nil, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAsset, err := svc.Update(ctx, tt.mediaAssetID, tt.req)
 
@@ -492,7 +492,7 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 			mockGuidesRepo := new(tests.MockGuidesRepository)
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			ctx := context.Background()
-			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, tests.NewTestRedisClient(t), nil, (*interfaces.MediaAssetHooks)(nil))
 
 			mediaAsset, err := svc.Delete(ctx, tt.mediaAssetID)
 

@@ -8,11 +8,23 @@
 import { HttpResponse, http } from "msw";
 import type { RequestHandlerOptions } from "msw";
 
-import type { CompleteUploadResponse, PresignUploadResponse } from "../../models";
+import type {
+  CompleteUploadResponse,
+  PresignUploadResponse,
+  ReplaceUploadResponse,
+} from "../../models";
 
-import { getCompleteUploadResponseMock, getPresignUploadResponseMock } from "./uploads.faker";
+import {
+  getCompleteUploadResponseMock,
+  getPresignUploadResponseMock,
+  getReplaceUploadResponseMock,
+} from "./uploads.faker";
 
-export { getCompleteUploadResponseMock, getPresignUploadResponseMock } from "./uploads.faker";
+export {
+  getCompleteUploadResponseMock,
+  getPresignUploadResponseMock,
+  getReplaceUploadResponseMock,
+} from "./uploads.faker";
 
 export const getCompleteUploadMockHandler = (
   overrideResponse?:
@@ -61,4 +73,32 @@ export const getPresignUploadMockHandler = (
     options,
   );
 };
-export const getUploadsMock = () => [getCompleteUploadMockHandler(), getPresignUploadMockHandler()];
+
+export const getReplaceUploadMockHandler = (
+  overrideResponse?:
+    | ReplaceUploadResponse
+    | ((
+        info: Parameters<Parameters<typeof http.post>[1]>[0],
+      ) => Promise<ReplaceUploadResponse> | ReplaceUploadResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post(
+    "*/api/v1/uploads/replace",
+    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === "function"
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getReplaceUploadResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+export const getUploadsMock = () => [
+  getCompleteUploadMockHandler(),
+  getPresignUploadMockHandler(),
+  getReplaceUploadMockHandler(),
+];

@@ -13,4 +13,6 @@ type MediaAssetsRepository interface {
 	GetByStepID(ctx context.Context, stepID string) ([]*models.MediaAsset, error)
 	Update(ctx context.Context, dto *types.UpdateMediaAssetDTO) (*models.MediaAsset, error)
 	Delete(ctx context.Context, id string) (*models.MediaAsset, error)
+	DeleteByStepID(ctx context.Context, stepID string) ([]*models.MediaAsset, error)
+	Tx(ctx context.Context, fn func(ctx context.Context, repo MediaAssetsRepository) error) error
 }

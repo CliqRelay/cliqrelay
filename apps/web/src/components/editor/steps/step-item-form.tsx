@@ -23,9 +23,11 @@ type StepItemFormProps = {
   step: Step;
   index: number;
   onUpdate?: (stepId: string, updates: Record<string, unknown>) => void;
+  onReplaceMedia?: () => void;
+  isReplacing?: boolean;
 };
 
-export function StepItemForm({ step, onUpdate }: StepItemFormProps) {
+export function StepItemForm({ step, onUpdate, onReplaceMedia, isReplacing }: StepItemFormProps) {
   const form = useForm({
     defaultValues: {
       actionText: step.actionText ?? "",
@@ -68,7 +70,7 @@ export function StepItemForm({ step, onUpdate }: StepItemFormProps) {
         </form.Field>
       </div>
 
-      <StepMedia step={step} />
+      <StepMedia step={step} onReplaceMedia={onReplaceMedia} isReplacing={isReplacing} />
 
       <div>
         <label className="mb-2 block text-xs font-medium text-muted-foreground">Notes</label>

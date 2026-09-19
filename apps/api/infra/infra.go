@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -69,6 +70,12 @@ func Init(envConfig *constants.EnvConfig) (*Infrastructure, error) {
 		} else {
 			slog.Info("S3 bucket already exists", "bucket", bucket)
 		}
+
+		if envConfig.S3ManageBucketCORS {
+			if err := applyBucketCORS(ctx, s3Client, bucket, envConfig.ClientURL); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return &Infrastructure{
@@ -77,4 +84,31 @@ func Init(envConfig *constants.EnvConfig) (*Infrastructure, error) {
 		S3Client:    s3Client,
 		S3Bucket:    bucket,
 	}, nil
+}
+
+// Browsers upload straight to presigned URLs, so the bucket must allow the web origin.
+// Opt-in via S3_MANAGE_BUCKET_CORS: self-hosted S3 (Rustfs, MinIO) needs it, while
+// platforms services like Supabase Storage has no PutBucketCors and already sends permissive CORS headers.
+func applyBucketCORS(ctx context.Context, client *s3.Client, bucket, clientURL string) error {
+	if clientURL == "" {
+		return nil
+	}
+
+	_, err := client.PutBucketCors(ctx, &s3.PutBucketCorsInput{
+		Bucket: aws.String(bucket),
+		CORSConfiguration: &s3types.CORSConfiguration{
+			CORSRules: []s3types.CORSRule{{
+				AllowedOrigins: []string{clientURL},
+				AllowedMethods: []string{"PUT", "GET", "HEAD"},
+				AllowedHeaders: []string{"*"},
+				MaxAgeSeconds:  aws.Int32(3600),
+			}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	slog.Info("Applied S3 bucket CORS", "bucket", bucket, "origin", clientURL)
+	return nil
 }

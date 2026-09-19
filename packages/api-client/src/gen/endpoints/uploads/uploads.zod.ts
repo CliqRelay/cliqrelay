@@ -10,6 +10,8 @@ import {
   CompleteUploadResponse,
   PresignUploadRequest,
   PresignUploadResponse,
+  ReplaceUploadRequest,
+  ReplaceUploadResponse,
 } from "../cliqrelay-api.schemas.zod";
 
 /**
@@ -27,3 +29,11 @@ export const CompleteUploadResponseSchema = CompleteUploadResponse;
 export const PresignUploadBody = PresignUploadRequest;
 
 export const PresignUploadResponseSchema = PresignUploadResponse;
+
+/**
+ * Replaces the step's media asset with the uploaded file and queues the old file for deletion
+ * @summary Replace upload
+ */
+export const ReplaceUploadBody = ReplaceUploadRequest;
+
+export const ReplaceUploadResponseSchema = ReplaceUploadResponse;

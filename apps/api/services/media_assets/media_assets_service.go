@@ -2,11 +2,14 @@ package media_assets
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/CliqRelay/cliqrelay/constants"
+	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -16,6 +19,8 @@ type MediaAssetsService struct {
 	mediaAssetsRepo interfaces.MediaAssetsRepository
 	stepsRepo       interfaces.StepsRepository
 	guidesRepo      interfaces.GuidesRepository
+	redisClient     *redis.Client
+	logger          *slog.Logger
 	hooks           *interfaces.MediaAssetHooks
 }
 
@@ -23,15 +28,22 @@ func NewMediaAssetsService(
 	mediaAssetsRepo interfaces.MediaAssetsRepository,
 	stepsRepo interfaces.StepsRepository,
 	guidesRepo interfaces.GuidesRepository,
+	redisClient *redis.Client,
+	logger *slog.Logger,
 	hooks *interfaces.MediaAssetHooks,
 ) *MediaAssetsService {
 	if hooks == nil {
 		hooks = &interfaces.MediaAssetHooks{}
 	}
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &MediaAssetsService{
 		mediaAssetsRepo: mediaAssetsRepo,
 		stepsRepo:       stepsRepo,
 		guidesRepo:      guidesRepo,
+		redisClient:     redisClient,
+		logger:          logger,
 		hooks:           hooks,
 	}
 }
@@ -201,6 +213,13 @@ func (s *MediaAssetsService) Delete(ctx context.Context, mediaAssetID string) (*
 	}
 	if deleted == nil {
 		return nil, constants.ErrMediaAssetNotFound
+	}
+
+	if err := events.Publish(ctx, s.redisClient, events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, &events.MediaAssetDeletePayload{
+		StepID:      deleted.StepID.String(),
+		StoragePath: deleted.StoragePath,
+	}); err != nil {
+		s.logger.Error("publish event for asset", "err", err, "media_asset_id", mediaAssetID, "storage_path", deleted.StoragePath)
 	}
 
 	if err := runDeleteMediaAssetHooks(s.hooks.AfterDeleteHooks(), ctx, mediaAssetID); err != nil {

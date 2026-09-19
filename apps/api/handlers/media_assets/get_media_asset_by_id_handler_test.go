@@ -86,7 +86,7 @@ func TestGetMediaAssetByIDHandler(t *testing.T) {
 			tt.setup(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo)
 			mockAuthz := new(tests.MockAuthorizationService)
 			mockAuthz.On("CanReadGuide", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			maSvc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, (*interfaces.MediaAssetHooks)(nil))
+			maSvc := media_assetsservice.NewMediaAssetsService(mockMediaAssetsRepo, mockStepsRepo, mockGuidesRepo, tests.NewTestRedisClient(t), nil, (*interfaces.MediaAssetHooks)(nil))
 			stepsSvc := stepsservice.NewStepsService(nil, mockStepsRepo, mockGuidesRepo, new(tests.MockPresignService), new(tests.MockStorageService), new(tests.MockMediaAssetsRepository), "test-bucket", nil, (*interfaces.StepHooks)(nil))
 			guidesSvc := guidesservice.NewGuidesService(mockGuidesRepo, nil, nil, nil, nil)
 			uc := usecases.NewMediaAssetsUseCase(mockAuthz, maSvc, stepsSvc, guidesSvc)
