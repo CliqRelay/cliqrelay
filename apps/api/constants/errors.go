@@ -15,6 +15,7 @@ var (
 	ErrInvalidStepID         = errors.New("invalid step ID")
 	ErrStepNotFound          = errors.New("step not found")
 	ErrInvalidStoragePath    = errors.New("invalid storage path")
+	ErrStoragePathInUse      = errors.New("storage path is already in use")
 	ErrInvalidMediaAssetID   = errors.New("invalid media asset ID")
 	ErrMediaAssetNotFound    = errors.New("media asset not found")
 	ErrInvalidContentType    = errors.New("invalid content type")

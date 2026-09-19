@@ -206,6 +206,18 @@ func TestUploadsService_ReplaceUpload(t *testing.T) {
 			wantEvents: 0,
 		},
 		{
+			name: "surfaces storage path conflict from the repository",
+			dto:  validDTO(),
+			setup: func(stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step(), nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
+				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).Return([]*models.MediaAsset{oldAsset()}, nil).Once()
+				mediaRepo.On("Create", mock.Anything, mock.Anything).Return(nil, constants.ErrStoragePathInUse).Once()
+			},
+			wantErr:    constants.ErrStoragePathInUse,
+			wantEvents: 0,
+		},
+		{
 			name:  "publish failure does not fail the request",
 			dto:   validDTO(),
 			redis: tests.NewUnreachableRedis,

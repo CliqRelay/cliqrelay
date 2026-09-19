@@ -116,6 +116,18 @@ func TestReplaceUploadHandler(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
+			name:    "storage path held by another step",
+			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath, MimeType: &mimeType, FileSize: &fileSize},
+			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
+				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step, nil).Twice()
+				guidesRepo.On("GetByID", mock.Anything, guideID.String()).Return(guide, nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
+				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).Return([]*models.MediaAsset{}, nil).Once()
+				mediaRepo.On("Create", mock.Anything, mock.Anything).Return(nil, constants.ErrStoragePathInUse).Once()
+			},
+			expectedStatus: http.StatusConflict,
+		},
+		{
 			name:    "edit denied",
 			payload: types.ReplaceUploadRequest{StepID: stepID.String(), StoragePath: storagePath},
 			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {

@@ -1,10 +1,12 @@
 package media_assets
 
 import (
+	"errors"
 	"net/http"
 
 	authulamodels "github.com/Authula/authula/models"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
@@ -38,7 +40,11 @@ func (h *CreateMediaAssetHandler) Handle() http.HandlerFunc {
 
 		mediaAsset, err := h.mediaAssetsUseCase.Create(ctx, actor, &request)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			status := http.StatusInternalServerError
+			if errors.Is(err, constants.ErrStoragePathInUse) {
+				status = http.StatusConflict
+			}
+			reqCtx.SetJSONResponse(status, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}
