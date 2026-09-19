@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	handlersmediaassets "github.com/CliqRelay/cliqrelay/handlers/media_assets"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -99,6 +100,35 @@ func TestCreateMediaAssetHandler(t *testing.T) {
 			},
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   assert.AnError.Error(),
+		},
+		{
+			name: "storage path already in use",
+			payload: types.CreateMediaAssetRequest{
+				StepID:      uuid.New(),
+				StoragePath: "uploads/test.png",
+			},
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   uuid.New(),
+						SortOrder: "a0",
+					}, nil).
+					Twice()
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
+					Return(&models.Guide{
+						ID:        uuid.New(),
+						CreatorID: new("test-user-123"),
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
+				mockMediaAssetsRepo.On("Create", mock.Anything, mock.Anything).
+					Return(nil, constants.ErrStoragePathInUse).
+					Once()
+			},
+			expectedStatus: http.StatusConflict,
+			expectedBody:   constants.ErrStoragePathInUse.Error(),
 		},
 	}
 

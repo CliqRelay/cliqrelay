@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/uptrace/bun"
 
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -60,10 +61,20 @@ func (r *BunMediaAssetsRepository) Create(ctx context.Context, dto *types.Create
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
+		if isStoragePathConflict(err) {
+			return nil, constants.ErrStoragePathInUse
+		}
 		return nil, err
 	}
 
 	return mediaAsset, nil
+}
+
+func isStoragePathConflict(err error) bool {
+	var pqErr *pq.Error
+	return errors.As(err, &pqErr) &&
+		pqErr.Code == "23505" &&
+		pqErr.Constraint == "media_assets_storage_path_unique"
 }
 
 func (r *BunMediaAssetsRepository) GetByID(ctx context.Context, id string) (*models.MediaAsset, error) {

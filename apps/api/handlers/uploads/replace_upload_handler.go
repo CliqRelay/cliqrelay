@@ -47,6 +47,8 @@ func (h *ReplaceUploadHandler) Handle() http.HandlerFunc {
 			case errors.Is(err, constants.ErrInvalidStepID), errors.Is(err, constants.ErrInvalidStoragePath), errors.Is(err, constants.ErrStepMediaNotSupported),
 				errors.Is(err, constants.ErrInvalidContentType), errors.Is(err, constants.ErrInvalidFileSize):
 				status = http.StatusBadRequest
+			case errors.Is(err, constants.ErrStoragePathInUse):
+				status = http.StatusConflict
 			}
 			reqCtx.SetJSONResponse(status, map[string]any{"message": err.Error()})
 			reqCtx.Handled = true

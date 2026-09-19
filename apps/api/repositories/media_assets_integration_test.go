@@ -54,7 +54,7 @@ func TestBunMediaAssetsRepository_Create(t *testing.T) {
 		name    string
 		setup   func(*bun.DB) *types.CreateMediaAssetDTO
 		check   func(*testing.T, *models.MediaAsset)
-		wantErr bool
+		wantErr error
 	}{
 		{
 			name: "creates media asset with given fields",
@@ -86,16 +86,17 @@ func TestBunMediaAssetsRepository_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "enforces storage_path uniqueness",
+			name: "returns ErrStoragePathInUse when another step holds the path",
 			setup: func(db *bun.DB) *types.CreateMediaAssetDTO {
 				stepID, _ := seedSimpleStep(t, db)
-				seedMediaAsset(t, db, stepID, "/uploads/unique.png")
+				otherStepID, _ := seedSimpleStep(t, db)
+				seedMediaAsset(t, db, otherStepID, "/uploads/unique.png")
 				return &types.CreateMediaAssetDTO{
 					StepID:      stepID,
 					StoragePath: "/uploads/unique.png",
 				}
 			},
-			wantErr: true,
+			wantErr: constants.ErrStoragePathInUse,
 		},
 	}
 
@@ -111,8 +112,8 @@ func TestBunMediaAssetsRepository_Create(t *testing.T) {
 
 			mediaAsset, err := repo.Create(ctx, dto)
 
-			if tt.wantErr {
-				assert.Error(t, err)
+			if tt.wantErr != nil {
+				require.ErrorIs(t, err, tt.wantErr)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, mediaAsset)
