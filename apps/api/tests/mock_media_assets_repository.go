@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -60,6 +61,11 @@ func (m *MockMediaAssetsRepository) DeleteByStepID(ctx context.Context, stepID s
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]*models.MediaAsset), args.Error(1)
+}
+
+func (m *MockMediaAssetsRepository) LockStepForUpdate(ctx context.Context, stepID uuid.UUID) error {
+	args := m.Called(ctx, stepID)
+	return args.Error(0)
 }
 
 func (m *MockMediaAssetsRepository) Tx(ctx context.Context, fn func(ctx context.Context, repo interfaces.MediaAssetsRepository) error) error {

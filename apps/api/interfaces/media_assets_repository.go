@@ -3,6 +3,8 @@ package interfaces
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
 )
@@ -15,5 +17,6 @@ type MediaAssetsRepository interface {
 	Delete(ctx context.Context, id string) (*models.MediaAsset, error)
 	ExistingStoragePaths(ctx context.Context, paths []string) ([]string, error)
 	DeleteByStepID(ctx context.Context, stepID string) ([]*models.MediaAsset, error)
+	LockStepForUpdate(ctx context.Context, stepID uuid.UUID) error
 	Tx(ctx context.Context, fn func(ctx context.Context, repo MediaAssetsRepository) error) error
 }

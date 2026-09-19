@@ -47,6 +47,7 @@ func TestReplaceUploadHandler(t *testing.T) {
 			setup: func(guidesRepo *tests.MockGuidesRepository, stepsRepo *tests.MockStepsRepository, mediaRepo *tests.MockMediaAssetsRepository, presign *tests.MockPresignService) {
 				stepsRepo.On("GetByID", mock.Anything, stepID.String()).Return(step, nil).Twice()
 				guidesRepo.On("GetByID", mock.Anything, guideID.String()).Return(guide, nil).Once()
+				mediaRepo.On("LockStepForUpdate", mock.Anything, stepID).Return(nil).Once()
 				mediaRepo.On("DeleteByStepID", mock.Anything, stepID.String()).
 					Return([]*models.MediaAsset{{ID: uuid.New(), StepID: stepID, StoragePath: oldPath}}, nil).Once()
 				mediaRepo.On("Create", mock.Anything, mock.Anything).
