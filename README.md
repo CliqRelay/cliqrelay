@@ -20,10 +20,12 @@ An open-source platform that transforms page clicks and interactions into beauti
 
 ### Features
 
-- **Instant Capture**: Capture workflows in real-time with a Chrome extension that listens for user interactions and captures them.
+- **Instant Capture**: Capture workflows in real-time with a Chrome/Firefox extension that listens for user interactions and captures them.
 - **Contextual Screenshots**: Automatically capture screenshots during interactions to provide visual context.
-- **Seamless Sharing**: Share guides with your team to ensure everyone has access to the best practices and workflows.
-- **AI-Powered Refinement**: Use AI to automatically refine captured workflows into clear, step-by-step guides that are easy to follow and share. (coming soon)
+- **Live Recording Sessions**: Start, pause, and review a capture session from the extension's sidepanel, watching steps populate in real time as you click through a workflow.
+- **Guide Editor**: Fine-tune captured guides in the web dashboard, reordering steps, editing titles and descriptions, and inserting custom annotation blocks (headers, tips, callouts, alerts) alongside captured steps.
+- **Guide Lifecycle Management**: Publish, archive, star, and trash guides, with soft-delete and restore support so nothing is lost by accident.
+- **PDF Export**: Export any guide as a polished, print-ready PDF for offline sharing or documentation handoff.
 
 ---
 
