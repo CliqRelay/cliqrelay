@@ -44,6 +44,9 @@ func NewWorker(opts ...Option) (*Worker, error) {
 		if err := worker.RegisterGuidePurgeCron(cronService.Scheduler(), repos.Guides, o.infraCfg.RedisClient); err != nil {
 			return nil, err
 		}
+		if err := worker.RegisterOrphanedUploadsSweepCron(cronService.Scheduler(), svcs.Domain.OrphanedUploadsService); err != nil {
+			return nil, err
+		}
 		w.cron = cronService
 	}
 

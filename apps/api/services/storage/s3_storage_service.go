@@ -7,9 +7,10 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/types"
 )
 
 type S3StorageService struct {
@@ -58,7 +59,37 @@ func (s *S3StorageService) CopyObject(ctx context.Context, bucket string, source
 	return err
 }
 
+func (s *S3StorageService) DeleteObjects(ctx context.Context, bucket string, keys []string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+
+	objectIdentifiers := make([]s3types.ObjectIdentifier, len(keys))
+	for i, key := range keys {
+		objectIdentifiers[i] = s3types.ObjectIdentifier{Key: aws.String(key)}
+	}
+
+	_, err := s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		Bucket: &bucket,
+		Delete: &s3types.Delete{
+			Objects: objectIdentifiers,
+			Quiet:   aws.Bool(true),
+		},
+	})
+	return err
+}
+
 func (s *S3StorageService) DeleteObjectsByPrefix(ctx context.Context, bucket string, prefix string) error {
+	return s.ListObjects(ctx, bucket, prefix, func(objects []types.StorageObject) error {
+		keys := make([]string, len(objects))
+		for i, obj := range objects {
+			keys[i] = obj.Key
+		}
+		return s.DeleteObjects(ctx, bucket, keys)
+	})
+}
+
+func (s *S3StorageService) ListObjects(ctx context.Context, bucket string, prefix string, visit func(objects []types.StorageObject) error) error {
 	paginator := s3.NewListObjectsV2Paginator(s.client, &s3.ListObjectsV2Input{
 		Bucket: &bucket,
 		Prefix: &prefix,
@@ -74,19 +105,12 @@ func (s *S3StorageService) DeleteObjectsByPrefix(ctx context.Context, bucket str
 			continue
 		}
 
-		objectIdentifiers := make([]types.ObjectIdentifier, len(page.Contents))
+		objects := make([]types.StorageObject, len(page.Contents))
 		for i, obj := range page.Contents {
-			objectIdentifiers[i] = types.ObjectIdentifier{Key: obj.Key}
+			objects[i] = types.StorageObject{Key: aws.ToString(obj.Key), LastModified: aws.ToTime(obj.LastModified)}
 		}
 
-		_, err = s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
-			Bucket: &bucket,
-			Delete: &types.Delete{
-				Objects: objectIdentifiers,
-				Quiet:   aws.Bool(true),
-			},
-		})
-		if err != nil {
+		if err := visit(objects); err != nil {
 			return err
 		}
 	}

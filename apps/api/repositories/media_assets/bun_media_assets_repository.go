@@ -83,6 +83,24 @@ func (r *BunMediaAssetsRepository) GetByStepID(ctx context.Context, stepID strin
 	return mediaAssets, nil
 }
 
+func (r *BunMediaAssetsRepository) ExistingStoragePaths(ctx context.Context, paths []string) ([]string, error) {
+	existing := make([]string, 0)
+	if len(paths) == 0 {
+		return existing, nil
+	}
+
+	err := r.db.NewSelect().
+		Model((*models.MediaAsset)(nil)).
+		Column("storage_path").
+		Where("storage_path IN (?)", bun.List(paths)).
+		Scan(ctx, &existing)
+	if err != nil {
+		return nil, err
+	}
+
+	return existing, nil
+}
+
 func (r *BunMediaAssetsRepository) Update(ctx context.Context, dto *types.UpdateMediaAssetDTO) (*models.MediaAsset, error) {
 	mediaAsset := &models.MediaAsset{}
 
