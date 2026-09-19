@@ -9,7 +9,7 @@ import { toast } from "@/lib/toast";
 import { validateReplacementFile } from "@/models";
 import {
   createReplaceStepMedia,
-  putObjectWithFetch,
+  putObjectWithXhr,
 } from "@/services/steps/step-media-replace.service";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 import { processImageFileForUpload } from "@/utils/image.utils";
@@ -30,7 +30,7 @@ export function useStepMediaReplace(guideId: string) {
     presignUpload: (data) => presignUpload.mutateAsync({ data }),
     replaceUpload: (data) => replaceUpload.mutateAsync({ data }),
     processImage: processImageFileForUpload,
-    putObject: putObjectWithFetch,
+    putObject: putObjectWithXhr,
   });
 
   const handleReplaceMedia = async (stepId: string, file: File) => {
@@ -47,7 +47,13 @@ export function useStepMediaReplace(guideId: string) {
     setReplacingStepId(stepId);
     const toastId = toast.loading("Uploading screenshot…");
     try {
-      await replaceStepMedia({ stepId, guideId, file });
+      await replaceStepMedia({
+        stepId,
+        guideId,
+        file,
+        onProgress: (fraction) =>
+          toast.loading(`Uploading screenshot… ${Math.round(fraction * 100)}%`, { id: toastId }),
+      });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: stepsQueryKey(guideId) }),
         queryClient.invalidateQueries({
@@ -57,10 +63,7 @@ export function useStepMediaReplace(guideId: string) {
       toast.success("Screenshot updated");
     } catch (error) {
       toast.error("Error", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to replace screenshot",
+        description: error instanceof Error ? error.message : "Failed to replace screenshot",
       });
     } finally {
       toast.dismiss(toastId);

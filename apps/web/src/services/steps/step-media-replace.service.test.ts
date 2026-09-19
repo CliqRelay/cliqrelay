@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { createReplaceStepMedia } from "./step-media-replace.service";
+import { createReplaceStepMedia, putObjectWithXhr } from "./step-media-replace.service";
 
 const processed = {
   webpBlob: { size: 4321 } as Blob,
@@ -58,12 +58,7 @@ describe("createReplaceStepMedia", () => {
   test("runs convert → presign → put → replace in order and returns the replace response", async () => {
     const result = await createReplaceStepMedia(deps)(input);
 
-    expect(calls).toEqual([
-      "processImage",
-      "presignUpload",
-      "putObject",
-      "replaceUpload",
-    ]);
+    expect(calls).toEqual(["processImage", "presignUpload", "putObject", "replaceUpload"]);
     expect(result).toBe(replaced);
   });
 
@@ -78,6 +73,7 @@ describe("createReplaceStepMedia", () => {
       presigned.presignedUrl,
       processed.webpBlob,
       "image/webp",
+      undefined,
     );
     expect(deps.replaceUpload).toHaveBeenCalledWith({
       stepId: "s",
@@ -90,6 +86,19 @@ describe("createReplaceStepMedia", () => {
     });
   });
 
+  test("forwards onProgress to putObject", async () => {
+    const onProgress = vi.fn();
+
+    await createReplaceStepMedia(deps)({ ...input, onProgress });
+
+    expect(deps.putObject).toHaveBeenCalledWith(
+      presigned.presignedUrl,
+      processed.webpBlob,
+      "image/webp",
+      onProgress,
+    );
+  });
+
   test("rejects on a non-OK put and never calls replaceUpload", async () => {
     deps.putObject.mockResolvedValue({ ok: false, status: 403 });
 
@@ -100,9 +109,7 @@ describe("createReplaceStepMedia", () => {
   test("never presigns when image conversion fails", async () => {
     deps.processImage.mockRejectedValue(new Error("decode failed"));
 
-    await expect(createReplaceStepMedia(deps)(input)).rejects.toThrow(
-      "decode failed",
-    );
+    await expect(createReplaceStepMedia(deps)(input)).rejects.toThrow("decode failed");
     expect(deps.presignUpload).not.toHaveBeenCalled();
     expect(deps.putObject).not.toHaveBeenCalled();
     expect(deps.replaceUpload).not.toHaveBeenCalled();
@@ -111,10 +118,91 @@ describe("createReplaceStepMedia", () => {
   test("never uploads when presign fails", async () => {
     deps.presignUpload.mockRejectedValue(new Error("presign failed"));
 
-    await expect(createReplaceStepMedia(deps)(input)).rejects.toThrow(
-      "presign failed",
-    );
+    await expect(createReplaceStepMedia(deps)(input)).rejects.toThrow("presign failed");
     expect(deps.putObject).not.toHaveBeenCalled();
     expect(deps.replaceUpload).not.toHaveBeenCalled();
+  });
+});
+
+class FakeXhr {
+  static instances: FakeXhr[] = [];
+
+  status = 0;
+  upload: { onprogress: ((event: ProgressEvent) => void) | null } = {
+    onprogress: null,
+  };
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  onabort: (() => void) | null = null;
+  open = vi.fn();
+  setRequestHeader = vi.fn();
+  send = vi.fn();
+
+  constructor() {
+    FakeXhr.instances.push(this);
+  }
+}
+
+const progressEvent = (loaded: number, total: number, lengthComputable = true) =>
+  ({ loaded, total, lengthComputable }) as ProgressEvent;
+
+describe("putObjectWithXhr", () => {
+  const body = { size: 10 } as Blob;
+
+  beforeEach(() => {
+    FakeXhr.instances = [];
+    vi.stubGlobal("XMLHttpRequest", FakeXhr);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const start = (onProgress?: (fraction: number) => void) => {
+    const promise = putObjectWithXhr("https://s3.test/put", body, "image/webp", onProgress);
+    const xhr = FakeXhr.instances[0]!;
+    return { promise, xhr };
+  };
+
+  test("sends a PUT with the content type and body", () => {
+    const { xhr } = start();
+
+    expect(xhr.open).toHaveBeenCalledWith("PUT", "https://s3.test/put");
+    expect(xhr.setRequestHeader).toHaveBeenCalledWith("Content-Type", "image/webp");
+    expect(xhr.send).toHaveBeenCalledWith(body);
+  });
+
+  test("resolves ok on a 2xx status", async () => {
+    const { promise, xhr } = start();
+    xhr.status = 200;
+    xhr.onload?.();
+
+    await expect(promise).resolves.toEqual({ ok: true, status: 200 });
+  });
+
+  test("resolves not-ok on a 4xx status", async () => {
+    const { promise, xhr } = start();
+    xhr.status = 403;
+    xhr.onload?.();
+
+    await expect(promise).resolves.toEqual({ ok: false, status: 403 });
+  });
+
+  test("rejects on a network error", async () => {
+    const { promise, xhr } = start();
+    xhr.onerror?.();
+
+    await expect(promise).rejects.toThrow("network error");
+  });
+
+  test("reports upload progress as a fraction and skips non-computable events", () => {
+    const onProgress = vi.fn();
+    const { xhr } = start(onProgress);
+
+    xhr.upload.onprogress?.(progressEvent(5, 10));
+    xhr.upload.onprogress?.(progressEvent(0, 0, false));
+    xhr.upload.onprogress?.(progressEvent(10, 10));
+
+    expect(onProgress.mock.calls).toEqual([[0.5], [1]]);
   });
 });
