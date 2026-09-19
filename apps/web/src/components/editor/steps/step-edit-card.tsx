@@ -213,7 +213,9 @@ export function StepEditCard({
 										}}
 									>
 										<ImageUpIcon className="h-3.5 w-3.5" />
-										Replace screenshot
+										{step.mediaAssets?.length
+											? "Replace screenshot"
+											: "Upload screenshot"}
 									</DropdownMenuItem>
 								)}
 								{onDuplicate && (
