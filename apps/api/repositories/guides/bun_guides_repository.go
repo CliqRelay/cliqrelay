@@ -13,6 +13,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
+	"github.com/CliqRelay/cliqrelay/repositories/dbutil"
 	"github.com/CliqRelay/cliqrelay/types"
 )
 
@@ -58,23 +59,15 @@ func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuide
 		Visibility:  models.VisibilityPrivate,
 	}
 
-	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().
-			Model(guide).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
+	_, err := r.db.NewInsert().
+		Model(guide).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-		err = tx.NewSelect().
-			Model(guide).
-			WherePK().
-			Scan(ctx)
-
-		return err
-	})
-
-	return guide, err
+	return guide, nil
 }
 
 func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error) {
@@ -231,10 +224,41 @@ func (r *BunGuidesRepository) GetByID(ctx context.Context, id string) (*models.G
 func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuideDTO) (*models.Guide, error) {
 	guide := &models.Guide{}
 
-	err := r.db.NewSelect().
+	query := r.db.NewUpdate().
 		Model(guide).
 		Where("id = ?", data.ID).
 		Where("deleted_at IS NULL").
+		Returning("*")
+
+	hasChanges := false
+	set := func(column string, value any) {
+		hasChanges = true
+		query.Set("? = ?", bun.Ident(column), value)
+	}
+	if data.Title != nil {
+		set("title", *data.Title)
+	}
+	if data.Description != nil {
+		set("description", data.Description)
+	}
+	if data.Visibility != nil {
+		set("visibility", *data.Visibility)
+	}
+
+	if !hasChanges {
+		return r.getLive(ctx, data.ID.String())
+	}
+
+	return dbutil.ExecReturningOne(ctx, query, guide)
+}
+
+func (r *BunGuidesRepository) getLive(ctx context.Context, id string) (*models.Guide, error) {
+	guide := &models.Guide{}
+
+	err := r.db.NewSelect().
+		Model(guide).
+		Where("id = ?", id).
+		Where("deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -243,224 +267,78 @@ func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuid
 		return nil, err
 	}
 
-	if data.Title != nil {
-		guide.Title = *data.Title
-	}
-	if data.Description != nil {
-		guide.Description = data.Description
-	}
-	if data.Visibility != nil {
-		guide.Visibility = *data.Visibility
-	}
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.db.NewSelect().
-		Model(guide).
-		WherePK().
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return guide, nil
+}
+
+// Applies a single UPDATE ... RETURNING * to one guide, returning nil when no row matched.
+func (r *BunGuidesRepository) updateOne(ctx context.Context, id string, deletedFilter string, set func(*bun.UpdateQuery)) (*models.Guide, error) {
+	guide := &models.Guide{}
+
+	query := r.db.NewUpdate().
+		Model(guide).
+		Where("id = ?", id).
+		Where(deletedFilter).
+		Returning("*")
+	set(query)
+
+	return dbutil.ExecReturningOne(ctx, query, guide)
 }
 
 func (r *BunGuidesRepository) Delete(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	guide.Status = models.StatusDeleted
-	now := time.Now()
-	guide.DeletedAt = &now
-	guide.PublishedAt = nil
-	guide.ArchivedAt = nil
-	guide.RestoredAt = nil
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guide, nil
+	return r.updateOne(ctx, id, "deleted_at IS NULL", func(q *bun.UpdateQuery) {
+		q.Set("status = ?", models.StatusDeleted).
+			Set("deleted_at = ?", time.Now()).
+			Set("published_at = NULL").
+			Set("archived_at = NULL").
+			Set("restored_at = NULL")
+	})
 }
 
 func (r *BunGuidesRepository) Publish(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	guide.Status = models.StatusPublished
-	guide.Visibility = models.VisibilityTeam
-	now := time.Now()
-	guide.PublishedAt = &now
-	guide.ArchivedAt = nil
-	guide.DeletedAt = nil
-	guide.RestoredAt = nil
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guide, nil
+	return r.updateOne(ctx, id, "deleted_at IS NULL", func(q *bun.UpdateQuery) {
+		q.Set("status = ?", models.StatusPublished).
+			Set("visibility = ?", models.VisibilityTeam).
+			Set("published_at = ?", time.Now()).
+			Set("archived_at = NULL").
+			Set("deleted_at = NULL").
+			Set("restored_at = NULL")
+	})
 }
 
 func (r *BunGuidesRepository) Unpublish(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	guide.Status = models.StatusDraft
-	guide.PublishedAt = nil
-	guide.ArchivedAt = nil
-	guide.DeletedAt = nil
-	guide.RestoredAt = nil
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guide, nil
+	return r.updateOne(ctx, id, "deleted_at IS NULL", func(q *bun.UpdateQuery) {
+		q.Set("status = ?", models.StatusDraft).
+			Set("published_at = NULL").
+			Set("archived_at = NULL").
+			Set("deleted_at = NULL").
+			Set("restored_at = NULL")
+	})
 }
 
 func (r *BunGuidesRepository) Archive(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	guide.Status = models.StatusArchived
-	now := time.Now()
-	guide.ArchivedAt = &now
-	guide.PublishedAt = nil
-	guide.DeletedAt = nil
-	guide.RestoredAt = nil
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guide, nil
+	return r.updateOne(ctx, id, "deleted_at IS NULL", func(q *bun.UpdateQuery) {
+		q.Set("status = ?", models.StatusArchived).
+			Set("archived_at = ?", time.Now()).
+			Set("published_at = NULL").
+			Set("deleted_at = NULL").
+			Set("restored_at = NULL")
+	})
 }
 
 func (r *BunGuidesRepository) Unarchive(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	guide.Status = models.StatusDraft
-	now := time.Now()
-	guide.RestoredAt = &now
-	guide.ArchivedAt = nil
-	guide.PublishedAt = nil
-	guide.DeletedAt = nil
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guide, nil
+	return r.updateOne(ctx, id, "deleted_at IS NULL", func(q *bun.UpdateQuery) {
+		q.Set("status = ?", models.StatusDraft).
+			Set("restored_at = ?", time.Now()).
+			Set("archived_at = NULL").
+			Set("published_at = NULL").
+			Set("deleted_at = NULL")
+	})
 }
 
 func (r *BunGuidesRepository) PermanentlyDelete(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NOT NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	guide.PurgeRequestedAt = new(time.Now().UTC())
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guide, nil
+	return r.updateOne(ctx, id, "deleted_at IS NOT NULL", func(q *bun.UpdateQuery) {
+		q.Set("purge_requested_at = ?", time.Now().UTC())
+	})
 }
 
 func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideFilter) (int, error) {
@@ -490,39 +368,9 @@ func (r *BunGuidesRepository) GetCount(ctx context.Context, filter *types.GuideF
 }
 
 func (r *BunGuidesRepository) UpdateDuration(ctx context.Context, id string, durationSeconds int) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	guide.DurationSeconds = durationSeconds
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.db.NewSelect().
-		Model(guide).
-		WherePK().
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guide, nil
+	return r.updateOne(ctx, id, "deleted_at IS NULL", func(q *bun.UpdateQuery) {
+		q.Set("duration_seconds = ?", durationSeconds)
+	})
 }
 
 func (r *BunGuidesRepository) BulkDelete(ctx context.Context, ids []uuid.UUID, teamID uuid.UUID, actorID string, isAdmin bool) (int64, error) {
@@ -620,34 +468,11 @@ func (r *BunGuidesRepository) HardDelete(ctx context.Context, id string) error {
 }
 
 func (r *BunGuidesRepository) Restore(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NOT NULL").
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	guide.Status = models.StatusDraft
-	now := time.Now()
-	guide.RestoredAt = &now
-	guide.PublishedAt = nil
-	guide.ArchivedAt = nil
-	guide.DeletedAt = nil
-
-	_, err = r.db.NewUpdate().
-		Model(guide).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return guide, nil
+	return r.updateOne(ctx, id, "deleted_at IS NOT NULL", func(q *bun.UpdateQuery) {
+		q.Set("status = ?", models.StatusDraft).
+			Set("restored_at = ?", time.Now()).
+			Set("published_at = NULL").
+			Set("archived_at = NULL").
+			Set("deleted_at = NULL")
+	})
 }

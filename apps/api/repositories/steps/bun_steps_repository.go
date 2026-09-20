@@ -323,15 +323,13 @@ func (r *BunStepsRepository) Update(ctx context.Context, dto *types.UpdateStepDT
 		return nil, nil
 	}
 
+	step.MediaAssets = make([]*models.MediaAsset, 0)
 	err = r.db.NewSelect().
-		Model(step).
-		Relation("MediaAssets").
-		WherePK().
+		Model(&step.MediaAssets).
+		Where("step_id = ?", step.ID).
+		Order("created_at DESC", "id DESC").
 		Scan(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
 		return nil, err
 	}
 
