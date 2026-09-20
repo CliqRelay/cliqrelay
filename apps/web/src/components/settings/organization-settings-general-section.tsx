@@ -13,7 +13,7 @@ import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Organization name is required"),
-  slug: z.string().trim().optional(),
+  slug: z.string().trim(),
 });
 type FormSchema = z.infer<typeof formSchema>;
 

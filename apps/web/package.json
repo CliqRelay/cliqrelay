@@ -14,6 +14,7 @@
     "test:e2e:ui": "playwright test --ui",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "check-types": "tsc --noEmit",
     "fmt": "oxfmt",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
