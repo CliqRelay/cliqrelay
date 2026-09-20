@@ -455,6 +455,13 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:         "returns error for invalid UUID",
+			mediaAssetID: "not-a-uuid",
+			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository) {
+			},
+			wantErr: true,
+		},
+		{
 			name:         "returns error when media asset not found",
 			mediaAssetID: uuid.New().String(),
 			setup: func(mockMediaAssetsRepo *tests.MockMediaAssetsRepository, _ *tests.MockStepsRepository, _ *tests.MockGuidesRepository) {
@@ -499,7 +506,7 @@ func TestMediaAssetsService_Delete(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, mediaAsset)
-				if tt.mediaAssetID == "" {
+				if tt.mediaAssetID == "" || tt.mediaAssetID == "not-a-uuid" {
 					assert.ErrorIs(t, err, constants.ErrInvalidMediaAssetID)
 				}
 			} else {

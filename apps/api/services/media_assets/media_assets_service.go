@@ -195,6 +195,10 @@ func (s *MediaAssetsService) Delete(ctx context.Context, mediaAssetID string) (*
 		return nil, constants.ErrInvalidMediaAssetID
 	}
 
+	if _, err := uuid.Parse(mediaAssetID); err != nil {
+		return nil, constants.ErrInvalidMediaAssetID
+	}
+
 	mediaAsset, err := s.mediaAssetsRepo.GetByID(ctx, mediaAssetID)
 	if err != nil {
 		return nil, err
