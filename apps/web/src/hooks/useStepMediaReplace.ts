@@ -16,7 +16,7 @@ import { processImageFileForUpload } from "@/utils/image.utils";
 
 export function useStepMediaReplace(guideId: string) {
   const queryClient = useQueryClient();
-  const [replacingStepId, setReplacingStepId] = useState<string | null>(null);
+  const [replacingStepIds, setReplacingStepIds] = useState<string[]>([]);
 
   const request = {
     credentials: "include" as const,
@@ -34,7 +34,7 @@ export function useStepMediaReplace(guideId: string) {
   });
 
   const handleReplaceMedia = async (stepId: string, file: File) => {
-    if (replacingStepId) return;
+    if (replacingStepIds.includes(stepId)) return;
 
     const validation = validateReplacementFile(file);
     if (!validation.success) {
@@ -44,7 +44,7 @@ export function useStepMediaReplace(guideId: string) {
       return;
     }
 
-    setReplacingStepId(stepId);
+    setReplacingStepIds((ids) => [...ids, stepId]);
     const toastId = toast.loading("Uploading screenshot…");
     try {
       await replaceStepMedia({
@@ -67,9 +67,9 @@ export function useStepMediaReplace(guideId: string) {
       });
     } finally {
       toast.dismiss(toastId);
-      setReplacingStepId(null);
+      setReplacingStepIds((ids) => ids.filter((id) => id !== stepId));
     }
   };
 
-  return { handleReplaceMedia, replacingStepId };
+  return { handleReplaceMedia, replacingStepIds };
 }

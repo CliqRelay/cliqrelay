@@ -20,7 +20,7 @@ type Props = {
   onDuplicateStep?: (stepId: string) => void;
   onRecaptureStep?: (stepId: string) => void;
   onReplaceStepMedia?: (stepId: string, file: File) => void;
-  replacingStepId?: string | null;
+  replacingStepIds?: string[];
   onReorderSteps?: (
     targetStepId: string,
     prevStepId: string | null,
@@ -43,7 +43,7 @@ export function GuideWorkflowEditMode({
   onDuplicateStep,
   onRecaptureStep,
   onReplaceStepMedia,
-  replacingStepId,
+  replacingStepIds,
   onReorderSteps,
 }: Props) {
   if (stepsLoading) {
@@ -69,7 +69,7 @@ export function GuideWorkflowEditMode({
       onDuplicateStep={onDuplicateStep}
       onRecaptureStep={onRecaptureStep}
       onReplaceStepMedia={onReplaceStepMedia}
-      replacingStepId={replacingStepId}
+      replacingStepIds={replacingStepIds}
       onReorderSteps={onReorderSteps}
     />
   );
