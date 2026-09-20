@@ -54,6 +54,7 @@ export function CanvasStepForm({
   });
 
   useEffect(() => {
+    if (form.state.isDirty) return;
     const newDefaults: CanvasFormValues = {
       headingText: step.canvasContent?.headingText ?? "",
       bodyText: step.canvasContent?.bodyText ?? "",

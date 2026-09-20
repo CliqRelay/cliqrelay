@@ -1,9 +1,25 @@
+import { useState } from "react";
+
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { expect, fn, userEvent, waitFor, within } from "storybook/test";
 
+import type { Step } from "@repo/api-client";
+
 import { StepItemForm } from "./step-item-form";
 import { makeCanvasStep, makeInteractionStep, makeMediaAsset } from "@/test/fixtures/steps";
+
+function StaleRefetchHarness({ initialStep, staleStep }: { initialStep: Step; staleStep: Step }) {
+  const [step, setStep] = useState(initialStep);
+  return (
+    <>
+      <StepItemForm step={step} index={1} onUpdate={fn()} />
+      <button type="button" onClick={() => setStep(staleStep)}>
+        Simulate stale refetch
+      </button>
+    </>
+  );
+}
 
 const meta = {
   title: "Editor/Steps/StepItemForm",
@@ -52,5 +68,29 @@ export const CanvasDelegatesToCanvasForm: Story = {
     await expect(
       canvas.queryByPlaceholderText("e.g., Submit button, Email field"),
     ).not.toBeInTheDocument();
+  },
+};
+
+export const KeepsTypingWhenServerRefetchesStaleValue: Story = {
+  render: () => (
+    <StaleRefetchHarness
+      initialStep={makeInteractionStep({ notes: "Some notes" })}
+      staleStep={makeInteractionStep({ actionText: "abc", notes: "Some notes" })}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const actionText = canvas.getByPlaceholderText("e.g., Submit button, Email field");
+    const notes = canvas.getByPlaceholderText("Internal notes about this step");
+
+    await userEvent.clear(actionText);
+    await userEvent.type(actionText, "abcdef");
+    await userEvent.clear(notes);
+    await userEvent.type(notes, "Fresh notes");
+
+    await userEvent.click(canvas.getByRole("button", { name: "Simulate stale refetch" }));
+
+    await expect(actionText).toHaveValue("abcdef");
+    await expect(notes).toHaveValue("Fresh notes");
   },
 };

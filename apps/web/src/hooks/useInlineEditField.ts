@@ -4,6 +4,7 @@ import { type DebouncedFunction, debounce } from "es-toolkit";
 
 export function useInlineEditField(
   externalValue: string,
+  isEditing: boolean,
   onSave: (value: string) => void,
   delay = 500,
 ) {
@@ -30,11 +31,12 @@ export function useInlineEditField(
   }, [delay]);
 
   useEffect(() => {
+    if (isEditing) return;
     if (externalValue !== lastSavedRef.current) {
       setLocalValue(externalValue);
       lastSavedRef.current = externalValue;
     }
-  }, [externalValue]);
+  }, [externalValue, isEditing]);
 
   const startEditing = () => {
     beforeEditRef.current = localValue;
