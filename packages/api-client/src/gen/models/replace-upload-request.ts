@@ -13,8 +13,8 @@ export type ReplaceUploadRequest = {
   height?: number | null;
   /** @nullable */
   mimeType?: string | null;
-  stepId?: string;
-  storagePath?: string;
+  stepId: string;
+  storagePath: string;
   /** @nullable */
   thumbnail?: string | null;
   /** @nullable */

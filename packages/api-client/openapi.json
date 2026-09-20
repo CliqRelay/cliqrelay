@@ -2219,6 +2219,10 @@
             "type": "string"
           }
         },
+        "required": [
+          "guide_id",
+          "step_id"
+        ],
         "type": "object"
       },
       "PresignUploadResponse": {
@@ -2349,6 +2353,10 @@
             ]
           }
         },
+        "required": [
+          "step_id",
+          "storage_path"
+        ],
         "type": "object"
       },
       "ReplaceUploadResponse": {
