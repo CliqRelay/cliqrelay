@@ -41,7 +41,7 @@ type Props = {
   onDuplicateStep?: (stepId: string) => void;
   onRecaptureStep?: (stepId: string) => void;
   onReplaceStepMedia?: (stepId: string, file: File) => void;
-  replacingStepId?: string | null;
+  replacingStepIds?: string[];
   onReorderSteps?: (
     targetStepId: string,
     prevStepId: string | null,
@@ -66,7 +66,7 @@ export function GuideWorkflowTimeline({
   onDuplicateStep,
   onRecaptureStep,
   onReplaceStepMedia,
-  replacingStepId,
+  replacingStepIds = [],
   onReorderSteps,
 }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -166,7 +166,7 @@ export function GuideWorkflowTimeline({
               step={step}
               stepNumber={stepsMap.get(step.id) ?? index + 1}
               selectedStepId={selectedStepId}
-              isReplacing={replacingStepId === step.id}
+              isReplacing={replacingStepIds.includes(step.id)}
               actions={{
                 onSelect: onSelectStep,
                 onUpdate: onUpdateStep,
