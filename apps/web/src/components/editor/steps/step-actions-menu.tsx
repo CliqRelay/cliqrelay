@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Camera, CopyIcon, ImageUpIcon, Trash2Icon } from "lucide-react";
+import { CopyIcon, ImageUpIcon, Trash2Icon } from "lucide-react";
 
 import type { Step } from "@repo/api-client";
 
@@ -15,7 +15,6 @@ type Props = {
   step: Step;
   trigger: ReactNode;
   isReplacing?: boolean;
-  onRecapture?: () => void;
   onReplaceMedia?: () => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
@@ -25,7 +24,6 @@ export function StepActionsMenu({
   step,
   trigger,
   isReplacing,
-  onRecapture,
   onReplaceMedia,
   onDuplicate,
   onDelete,
@@ -34,17 +32,6 @@ export function StepActionsMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {onRecapture && (
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              onRecapture();
-            }}
-          >
-            <Camera className="h-3.5 w-3.5" />
-            Recapture
-          </DropdownMenuItem>
-        )}
         {onReplaceMedia && (
           <DropdownMenuItem
             disabled={isReplacing}

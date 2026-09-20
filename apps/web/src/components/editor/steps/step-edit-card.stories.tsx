@@ -28,7 +28,6 @@ const meta = {
       onUpdate: fn(),
       onDelete: fn(),
       onDuplicate: fn(),
-      onRecapture: fn(),
       onReplaceMedia: fn(),
       onAddStepBeforeWithType: fn(),
     },
@@ -71,7 +70,6 @@ export const InteractionStepSelected: Story = {
 export const InteractionStepMenu: Story = {
   play: async ({ canvasElement, args }) => {
     const menu = await openActionsMenu(canvasElement);
-    await expect(menu.getByRole("menuitem", { name: /Recapture/ })).toBeInTheDocument();
     await userEvent.click(menu.getByRole("menuitem", { name: /Duplicate/ }));
     await expect(args.actions?.onDuplicate).toHaveBeenCalledWith("step-1");
     await expect(args.actions?.onSelect).not.toHaveBeenCalled();
@@ -109,11 +107,10 @@ export const CanvasTipSelectedShowsFormInShell: Story = {
   },
 };
 
-export const CanvasMenuHasNoRecapture: Story = {
+export const CanvasMenuUploadDoesNotSelect: Story = {
   args: { step: makeCanvasStep() },
   play: async ({ canvasElement, args }) => {
     const menu = await openActionsMenu(canvasElement);
-    await expect(menu.queryByRole("menuitem", { name: /Recapture/ })).not.toBeInTheDocument();
     await userEvent.click(menu.getByRole("menuitem", { name: /Upload screenshot/ }));
     await expect(args.actions?.onSelect).not.toHaveBeenCalled();
   },

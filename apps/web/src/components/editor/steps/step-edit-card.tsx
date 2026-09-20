@@ -27,7 +27,6 @@ type EditableStepItemActions = {
   onUpdate?: (stepId: string, updates: Record<string, unknown>) => void;
   onDelete?: (stepId: string) => void;
   onDuplicate?: (stepId: string) => void;
-  onRecapture?: (stepId: string) => void;
   onReplaceMedia?: (stepId: string, file: File) => void;
   onAddStepBeforeWithType?: (stepId: string, type: StepTypeOption) => void;
 };
@@ -41,15 +40,8 @@ type Props = {
 };
 
 export function StepEditCard({ step, stepNumber, selectedStepId, actions, isReplacing }: Props) {
-  const {
-    onSelect,
-    onUpdate,
-    onDelete,
-    onDuplicate,
-    onRecapture,
-    onReplaceMedia,
-    onAddStepBeforeWithType,
-  } = actions ?? {};
+  const { onSelect, onUpdate, onDelete, onDuplicate, onReplaceMedia, onAddStepBeforeWithType } =
+    actions ?? {};
   const filePickerRef = useRef<HTMLInputElement>(null);
   const canReplaceMedia = onReplaceMedia != null && stepSupportsMedia(step);
   const handleOpenFilePicker = () => {
@@ -77,7 +69,6 @@ export function StepEditCard({ step, stepNumber, selectedStepId, actions, isRepl
       step={step}
       trigger={trigger}
       isReplacing={isReplacing}
-      onRecapture={onRecapture && !isCanvasStep ? () => onRecapture(step.id) : undefined}
       onReplaceMedia={canReplaceMedia ? handleOpenFilePicker : undefined}
       onDuplicate={onDuplicate ? () => onDuplicate(step.id) : undefined}
       onDelete={onDelete ? () => onDelete(step.id) : undefined}
