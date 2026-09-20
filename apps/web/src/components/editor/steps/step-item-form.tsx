@@ -37,6 +37,7 @@ export function StepItemForm({ step, onUpdate, onReplaceMedia, isReplacing }: St
   });
 
   useEffect(() => {
+    if (form.state.isDirty) return;
     const newDefaults: StepFormValues = {
       actionText: step.actionText ?? "",
       notes: step.notes ?? "",

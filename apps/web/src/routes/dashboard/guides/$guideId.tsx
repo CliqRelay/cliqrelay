@@ -183,7 +183,7 @@ function GuideDetailPage() {
           return {
             ...prev,
             title: updates.title ?? prev.title,
-            description: updates.description ?? prev.description,
+            description: updates.description !== undefined ? updates.description : prev.description,
           };
         });
       }

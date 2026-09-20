@@ -1,9 +1,25 @@
+import { useState } from "react";
+
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 
+import type { Step } from "@repo/api-client";
+
 import { CanvasStepForm } from "./canvas-step-form";
 import { makeCanvasStep, makeMediaAsset } from "@/test/fixtures/steps";
+
+function StaleRefetchHarness({ initialStep, staleStep }: { initialStep: Step; staleStep: Step }) {
+  const [step, setStep] = useState(initialStep);
+  return (
+    <>
+      <CanvasStepForm step={step} onUpdate={fn()} />
+      <button type="button" onClick={() => setStep(staleStep)}>
+        Simulate stale refetch
+      </button>
+    </>
+  );
+}
 
 const meta = {
   title: "Editor/Steps/CanvasStepForm",
@@ -80,5 +96,29 @@ export const WithScreenshotAndReplace: Story = {
     await expect(canvas.getByRole("img")).toBeInTheDocument();
     await userEvent.click(canvas.getByRole("button", { name: "Replace screenshot" }));
     await expect(args.onReplaceMedia).toHaveBeenCalledTimes(1);
+  },
+};
+
+export const KeepsTypingWhenServerRefetchesStaleValue: Story = {
+  render: () => (
+    <StaleRefetchHarness
+      initialStep={makeCanvasStep()}
+      staleStep={makeCanvasStep({ headingText: "abc" })}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const heading = canvas.getByPlaceholderText("Alert heading text");
+    const body = canvas.getByPlaceholderText("Markdown body text");
+
+    await userEvent.clear(heading);
+    await userEvent.type(heading, "abcdef");
+    await userEvent.clear(body);
+    await userEvent.type(body, "Fresh body");
+
+    await userEvent.click(canvas.getByRole("button", { name: "Simulate stale refetch" }));
+
+    await expect(heading).toHaveValue("abcdef");
+    await expect(body).toHaveValue("Fresh body");
   },
 };
