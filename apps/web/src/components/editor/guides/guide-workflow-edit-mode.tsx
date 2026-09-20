@@ -18,7 +18,6 @@ type Props = {
   onAddStepBeforeWithType?: (stepId: string, type: StepTypeOption) => void;
   onDeleteStep?: (stepId: string) => void;
   onDuplicateStep?: (stepId: string) => void;
-  onRecaptureStep?: (stepId: string) => void;
   onReplaceStepMedia?: (stepId: string, file: File) => void;
   replacingStepIds?: string[];
   onReorderSteps?: (
@@ -41,7 +40,6 @@ export function GuideWorkflowEditMode({
   onAddStepBeforeWithType,
   onDeleteStep,
   onDuplicateStep,
-  onRecaptureStep,
   onReplaceStepMedia,
   replacingStepIds,
   onReorderSteps,
@@ -67,7 +65,6 @@ export function GuideWorkflowEditMode({
       onAddStepBeforeWithType={onAddStepBeforeWithType}
       onDeleteStep={onDeleteStep}
       onDuplicateStep={onDuplicateStep}
-      onRecaptureStep={onRecaptureStep}
       onReplaceStepMedia={onReplaceStepMedia}
       replacingStepIds={replacingStepIds}
       onReorderSteps={onReorderSteps}

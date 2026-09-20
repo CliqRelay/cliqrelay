@@ -12,7 +12,6 @@ const meta = {
   args: {
     step: makeInteractionStep(),
     trigger: <Button>Open menu</Button>,
-    onRecapture: fn(),
     onReplaceMedia: fn(),
     onDuplicate: fn(),
     onDelete: fn(),
@@ -30,7 +29,6 @@ async function openMenu(canvasElement: HTMLElement) {
 export const AllActions: Story = {
   play: async ({ canvasElement, args }) => {
     const menu = await openMenu(canvasElement);
-    await expect(menu.getByRole("menuitem", { name: /Recapture/ })).toBeInTheDocument();
     await expect(menu.getByRole("menuitem", { name: /Upload screenshot/ })).toBeInTheDocument();
     await expect(menu.getByRole("menuitem", { name: /Duplicate/ })).toBeInTheDocument();
 
@@ -61,7 +59,7 @@ export const ReplaceDisabledWhileUploading: Story = {
 };
 
 export const OnlyProvidedActions: Story = {
-  args: { onRecapture: undefined, onReplaceMedia: undefined, onDuplicate: undefined },
+  args: { onReplaceMedia: undefined, onDuplicate: undefined },
   play: async ({ canvasElement }) => {
     const menu = await openMenu(canvasElement);
     await expect(menu.getAllByRole("menuitem")).toHaveLength(1);
