@@ -536,6 +536,31 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 				assert.Equal(t, "Updated", guide.Title)
 			},
 		},
+		{
+			name: "returns the guide unchanged when no fields are set",
+			setup: func(db bun.IDB) (string, *models.Guide) {
+				guide := seedGuide(t, db, "", "Unchanged")
+				return *guide.CreatorID, guide
+			},
+			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
+				return &types.UpdateGuideDTO{ID: guide.ID, TeamID: guide.TeamID}
+			},
+			check: func(t *testing.T, guide *models.Guide) {
+				assert.Equal(t, "Unchanged", guide.Title)
+			},
+		},
+		{
+			name: "returns nil for soft-deleted guide",
+			setup: func(db bun.IDB) (string, *models.Guide) {
+				guide := seedGuide(t, db, "", "Deleted")
+				softDeleteGuide(t, db, guide.ID)
+				return *guide.CreatorID, guide
+			},
+			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
+				return &types.UpdateGuideDTO{ID: guide.ID, TeamID: guide.TeamID, Title: new("Nope")}
+			},
+			wantNil: true,
+		},
 	}
 
 	for _, tt := range cases {
@@ -999,6 +1024,126 @@ func TestBunGuidesRepository_UnarchiveGuide(t *testing.T) {
 				assert.Nil(t, guide.ArchivedAt)
 				assert.NotNil(t, guide.RestoredAt)
 			}
+		})
+	}
+}
+
+func TestBunGuidesRepository_UpdateDuration(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		setup   func(bun.IDB) string
+		wantNil bool
+	}{
+		{
+			name: "updates duration of a live guide",
+			setup: func(db bun.IDB) string {
+				return seedGuide(t, db, "", "Timed").ID.String()
+			},
+		},
+		{
+			name: "returns nil for non-existent guide",
+			setup: func(db bun.IDB) string {
+				return uuid.New().String()
+			},
+			wantNil: true,
+		},
+		{
+			name: "returns nil for soft-deleted guide",
+			setup: func(db bun.IDB) string {
+				guide := seedGuide(t, db, "", "Deleted")
+				softDeleteGuide(t, db, guide.ID)
+				return guide.ID.String()
+			},
+			wantNil: true,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tx, err := guidesDB.Begin()
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = tx.Rollback() })
+
+			repo := guides.NewBunGuidesRepository(tx)
+			targetID := tt.setup(tx)
+			ctx := context.Background()
+
+			updated, err := repo.UpdateDuration(ctx, targetID, 90)
+			require.NoError(t, err)
+
+			if tt.wantNil {
+				assert.Nil(t, updated)
+				return
+			}
+
+			require.NotNil(t, updated)
+			assert.Equal(t, targetID, updated.ID.String())
+			assert.Equal(t, 90, updated.DurationSeconds)
+			assert.Equal(t, "Timed", updated.Title)
+		})
+	}
+}
+
+func TestBunGuidesRepository_PermanentlyDelete(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		setup   func(bun.IDB) string
+		wantNil bool
+	}{
+		{
+			name: "marks a soft-deleted guide for purge",
+			setup: func(db bun.IDB) string {
+				guide := seedGuide(t, db, "", "To Purge")
+				softDeleteGuide(t, db, guide.ID)
+				return guide.ID.String()
+			},
+		},
+		{
+			name: "returns nil for non-existent guide",
+			setup: func(db bun.IDB) string {
+				return uuid.New().String()
+			},
+			wantNil: true,
+		},
+		{
+			name: "returns nil for guide that is not soft-deleted",
+			setup: func(db bun.IDB) string {
+				return seedGuide(t, db, "", "Live").ID.String()
+			},
+			wantNil: true,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tx, err := guidesDB.Begin()
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = tx.Rollback() })
+
+			repo := guides.NewBunGuidesRepository(tx)
+			targetID := tt.setup(tx)
+			ctx := context.Background()
+
+			deleted, err := repo.PermanentlyDelete(ctx, targetID)
+			require.NoError(t, err)
+
+			if tt.wantNil {
+				assert.Nil(t, deleted)
+				return
+			}
+
+			require.NotNil(t, deleted)
+			assert.Equal(t, targetID, deleted.ID.String())
+			assert.NotNil(t, deleted.PurgeRequestedAt)
+			assert.NotNil(t, deleted.DeletedAt)
 		})
 	}
 }
