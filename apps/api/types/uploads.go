@@ -6,8 +6,8 @@ import (
 )
 
 type PresignUploadRequest struct {
-	GuideID string `json:"guide_id" validate:"required,uuid"`
-	StepID  string `json:"step_id"  validate:"required,uuid"`
+	GuideID string `json:"guide_id" validate:"required,uuid" required:"true"`
+	StepID  string `json:"step_id"  validate:"required,uuid" required:"true"`
 }
 
 func (r *PresignUploadRequest) Validate() error {
@@ -25,8 +25,8 @@ type PresignedURLResult struct {
 }
 
 type ReplaceUploadRequest struct {
-	StepID      string  `json:"step_id"       validate:"required,uuid"`
-	StoragePath string  `json:"storage_path"  validate:"required"`
+	StepID      string  `json:"step_id"       validate:"required,uuid" required:"true"`
+	StoragePath string  `json:"storage_path"  validate:"required"      required:"true"`
 	FileSize    *int    `json:"file_size,omitempty"`
 	MimeType    *string `json:"mime_type,omitempty"`
 	Thumbnail   *string `json:"thumbnail,omitempty"`

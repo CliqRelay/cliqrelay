@@ -428,8 +428,8 @@ export type PermanentlyDeleteGuideResponseOutput = zod.output<
 >;
 
 export const PresignUploadRequest = zod.object({
-  guideId: zod.string().optional(),
-  stepId: zod.string().optional(),
+  guideId: zod.string(),
+  stepId: zod.string(),
 });
 
 export type PresignUploadRequest = zod.input<typeof PresignUploadRequest>;
@@ -485,8 +485,8 @@ export const ReplaceUploadRequest = zod.object({
   fileSize: zod.int().nullish(),
   height: zod.int().nullish(),
   mimeType: zod.string().nullish(),
-  stepId: zod.string().optional(),
-  storagePath: zod.string().optional(),
+  stepId: zod.string(),
+  storagePath: zod.string(),
   thumbnail: zod.string().nullish(),
   width: zod.int().nullish(),
 });
