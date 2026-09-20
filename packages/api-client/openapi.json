@@ -1301,37 +1301,6 @@
         }
       }
     },
-    "/api/v1/uploads/complete": {
-      "post": {
-        "tags": [
-          "Uploads"
-        ],
-        "summary": "Complete upload",
-        "description": "Creates a media asset record after the upload finishes",
-        "operationId": "completeUpload",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CompleteUploadRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompleteUploadResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/uploads/presign": {
       "post": {
         "tags": [
@@ -1433,62 +1402,6 @@
         },
         "required": [
           "message"
-        ],
-        "type": "object"
-      },
-      "CompleteUploadRequest": {
-        "properties": {
-          "file_size": {
-            "type": [
-              "null",
-              "integer"
-            ]
-          },
-          "height": {
-            "type": [
-              "null",
-              "integer"
-            ]
-          },
-          "mime_type": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "step_id": {
-            "type": "string"
-          },
-          "storage_path": {
-            "type": "string"
-          },
-          "thumbnail": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "width": {
-            "type": [
-              "null",
-              "integer"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "CompleteUploadResponse": {
-        "properties": {
-          "storage_path": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "url",
-          "storage_path"
         ],
         "type": "object"
       },

@@ -14,8 +14,6 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  CompleteUploadRequest,
-  CompleteUploadResponse,
   PresignUploadRequest,
   PresignUploadResponse,
   ReplaceUploadRequest,
@@ -26,94 +24,6 @@ import { customFetch } from "../../../mutators/custom-fetch";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export const getCompleteUploadUrl = () => {
-  return `${import.meta.env.VITE_API_URL}/api/v1/uploads/complete`;
-};
-
-/**
- * Creates a media asset record after the upload finishes
- * @summary Complete upload
- */
-export const completeUpload = async (
-  completeUploadRequest?: CompleteUploadRequest,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<CompleteUploadResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
-  };
-  return customFetch<CompleteUploadResponse>(getCompleteUploadUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
-    body: JSON.stringify(completeUploadRequest),
-  });
-};
-
-export const getCompleteUploadMutationOptions = <TError = unknown, TContext = unknown>(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof completeUpload>>,
-    TError,
-    CompleteUploadMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof completeUpload>>,
-  TError,
-  CompleteUploadMutationVariables,
-  TContext
-> => {
-  const mutationKey = ["completeUpload"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof completeUpload>>,
-    CompleteUploadMutationVariables
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return completeUpload(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CompleteUploadMutationResult = NonNullable<Awaited<ReturnType<typeof completeUpload>>>;
-export type CompleteUploadMutationBody = CompleteUploadRequest | undefined;
-export type CompleteUploadMutationError = unknown;
-export type CompleteUploadMutationVariables = { data?: CompleteUploadRequest };
-
-/**
- * @summary Complete upload
- */
-export const useCompleteUpload = <TError = unknown, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof completeUpload>>,
-      TError,
-      CompleteUploadMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof completeUpload>>,
-  TError,
-  CompleteUploadMutationVariables,
-  TContext
-> => {
-  return useMutation(getCompleteUploadMutationOptions(options), queryClient);
-};
 export const getPresignUploadUrl = () => {
   return `${import.meta.env.VITE_API_URL}/api/v1/uploads/presign`;
 };

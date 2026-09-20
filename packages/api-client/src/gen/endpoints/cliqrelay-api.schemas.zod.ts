@@ -80,27 +80,6 @@ export const BulkGuidesResponse = zod.object({
 export type BulkGuidesResponse = zod.input<typeof BulkGuidesResponse>;
 export type BulkGuidesResponseOutput = zod.output<typeof BulkGuidesResponse>;
 
-export const CompleteUploadRequest = zod.object({
-  fileSize: zod.int().nullish(),
-  height: zod.int().nullish(),
-  mimeType: zod.string().nullish(),
-  stepId: zod.string().optional(),
-  storagePath: zod.string().optional(),
-  thumbnail: zod.string().nullish(),
-  width: zod.int().nullish(),
-});
-
-export type CompleteUploadRequest = zod.input<typeof CompleteUploadRequest>;
-export type CompleteUploadRequestOutput = zod.output<typeof CompleteUploadRequest>;
-
-export const CompleteUploadResponse = zod.object({
-  storagePath: zod.string(),
-  url: zod.string(),
-});
-
-export type CompleteUploadResponse = zod.input<typeof CompleteUploadResponse>;
-export type CompleteUploadResponseOutput = zod.output<typeof CompleteUploadResponse>;
-
 export const CreateDemoGuideRequest = zod.object({
   teamId: Uuid,
 });
