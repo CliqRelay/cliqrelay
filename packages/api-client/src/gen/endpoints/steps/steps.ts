@@ -399,8 +399,19 @@ export const createStep = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<CreateStepResponse>(getCreateStepUrl(), {
     ...options,
@@ -409,6 +420,8 @@ export const createStep = async (
     body: JSON.stringify(createStepRequest),
   });
 };
+
+export const getCreateStepMutationKey = () => ["createStep"] as const;
 
 export const getCreateStepMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -424,7 +437,7 @@ export const getCreateStepMutationOptions = <TError = unknown, TContext = unknow
   CreateStepMutationVariables,
   TContext
 > => {
-  const mutationKey = ["createStep"];
+  const mutationKey = getCreateStepMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -487,8 +500,19 @@ export const reorderSteps = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<ReorderStepsResponse>(getReorderStepsUrl(), {
     ...options,
@@ -497,6 +521,8 @@ export const reorderSteps = async (
     body: JSON.stringify(reorderStepsRequest),
   });
 };
+
+export const getReorderStepsMutationKey = () => ["reorderSteps"] as const;
 
 export const getReorderStepsMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -512,7 +538,7 @@ export const getReorderStepsMutationOptions = <TError = unknown, TContext = unkn
   ReorderStepsMutationVariables,
   TContext
 > => {
-  const mutationKey = ["reorderSteps"];
+  const mutationKey = getReorderStepsMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -689,6 +715,8 @@ export const deleteStep = async (
   });
 };
 
+export const getDeleteStepMutationKey = () => ["deleteStep"] as const;
+
 export const getDeleteStepMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteStep>>,
@@ -703,7 +731,7 @@ export const getDeleteStepMutationOptions = <TError = unknown, TContext = unknow
   DeleteStepMutationVariables,
   TContext
 > => {
-  const mutationKey = ["deleteStep"];
+  const mutationKey = getDeleteStepMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -767,8 +795,19 @@ export const updateStep = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<UpdateStepResponse>(getUpdateStepUrl(id), {
     ...options,
@@ -777,6 +816,8 @@ export const updateStep = async (
     body: JSON.stringify(updateStepRequest),
   });
 };
+
+export const getUpdateStepMutationKey = () => ["updateStep"] as const;
 
 export const getUpdateStepMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -792,7 +833,7 @@ export const getUpdateStepMutationOptions = <TError = unknown, TContext = unknow
   UpdateStepMutationVariables,
   TContext
 > => {
-  const mutationKey = ["updateStep"];
+  const mutationKey = getUpdateStepMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -856,8 +897,19 @@ export const duplicateStep = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<DuplicateStepResponse>(getDuplicateStepUrl(id), {
     ...options,
@@ -866,6 +918,8 @@ export const duplicateStep = async (
     body: JSON.stringify(duplicateStepRequest),
   });
 };
+
+export const getDuplicateStepMutationKey = () => ["duplicateStep"] as const;
 
 export const getDuplicateStepMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -881,7 +935,7 @@ export const getDuplicateStepMutationOptions = <TError = unknown, TContext = unk
   DuplicateStepMutationVariables,
   TContext
 > => {
-  const mutationKey = ["duplicateStep"];
+  const mutationKey = getDuplicateStepMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options

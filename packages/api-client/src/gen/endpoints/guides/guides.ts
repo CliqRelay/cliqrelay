@@ -341,8 +341,19 @@ export const createGuide = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<CreateGuideResponse>(getCreateGuideUrl(), {
     ...options,
@@ -351,6 +362,8 @@ export const createGuide = async (
     body: JSON.stringify(createGuideRequest),
   });
 };
+
+export const getCreateGuideMutationKey = () => ["createGuide"] as const;
 
 export const getCreateGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -366,7 +379,7 @@ export const getCreateGuideMutationOptions = <TError = unknown, TContext = unkno
   CreateGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["createGuide"];
+  const mutationKey = getCreateGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -442,8 +455,19 @@ export const bulkGuidesAction = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<BulkGuidesResponse>(getBulkGuidesActionUrl(params), {
     ...options,
@@ -452,6 +476,8 @@ export const bulkGuidesAction = async (
     body: JSON.stringify(bulkGuidesRequest),
   });
 };
+
+export const getBulkGuidesActionMutationKey = () => ["bulkGuidesAction"] as const;
 
 export const getBulkGuidesActionMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -467,7 +493,7 @@ export const getBulkGuidesActionMutationOptions = <TError = unknown, TContext = 
   BulkGuidesActionMutationVariables,
   TContext
 > => {
-  const mutationKey = ["bulkGuidesAction"];
+  const mutationKey = getBulkGuidesActionMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -672,8 +698,19 @@ export const createDemoGuide = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<CreateDemoGuideResponse>(getCreateDemoGuideUrl(), {
     ...options,
@@ -682,6 +719,8 @@ export const createDemoGuide = async (
     body: JSON.stringify(createDemoGuideRequest),
   });
 };
+
+export const getCreateDemoGuideMutationKey = () => ["createDemoGuide"] as const;
 
 export const getCreateDemoGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -697,7 +736,7 @@ export const getCreateDemoGuideMutationOptions = <TError = unknown, TContext = u
   CreateDemoGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["createDemoGuide"];
+  const mutationKey = getCreateDemoGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1295,6 +1334,8 @@ export const deleteGuide = async (
   });
 };
 
+export const getDeleteGuideMutationKey = () => ["deleteGuide"] as const;
+
 export const getDeleteGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteGuide>>,
@@ -1309,7 +1350,7 @@ export const getDeleteGuideMutationOptions = <TError = unknown, TContext = unkno
   DeleteGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["deleteGuide"];
+  const mutationKey = getDeleteGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1373,8 +1414,19 @@ export const updateGuide = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<UpdateGuideResponse>(getUpdateGuideUrl(id), {
     ...options,
@@ -1383,6 +1435,8 @@ export const updateGuide = async (
     body: JSON.stringify(updateGuideRequest),
   });
 };
+
+export const getUpdateGuideMutationKey = () => ["updateGuide"] as const;
 
 export const getUpdateGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -1398,7 +1452,7 @@ export const getUpdateGuideMutationOptions = <TError = unknown, TContext = unkno
   UpdateGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["updateGuide"];
+  const mutationKey = getUpdateGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1462,6 +1516,8 @@ export const archiveGuide = async (
   });
 };
 
+export const getArchiveGuideMutationKey = () => ["archiveGuide"] as const;
+
 export const getArchiveGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof archiveGuide>>,
@@ -1476,7 +1532,7 @@ export const getArchiveGuideMutationOptions = <TError = unknown, TContext = unkn
   ArchiveGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["archiveGuide"];
+  const mutationKey = getArchiveGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1540,8 +1596,19 @@ export const exportGuide = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<ExportGuideResponse>(getExportGuideUrl(id), {
     ...options,
@@ -1550,6 +1617,8 @@ export const exportGuide = async (
     body: JSON.stringify(exportGuideRequest),
   });
 };
+
+export const getExportGuideMutationKey = () => ["exportGuide"] as const;
 
 export const getExportGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -1565,7 +1634,7 @@ export const getExportGuideMutationOptions = <TError = unknown, TContext = unkno
   ExportGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["exportGuide"];
+  const mutationKey = getExportGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1629,6 +1698,8 @@ export const permanentlyDeleteGuide = async (
   });
 };
 
+export const getPermanentlyDeleteGuideMutationKey = () => ["permanentlyDeleteGuide"] as const;
+
 export const getPermanentlyDeleteGuideMutationOptions = <
   TError = unknown,
   TContext = unknown,
@@ -1646,7 +1717,7 @@ export const getPermanentlyDeleteGuideMutationOptions = <
   PermanentlyDeleteGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["permanentlyDeleteGuide"];
+  const mutationKey = getPermanentlyDeleteGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1712,6 +1783,8 @@ export const publishGuide = async (
   });
 };
 
+export const getPublishGuideMutationKey = () => ["publishGuide"] as const;
+
 export const getPublishGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof publishGuide>>,
@@ -1726,7 +1799,7 @@ export const getPublishGuideMutationOptions = <TError = unknown, TContext = unkn
   PublishGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["publishGuide"];
+  const mutationKey = getPublishGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1790,6 +1863,8 @@ export const recalculateGuideDuration = async (
   });
 };
 
+export const getRecalculateGuideDurationMutationKey = () => ["recalculateGuideDuration"] as const;
+
 export const getRecalculateGuideDurationMutationOptions = <
   TError = unknown,
   TContext = unknown,
@@ -1807,7 +1882,7 @@ export const getRecalculateGuideDurationMutationOptions = <
   RecalculateGuideDurationMutationVariables,
   TContext
 > => {
-  const mutationKey = ["recalculateGuideDuration"];
+  const mutationKey = getRecalculateGuideDurationMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1873,6 +1948,8 @@ export const restoreGuide = async (
   });
 };
 
+export const getRestoreGuideMutationKey = () => ["restoreGuide"] as const;
+
 export const getRestoreGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof restoreGuide>>,
@@ -1887,7 +1964,7 @@ export const getRestoreGuideMutationOptions = <TError = unknown, TContext = unkn
   RestoreGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["restoreGuide"];
+  const mutationKey = getRestoreGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -1951,6 +2028,8 @@ export const starGuide = async (
   });
 };
 
+export const getStarGuideMutationKey = () => ["starGuide"] as const;
+
 export const getStarGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof starGuide>>,
@@ -1965,7 +2044,7 @@ export const getStarGuideMutationOptions = <TError = unknown, TContext = unknown
   StarGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["starGuide"];
+  const mutationKey = getStarGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -2029,6 +2108,8 @@ export const unstarGuide = async (
   });
 };
 
+export const getUnstarGuideMutationKey = () => ["unstarGuide"] as const;
+
 export const getUnstarGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof unstarGuide>>,
@@ -2043,7 +2124,7 @@ export const getUnstarGuideMutationOptions = <TError = unknown, TContext = unkno
   UnstarGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["unstarGuide"];
+  const mutationKey = getUnstarGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -2107,6 +2188,8 @@ export const unarchiveGuide = async (
   });
 };
 
+export const getUnarchiveGuideMutationKey = () => ["unarchiveGuide"] as const;
+
 export const getUnarchiveGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof unarchiveGuide>>,
@@ -2121,7 +2204,7 @@ export const getUnarchiveGuideMutationOptions = <TError = unknown, TContext = un
   UnarchiveGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["unarchiveGuide"];
+  const mutationKey = getUnarchiveGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -2185,6 +2268,8 @@ export const unpublishGuide = async (
   });
 };
 
+export const getUnpublishGuideMutationKey = () => ["unpublishGuide"] as const;
+
 export const getUnpublishGuideMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof unpublishGuide>>,
@@ -2199,7 +2284,7 @@ export const getUnpublishGuideMutationOptions = <TError = unknown, TContext = un
   UnpublishGuideMutationVariables,
   TContext
 > => {
-  const mutationKey = ["unpublishGuide"];
+  const mutationKey = getUnpublishGuideMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -2263,6 +2348,8 @@ export const recordGuideView = async (
   });
 };
 
+export const getRecordGuideViewMutationKey = () => ["recordGuideView"] as const;
+
 export const getRecordGuideViewMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof recordGuideView>>,
@@ -2277,7 +2364,7 @@ export const getRecordGuideViewMutationOptions = <TError = unknown, TContext = u
   RecordGuideViewMutationVariables,
   TContext
 > => {
-  const mutationKey = ["recordGuideView"];
+  const mutationKey = getRecordGuideViewMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options

@@ -5,7 +5,7 @@ WORKDIR /app
 
 RUN apk add --no-cache libc6-compat
 
-RUN corepack enable && corepack prepare pnpm@12.4.1 --activate
+RUN corepack enable && corepack prepare pnpm@12.5.1 --activate
 
 # ---------- Prune (Turborepo) ----------
 FROM base AS pruner

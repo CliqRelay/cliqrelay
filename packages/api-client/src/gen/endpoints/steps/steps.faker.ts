@@ -27,35 +27,26 @@ export const getGetAllStepsByGuideIdResponseMock = (
   ]),
   steps: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
     action: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([null, faker.helpers.arrayElement(Object.values(StepAction))]),
-      undefined,
+      null,
+      faker.helpers.arrayElement(Object.values(StepAction)),
     ]),
     actionText: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     canvasContent: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        null,
-        {
-          bodyText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          headingText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
-        },
-      ]),
-      undefined,
+      null,
+      {
+        bodyText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
+      },
     ]),
     createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
     guideId: faker.string.uuid(),
@@ -63,61 +54,43 @@ export const getGetAllStepsByGuideIdResponseMock = (
     mediaAssets: faker.helpers.arrayElement([
       Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
         altText: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        byteSize: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
         createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-        height: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        height: faker.helpers.arrayElement([faker.number.int(), null]),
         id: faker.string.uuid(),
         mimeType: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         stepId: faker.string.uuid(),
         storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
         thumbnail: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
         url: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        width: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        width: faker.helpers.arrayElement([faker.number.int(), null]),
       })),
       undefined,
     ]),
-    notes: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    notes: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
     sortOrder: faker.string.alpha({ length: { min: 10, max: 20 } }),
     targetElement: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          [faker.string.alphanumeric(5)]: {},
-        },
-        null,
-      ]),
-      undefined,
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
     ]),
     type: faker.helpers.arrayElement(Object.values(StepType)),
     updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    url: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
   })),
   total: faker.number.int(),
   ...overrideResponse,
@@ -128,35 +101,26 @@ export const getCreateStepResponseMock = (
 ): CreateStepResponse => ({
   step: {
     action: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([null, faker.helpers.arrayElement(Object.values(StepAction))]),
-      undefined,
+      null,
+      faker.helpers.arrayElement(Object.values(StepAction)),
     ]),
     actionText: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     canvasContent: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        null,
-        {
-          bodyText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          headingText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
-        },
-      ]),
-      undefined,
+      null,
+      {
+        bodyText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
+      },
     ]),
     createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
     guideId: faker.string.uuid(),
@@ -164,61 +128,43 @@ export const getCreateStepResponseMock = (
     mediaAssets: faker.helpers.arrayElement([
       Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
         altText: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        byteSize: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
         createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-        height: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        height: faker.helpers.arrayElement([faker.number.int(), null]),
         id: faker.string.uuid(),
         mimeType: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         stepId: faker.string.uuid(),
         storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
         thumbnail: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
         url: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        width: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        width: faker.helpers.arrayElement([faker.number.int(), null]),
       })),
       undefined,
     ]),
-    notes: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    notes: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
     sortOrder: faker.string.alpha({ length: { min: 10, max: 20 } }),
     targetElement: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          [faker.string.alphanumeric(5)]: {},
-        },
-        null,
-      ]),
-      undefined,
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
     ]),
     type: faker.helpers.arrayElement(Object.values(StepType)),
     updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    url: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
   },
   ...overrideResponse,
 });
@@ -228,35 +174,26 @@ export const getReorderStepsResponseMock = (
 ): ReorderStepsResponse => ({
   steps: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
     action: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([null, faker.helpers.arrayElement(Object.values(StepAction))]),
-      undefined,
+      null,
+      faker.helpers.arrayElement(Object.values(StepAction)),
     ]),
     actionText: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     canvasContent: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        null,
-        {
-          bodyText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          headingText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
-        },
-      ]),
-      undefined,
+      null,
+      {
+        bodyText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
+      },
     ]),
     createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
     guideId: faker.string.uuid(),
@@ -264,61 +201,43 @@ export const getReorderStepsResponseMock = (
     mediaAssets: faker.helpers.arrayElement([
       Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
         altText: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        byteSize: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
         createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-        height: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        height: faker.helpers.arrayElement([faker.number.int(), null]),
         id: faker.string.uuid(),
         mimeType: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         stepId: faker.string.uuid(),
         storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
         thumbnail: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
         url: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        width: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        width: faker.helpers.arrayElement([faker.number.int(), null]),
       })),
       undefined,
     ]),
-    notes: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    notes: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
     sortOrder: faker.string.alpha({ length: { min: 10, max: 20 } }),
     targetElement: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          [faker.string.alphanumeric(5)]: {},
-        },
-        null,
-      ]),
-      undefined,
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
     ]),
     type: faker.helpers.arrayElement(Object.values(StepType)),
     updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    url: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
   })),
   ...overrideResponse,
 });
@@ -330,35 +249,26 @@ export const getGetStepByIdResponseMock = (
     null,
     {
       action: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([null, faker.helpers.arrayElement(Object.values(StepAction))]),
-        undefined,
+        null,
+        faker.helpers.arrayElement(Object.values(StepAction)),
       ]),
       actionText: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
       canvasContent: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          null,
-          {
-            bodyText: faker.helpers.arrayElement([
-              faker.helpers.arrayElement([
-                faker.string.alpha({ length: { min: 10, max: 20 } }),
-                null,
-              ]),
-              undefined,
-            ]),
-            headingText: faker.helpers.arrayElement([
-              faker.helpers.arrayElement([
-                faker.string.alpha({ length: { min: 10, max: 20 } }),
-                null,
-              ]),
-              undefined,
-            ]),
-            type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
-          },
-        ]),
-        undefined,
+        null,
+        {
+          bodyText: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          headingText: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
+        },
       ]),
       createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
       guideId: faker.string.uuid(),
@@ -366,73 +276,46 @@ export const getGetStepByIdResponseMock = (
       mediaAssets: faker.helpers.arrayElement([
         Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
           altText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
           ]),
-          byteSize: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([faker.number.int(), null]),
-            undefined,
-          ]),
+          byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
           createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-          height: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([faker.number.int(), null]),
-            undefined,
-          ]),
+          height: faker.helpers.arrayElement([faker.number.int(), null]),
           id: faker.string.uuid(),
           mimeType: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
           ]),
           stepId: faker.string.uuid(),
           storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
           thumbnail: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
           ]),
           updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
           url: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
           ]),
-          width: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([faker.number.int(), null]),
-            undefined,
-          ]),
+          width: faker.helpers.arrayElement([faker.number.int(), null]),
         })),
         undefined,
       ]),
       notes: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
       sortOrder: faker.string.alpha({ length: { min: 10, max: 20 } }),
       targetElement: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([
-          {
-            [faker.string.alphanumeric(5)]: {},
-          },
-          null,
-        ]),
-        undefined,
+        {
+          [faker.string.alphanumeric(5)]: {},
+        },
+        null,
       ]),
       type: faker.helpers.arrayElement(Object.values(StepType)),
       updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-      url: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
-      ]),
+      url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
     },
   ]),
   ...overrideResponse,
@@ -450,35 +333,26 @@ export const getUpdateStepResponseMock = (
 ): UpdateStepResponse => ({
   step: {
     action: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([null, faker.helpers.arrayElement(Object.values(StepAction))]),
-      undefined,
+      null,
+      faker.helpers.arrayElement(Object.values(StepAction)),
     ]),
     actionText: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     canvasContent: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        null,
-        {
-          bodyText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          headingText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
-        },
-      ]),
-      undefined,
+      null,
+      {
+        bodyText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
+      },
     ]),
     createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
     guideId: faker.string.uuid(),
@@ -486,61 +360,43 @@ export const getUpdateStepResponseMock = (
     mediaAssets: faker.helpers.arrayElement([
       Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
         altText: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        byteSize: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
         createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-        height: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        height: faker.helpers.arrayElement([faker.number.int(), null]),
         id: faker.string.uuid(),
         mimeType: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         stepId: faker.string.uuid(),
         storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
         thumbnail: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
         url: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        width: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        width: faker.helpers.arrayElement([faker.number.int(), null]),
       })),
       undefined,
     ]),
-    notes: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    notes: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
     sortOrder: faker.string.alpha({ length: { min: 10, max: 20 } }),
     targetElement: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          [faker.string.alphanumeric(5)]: {},
-        },
-        null,
-      ]),
-      undefined,
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
     ]),
     type: faker.helpers.arrayElement(Object.values(StepType)),
     updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    url: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
   },
   ...overrideResponse,
 });
@@ -550,35 +406,26 @@ export const getDuplicateStepResponseMock = (
 ): DuplicateStepResponse => ({
   step: {
     action: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([null, faker.helpers.arrayElement(Object.values(StepAction))]),
-      undefined,
+      null,
+      faker.helpers.arrayElement(Object.values(StepAction)),
     ]),
     actionText: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     canvasContent: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        null,
-        {
-          bodyText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          headingText: faker.helpers.arrayElement([
-            faker.helpers.arrayElement([
-              faker.string.alpha({ length: { min: 10, max: 20 } }),
-              null,
-            ]),
-            undefined,
-          ]),
-          type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
-        },
-      ]),
-      undefined,
+      null,
+      {
+        bodyText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        type: faker.helpers.arrayElement(Object.values(StepCanvasType)),
+      },
     ]),
     createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
     guideId: faker.string.uuid(),
@@ -586,61 +433,43 @@ export const getDuplicateStepResponseMock = (
     mediaAssets: faker.helpers.arrayElement([
       Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
         altText: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        byteSize: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
         createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-        height: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        height: faker.helpers.arrayElement([faker.number.int(), null]),
         id: faker.string.uuid(),
         mimeType: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         stepId: faker.string.uuid(),
         storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
         thumbnail: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
         updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
         url: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-          undefined,
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
         ]),
-        width: faker.helpers.arrayElement([
-          faker.helpers.arrayElement([faker.number.int(), null]),
-          undefined,
-        ]),
+        width: faker.helpers.arrayElement([faker.number.int(), null]),
       })),
       undefined,
     ]),
-    notes: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    notes: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
     sortOrder: faker.string.alpha({ length: { min: 10, max: 20 } }),
     targetElement: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([
-        {
-          [faker.string.alphanumeric(5)]: {},
-        },
-        null,
-      ]),
-      undefined,
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
     ]),
     type: faker.helpers.arrayElement(Object.values(StepType)),
     updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    url: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
+    url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
   },
   ...overrideResponse,
 });

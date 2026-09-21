@@ -21,38 +21,26 @@ export const getGetAllMediaAssetsByStepIdResponseMock = (
   mediaAssets: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
     () => ({
       altText: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      byteSize: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
       createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-      height: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      height: faker.helpers.arrayElement([faker.number.int(), null]),
       id: faker.string.uuid(),
       mimeType: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
       stepId: faker.string.uuid(),
       storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
       thumbnail: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
       updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-      url: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
-      ]),
-      width: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+      width: faker.helpers.arrayElement([faker.number.int(), null]),
     }),
   ),
   ...overrideResponse,
@@ -63,38 +51,26 @@ export const getCreateMediaAssetResponseMock = (
 ): CreateMediaAssetResponse => ({
   mediaAsset: {
     altText: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
-    byteSize: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
     createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    height: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    height: faker.helpers.arrayElement([faker.number.int(), null]),
     id: faker.string.uuid(),
     mimeType: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     stepId: faker.string.uuid(),
     storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
     thumbnail: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    url: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
-    width: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+    width: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   ...overrideResponse,
 });
@@ -106,38 +82,26 @@ export const getGetMediaAssetByIdResponseMock = (
     null,
     {
       altText: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
-      byteSize: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
       createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-      height: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      height: faker.helpers.arrayElement([faker.number.int(), null]),
       id: faker.string.uuid(),
       mimeType: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
       stepId: faker.string.uuid(),
       storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
       thumbnail: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
       ]),
       updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-      url: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-        undefined,
-      ]),
-      width: faker.helpers.arrayElement([
-        faker.helpers.arrayElement([faker.number.int(), null]),
-        undefined,
-      ]),
+      url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+      width: faker.helpers.arrayElement([faker.number.int(), null]),
     },
   ]),
   ...overrideResponse,
@@ -155,38 +119,26 @@ export const getUpdateMediaAssetResponseMock = (
 ): UpdateMediaAssetResponse => ({
   mediaAsset: {
     altText: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
-    byteSize: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    byteSize: faker.helpers.arrayElement([faker.number.int(), null]),
     createdAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    height: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    height: faker.helpers.arrayElement([faker.number.int(), null]),
     id: faker.string.uuid(),
     mimeType: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     stepId: faker.string.uuid(),
     storagePath: faker.string.alpha({ length: { min: 10, max: 20 } }),
     thumbnail: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
     ]),
     updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
-    url: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
-      undefined,
-    ]),
-    width: faker.helpers.arrayElement([
-      faker.helpers.arrayElement([faker.number.int(), null]),
-      undefined,
-    ]),
+    url: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+    width: faker.helpers.arrayElement([faker.number.int(), null]),
   },
   ...overrideResponse,
 });

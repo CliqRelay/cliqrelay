@@ -218,8 +218,19 @@ export const createMediaAsset = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<CreateMediaAssetResponse>(getCreateMediaAssetUrl(), {
     ...options,
@@ -228,6 +239,8 @@ export const createMediaAsset = async (
     body: JSON.stringify(createMediaAssetRequest),
   });
 };
+
+export const getCreateMediaAssetMutationKey = () => ["createMediaAsset"] as const;
 
 export const getCreateMediaAssetMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -243,7 +256,7 @@ export const getCreateMediaAssetMutationOptions = <TError = unknown, TContext = 
   CreateMediaAssetMutationVariables,
   TContext
 > => {
-  const mutationKey = ["createMediaAsset"];
+  const mutationKey = getCreateMediaAssetMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -436,6 +449,8 @@ export const deleteMediaAsset = async (
   });
 };
 
+export const getDeleteMediaAssetMutationKey = () => ["deleteMediaAsset"] as const;
+
 export const getDeleteMediaAssetMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof deleteMediaAsset>>,
@@ -450,7 +465,7 @@ export const getDeleteMediaAssetMutationOptions = <TError = unknown, TContext = 
   DeleteMediaAssetMutationVariables,
   TContext
 > => {
-  const mutationKey = ["deleteMediaAsset"];
+  const mutationKey = getDeleteMediaAssetMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
@@ -516,8 +531,19 @@ export const updateMediaAsset = async (
   ): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Array.isArray(h)) return Object.fromEntries(h);
-    return h;
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
   };
   return customFetch<UpdateMediaAssetResponse>(getUpdateMediaAssetUrl(id), {
     ...options,
@@ -526,6 +552,8 @@ export const updateMediaAsset = async (
     body: JSON.stringify(updateMediaAssetRequest),
   });
 };
+
+export const getUpdateMediaAssetMutationKey = () => ["updateMediaAsset"] as const;
 
 export const getUpdateMediaAssetMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<
@@ -541,7 +569,7 @@ export const getUpdateMediaAssetMutationOptions = <TError = unknown, TContext = 
   UpdateMediaAssetMutationVariables,
   TContext
 > => {
-  const mutationKey = ["updateMediaAsset"];
+  const mutationKey = getUpdateMediaAssetMutationKey();
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options

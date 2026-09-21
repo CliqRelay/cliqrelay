@@ -11,15 +11,15 @@
     "update-npm-deps": "tsx ./scripts/update-npm-deps.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
-    "oxfmt": "^0.67.0",
-    "oxlint": "^1.82.0",
+    "@types/node": "^26.6.2",
+    "oxfmt": "^0.68.0",
+    "oxlint": "^1.83.0",
     "tsx": "^4.23.13",
-    "turbo": "^2.10.12",
+    "turbo": "^2.11.2",
     "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@12.4.1"
+  "packageManager": "pnpm@12.5.1"
 }

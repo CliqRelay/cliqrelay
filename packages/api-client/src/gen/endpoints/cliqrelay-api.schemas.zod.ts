@@ -5,6 +5,8 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import * as zod from "zod";
+
 export const GuideCreator = zod.object({
   email: zod.string(),
   id: zod.string(),
