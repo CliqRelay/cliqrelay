@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -241,6 +242,7 @@ func TestBunMediaAssetsRepository_GetByStepID(t *testing.T) {
 func TestBunMediaAssetsRepository_Update(t *testing.T) {
 	t.Parallel()
 
+	var seededUpdatedAt time.Time
 	cases := []struct {
 		name    string
 		setup   func(*bun.DB) *types.UpdateMediaAssetDTO
@@ -303,6 +305,44 @@ func TestBunMediaAssetsRepository_Update(t *testing.T) {
 				assert.Equal(t, 600, *a.Width)
 				require.NotNil(t, a.ByteSize)
 				assert.Equal(t, 2048, *a.ByteSize)
+			},
+		},
+		{
+			name: "leaves other columns untouched when updating one field",
+			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
+				stepID, _ := seedSimpleStep(t, db)
+				asset := seedMediaAsset(t, db, stepID, "/uploads/partial.png")
+				asset.MimeType = new("image/png")
+				asset.AltText = new("Seeded alt")
+				_, err := db.NewUpdate().Model(asset).Column("mime_type", "alt_text").WherePK().Exec(context.Background())
+				require.NoError(t, err)
+				return &types.UpdateMediaAssetDTO{
+					ID:     asset.ID,
+					Height: new(120),
+				}
+			},
+			check: func(t *testing.T, a *models.MediaAsset) {
+				require.NotNil(t, a.Height)
+				assert.Equal(t, 120, *a.Height)
+				require.NotNil(t, a.MimeType)
+				assert.Equal(t, "image/png", *a.MimeType)
+				require.NotNil(t, a.AltText)
+				assert.Equal(t, "Seeded alt", *a.AltText)
+				assert.Equal(t, "/uploads/partial.png", a.StoragePath)
+			},
+		},
+		{
+			name: "returns the asset unchanged without bumping updated_at when no fields are set",
+			setup: func(db *bun.DB) *types.UpdateMediaAssetDTO {
+				stepID, _ := seedSimpleStep(t, db)
+				asset := seedMediaAsset(t, db, stepID, "/uploads/unchanged.png")
+				require.NoError(t, db.NewSelect().Model(asset).WherePK().Scan(context.Background()))
+				seededUpdatedAt = asset.UpdatedAt
+				return &types.UpdateMediaAssetDTO{ID: asset.ID}
+			},
+			check: func(t *testing.T, a *models.MediaAsset) {
+				assert.Equal(t, "/uploads/unchanged.png", a.StoragePath)
+				assert.True(t, a.UpdatedAt.Equal(seededUpdatedAt), "updated_at moved from %v to %v", seededUpdatedAt, a.UpdatedAt)
 			},
 		},
 		{
