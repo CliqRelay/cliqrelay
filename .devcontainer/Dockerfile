@@ -34,6 +34,9 @@ ENV SHELL=/bin/zsh
 # Node.js
 # --------------------------------------
 RUN npm i -g pnpm@12.5.1
+
+# Install required dependencies for playwright.
+RUN npx playwright install-deps
 # --------------------------------------
 
 # --------------------------------------
@@ -53,11 +56,11 @@ ENV PATH="$PATH:$(go env GOPATH)/bin"
 # Ngrok
 # --------------------------------------
 RUN curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
-  | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
-  && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
-  | tee /etc/apt/sources.list.d/ngrok.list \
-  && apt update \
-  && apt install -y ngrok
+    | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
+    && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
+    | tee /etc/apt/sources.list.d/ngrok.list \
+    && apt update \
+    && apt install -y ngrok
 # --------------------------------------
 
 # --------------------------------------
