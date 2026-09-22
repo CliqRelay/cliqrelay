@@ -139,3 +139,7 @@ $ jq "." openapi.json > temp.json && mv temp.json openapi.json
 ```
 
 The exported spec is also served live at `GET /api/v1/openapi.json` when the server is running.
+
+Both the exported file and the live endpoint are built by `openapiexport.GenerateService`, which calls `routes.RegisterAllOpenAPIDocs`. The server does **not** read `openapi.json` from disk.
+
+If you add routes outside the core `routes` package (e.g. plugins via `bootstrap.WithExtraRoutes`), also pass their `routes.OpenAPIDocFunc` in the `extraDocs` argument of `GenerateService` — in both `cmd/core/main.go` and `cmd/openapi/main.go` — otherwise they won't appear in the spec.

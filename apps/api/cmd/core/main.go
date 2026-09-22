@@ -10,6 +10,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/infra"
 	"github.com/CliqRelay/cliqrelay/openapi"
+	"github.com/CliqRelay/cliqrelay/openapiexport"
 )
 
 func main() {
@@ -20,11 +21,13 @@ func main() {
 		log.Fatal("Error initializing infrastructure: ", err)
 	}
 
-	openAPISvc, err := openapi.NewOpenAPIService(
+	openAPISvc, err := openapiexport.GenerateService(
 		"CliqRelay API",
 		envConfig.OpenAPISpecVersion,
-		"CliqRelay API - open-source platform that transforms page clicks and interactions into beautiful, step-by-step visual documentation.",
+		"CliqRelay API - step-by-step visual documentation platform",
 		envConfig.BaseURL,
+		"/api/v1",
+		nil,
 		openapi.WithOpenAPIVersion("3.1.0"),
 		openapi.WithShortSchemaNames(),
 	)
