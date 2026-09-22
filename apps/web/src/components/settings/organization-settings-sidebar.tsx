@@ -1,81 +1,106 @@
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
+
 import { Building2, Layers, Palette, Settings, Users } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useOrgStore } from "@/stores";
 
 const sections = [
-	{
-		id: "general",
-		label: "General",
-		icon: Settings,
-		to: "/dashboard/organizations/$orgId/settings/general",
-	},
-	{
-		id: "members",
-		label: "Members",
-		icon: Users,
-		to: "/dashboard/organizations/$orgId/settings/members",
-	},
-	{
-		id: "teams",
-		label: "Teams",
-		icon: Layers,
-		to: "/dashboard/organizations/$orgId/settings/teams",
-	},
-	{
-		id: "branding",
-		label: "Branding",
-		icon: Palette,
-		to: "/dashboard/organizations/$orgId/settings/branding",
-	},
+  {
+    id: "general",
+    label: "General",
+    icon: Settings,
+    to: "/dashboard/organizations/$orgId/settings/general",
+  },
+  {
+    id: "members",
+    label: "Members",
+    icon: Users,
+    to: "/dashboard/organizations/$orgId/settings/members",
+  },
+  {
+    id: "teams",
+    label: "Teams",
+    icon: Layers,
+    to: "/dashboard/organizations/$orgId/settings/teams",
+  },
+  {
+    id: "branding",
+    label: "Branding",
+    icon: Palette,
+    to: "/dashboard/organizations/$orgId/settings/branding",
+  },
 ] as const;
 
+export function OrganizationSettingsSidebarSkeleton() {
+  return (
+    <div className="flex w-64 shrink-0 flex-col border-r">
+      <div className="flex h-14 items-center gap-3 border-b px-4">
+        <Skeleton className="size-8 rounded-lg" />
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-3.5 w-14" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+      <nav className="flex-1 space-y-0.5 overflow-auto p-2">
+        {sections.map((section) => (
+          <div key={section.id} className="flex items-center gap-2.5 px-3 py-2">
+            <Skeleton className="size-4 rounded-sm" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
 export function OrganizationSettingsSidebar() {
-	const orgName = useOrgStore((state) => state.orgName);
-	const { orgId } = useParams({
-		from: "/dashboard/organizations/$orgId/settings",
-	});
+  const orgName = useOrgStore((state) => state.orgName);
+  const { orgId } = useParams({
+    from: "/dashboard/organizations/$orgId/settings",
+  });
 
-	const location = useRouterState({ select: (s) => s.location });
+  const location = useRouterState({ select: (s) => s.location });
 
-	const activeSection =
-		sections.find((s) => location.pathname.endsWith(s.id))?.id ?? "general";
+  const activeSection = sections.find((s) => location.pathname.endsWith(s.id))?.id ?? "general";
 
-	return (
-		<div className="flex flex-col w-64 shrink-0 border-r">
-			<div className="flex h-14 items-center gap-3 border-b px-4">
-				<div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-					<Building2 size={16} className="text-primary" />
-				</div>
-				<div className="flex flex-col">
-					<span className="text-sm font-semibold">Settings</span>
-					<span className="text-xs text-muted-foreground truncate max-w-40">
-						{orgName}
-					</span>
-				</div>
-			</div>
-			<nav className="flex-1 p-2 space-y-0.5 overflow-auto">
-				{sections.map((section) => {
-					const isActive = activeSection === section.id;
-					return (
-						<Link
-							key={section.id}
-							to={section.to}
-							params={{ orgId }}
-							className={cn(
-								"flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
-								isActive
-									? "bg-accent text-accent-foreground shadow-sm"
-									: "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-							)}
-						>
-							<section.icon size={16} className="shrink-0" />
-							{section.label}
-						</Link>
-					);
-				})}
-			</nav>
-		</div>
-	);
+  if (!orgName) {
+    return <OrganizationSettingsSidebarSkeleton />;
+  }
+
+  return (
+    <div className="flex w-64 shrink-0 flex-col border-r">
+      <div className="flex h-14 items-center gap-3 border-b px-4">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
+          <Building2 size={16} className="text-primary" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold">Settings</span>
+          <span className="max-w-40 truncate text-xs text-muted-foreground">{orgName}</span>
+        </div>
+      </div>
+      <nav className="flex-1 space-y-0.5 overflow-auto p-2">
+        {sections.map((section) => {
+          const isActive = activeSection === section.id;
+          return (
+            <Link
+              key={section.id}
+              to={section.to}
+              params={{ orgId }}
+              className={cn(
+                "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                isActive
+                  ? "bg-accent text-accent-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+              )}
+            >
+              <section.icon size={16} className="shrink-0" />
+              {section.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
+  );
 }

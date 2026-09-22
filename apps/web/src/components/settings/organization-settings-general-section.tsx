@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form";
 
 import { z } from "zod";
 
+import { OrganizationSettingsGeneralSectionSkeleton } from "@/components/settings/org-settings-skeletons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,16 @@ function FieldInfo({ field }: { field: any }) {
 export function OrganizationSettingsGeneralSection() {
   const orgId = useOrgStore((state) => state.orgId);
   const orgName = useOrgStore((state) => state.orgName);
+
+  if (!orgId || orgName === null) {
+    return <OrganizationSettingsGeneralSectionSkeleton />;
+  }
+
+  // Keyed on orgId so the form's default values are re-captured when the org changes
+  return <OrganizationSettingsGeneralForm key={orgId} orgId={orgId} orgName={orgName} />;
+}
+
+function OrganizationSettingsGeneralForm({ orgId, orgName }: { orgId: string; orgName: string }) {
   const organizations = useOrgStore((state) => state.organizations);
   const currentMember = useOrgStore((state) => state.currentMember);
   const setOrg = useOrgStore((state) => state.setOrg);
@@ -52,14 +63,11 @@ export function OrganizationSettingsGeneralSection() {
       onChange: formSchema,
     },
     defaultValues: {
-      name: orgName ?? "",
+      name: orgName,
       slug: organizations.find((o) => o.id === orgId)?.slug ?? "",
     } satisfies FormSchema,
     onSubmit: async ({ value }) => {
       try {
-        if (!orgId) {
-          return;
-        }
         const updatedOrg = await updateOrganization({
           organizationId: orgId,
           data: {
