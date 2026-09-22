@@ -6,10 +6,10 @@ import {
   buildSignInUrl,
   isSessionCookieCleared,
   isSessionCookieSet,
-  type SessionCookieChange,
+  type CookieChange,
 } from "./auth-session";
 
-const buildChange = (overrides: Partial<SessionCookieChange> = {}): SessionCookieChange => ({
+const buildChange = (overrides: Partial<CookieChange> = {}): CookieChange => ({
   cookie: { name: COOKIE_CONSTANTS.session.name },
   removed: false,
   cause: "explicit",

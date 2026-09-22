@@ -14,6 +14,7 @@ import {
   RecordingControls,
   StepList,
 } from "../components";
+import { useActiveTeamId } from "../hooks/useActiveTeamId";
 import { fetchAuthSession } from "../hooks/useAuthSession";
 import { useSidePanelBridge } from "../hooks/useSidePanelBridge";
 import { useSignedOutRedirect } from "../hooks/useSignedOutRedirect";
@@ -48,6 +49,13 @@ function Home() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewingGuideId, setViewingGuideId] = useState<string | null>(null);
+
+  const { teamId } = useActiveTeamId();
+  const [viewedTeamId, setViewedTeamId] = useState(teamId);
+  if (teamId !== viewedTeamId) {
+    setViewedTeamId(teamId);
+    setViewingGuideId(null);
+  }
 
   const stepCount = jobProgress.length;
   const isActive = status === "recording" || status === "paused";
@@ -196,10 +204,7 @@ function Home() {
 
   if (viewingGuideId) {
     return (
-      <PersistedGuideView
-        activeGuideId={viewingGuideId}
-        onBack={() => setViewingGuideId(null)}
-      />
+      <PersistedGuideView activeGuideId={viewingGuideId} onBack={() => setViewingGuideId(null)} />
     );
   }
 
