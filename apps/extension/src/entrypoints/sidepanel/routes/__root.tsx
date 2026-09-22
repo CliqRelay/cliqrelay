@@ -3,6 +3,7 @@ import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router
 
 import { Settings } from "lucide-react";
 
+import { useActiveTeamCookieSync } from "../hooks/useActiveTeamCookieSync";
 import { useAuthSession } from "../hooks/useAuthSession";
 import { useSessionCookieSync } from "../hooks/useSessionCookieSync";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export const Route = createRootRouteWithContext<SidePanelRouterContext>()({
 
 function RootComponent() {
   useSessionCookieSync();
+  useActiveTeamCookieSync();
   const { isAuthenticated } = useAuthSession();
 
   return (

@@ -6,11 +6,7 @@ import { useRouter } from "@tanstack/react-router";
 import { browser } from "wxt/browser";
 
 import { fetchAuthSession } from "./useAuthSession";
-import {
-  isSessionCookieCleared,
-  isSessionCookieSet,
-  type SessionCookieChange,
-} from "@/lib/auth-session";
+import { isSessionCookieCleared, isSessionCookieSet, type CookieChange } from "@/lib/auth-session";
 
 const SIGN_IN_PATH = "/sign-in";
 
@@ -34,7 +30,7 @@ export function useSessionCookieSync() {
       }
     };
 
-    const handleCookieChange = (change: SessionCookieChange) => {
+    const handleCookieChange = (change: CookieChange) => {
       if (!isSessionCookieSet(change) && !isSessionCookieCleared(change)) {
         return;
       }
