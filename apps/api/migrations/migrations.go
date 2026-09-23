@@ -50,6 +50,7 @@ func RunMigrations(ctx context.Context, auth *authula.Auth, opts ...Option) erro
 		mediaAssetsInitial(),
 		starredGuidesInitial(),
 		guideExportsInitial(),
+		activityLogsInitial(),
 	}
 	if o.guideViewsMigrationEnabled {
 		migrations = append(migrations, guideViewsInitial())

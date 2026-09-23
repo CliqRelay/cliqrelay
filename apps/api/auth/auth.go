@@ -248,6 +248,25 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 					csrfplugin.HookIDCSRFProtect.String(),
 				},
 			},
+			// Activity Logs
+			{
+				Paths: []string{
+					fmt.Sprintf("GET:%s/activity-logs", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			// Realtime
+			{
+				Paths: []string{
+					fmt.Sprintf("POST:%s/realtime/connect", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+					csrfplugin.HookIDCSRFProtect.String(),
+				},
+			},
 		}),
 	)
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	bunActivityLogs "github.com/CliqRelay/cliqrelay/repositories/activity_logs"
 	bunGuideExports "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
 	bunGuideViews "github.com/CliqRelay/cliqrelay/repositories/guide_views"
 	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
@@ -31,3 +32,5 @@ func TestBuildRepositoriesDefaultsToBun(t *testing.T) {
 		t.Fatal("expected error when no DB is configured")
 	}
 }
+
+var _ interfaces.ActivityLogsRepository = (*bunActivityLogs.BunActivityLogsRepository)(nil)

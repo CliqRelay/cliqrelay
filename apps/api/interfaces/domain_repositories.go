@@ -8,4 +8,5 @@ type Repositories struct {
 	GuideExports  GuideExportsRepository
 	GuideViews    GuideViewsRepository
 	Teams         TeamsRepository
+	ActivityLogs  ActivityLogsRepository
 }

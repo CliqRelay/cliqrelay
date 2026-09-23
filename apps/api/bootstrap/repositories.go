@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	bunActivityLogs "github.com/CliqRelay/cliqrelay/repositories/activity_logs"
 	bunGuideExports "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
 	bunGuideViews "github.com/CliqRelay/cliqrelay/repositories/guide_views"
 	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
@@ -25,6 +26,7 @@ func buildRepositories(o *options) (*interfaces.Repositories, error) {
 		GuideExports:  o.guideExportsRepo,
 		GuideViews:    o.guideViewsRepo,
 		Teams:         o.teamsRepo,
+		ActivityLogs:  o.activityLogsRepo,
 	}
 
 	if repos.Guides == nil {
@@ -47,6 +49,10 @@ func buildRepositories(o *options) (*interfaces.Repositories, error) {
 	}
 	if repos.Teams == nil {
 		repos.Teams = bunTeams.NewBunTeamsRepository(db)
+	}
+
+	if repos.ActivityLogs == nil {
+		repos.ActivityLogs = bunActivityLogs.NewBunActivityLogsRepository(db)
 	}
 
 	return repos, nil

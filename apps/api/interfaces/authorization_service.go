@@ -10,6 +10,7 @@ import (
 )
 
 type AuthorizationService interface {
+	CanAccessTeam(ctx context.Context, actor *authulamodels.Actor, teamID string) error
 	CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) error
 	CanReadGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error
 	CanEditGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error

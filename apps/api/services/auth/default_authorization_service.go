@@ -46,6 +46,17 @@ func hasScope(scopes []string, required string) bool {
 	return false
 }
 
+func (s *DefaultAuthorizationService) CanAccessTeam(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
+	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
+	if err != nil {
+		return err
+	}
+	if team == nil {
+		return constants.ErrTeamAccessDenied
+	}
+	return nil
+}
+
 func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
 	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
 	if err != nil {

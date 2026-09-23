@@ -7,21 +7,28 @@
  */
 import * as zod from "zod";
 
-export const GuideCreator = zod.object({
-  email: zod.string(),
-  id: zod.string(),
-  image: zod.string().nullish(),
-  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
-  name: zod.string(),
-});
+export const ActivityActorType = zod
+  .enum(["user", "machine"])
+  .describe("The kind of actor that performed the activity");
 
-export type GuideCreator = zod.input<typeof GuideCreator>;
-export type GuideCreatorOutput = zod.output<typeof GuideCreator>;
+export type ActivityActorType = zod.input<typeof ActivityActorType>;
+export type ActivityActorTypeOutput = zod.output<typeof ActivityActorType>;
 
-export const Uuid = zod.uuid();
+export const ActivityEventType = zod
+  .enum([
+    "guide.created",
+    "guide.updated",
+    "guide.published",
+    "guide.unpublished",
+    "guide.archived",
+    "guide.unarchived",
+    "guide.deleted",
+    "guide.restored",
+  ])
+  .describe("The type of activity that was recorded");
 
-export type Uuid = zod.input<typeof Uuid>;
-export type UuidOutput = zod.output<typeof Uuid>;
+export type ActivityEventType = zod.input<typeof ActivityEventType>;
+export type ActivityEventTypeOutput = zod.output<typeof ActivityEventType>;
 
 export const GuideStatus = zod
   .enum(["draft", "published", "archived", "deleted"])
@@ -36,6 +43,63 @@ export const Visibility = zod
 
 export type Visibility = zod.input<typeof Visibility>;
 export type VisibilityOutput = zod.output<typeof Visibility>;
+
+export const ActivityGuideMetadata = zod.object({
+  creatorId: zod.string().nullish(),
+  status: GuideStatus,
+  title: zod.string(),
+  visibility: Visibility,
+});
+
+export type ActivityGuideMetadata = zod.input<typeof ActivityGuideMetadata>;
+export type ActivityGuideMetadataOutput = zod.output<typeof ActivityGuideMetadata>;
+
+export const Uuid = zod.uuid();
+
+export type Uuid = zod.input<typeof Uuid>;
+export type UuidOutput = zod.output<typeof Uuid>;
+
+export const ActivityUserMetadata = zod.object({
+  name: zod.string(),
+});
+
+export type ActivityUserMetadata = zod.input<typeof ActivityUserMetadata>;
+export type ActivityUserMetadataOutput = zod.output<typeof ActivityUserMetadata>;
+
+export const ActivityMetadata = zod.object({
+  guide: ActivityGuideMetadata.optional(),
+  user: ActivityUserMetadata.optional(),
+});
+
+export type ActivityMetadata = zod.input<typeof ActivityMetadata>;
+export type ActivityMetadataOutput = zod.output<typeof ActivityMetadata>;
+
+export const ActivityLog = zod.object({
+  actorId: zod.string(),
+  actorType: ActivityActorType,
+  createdAt: zod.iso.datetime({ offset: true }),
+  eventType: ActivityEventType,
+  id: Uuid,
+  metadata: ActivityMetadata,
+  organizationId: Uuid,
+  targetId: zod.string(),
+  targetType: zod.string(),
+  teamId: zod.union([zod.null(), Uuid]),
+});
+
+export type ActivityLog = zod.input<typeof ActivityLog>;
+export type ActivityLogOutput = zod.output<typeof ActivityLog>;
+
+export const GuideCreator = zod.object({
+  email: zod.string(),
+  id: zod.string(),
+  image: zod.string().nullish(),
+  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
+  name: zod.string(),
+});
+
+export type GuideCreator = zod.input<typeof GuideCreator>;
+export type GuideCreatorOutput = zod.output<typeof GuideCreator>;
 
 export const Guide = zod.object({
   archivedAt: zod.iso.datetime({ offset: true }).nullish(),
@@ -420,6 +484,13 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
+export const ListActivityLogsResponse = zod.object({
+  data: zod.array(ActivityLog),
+});
+
+export type ListActivityLogsResponse = zod.input<typeof ListActivityLogsResponse>;
+export type ListActivityLogsResponseOutput = zod.output<typeof ListActivityLogsResponse>;
+
 export const PermanentlyDeleteGuideResponse = zod.object({
   guide: Guide,
 });
@@ -451,6 +522,14 @@ export const PublishGuideResponse = zod.object({
 
 export type PublishGuideResponse = zod.input<typeof PublishGuideResponse>;
 export type PublishGuideResponseOutput = zod.output<typeof PublishGuideResponse>;
+
+export const RealtimeConnectionResponse = zod.object({
+  expiresAt: zod.iso.datetime({ offset: true }),
+  url: zod.string(),
+});
+
+export type RealtimeConnectionResponse = zod.input<typeof RealtimeConnectionResponse>;
+export type RealtimeConnectionResponseOutput = zod.output<typeof RealtimeConnectionResponse>;
 
 export const RecalculateDurationResponse = zod.object({
   guide: Guide,

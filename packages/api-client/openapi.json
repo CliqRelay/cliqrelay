@@ -7,10 +7,48 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080"
+      "url": "http://localhost:8081"
     }
   ],
   "paths": {
+    "/api/v1/activity-logs": {
+      "get": {
+        "tags": [
+          "Activity Logs"
+        ],
+        "summary": "List activity logs",
+        "description": "Returns the most recent activity for a team, newest first",
+        "operationId": "listActivityLogs",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListActivityLogsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/guide-exports/{exportID}": {
       "get": {
         "tags": [
@@ -1032,6 +1070,37 @@
         }
       }
     },
+    "/api/v1/realtime/connect": {
+      "post": {
+        "tags": [
+          "Realtime"
+        ],
+        "summary": "Connect to realtime events",
+        "description": "Returns a short-lived, single-use URL for opening the team's realtime event stream",
+        "operationId": "connectRealtime",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeConnectionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/steps": {
       "get": {
         "tags": [
@@ -1366,6 +1435,130 @@
   },
   "components": {
     "schemas": {
+      "ActivityActorType": {
+        "description": "The kind of actor that performed the activity",
+        "enum": [
+          "user",
+          "machine"
+        ],
+        "type": "string"
+      },
+      "ActivityEventType": {
+        "description": "The type of activity that was recorded",
+        "enum": [
+          "guide.created",
+          "guide.updated",
+          "guide.published",
+          "guide.unpublished",
+          "guide.archived",
+          "guide.unarchived",
+          "guide.deleted",
+          "guide.restored"
+        ],
+        "type": "string"
+      },
+      "ActivityGuideMetadata": {
+        "properties": {
+          "creator_id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/GuideStatus"
+          },
+          "title": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        },
+        "required": [
+          "title",
+          "status",
+          "visibility"
+        ],
+        "type": "object"
+      },
+      "ActivityLog": {
+        "properties": {
+          "actor_id": {
+            "type": "string"
+          },
+          "actor_type": {
+            "$ref": "#/components/schemas/ActivityActorType"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/ActivityEventType"
+          },
+          "id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ActivityMetadata"
+          },
+          "organization_id": {
+            "$ref": "#/components/schemas/UUID"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "target_type": {
+            "type": "string"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UUID"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "organization_id",
+          "team_id",
+          "actor_id",
+          "actor_type",
+          "event_type",
+          "target_id",
+          "target_type",
+          "metadata",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "ActivityMetadata": {
+        "properties": {
+          "guide": {
+            "$ref": "#/components/schemas/ActivityGuideMetadata"
+          },
+          "user": {
+            "$ref": "#/components/schemas/ActivityUserMetadata"
+          }
+        },
+        "type": "object"
+      },
+      "ActivityUserMetadata": {
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
       "ArchiveGuideResponse": {
         "properties": {
           "guide": {
@@ -2128,6 +2321,20 @@
         ],
         "type": "object"
       },
+      "ListActivityLogsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityLog"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
       "MediaAsset": {
         "properties": {
           "alt_text": {
@@ -2248,6 +2455,22 @@
         },
         "required": [
           "guide"
+        ],
+        "type": "object"
+      },
+      "RealtimeConnectionResponse": {
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expires_at"
         ],
         "type": "object"
       },

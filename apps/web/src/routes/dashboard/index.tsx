@@ -1,16 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ExtensionSlot } from "@repo/extensions-sdk";
-
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { DashboardHero } from "@/components/dashboard/dashboard-hero";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { QuickCaptureCard } from "@/components/dashboard/quick-capture-card";
 import { RecentGuides } from "@/components/dashboard/recent-guides";
 import { StatsCards } from "@/components/dashboard/stats-cards";
-import { ActivityFeedFallback } from "@/components/pro/activity-feed-fallback";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExtensionSlotKeys } from "@/constants/extension-slots";
 import { useOrgStore, useTeamStore } from "@/stores";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -169,10 +166,7 @@ function DashboardPage() {
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <RecentGuides teamId={activeTeamId ?? undefined} />
         <QuickCaptureCard />
-        <ExtensionSlot
-          name={ExtensionSlotKeys.DASHBOARD_ACTIVITY_FEED}
-          fallback={ActivityFeedFallback}
-        />
+        <ActivityFeed />
       </div>
     </div>
   );

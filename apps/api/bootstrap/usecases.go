@@ -2,11 +2,13 @@ package bootstrap
 
 import (
 	"errors"
+	"strings"
 
 	authulamodels "github.com/Authula/authula/models"
 	organizationsplugin "github.com/Authula/authula/plugins/organizations"
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/routes"
 	authservice "github.com/CliqRelay/cliqrelay/services/auth"
 	"github.com/CliqRelay/cliqrelay/usecases"
 )
@@ -31,13 +33,25 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, svcs.Domain.MediaAssetsService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
 	teamsUseCase := usecases.NewTeamsUseCase(svcs.Domain.TeamsService)
 	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, svcs.Domain.UploadsService, svcs.Domain.GuidesService, svcs.Domain.StepsService)
+	activityLogsUseCase := usecases.NewActivityLogsUseCase(authorizationService, svcs.Domain.ActivityLogsService)
+	realtimeUseCase := usecases.NewRealtimeUseCase(authorizationService, svcs.Domain.RealtimeService, realtimeStreamURL(o))
 
 	return &interfaces.DomainUseCases{
-		GuidesUseCase:      guidesUseCase,
-		GuideViewsUseCase:  guideViewsUseCase,
-		StepsUseCase:       stepsUseCase,
-		MediaAssetsUseCase: mediaAssetsUseCase,
-		UploadsUseCase:     uploadsUseCase,
-		TeamsUseCase:       teamsUseCase,
+		GuidesUseCase:       guidesUseCase,
+		GuideViewsUseCase:   guideViewsUseCase,
+		StepsUseCase:        stepsUseCase,
+		MediaAssetsUseCase:  mediaAssetsUseCase,
+		UploadsUseCase:      uploadsUseCase,
+		TeamsUseCase:        teamsUseCase,
+		ActivityLogsUseCase: activityLogsUseCase,
+		RealtimeUseCase:     realtimeUseCase,
 	}, authorizationService, nil
+}
+
+func realtimeStreamURL(o *options) string {
+	baseURL := ""
+	if o.envConfig != nil {
+		baseURL = o.envConfig.BaseURL
+	}
+	return strings.TrimSuffix(baseURL, "/") + o.basePath + routes.RealtimeStreamPath
 }

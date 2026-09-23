@@ -6,10 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./activity-actor-type";
+export * from "./activity-event-type";
+export * from "./activity-guide-metadata";
+export * from "./activity-log";
+export * from "./activity-metadata";
+export * from "./activity-user-metadata";
 export * from "./archive-guide-response";
 export * from "./bulk-guides-action-params";
 export * from "./bulk-guides-request";
 export * from "./bulk-guides-response";
+export * from "./connect-realtime-params";
 export * from "./create-demo-guide-request";
 export * from "./create-demo-guide-response";
 export * from "./create-guide-request";
@@ -53,11 +60,14 @@ export * from "./guide-sort-field";
 export * from "./guide-status";
 export * from "./guide";
 export * from "./health-response";
+export * from "./list-activity-logs-params";
+export * from "./list-activity-logs-response";
 export * from "./media-asset";
 export * from "./permanently-delete-guide-response";
 export * from "./presign-upload-request";
 export * from "./presign-upload-response";
 export * from "./publish-guide-response";
+export * from "./realtime-connection-response";
 export * from "./recalculate-duration-response";
 export * from "./record-guide-view-response";
 export * from "./reorder-steps-request";

@@ -8,22 +8,25 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type PurgeService struct {
-	guidesRepo        interfaces.GuidesRepository
-	storageService    interfaces.StorageService
-	guideViewsService interfaces.GuideViewsService
-	bucket            string
+	guidesRepo          interfaces.GuidesRepository
+	storageService      interfaces.StorageService
+	guideViewsService   interfaces.GuideViewsService
+	activityLogsService interfaces.ActivityLogsService
+	bucket              string
 }
 
-func NewPurgeService(guidesRepo interfaces.GuidesRepository, storageService interfaces.StorageService, guideViewsService interfaces.GuideViewsService, bucket string) *PurgeService {
+func NewPurgeService(guidesRepo interfaces.GuidesRepository, storageService interfaces.StorageService, guideViewsService interfaces.GuideViewsService, activityLogsService interfaces.ActivityLogsService, bucket string) *PurgeService {
 	return &PurgeService{
-		guidesRepo:        guidesRepo,
-		storageService:    storageService,
-		guideViewsService: guideViewsService,
-		bucket:            bucket,
+		guidesRepo:          guidesRepo,
+		storageService:      storageService,
+		guideViewsService:   guideViewsService,
+		activityLogsService: activityLogsService,
+		bucket:              bucket,
 	}
 }
 
@@ -49,6 +52,12 @@ func (s *PurgeService) PurgeGuide(ctx context.Context, guideID string) error {
 	if err := s.storageService.DeleteObjectsByPrefix(ctx, s.bucket, prefix); err != nil {
 		slog.Error("failed to delete S3 objects", "guide_id", guideID, "prefix", prefix, "err", err)
 		return fmt.Errorf("delete S3 objects: %w", err)
+	}
+
+	// Runs before the hard delete so a failure is retried while the guide is still eligible.
+	if err := s.activityLogsService.DeleteByTarget(ctx, models.ActivityTargetGuide, guideID); err != nil {
+		slog.Error("failed to delete guide activity", "guide_id", guideID, "err", err)
+		return fmt.Errorf("delete guide activity: %w", err)
 	}
 
 	if err := s.guidesRepo.HardDelete(ctx, guideID); err != nil {

@@ -11,4 +11,6 @@ type DomainServices struct {
 	PurgeService           PurgeService
 	OrphanedUploadsService OrphanedUploadsService
 	TeamsService           TeamsService
+	ActivityLogsService    ActivityLogsService
+	RealtimeService        RealtimeService
 }

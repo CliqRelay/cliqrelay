@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
+	activitylogsservice "github.com/CliqRelay/cliqrelay/services/activity_logs"
 	"github.com/CliqRelay/cliqrelay/services/export"
 	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
@@ -11,6 +12,7 @@ import (
 	orphaneduploadsservice "github.com/CliqRelay/cliqrelay/services/orphaned_uploads"
 	"github.com/CliqRelay/cliqrelay/services/presign"
 	"github.com/CliqRelay/cliqrelay/services/purge"
+	realtimeservice "github.com/CliqRelay/cliqrelay/services/realtime"
 	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
 	stepsservice "github.com/CliqRelay/cliqrelay/services/steps"
 	"github.com/CliqRelay/cliqrelay/services/storage"
@@ -36,8 +38,10 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 	uploadsService := uploadsservice.NewUploadsService(repos.Guides, repos.Steps, repos.MediaAssets, presignService, o.infraCfg.RedisClient, o.infraCfg.Logger, o.infraCfg.S3Bucket)
 	guideViewsService := guideviewsservice.NewGuideViewsService(repos.GuideViews, o.infraCfg.RedisClient)
 	teamsService := teamsservice.NewTeamsService(repos.Teams)
-	purgeService := purge.NewPurgeService(repos.Guides, storageService, guideViewsService, o.infraCfg.S3Bucket)
 	orphanedUploadsService := orphaneduploadsservice.NewOrphanedUploadsService(repos.MediaAssets, storageService, o.infraCfg.S3Bucket)
+	realtimeService := realtimeservice.NewRealtimeService(o.infraCfg.RedisClient, o.infraCfg.Logger)
+	activityLogsService := activitylogsservice.NewActivityLogsService(repos.ActivityLogs, realtimeService, o.infraCfg.Logger)
+	purgeService := purge.NewPurgeService(repos.Guides, storageService, guideViewsService, activityLogsService, o.infraCfg.S3Bucket)
 
 	return &builtServices{
 		Storage: storageService,
@@ -53,6 +57,8 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 			PurgeService:           purgeService,
 			OrphanedUploadsService: orphanedUploadsService,
 			TeamsService:           teamsService,
+			ActivityLogsService:    activityLogsService,
+			RealtimeService:        realtimeService,
 		},
 	}
 }

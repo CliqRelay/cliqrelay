@@ -1,10 +1,12 @@
 package interfaces
 
 type DomainUseCases struct {
-	GuidesUseCase      GuidesUseCase
-	GuideViewsUseCase  GuideViewsUseCase
-	StepsUseCase       StepsUseCase
-	MediaAssetsUseCase MediaAssetsUseCase
-	UploadsUseCase     UploadsUseCase
-	TeamsUseCase       TeamsUseCase
+	GuidesUseCase       GuidesUseCase
+	GuideViewsUseCase   GuideViewsUseCase
+	StepsUseCase        StepsUseCase
+	MediaAssetsUseCase  MediaAssetsUseCase
+	UploadsUseCase      UploadsUseCase
+	TeamsUseCase        TeamsUseCase
+	ActivityLogsUseCase ActivityLogsUseCase
+	RealtimeUseCase     RealtimeUseCase
 }

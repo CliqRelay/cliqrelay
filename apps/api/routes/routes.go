@@ -18,6 +18,8 @@ func InitRoutes(cfg *config.HTTPConfig, useCases *interfaces.DomainUseCases, ser
 	routes = append(routes, StepsRoutes(cfg, useCases.StepsUseCase)...)
 	routes = append(routes, MediaAssetsRoutes(cfg, useCases.MediaAssetsUseCase)...)
 	routes = append(routes, UploadRoutes(cfg, useCases.UploadsUseCase)...)
+	routes = append(routes, ActivityLogsRoutes(cfg, useCases.ActivityLogsUseCase)...)
+	routes = append(routes, RealtimeRoutes(cfg, useCases.RealtimeUseCase)...)
 
 	for _, extra := range extraRoutes {
 		routes = append(routes, extra...)

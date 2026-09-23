@@ -37,4 +37,7 @@ var (
 	ErrGuideDeleteDenied       = errors.New("you do not have permission to delete this guide")
 	ErrGuideNotPublished       = errors.New("guide must be published to record views")
 	ErrCannotSetGuideToPrivate = errors.New("only the creator can set a guide to private")
+
+	ErrInvalidActivityPayload = errors.New("invalid activity payload")
+	ErrInvalidStreamTicket    = errors.New("invalid or expired stream ticket")
 )

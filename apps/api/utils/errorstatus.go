@@ -9,7 +9,7 @@ import (
 
 func ErrorStatus(err error) int {
 	switch {
-	case errors.Is(err, constants.ErrUnauthorized):
+	case errors.Is(err, constants.ErrUnauthorized), errors.Is(err, constants.ErrInvalidStreamTicket):
 		return http.StatusUnauthorized
 	case errors.Is(err, constants.ErrInvalidGuideID):
 		return http.StatusBadRequest

@@ -14,6 +14,11 @@ type MockAuthorizationService struct {
 	mock.Mock
 }
 
+func (m *MockAuthorizationService) CanAccessTeam(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
+	args := m.Called(ctx, actor, teamID)
+	return args.Error(0)
+}
+
 func (m *MockAuthorizationService) CanCreateGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) error {
 	args := m.Called(ctx, actor, teamID)
 	return args.Error(0)

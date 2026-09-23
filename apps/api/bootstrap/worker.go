@@ -32,6 +32,7 @@ func NewWorker(opts ...Option) (*Worker, error) {
 	consumer := worker.NewStreamConsumer(o.infraCfg.RedisClient, o.consumerGroup, 5, worker.WithConcurrency(o.concurrency))
 	consumer.RegisterHandler(events.TopicMediaAssets, events.EventTypeMediaAssetDeleted, worker.HandleMediaAssetsEvent(svcs.Storage, o.infraCfg.S3Bucket))
 	consumer.RegisterHandler(events.TopicGuides, events.EventTypeGuidePurge, worker.HandleGuidePurgeEvent(svcs.Domain.PurgeService))
+	consumer.RegisterHandler(events.TopicActivity, events.EventTypeActivityRecorded, worker.HandleActivityRecordedEvent(svcs.Domain.ActivityLogsService))
 	consumer.RegisterHandler(events.TopicGuideExports, events.EventTypeGuideExport, worker.HandleGuideExportEvent(svcs.Domain.ExportService))
 
 	w := &Worker{consumer: consumer}
