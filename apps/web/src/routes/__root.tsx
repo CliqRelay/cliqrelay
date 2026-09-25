@@ -9,8 +9,11 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+
 import { ThemeProvider } from "next-themes";
 
+import TanStackQueryDevtools from "../integrations/tanstack-query/Devtools";
+import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "@/constants/query-client";
@@ -19,8 +22,6 @@ import { getActiveTeamCookie, setActiveTeamCookie } from "@/lib/team-cookie";
 import type { MyRouterContext } from "@/router";
 import { getTeams } from "@/server-fns/teams";
 import { useTeamStore } from "@/stores";
-import TanStackQueryDevtools from "../integrations/tanstack-query/Devtools";
-import appCss from "../styles.css?url";
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => {
@@ -70,13 +71,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         name: "description",
         content:
-          "Capture, document and share step-by-step workflows with your team from one calm, premium workspace.",
+          "CliqRelay transforms page clicks and interactions into beautiful, step-by-step visual documentation.",
       },
       { property: "og:title", content: "CliqRelay" },
       {
         property: "og:description",
         content:
-          "Your CliqRelay workspace at a glance — recent guides, activity and quick capture.",
+          "CliqRelay transforms page clicks and interactions into beautiful, step-by-step visual documentation.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

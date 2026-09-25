@@ -60,7 +60,7 @@ import { formatDuration, timeAgo } from "@/utils/time.utils";
 type Props = {
   guide: Guide;
   onDelete?: (guideId: string) => void;
-  onStarToggle?: (guideId: string) => void;
+  onStarToggle?: (guide: Guide) => void;
   onArchive?: (guideId: string) => void;
   onPublish?: (guideId: string) => void;
   onUnpublish?: (guideId: string) => void;
@@ -73,6 +73,7 @@ type Props = {
   onToggleSelect?: (guideId: string) => void;
   onRestore?: (guideId: string) => void;
   onDeletePermanently?: (guideId: string) => void;
+  showActions?: boolean;
 };
 
 export function GuideCard({
@@ -91,6 +92,7 @@ export function GuideCard({
   onToggleSelect,
   onRestore,
   onDeletePermanently,
+  showActions = true,
 }: Props) {
   const navigate = useNavigate();
 
@@ -161,7 +163,7 @@ export function GuideCard({
           </div>
           {onStarToggle && (
             <CardAction>
-              <StarButton isStarred={guide.isStarred} onToggle={() => onStarToggle(guide.id)} />
+              <StarButton isStarred={guide.isStarred} onToggle={() => onStarToggle(guide)} />
             </CardAction>
           )}
         </CardHeader>
@@ -194,7 +196,7 @@ export function GuideCard({
           <span className="text-[11px] text-muted-foreground/70">{timeAgo(guide.updatedAt)}</span>
           <span className="text-[11px] text-muted-foreground/40">|</span>
           <GuideStatusBadge status={guide.status} />
-          {isCreator || isEditor ? (
+          {showActions && (isCreator || isEditor) ? (
             <div className="ml-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

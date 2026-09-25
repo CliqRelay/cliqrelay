@@ -11,9 +11,9 @@ import { GuideFilterGroup } from "@/components/guides/guide-filter-group";
 import { GuidePageHeader } from "@/components/guides/guide-page-header";
 import { GuidesList } from "@/components/guides/guides-list";
 import { useGuideActions } from "@/components/guides/use-guide-actions";
+import { useToggleStar } from "@/components/guides/use-toggle-star";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { updateGuideVisibility } from "@/server-fns/guides";
-import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
 import { useGuidesStore, useTeamStore } from "@/stores";
 
 const PAGE_SIZE = 12;
@@ -79,6 +79,7 @@ function GuidesSkeleton() {
 function Guides() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
   const activeTeamId = useTeamStore((s) => s.activeTeamId);
   const filter = useGuidesStore((s) => s.filter);
   const setFilter = useGuidesStore((s) => s.setFilter);
@@ -99,6 +100,7 @@ function Guides() {
   const { confirmAction, setConfirmAction, loading, confirm } = useGuideActions(() =>
     invalidateGuides(),
   );
+  const { toggleStar } = useToggleStar();
 
   const statusParam = filter === "all" ? undefined : filter;
 
@@ -154,17 +156,6 @@ function Guides() {
     setConfirmAction("unarchive");
   };
 
-  const handleStarToggle = async (guideId: string) => {
-    const guide = guides.find((g) => g.id === guideId);
-    if (!guide) return;
-    if (guide.isStarred) {
-      await unstarGuide({ data: { guideId } });
-    } else {
-      await starGuide({ data: { guideId } });
-    }
-    invalidateGuides();
-  };
-
   const handleVisibilityChange = async (guideId: string, visibility: Visibility) => {
     await updateGuideVisibility({ data: { guideId, visibility } });
     invalidateGuides();
@@ -187,7 +178,7 @@ function Guides() {
             <GuidesList
               guides={guides}
               onDelete={handleDelete}
-              onStarToggle={handleStarToggle}
+              onStarToggle={toggleStar}
               onArchive={handleArchive}
               onPublish={handlePublish}
               onUnpublish={handleUnpublish}
