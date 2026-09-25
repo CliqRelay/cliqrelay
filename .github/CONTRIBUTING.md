@@ -46,17 +46,17 @@ Choose one of the following development setups:
 
 1. `Devcontainers`:
 
-    Once you have this repo cloned to your local system, you will need to install the VSCode extension [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack).
+   Once you have this repo cloned to your local system, you will need to install the VSCode extension [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack).
 
-    Then run the following command from the command palette:
-    `Dev Containers: Open Folder in Container...`
+   Then run the following command from the command palette:
+   `Dev Containers: Open Folder in Container...`
 
-    This will automatically select the workspace folder. But if you need to find the project manually then it is located at `/workspaces/cliqrelay`. You can then proceed to the development section below.
+   This will automatically select the workspace folder. But if you need to find the project manually then it is located at `/workspaces/cliqrelay`. You can then proceed to the development section below.
 
 2. `Without devcontainers`:
 
-  - Make sure to install [Node.js](https://nodejs.org/en/download/) and set it up as shown in their docs.
-  - Make sure to install [Go](https://go.dev/doc/install) and set it up as shown in their docs.
+- Make sure to install [Node.js](https://nodejs.org/en/download/) and set it up as shown in their docs.
+- Make sure to install [Go](https://go.dev/doc/install) and set it up as shown in their docs.
 
 3. Make sure to also have Docker Desktop installed and running on your machine, as it is required for the development environment.
 
@@ -67,11 +67,13 @@ This Turborepo includes the following packages/apps:
 ### Apps and Packages
 
 `apps`:
+
 - `extension`: a [Tanstack Router](https://tanstack.com/router/latest) app for the chrome extension
 - `web`: a [Tanstack Start](https://tanstack.com/start/latest) web app for the platform
 - `api`: a REST API built with Go 1.26+, providing all API endpoints for the platform and handling business logic, database interactions, and integrations with external services. Also includes the worker module which can be ran standalone to offload background jobs from the API (via Redis Streams).
 
 `packages:`
+
 - `@repo/api-client`: a TypeScript client for the API, generated from the OpenAPI spec defined in the `api` app, used by both `web` and `extension` applications
 - `@repo/data-commons`: a shared library used by both `web` and `extension` applications
 
@@ -102,9 +104,9 @@ These packages/apps are 100% [TypeScript](https://www.typescriptlang.org/).
 
 - Run the following docker compose command to start the development environment:
 
-    ```bash
-    $ docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml --env-file=docker-compose.dev.env up -d
-    ```
+  ```bash
+  $ docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml --env-file=docker-compose.dev.env up -d
+  ```
 
 ## Testing
 
@@ -114,18 +116,19 @@ Unit tests and Storybook component tests run together with Vitest. The component
 
 ```bash
 # Install Chromium (and its system libraries on Linux)
-pnpm --filter web exec playwright install --with-deps chromium
+$ pnpm --filter web exec playwright install --with-deps chromium
 
 # Run all web tests
-pnpm --filter web test
+$ pnpm --filter web test
 
 # Only the Storybook component tests
-pnpm --filter web exec vitest run --project storybook
+$ pnpm --filter web exec vitest run --project storybook
 ```
 
 E2E tests validate the capture-to-editor pipeline — the messaging bridge, ingestion hooks, and guide creation flow — against the full stack (DB, Redis, S3).
 
 **Prerequisites:**
+
 - Docker services running: `docker compose -f docker-compose.dev.yml --env-file=docker-compose.dev.env up -d`
 - Playwright browsers installed: `pnpm exec playwright install chromium`
 
@@ -133,10 +136,10 @@ E2E tests validate the capture-to-editor pipeline — the messaging bridge, inge
 
 ```bash
 # From the web app directory
-pnpm --filter web test:e2e
+$ pnpm --filter web test:e2e
 
 # With UI mode
-pnpm --filter web test:e2e:ui
+$ pnpm --filter web test:e2e:ui
 ```
 
 **Architecture:** Tests use Approach A — simulate a capture event by posting a `cliqrelay:capture-event` message directly to `window` via `page.evaluate()`. This tests the full pipeline (messaging bridge listener → ingestion hooks → guide + step creation → editor navigation) without requiring the Chrome extension.
@@ -149,10 +152,10 @@ See `apps/web/e2e/` for test files and utilities.
 
   ```bash
   # Run all tests
-  make test
+  $ make test
 
   # Run specific tests
-  go test -v -race ./path/to/package -run TestName
+  $ go test -v -race ./path/to/package -run TestName
   ```
 
 ## Building
