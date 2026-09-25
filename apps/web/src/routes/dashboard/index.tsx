@@ -1,16 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ExtensionSlot } from "@repo/extensions-sdk";
-
 import { DashboardHero } from "@/components/dashboard/dashboard-hero";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { QuickCaptureCard } from "@/components/dashboard/quick-capture-card";
 import { RecentGuides } from "@/components/dashboard/recent-guides";
 import { StatsCards } from "@/components/dashboard/stats-cards";
-import { ActivityFeedFallback } from "@/components/pro/activity-feed-fallback";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExtensionSlotKeys } from "@/constants/extension-slots";
 import { useOrgStore, useTeamStore } from "@/stores";
 
 export const Route = createFileRoute("/dashboard/")({
@@ -93,7 +89,7 @@ function DashboardSkeleton() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
           <div className="surface-card rounded-[20px] p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -101,14 +97,16 @@ function DashboardSkeleton() {
                 <Skeleton className="h-4 w-24" />
               </div>
             </div>
-            <div className="mt-2 flex flex-col gap-2">
+            <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="w-full rounded-md border border-border px-4 py-3">
+                <div
+                  key={i}
+                  className="mx-auto flex w-full max-w-sm flex-col gap-3 rounded-2xl border border-border p-3"
+                >
+                  <Skeleton className="h-5 w-16 rounded-md" />
                   <Skeleton className="h-4 w-48" />
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <Skeleton className="h-5 w-14 rounded-md" />
-                    <Skeleton className="h-3 w-20" />
-                  </div>
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-3 w-40" />
                 </div>
               ))}
             </div>
@@ -123,23 +121,6 @@ function DashboardSkeleton() {
             <Skeleton className="h-5 w-36" />
             <Skeleton className="h-3 w-56" />
             <Skeleton className="h-10 w-full rounded-md" />
-          </div>
-
-          <div className="flex flex-col surface-card rounded-[20px] p-5">
-            <div className="flex items-center gap-2">
-              <Skeleton className="size-4" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-            <div className="space-y-3 p-5">
-              <Skeleton className="h-3 w-48" />
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <Skeleton className="size-3.5 shrink-0" />
-                  <Skeleton className="h-3 w-44" />
-                </div>
-              ))}
-            </div>
-            <Skeleton className="mt-auto h-10 w-full rounded-md" />
           </div>
         </div>
       </div>
@@ -166,13 +147,9 @@ function DashboardPage() {
       <DashboardHero />
       <QuickActions />
       <StatsCards teamId={activeTeamId ?? undefined} />
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
         <RecentGuides teamId={activeTeamId ?? undefined} />
         <QuickCaptureCard />
-        <ExtensionSlot
-          name={ExtensionSlotKeys.DASHBOARD_ACTIVITY_FEED}
-          fallback={ActivityFeedFallback}
-        />
       </div>
     </div>
   );

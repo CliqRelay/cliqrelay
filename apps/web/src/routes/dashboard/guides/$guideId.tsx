@@ -11,13 +11,13 @@ import { GuideEditor } from "@/components/editor/guides/guide-editor";
 import { GuideActionsDropdown } from "@/components/guides/guide-actions-dropdown";
 import { GuideStatusBadge } from "@/components/guides/guide-status-badge";
 import { StarButton } from "@/components/guides/star-button";
+import { useToggleStar } from "@/components/guides/use-toggle-star";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/lib/toast";
 import { updateGuide } from "@/server-fns/guides";
-import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
 import { useOrgStore, useUserStore } from "@/stores";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 
@@ -101,6 +101,7 @@ function GuideDetailPage() {
   const { guideId } = Route.useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { toggleStar } = useToggleStar();
 
   const currentUserId = useUserStore((s) => s.userId);
   const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
@@ -201,40 +202,19 @@ function GuideDetailPage() {
     }
   };
 
+  const toggleStarred = () => {
+    setCurrentGuide((prev) => (prev ? { ...prev, isStarred: !prev.isStarred } : prev));
+  };
+
   const handleStarToggle = async () => {
-    try {
-      if (!currentGuide?.id) {
-        return;
-      }
+    if (!currentGuide?.id) {
+      return;
+    }
 
-      setCurrentGuide((prev) => {
-        if (!prev) {
-          return prev;
-        }
-        return { ...prev, isStarred: !prev.isStarred };
-      });
-
-      if (currentGuide.isStarred) {
-        await unstarGuide({ data: { guideId: currentGuide.id } });
-      } else {
-        await starGuide({ data: { guideId: currentGuide.id } });
-      }
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetAllGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetStarredGuidesQueryKey(),
-      });
-    } catch (error) {
-      setCurrentGuide((prev) => {
-        if (!prev) {
-          return prev;
-        }
-        return { ...prev, isStarred: !prev.isStarred };
-      });
-      toast.error("Error", {
-        description: error instanceof Error ? error.message : "Failed to update star",
-      });
+    toggleStarred();
+    const toggled = await toggleStar(currentGuide);
+    if (!toggled) {
+      toggleStarred();
     }
   };
 
