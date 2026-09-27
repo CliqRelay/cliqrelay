@@ -4,7 +4,6 @@ import { DashboardHero } from "@/components/dashboard/dashboard-hero";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { QuickCaptureCard } from "@/components/dashboard/quick-capture-card";
 import { RecentGuides } from "@/components/dashboard/recent-guides";
-import { StatsCards } from "@/components/dashboard/stats-cards";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrgStore, useTeamStore } from "@/stores";
@@ -146,7 +145,6 @@ function DashboardPage() {
     <div className="dashboard-page__wrapper">
       <DashboardHero />
       <QuickActions />
-      <StatsCards teamId={activeTeamId ?? undefined} />
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
         <RecentGuides teamId={activeTeamId ?? undefined} />
         <QuickCaptureCard />
