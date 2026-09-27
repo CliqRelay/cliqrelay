@@ -9,9 +9,10 @@ import { env } from "@/constants/env";
 import { firefoxBrowser } from "@/constants/firefox-browser";
 import { RUNTIME_MESSAGE_TYPES } from "@/constants/runtime-message-types";
 import { isSessionCookieCleared } from "@/lib/auth-session";
+import type { RecordingStatus } from "@/models";
 import { SIDEPANEL_PORT_NAME } from "@/models/sidepanel";
 import { createNavigationListener } from "@/services/background";
-import { createRecordingStateMachine } from "@/services/recording";
+import { createRecordingStateMachine, recordingStatusStore } from "@/services/recording";
 import { screenshotService } from "@/services/screenshot";
 import { sessionService } from "@/services/session";
 import { getSettings, updateSettings } from "@/services/settings";
@@ -20,7 +21,11 @@ import { generateCaptureId } from "@/utils/id";
 import { isOffscreenEvent, isSidePanelCommand } from "@/utils/message";
 
 export default defineBackground(() => {
-  const recording = createRecordingStateMachine("idle");
+  const mirrorRecordingStatus = (status: RecordingStatus) => {
+    void recordingStatusStore.set(status).catch(() => {});
+  };
+  const recording = createRecordingStateMachine("idle", mirrorRecordingStatus);
+  mirrorRecordingStatus("idle");
 
   const sessionManager = createSessionManager(
     recording,
