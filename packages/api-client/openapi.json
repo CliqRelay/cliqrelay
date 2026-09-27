@@ -1032,6 +1032,38 @@
         }
       }
     },
+    "/api/v1/organizations/{org_id}/members/me": {
+      "get": {
+        "tags": [
+          "Organizations"
+        ],
+        "summary": "Get the signed-in user's organization membership.",
+        "description": "Returns the caller's own membership row, including their role. Responds with 404 when the caller is not a member or the organization does not exist.",
+        "operationId": "getMyOrgMembership",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationMemberResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/steps": {
       "get": {
         "tags": [
@@ -2199,6 +2231,39 @@
         ],
         "type": "object"
       },
+      "OrganizationMemberResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "organization_id": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "required": [
+          "id",
+          "organization_id",
+          "role",
+          "created_at",
+          "updated_at",
+          "user"
+        ],
+        "type": "object"
+      },
       "PermanentlyDeleteGuideResponse": {
         "properties": {
           "guide": {
@@ -2751,6 +2816,52 @@
         },
         "required": [
           "step"
+        ],
+        "type": "object"
+      },
+      "User": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "email_verified": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "image": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metadata": {
+            "additionalProperties": {},
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "email_verified",
+          "created_at",
+          "updated_at"
         ],
         "type": "object"
       },

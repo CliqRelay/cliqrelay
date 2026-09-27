@@ -16,12 +16,13 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 		return nil, nil, errors.New("bootstrap: WithAuthula is required")
 	}
 
+	orgPlugin, ok := o.authulaInstance.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizationsplugin.OrganizationsPlugin)
+	if !ok {
+		return nil, nil, errors.New("bootstrap: organizations plugin not found")
+	}
+
 	authorizationService := o.authorizationService
 	if authorizationService == nil {
-		orgPlugin, ok := o.authulaInstance.PluginRegistry.GetPlugin(authulamodels.PluginOrganizations.String()).(*organizationsplugin.OrganizationsPlugin)
-		if !ok {
-			return nil, nil, errors.New("bootstrap: organizations plugin not found")
-		}
 		authorizationService = authservice.NewDefaultAuthorizationService(*orgPlugin.Api, svcs.Domain.TeamsService)
 	}
 
@@ -29,15 +30,17 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 	guideViewsUseCase := usecases.NewGuideViewsUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.GuideViewsService)
 	stepsUseCase := usecases.NewStepsUseCase(authorizationService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
 	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, svcs.Domain.MediaAssetsService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
+	organizationsUseCase := usecases.NewOrganizationsUseCase(orgPlugin.Api)
 	teamsUseCase := usecases.NewTeamsUseCase(svcs.Domain.TeamsService)
 	uploadsUseCase := usecases.NewUploadsUseCase(authorizationService, svcs.Domain.UploadsService, svcs.Domain.GuidesService, svcs.Domain.StepsService)
 
 	return &interfaces.DomainUseCases{
-		GuidesUseCase:      guidesUseCase,
-		GuideViewsUseCase:  guideViewsUseCase,
-		StepsUseCase:       stepsUseCase,
-		MediaAssetsUseCase: mediaAssetsUseCase,
-		UploadsUseCase:     uploadsUseCase,
-		TeamsUseCase:       teamsUseCase,
+		GuidesUseCase:        guidesUseCase,
+		GuideViewsUseCase:    guideViewsUseCase,
+		StepsUseCase:         stepsUseCase,
+		MediaAssetsUseCase:   mediaAssetsUseCase,
+		UploadsUseCase:       uploadsUseCase,
+		OrganizationsUseCase: organizationsUseCase,
+		TeamsUseCase:         teamsUseCase,
 	}, authorizationService, nil
 }

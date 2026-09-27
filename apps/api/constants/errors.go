@@ -24,11 +24,12 @@ var (
 	ErrMediaAssetCopyFailed  = errors.New("failed to copy media asset")
 	ErrStepMediaNotSupported = errors.New("step does not support media")
 
+	ErrOrganizationNotFound       = errors.New("organization not found")
+	ErrOrganizationAccessDenied   = errors.New("organization access denied")
+	ErrOrganizationMemberNotFound = errors.New("organization membership not found")
+
 	ErrTeamNotFound     = errors.New("team not found")
 	ErrTeamAccessDenied = errors.New("team access denied")
-
-	ErrOrganizationNotFound     = errors.New("organization not found")
-	ErrOrganizationAccessDenied = errors.New("organization access denied")
 
 	ErrGuideAccessDenied       = errors.New("you do not have permission to access this guide")
 	ErrGuideCreateDenied       = errors.New("you do not have permission to create guides")
