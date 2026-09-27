@@ -13,7 +13,10 @@ func ErrorStatus(err error) int {
 		return http.StatusUnauthorized
 	case errors.Is(err, constants.ErrInvalidGuideID):
 		return http.StatusBadRequest
-	case errors.Is(err, constants.ErrGuideNotFound), errors.Is(err, constants.ErrTeamNotFound), errors.Is(err, constants.ErrOrganizationNotFound):
+	case errors.Is(err, constants.ErrOrganizationNotFound),
+		errors.Is(err, constants.ErrOrganizationMemberNotFound),
+		errors.Is(err, constants.ErrTeamNotFound),
+		errors.Is(err, constants.ErrGuideNotFound):
 		return http.StatusNotFound
 	case errors.Is(err, constants.ErrTeamAccessDenied),
 		errors.Is(err, constants.ErrGuideAccessDenied),

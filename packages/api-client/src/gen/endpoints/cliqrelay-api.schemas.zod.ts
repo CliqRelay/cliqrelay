@@ -420,6 +420,32 @@ export const HealthResponse = zod.object({
 export type HealthResponse = zod.input<typeof HealthResponse>;
 export type HealthResponseOutput = zod.output<typeof HealthResponse>;
 
+export const User = zod.object({
+  createdAt: zod.iso.datetime({ offset: true }),
+  email: zod.string(),
+  emailVerified: zod.boolean(),
+  id: zod.string(),
+  image: zod.string().nullish(),
+  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
+  name: zod.string(),
+  updatedAt: zod.iso.datetime({ offset: true }),
+});
+
+export type User = zod.input<typeof User>;
+export type UserOutput = zod.output<typeof User>;
+
+export const OrganizationMemberResponse = zod.object({
+  createdAt: zod.iso.datetime({ offset: true }),
+  id: zod.string(),
+  organizationId: zod.string(),
+  role: zod.string(),
+  updatedAt: zod.iso.datetime({ offset: true }),
+  user: User,
+});
+
+export type OrganizationMemberResponse = zod.input<typeof OrganizationMemberResponse>;
+export type OrganizationMemberResponseOutput = zod.output<typeof OrganizationMemberResponse>;
+
 export const PermanentlyDeleteGuideResponse = zod.object({
   guide: Guide,
 });

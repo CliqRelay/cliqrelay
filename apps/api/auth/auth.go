@@ -169,6 +169,13 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 					csrfplugin.HookIDCSRFProtect.String(),
 				},
 			},
+			// Organizations
+			{
+				Paths: []string{fmt.Sprintf("GET:%s/organizations/*", apiBasePath)},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
 			// Guides
 			{
 				Paths: []string{
