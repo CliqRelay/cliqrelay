@@ -6,16 +6,13 @@ import {
   Archive,
   ArchiveRestore,
   Eye,
-  Globe,
   Hourglass,
-  Lock,
   MoreHorizontal,
   RotateCcw,
   Send,
   Shuffle,
   Trash2,
   Undo2,
-  Users,
 } from "lucide-react";
 
 import type { Guide, Visibility } from "@repo/api-client";
@@ -23,10 +20,11 @@ import { AppUserRole, hasMinimumRole } from "@repo/data-commons";
 
 import { RoleGuard } from "../shared/role-guard";
 import { GuideStatusBadge } from "./guide-status-badge";
+import { GuideVisibilityBadge } from "./guide-visibility-badge";
+import { GuideVisibilityDialog } from "./guide-visibility-dialog";
 import { MoveToTeamSlot } from "./move-to-team-slot";
 import { StarButton } from "./star-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -38,21 +36,12 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { useOrgStore, useTeamStore, useUserStore } from "@/stores";
 import { formatDuration, timeAgo } from "@/utils/time.utils";
@@ -106,7 +95,6 @@ export function GuideCard({
 
   const [moveToTeamOpen, setMoveToTeamOpen] = useState<boolean>(false);
   const [visibilityDialogOpen, setVisibilityDialogOpen] = useState<boolean>(false);
-  const [selectedVisibility, setSelectedVisibility] = useState<Visibility>(guide.visibility);
 
   return (
     <>
@@ -137,24 +125,7 @@ export function GuideCard({
                 />
               </RoleGuard>
             )}
-            {guide.visibility === "private" && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                <Lock className="size-3" />
-                Private
-              </span>
-            )}
-            {guide.visibility === "team" && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                <Users className="size-3" />
-                Team
-              </span>
-            )}
-            {guide.visibility === "public" && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                <Globe className="size-3" />
-                Public
-              </span>
-            )}
+            <GuideVisibilityBadge visibility={guide.visibility} status={guide.status} />
             {teamName && (
               <span className="inline-flex max-w-35 items-center truncate rounded-md bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary">
                 {teamName}
@@ -291,7 +262,6 @@ export function GuideCard({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedVisibility(guide.visibility);
                             setVisibilityDialogOpen(true);
                           }}
                         >
@@ -340,59 +310,14 @@ export function GuideCard({
         open={moveToTeamOpen}
         onOpenChange={setMoveToTeamOpen}
       />
-      <Dialog open={visibilityDialogOpen} onOpenChange={setVisibilityDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Change Visibility</DialogTitle>
-            <DialogDescription>Choose who can see this guide.</DialogDescription>
-          </DialogHeader>
-          <RadioGroup
-            value={selectedVisibility}
-            onValueChange={(v) => setSelectedVisibility(v as Visibility)}
-            className="py-2"
-          >
-            <label
-              className={`flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5 ${!isCreator ? "cursor-not-allowed opacity-50" : ""}`}
-            >
-              <RadioGroupItem value="private" disabled={!isCreator} />
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">Private</span>
-                <span className="text-xs text-muted-foreground">
-                  {isCreator ? "Only you can see this guide" : "Only the creator can set this"}
-                </span>
-              </div>
-            </label>
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-              <RadioGroupItem value="team" />
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">Team</span>
-                <span className="text-xs text-muted-foreground">Visible to all team members</span>
-              </div>
-            </label>
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-              <RadioGroupItem value="public" />
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">Public</span>
-                <span className="text-xs text-muted-foreground">Anyone with the link can view</span>
-              </div>
-            </label>
-          </RadioGroup>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setVisibilityDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={selectedVisibility === guide.visibility}
-              onClick={() => {
-                setVisibilityDialogOpen(false);
-                onVisibilityChange?.(guide.id, selectedVisibility);
-              }}
-            >
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GuideVisibilityDialog
+        open={visibilityDialogOpen}
+        onOpenChange={setVisibilityDialogOpen}
+        visibility={guide.visibility}
+        status={guide.status}
+        canSetPrivate={isCreator}
+        onSave={(visibility) => onVisibilityChange?.(guide.id, visibility)}
+      />
     </>
   );
 }
