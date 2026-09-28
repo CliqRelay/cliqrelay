@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	handlersguides "github.com/CliqRelay/cliqrelay/handlers/guides"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -94,39 +95,74 @@ func TestGetGuideHandler(t *testing.T) {
 func TestGetGuideHandler_AnonymousVisitor(t *testing.T) {
 	t.Parallel()
 
-	// Arrange
-	guideID := uuid.New().String()
+	cases := []struct {
+		name            string
+		visibility      models.Visibility
+		authzErr        error
+		expectedStatus  int
+		expectedTitle   string
+		expectedMessage string
+	}{
+		{
+			name:           "public guide is readable",
+			visibility:     models.VisibilityPublic,
+			expectedStatus: http.StatusOK,
+			expectedTitle:  "Anonymous Guide",
+		},
+		{
+			name:            "team guide is denied",
+			visibility:      models.VisibilityTeam,
+			authzErr:        constants.ErrUnauthorized,
+			expectedStatus:  http.StatusUnauthorized,
+			expectedMessage: constants.ErrUnauthorized.Error(),
+		},
+	}
 
-	mockRepo := new(tests.MockGuidesRepository)
-	mockRepo.On("GetByID", mock.Anything, guideID).
-		Return(&models.Guide{
-			ID:         uuid.MustParse(guideID),
-			Title:      "Public Guide",
-			Status:     models.StatusPublished,
-			Visibility: models.VisibilityPublic,
-		}, nil).
-		Once()
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	mockAuthz := new(tests.MockAuthorizationService)
-	mockAuthz.On("CanReadGuide", mock.Anything, (*authulamodels.Actor)(nil), mock.Anything, mock.Anything).Return(nil)
+			// Arrange
+			guideID := uuid.New().String()
 
-	mockStarredRepo := new(tests.MockStarredGuidesRepository)
+			mockRepo := new(tests.MockGuidesRepository)
+			mockRepo.On("GetByID", mock.Anything, guideID).
+				Return(&models.Guide{
+					ID:         uuid.MustParse(guideID),
+					Title:      "Anonymous Guide",
+					Status:     models.StatusPublished,
+					Visibility: tt.visibility,
+				}, nil).
+				Once()
 
-	svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
-	starredSvc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockRepo)
-	uc := usecases.NewGuidesUseCase(mockAuthz, svc, starredSvc, nil)
-	handler := handlersguides.NewGetGuideByIDHandler(uc)
+			mockAuthz := new(tests.MockAuthorizationService)
+			mockAuthz.On("CanReadGuide", mock.Anything, (*authulamodels.Actor)(nil), mock.Anything, mock.Anything).Return(tt.authzErr)
 
-	req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/"+guideID, nil)
-	req.ReqCtx.Actor = nil
-	req.Req.SetPathValue("id", guideID)
+			mockStarredRepo := new(tests.MockStarredGuidesRepository)
 
-	// Act
-	handler.Handle()(req.W, req.Req)
+			svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+			starredSvc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockRepo)
+			uc := usecases.NewGuidesUseCase(mockAuthz, svc, starredSvc, nil)
+			handler := handlersguides.NewGetGuideByIDHandler(uc)
 
-	// Assert
-	tests.AssertResponseStatus(t, req.ReqCtx, http.StatusOK)
-	tests.AssertResponseContains(t, req.ReqCtx, "guide.title", "Public Guide")
-	mockRepo.AssertExpectations(t)
-	mockStarredRepo.AssertNotCalled(t, "IsStarred", mock.Anything, mock.Anything, mock.Anything)
+			req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/"+guideID, nil)
+			req.ReqCtx.Actor = nil
+			req.Req.SetPathValue("id", guideID)
+
+			// Act
+			handler.Handle()(req.W, req.Req)
+
+			// Assert
+			tests.AssertResponseStatus(t, req.ReqCtx, tt.expectedStatus)
+			if tt.expectedTitle != "" {
+				tests.AssertResponseContains(t, req.ReqCtx, "guide.title", tt.expectedTitle)
+			}
+			if tt.expectedMessage != "" {
+				tests.AssertResponseMessage(t, req.ReqCtx, tt.expectedMessage)
+			}
+			mockRepo.AssertExpectations(t)
+			mockAuthz.AssertExpectations(t)
+			mockStarredRepo.AssertNotCalled(t, "IsStarred", mock.Anything, mock.Anything, mock.Anything)
+		})
+	}
 }
