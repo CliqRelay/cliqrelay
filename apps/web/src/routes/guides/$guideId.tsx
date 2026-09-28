@@ -6,6 +6,7 @@ import { GuideHeader } from "@/components/editor/guides/guide-header";
 import { GuideTimelineSkeleton } from "@/components/editor/guides/guide-timeline-skeleton";
 import { GuideWorkflowViewMode } from "@/components/editor/guides/guide-workflow-view-mode";
 import { Logo } from "@/components/layout/logo";
+import { ThemeToggle } from "@/components/motion/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStepEditor } from "@/hooks/useStepEditor";
@@ -32,9 +33,16 @@ function PublicGuidePage() {
         <Link to="/">
           <Logo className="h-8" />
         </Link>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/auth/sign-in">Sign in</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle
+            className="size-8 cursor-pointer rounded-[14px] hover:bg-muted"
+            iconClassName="size-4"
+            variant="circle-blur"
+          />
+          <Button asChild variant="outline" size="sm">
+            <Link to="/auth/sign-in">Sign in</Link>
+          </Button>
+        </div>
       </header>
 
       <main className="p-6">
