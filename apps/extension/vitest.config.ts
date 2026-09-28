@@ -20,6 +20,14 @@ const movePointer: BrowserCommand<[x: number, y: number]> = async (context, x, y
   await context.page.mouse.move((frameBox?.x ?? 0) + x, (frameBox?.y ?? 0) + y);
 };
 
+const pressPointer: BrowserCommand<[]> = async (context) => {
+  await context.page.mouse.down();
+};
+
+const releasePointer: BrowserCommand<[]> = async (context) => {
+  await context.page.mouse.up();
+};
+
 export default defineConfig({
   resolve: { alias },
   test: {
@@ -43,7 +51,7 @@ export default defineConfig({
             headless: true,
             provider: playwright(),
             instances: [{ browser: "chromium" }],
-            commands: { movePointer },
+            commands: { movePointer, pressPointer, releasePointer },
           },
         },
       },

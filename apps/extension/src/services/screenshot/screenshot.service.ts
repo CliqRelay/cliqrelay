@@ -1,4 +1,5 @@
 import type {
+  CaptureScreenshotOptions,
   CaptureVisibleTab,
   GetTab,
   ScreenshotResult,
@@ -14,8 +15,14 @@ export const captureScreenshotFactory = (
   getTab: GetTab,
   setHighlightSuppressed: SetHighlightSuppressed,
 ) => {
-  return async (tabId: number): Promise<ScreenshotResult> => {
-    const [tab] = await Promise.all([getTab(tabId), setHighlightSuppressed(tabId, true)]);
+  return async (
+    tabId: number,
+    { hideHighlightFirst = false }: CaptureScreenshotOptions = {},
+  ): Promise<ScreenshotResult> => {
+    const [tab] = await Promise.all([
+      getTab(tabId),
+      hideHighlightFirst ? setHighlightSuppressed(tabId, true) : undefined,
+    ]);
 
     try {
       const dataUrl = await captureVisibleTab(tab.windowId, {
@@ -36,7 +43,10 @@ export const captureScreenshotFactory = (
 export const createScreenshotService = (captureScreenshot: CaptureScreenshot) => {
   const lastScreenshotTimestamps = new Map<number, number>();
 
-  const captureWithThrottle = async (tabId: number): Promise<string | null> => {
+  const captureWithThrottle = async (
+    tabId: number,
+    options?: CaptureScreenshotOptions,
+  ): Promise<string | null> => {
     const now = Date.now();
     const lastTime = lastScreenshotTimestamps.get(tabId) ?? 0;
     if (now - lastTime < SCREENSHOT_THROTTLE_MS) {
@@ -45,7 +55,7 @@ export const createScreenshotService = (captureScreenshot: CaptureScreenshot) =>
     lastScreenshotTimestamps.set(tabId, now);
 
     try {
-      const result = await captureScreenshot(tabId);
+      const result = await captureScreenshot(tabId, options);
       return result.dataUrl;
     } catch (error) {
       console.warn("[background] Screenshot capture failed:", error);

@@ -1,5 +1,6 @@
 import type { HighlightOverlay } from "@/models";
 import { HIGHLIGHT_HOST_ID, HIGHLIGHT_STYLE } from "@/models";
+import { HIGHLIGHT_RESTORE_FALLBACK_MS } from "@/utils/constants";
 
 const HOST_STYLE = [
   "all: initial",
@@ -39,6 +40,7 @@ export const createHighlightOverlay = (root: Document = document): HighlightOver
   let frame = 0;
   let enabled = false;
   let suppressed = false;
+  let restoreFallback: ReturnType<typeof setTimeout> | undefined;
 
   const ensureHost = () => {
     if (!host) {
@@ -110,6 +112,23 @@ export const createHighlightOverlay = (root: Document = document): HighlightOver
     }
   };
 
+  const restore = () => {
+    clearTimeout(restoreFallback);
+    suppressed = false;
+    if (enabled) {
+      scheduleRender();
+    }
+  };
+
+  // Hides synchronously so the frame captured for a click or key step never includes the box.
+  // The background restores it once the screenshot is taken; the fallback covers uncaptured input.
+  const hideUntilRestored = () => {
+    suppressed = true;
+    hideBox();
+    clearTimeout(restoreFallback);
+    restoreFallback = setTimeout(restore, HIGHLIGHT_RESTORE_FALLBACK_MS);
+  };
+
   return {
     enable: () => {
       if (enabled) {
@@ -119,6 +138,8 @@ export const createHighlightOverlay = (root: Document = document): HighlightOver
       ensureHost();
       root.addEventListener("pointerover", handlePointerOver, LISTENER_OPTIONS);
       root.addEventListener("pointerout", handlePointerOut, LISTENER_OPTIONS);
+      root.addEventListener("pointerdown", hideUntilRestored, LISTENER_OPTIONS);
+      root.addEventListener("keydown", hideUntilRestored, LISTENER_OPTIONS);
       win.addEventListener("scroll", scheduleRender, LISTENER_OPTIONS);
       win.addEventListener("resize", scheduleRender, { passive: true });
     },
@@ -129,21 +150,23 @@ export const createHighlightOverlay = (root: Document = document): HighlightOver
       enabled = false;
       root.removeEventListener("pointerover", handlePointerOver, true);
       root.removeEventListener("pointerout", handlePointerOut, true);
+      root.removeEventListener("pointerdown", hideUntilRestored, true);
+      root.removeEventListener("keydown", hideUntilRestored, true);
       win.removeEventListener("scroll", scheduleRender, true);
       win.removeEventListener("resize", scheduleRender);
       if (frame) {
         win.cancelAnimationFrame(frame);
         frame = 0;
       }
+      clearTimeout(restoreFallback);
       target = null;
       suppressed = false;
       hideBox();
       host?.remove();
     },
     suppress: () => {
-      suppressed = true;
       const wasVisible = box?.style.display === "block";
-      hideBox();
+      hideUntilRestored();
 
       if (!wasVisible || root.hidden) {
         return Promise.resolve();
@@ -153,11 +176,6 @@ export const createHighlightOverlay = (root: Document = document): HighlightOver
         win.requestAnimationFrame(() => win.requestAnimationFrame(() => resolve()));
       });
     },
-    restore: () => {
-      suppressed = false;
-      if (enabled) {
-        scheduleRender();
-      }
-    },
+    restore,
   };
 };

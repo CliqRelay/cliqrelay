@@ -222,6 +222,45 @@ describe("highlight overlay", () => {
     });
   });
 
+  describe("user input", () => {
+    test("should hide the moment the pointer is pressed, before the click lands", async () => {
+      const save = getById("save");
+      const visibleOnClick = vi.fn();
+      save.addEventListener("click", () => visibleOnClick(isBoxVisible()));
+      await movePointerTo(save);
+      await expectBoxOver(save);
+
+      await commands.pressPointer();
+      expect(isBoxVisible()).toBe(false);
+      await commands.releasePointer();
+
+      expect(visibleOnClick).toHaveBeenCalledWith(false);
+      overlay.restore();
+      await expectBoxOver(save);
+    });
+
+    test("should hide when a key is pressed", async () => {
+      await movePointerTo(getById("save"));
+      await expectBoxOver(getById("save"));
+
+      await userEvent.keyboard("{Enter}");
+
+      expect(isBoxVisible()).toBe(false);
+    });
+
+    test("should show again on its own when no screenshot restores it", async () => {
+      const save = getById("save");
+      await movePointerTo(save);
+      await expectBoxOver(save);
+
+      await commands.pressPointer();
+      await commands.releasePointer();
+      expect(isBoxVisible()).toBe(false);
+
+      await vi.waitFor(() => expect(isBoxVisible()).toBe(true), { timeout: 3000 });
+    });
+  });
+
   describe("disable", () => {
     test("should remove the host and stop tracking", async () => {
       overlay.disable();

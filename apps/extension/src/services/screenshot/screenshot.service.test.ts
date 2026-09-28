@@ -45,7 +45,7 @@ describe("screenshot service", () => {
     await expect(service(99)).rejects.toThrow("tab not found");
   });
 
-  test("hides the highlight before capturing and restores it after", async () => {
+  const createOrderedCapture = () => {
     const calls: string[] = [];
     const setHighlightSuppressed = vi.fn(async (_tabId: number, suppressed: boolean) => {
       calls.push(suppressed ? "suppress" : "restore");
@@ -56,7 +56,26 @@ describe("screenshot service", () => {
     });
     const getTab = vi.fn().mockResolvedValue({ windowId: 42 });
 
-    await captureScreenshotFactory(captureVisibleTab, getTab, setHighlightSuppressed)(7);
+    return {
+      calls,
+      setHighlightSuppressed,
+      capture: captureScreenshotFactory(captureVisibleTab, getTab, setHighlightSuppressed),
+    };
+  };
+
+  test("captures without waiting on the tab and restores the highlight after", async () => {
+    const { calls, setHighlightSuppressed, capture } = createOrderedCapture();
+
+    await capture(7);
+
+    expect(calls).toEqual(["capture", "restore"]);
+    expect(setHighlightSuppressed).toHaveBeenCalledWith(7, false);
+  });
+
+  test("hides the highlight before capturing when asked to", async () => {
+    const { calls, setHighlightSuppressed, capture } = createOrderedCapture();
+
+    await capture(7, { hideHighlightFirst: true });
 
     expect(calls).toEqual(["suppress", "capture", "restore"]);
     expect(setHighlightSuppressed).toHaveBeenNthCalledWith(1, 7, true);
