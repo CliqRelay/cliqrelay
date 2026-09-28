@@ -43,6 +43,12 @@ func GuidesRoutes(cfg *config.HTTPConfig, guidesUseCase interfaces.GuidesUseCase
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
+	// Public guides can be read by signed-out visitors; the use case enforces
+	// visibility for everything else.
+	publicReadMiddleware := []func(http.Handler) http.Handler{
+		authulamiddleware.RequirePublicOrUserActor(),
+	}
+
 	base := cfg.BasePath
 
 	return []authulamodels.Route{
@@ -79,7 +85,7 @@ func GuidesRoutes(cfg *config.HTTPConfig, guidesUseCase interfaces.GuidesUseCase
 		{
 			Method:     "GET",
 			Path:       fmt.Sprintf("%s/guides/{id}", base),
-			Middleware: authMiddleware,
+			Middleware: publicReadMiddleware,
 			Handler:    getByIDHandler.Handle(),
 		},
 		{

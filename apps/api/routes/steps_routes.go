@@ -27,6 +27,12 @@ func StepsRoutes(cfg *config.HTTPConfig, stepsUseCase interfaces.StepsUseCase) [
 		authulamiddleware.RequireActor(authulamodels.ActorUser),
 	}
 
+	// Public guides can be read by signed-out visitors; the use case enforces
+	// visibility for everything else.
+	publicReadMiddleware := []func(http.Handler) http.Handler{
+		authulamiddleware.RequirePublicOrUserActor(),
+	}
+
 	base := cfg.BasePath
 
 	return []authulamodels.Route{
@@ -39,7 +45,7 @@ func StepsRoutes(cfg *config.HTTPConfig, stepsUseCase interfaces.StepsUseCase) [
 		{
 			Method:     "GET",
 			Path:       fmt.Sprintf("%s/steps", base),
-			Middleware: authMiddleware,
+			Middleware: publicReadMiddleware,
 			Handler:    getAllHandler.Handle(),
 		},
 		{

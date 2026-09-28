@@ -12,6 +12,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type DefaultAuthorizationService struct {
@@ -63,6 +64,10 @@ func (s *DefaultAuthorizationService) CanCreateGuide(ctx context.Context, actor 
 }
 
 func (s *DefaultAuthorizationService) CanReadGuide(ctx context.Context, actor *authulamodels.Actor, teamID string, guide *models.Guide) error {
+	if utils.IsGuidePubliclyReadable(guide) {
+		return nil
+	}
+
 	team, err := s.resolveAccessibleTeam(ctx, actor, teamID)
 	if err != nil {
 		return err

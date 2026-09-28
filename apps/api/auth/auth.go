@@ -178,12 +178,27 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 			},
 			// Guides
 			{
+				// Static GET paths are listed exactly rather than as guides/* so they
+				// take precedence over the public guides/{id} pattern below.
 				Paths: []string{
-					fmt.Sprintf("GET:%s/guides/*", apiBasePath),
+					fmt.Sprintf("GET:%s/guides", apiBasePath),
+					fmt.Sprintf("GET:%s/guides/count", apiBasePath),
+					fmt.Sprintf("GET:%s/guides/starred", apiBasePath),
+					fmt.Sprintf("GET:%s/guides/views/count", apiBasePath),
+					fmt.Sprintf("GET:%s/guides/time-saved", apiBasePath),
 					fmt.Sprintf("DELETE:%s/guides/*", apiBasePath),
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			{
+				// Public guides can be viewed while signed out.
+				Paths: []string{
+					fmt.Sprintf("GET:%s/guides/{id}", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuthOptional.String(),
 				},
 			},
 			{
@@ -213,6 +228,15 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 				},
 				Plugins: []string{
 					sessionplugin.HookIDSessionAuth.String(),
+				},
+			},
+			{
+				// Steps of public guides can be listed while signed out.
+				Paths: []string{
+					fmt.Sprintf("GET:%s/steps", apiBasePath),
+				},
+				Plugins: []string{
+					sessionplugin.HookIDSessionAuthOptional.String(),
 				},
 			},
 			{

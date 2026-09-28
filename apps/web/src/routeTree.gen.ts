@@ -22,6 +22,7 @@ import { Route as dashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as dashboardGuidesIndexRouteImport } from './routes/dashboard/guides/index'
 import { Route as dashboardStarredIndexRouteImport } from './routes/dashboard/starred/index'
 import { Route as dashboardTrashIndexRouteImport } from './routes/dashboard/trash/index'
+import { Route as guidesGuideIdRouteImport } from './routes/guides/$guideId'
 import { Route as dashboardGuidesGuideIdRouteImport } from './routes/dashboard/guides/$guideId'
 import { Route as dashboardOrganizationsOrgIdSettingsRouteRouteImport } from './routes/dashboard/organizations/$orgId/settings/route'
 import { Route as dashboardOrganizationsOrgIdSettingsIndexRouteImport } from './routes/dashboard/organizations/$orgId/settings/index'
@@ -100,6 +101,11 @@ const dashboardTrashIndexRoute = dashboardTrashIndexRouteImport.update({
   path: '/trash',
   getParentRoute: () => dashboardRouteRoute,
 } as any)
+const guidesGuideIdRoute = guidesGuideIdRouteImport.update({
+  id: '/guides/$guideId',
+  path: '/guides/$guideId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const dashboardGuidesGuideIdRoute = dashboardGuidesGuideIdRouteImport.update({
   id: '/guides/$guideId',
   path: '/guides/$guideId',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof authRouteRouteWithChildren
   '/dashboard': typeof dashboardRouteRouteWithChildren
   '/create-organization': typeof createOrganizationIndexRoute
+  '/guides/$guideId': typeof guidesGuideIdRoute
   '/dashboard/': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/': typeof indexRoute
   '/auth': typeof authRouteRouteWithChildren
   '/create-organization': typeof createOrganizationIndexRoute
+  '/guides/$guideId': typeof guidesGuideIdRoute
   '/dashboard': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/auth': typeof authRouteRouteWithChildren
   '/dashboard': typeof dashboardRouteRouteWithChildren
   '/create-organization': typeof createOrganizationIndexRoute
+  '/guides/$guideId': typeof guidesGuideIdRoute
   '/dashboard/': typeof dashboardIndexRoute
   '/auth/change-password': typeof authChangePasswordIndexRoute
   '/auth/email-verification': typeof authEmailVerificationIndexRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/create-organization'
+    | '/guides/$guideId'
     | '/dashboard/'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/create-organization'
+    | '/guides/$guideId'
     | '/dashboard'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/create-organization'
+    | '/guides/$guideId'
     | '/dashboard/'
     | '/auth/change-password'
     | '/auth/email-verification'
@@ -328,6 +340,7 @@ export interface RootRouteChildren {
   authRouteRoute: typeof authRouteRouteWithChildren
   dashboardRouteRoute: typeof dashboardRouteRouteWithChildren
   createOrganizationIndexRoute: typeof createOrganizationIndexRoute
+  guidesGuideIdRoute: typeof guidesGuideIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -422,6 +435,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/trash'
       preLoaderRoute: typeof dashboardTrashIndexRouteImport
       parentRoute: typeof dashboardRouteRoute
+    }
+    '/guides/$guideId': {
+      id: '/guides/$guideId'
+      path: '/guides/$guideId'
+      fullPath: '/guides/$guideId'
+      preLoaderRoute: typeof guidesGuideIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/guides/$guideId': {
       id: '/dashboard/guides/$guideId'
@@ -602,6 +622,7 @@ const rootRouteChildren: RootRouteChildren = {
   authRouteRoute: authRouteRouteWithChildren,
   dashboardRouteRoute: dashboardRouteRouteWithChildren,
   createOrganizationIndexRoute: createOrganizationIndexRoute,
+  guidesGuideIdRoute: guidesGuideIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

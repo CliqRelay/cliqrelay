@@ -20,6 +20,7 @@ export async function buildVirtualRouteConfig(
       route("/email-verification", "auth/email-verification/index.tsx"),
     ]),
     route("/create-organization", "create-organization/index.tsx"),
+    route("/guides/$guideId", "guides/$guideId.tsx"),
     route("/dashboard", "dashboard/route.tsx", [
       index("dashboard/index.tsx"),
       route("/guides", "dashboard/guides/index.tsx"),

@@ -297,7 +297,7 @@ func (r *BunGuidesRepository) Delete(ctx context.Context, id string) (*models.Gu
 func (r *BunGuidesRepository) Publish(ctx context.Context, id string) (*models.Guide, error) {
 	return r.updateOne(ctx, id, "deleted_at IS NULL", func(q *bun.UpdateQuery) {
 		q.Set("status = ?", models.StatusPublished).
-			Set("visibility = ?", models.VisibilityTeam).
+			Set("visibility = CASE WHEN visibility = ? THEN ? ELSE visibility END", models.VisibilityPrivate, models.VisibilityTeam).
 			Set("published_at = ?", time.Now()).
 			Set("archived_at = NULL").
 			Set("deleted_at = NULL").
