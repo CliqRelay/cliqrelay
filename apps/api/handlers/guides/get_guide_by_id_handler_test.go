@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	authulamodels "github.com/Authula/authula/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -12,6 +13,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
+	starredguidesservice "github.com/CliqRelay/cliqrelay/services/starred_guides"
 	"github.com/CliqRelay/cliqrelay/tests"
 	"github.com/CliqRelay/cliqrelay/usecases"
 )
@@ -87,4 +89,44 @@ func TestGetGuideHandler(t *testing.T) {
 			mockRepo.AssertExpectations(t)
 		})
 	}
+}
+
+func TestGetGuideHandler_AnonymousVisitor(t *testing.T) {
+	t.Parallel()
+
+	// Arrange
+	guideID := uuid.New().String()
+
+	mockRepo := new(tests.MockGuidesRepository)
+	mockRepo.On("GetByID", mock.Anything, guideID).
+		Return(&models.Guide{
+			ID:         uuid.MustParse(guideID),
+			Title:      "Public Guide",
+			Status:     models.StatusPublished,
+			Visibility: models.VisibilityPublic,
+		}, nil).
+		Once()
+
+	mockAuthz := new(tests.MockAuthorizationService)
+	mockAuthz.On("CanReadGuide", mock.Anything, (*authulamodels.Actor)(nil), mock.Anything, mock.Anything).Return(nil)
+
+	mockStarredRepo := new(tests.MockStarredGuidesRepository)
+
+	svc := guidesservice.NewGuidesService(mockRepo, nil, nil, nil, (*interfaces.GuideHooks)(nil))
+	starredSvc := starredguidesservice.NewStarredGuidesService(mockStarredRepo, mockRepo)
+	uc := usecases.NewGuidesUseCase(mockAuthz, svc, starredSvc, nil)
+	handler := handlersguides.NewGetGuideByIDHandler(uc)
+
+	req := tests.NewHandlerRequest(t, http.MethodGet, "/api/v1/guides/"+guideID, nil)
+	req.ReqCtx.Actor = nil
+	req.Req.SetPathValue("id", guideID)
+
+	// Act
+	handler.Handle()(req.W, req.Req)
+
+	// Assert
+	tests.AssertResponseStatus(t, req.ReqCtx, http.StatusOK)
+	tests.AssertResponseContains(t, req.ReqCtx, "guide.title", "Public Guide")
+	mockRepo.AssertExpectations(t)
+	mockStarredRepo.AssertNotCalled(t, "IsStarred", mock.Anything, mock.Anything, mock.Anything)
 }

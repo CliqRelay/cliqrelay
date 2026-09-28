@@ -28,11 +28,12 @@ func seedGuide(t *testing.T, db bun.IDB, userID, title string) *models.Guide {
 	teamID := uuid.MustParse(insertTestTeam(context.Background(), db, t, orgID, "Test Team", nil))
 
 	guide := &models.Guide{
-		ID:        uuid.New(),
-		TeamID:    teamID,
-		CreatorID: &userID,
-		Title:     title,
-		Status:    models.StatusDraft,
+		ID:         uuid.New(),
+		TeamID:     teamID,
+		CreatorID:  &userID,
+		Title:      title,
+		Status:     models.StatusDraft,
+		Visibility: models.VisibilityPrivate,
 	}
 
 	_, err := db.NewInsert().Model(guide).Exec(context.Background())
@@ -744,10 +745,11 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name    string
-		setup   func(bun.IDB) (userID string, targetID string, teamID string)
-		wantErr bool
-		wantNil bool
+		name           string
+		setup          func(bun.IDB) (userID string, targetID string, teamID string)
+		wantVisibility models.Visibility
+		wantErr        bool
+		wantNil        bool
 	}{
 		{
 			name: "publishes a draft guide",
@@ -755,6 +757,20 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 				guide := seedGuide(t, db, "", "To Publish")
 				return *guide.CreatorID, guide.ID.String(), guide.TeamID.String()
 			},
+			wantVisibility: models.VisibilityTeam,
+		},
+		{
+			name: "keeps a public guide public",
+			setup: func(db bun.IDB) (string, string, string) {
+				guide := seedGuide(t, db, "", "Public")
+				_, err := db.NewUpdate().Model((*models.Guide)(nil)).
+					Set("visibility = ?", models.VisibilityPublic).
+					Where("id = ?", guide.ID).
+					Exec(context.Background())
+				require.NoError(t, err)
+				return *guide.CreatorID, guide.ID.String(), guide.TeamID.String()
+			},
+			wantVisibility: models.VisibilityPublic,
 		},
 		{
 			name: "returns nil for non-existent guide",
@@ -769,6 +785,7 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 				guide := seedGuide(t, db, "", "Other")
 				return uuid.New().String(), guide.ID.String(), guide.TeamID.String()
 			},
+			wantVisibility: models.VisibilityTeam,
 		},
 		{
 			name: "returns nil for deleted guide",
@@ -805,7 +822,7 @@ func TestBunGuidesRepository_PublishGuide(t *testing.T) {
 				require.NotNil(t, published)
 				assert.Equal(t, targetID, published.ID.String())
 				assert.Equal(t, models.StatusPublished, published.Status)
-				assert.Equal(t, models.VisibilityTeam, published.Visibility)
+				assert.Equal(t, tt.wantVisibility, published.Visibility)
 				assert.NotNil(t, published.PublishedAt)
 				assert.Nil(t, published.ArchivedAt)
 				assert.Nil(t, published.DeletedAt)

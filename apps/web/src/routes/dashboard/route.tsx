@@ -5,7 +5,11 @@ import { createFileRoute, isRedirect, Outlet, redirect } from "@tanstack/react-r
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { authulaClient } from "@/lib/authula-client";
 import { getActiveOrgCookie, setActiveOrgCookie } from "@/lib/org-cookie";
-import type { AppOrganizationMemberResponse, AppUser } from "@/models";
+import {
+  type AppOrganizationMemberResponse,
+  type AppUser,
+  getGuideIdFromDashboardPath,
+} from "@/models";
 import { getMyOrgMembership } from "@/server-fns/organizations";
 import { useOrgStore, useUserStore } from "@/stores";
 
@@ -37,6 +41,10 @@ export const Route = createFileRoute("/dashboard")({
     } catch (error: unknown) {
       if (isRedirect(error)) {
         throw error;
+      }
+      const guideId = getGuideIdFromDashboardPath(location.pathname);
+      if (guideId) {
+        throw redirect({ to: "/guides/$guideId", params: { guideId } });
       }
       throw redirect({ to: "/auth/sign-up" });
     }

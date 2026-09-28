@@ -75,7 +75,7 @@ func (uc *GuidesUseCase) Get(ctx context.Context, actor *authulamodels.Actor, gu
 		return nil, err
 	}
 
-	if uc.starredService != nil {
+	if uc.starredService != nil && actor != nil {
 		starred, err := uc.starredService.IsStarred(ctx, guideID, actor.ID)
 		if err == nil {
 			guide.IsStarred = starred

@@ -45,7 +45,7 @@ func newService(t *testing.T, team *models.Team, errLookup error) (*authservice.
 	return authservice.NewDefaultAuthorizationService(organizationsplugin.API{}, teamsService), teamsService
 }
 
-func publicGuide() *models.Guide {
+func teamGuide() *models.Guide {
 	creator := "someone-else"
 	return &models.Guide{Visibility: models.VisibilityTeam, CreatorID: &creator}
 }
@@ -132,26 +132,26 @@ func TestDefaultAuthorizationService_CanReadGuide(t *testing.T) {
 			name:  "accessible team and sufficient scope is allowed",
 			team:  accessibleTeam(),
 			actor: newActor(constants.GuidesReadPermission),
-			guide: publicGuide(),
+			guide: teamGuide(),
 		},
 		{
 			name:    "inaccessible team is denied",
 			actor:   newActor(constants.GuidesReadPermission),
-			guide:   publicGuide(),
+			guide:   teamGuide(),
 			wantErr: constants.ErrGuideAccessDenied,
 		},
 		{
 			name:    "lookup failure propagates unwrapped",
 			err:     errLookup,
 			actor:   newActor(constants.GuidesReadPermission),
-			guide:   publicGuide(),
+			guide:   teamGuide(),
 			wantErr: errLookup,
 		},
 		{
 			name:    "missing scope is denied",
 			team:    accessibleTeam(),
 			actor:   newActor(),
-			guide:   publicGuide(),
+			guide:   teamGuide(),
 			wantErr: constants.ErrGuideAccessDenied,
 		},
 		{
@@ -166,6 +166,68 @@ func TestDefaultAuthorizationService_CanReadGuide(t *testing.T) {
 	})
 }
 
+func TestDefaultAuthorizationService_CanReadGuide_PublicVisibility(t *testing.T) {
+	t.Parallel()
+
+	publicGuide := func(status models.GuideStatus) *models.Guide {
+		creator := "someone-else"
+		return &models.Guide{Visibility: models.VisibilityPublic, Status: status, CreatorID: &creator}
+	}
+
+	cases := []struct {
+		name    string
+		actor   *authulamodels.Actor
+		guide   *models.Guide
+		wantErr error
+	}{
+		{
+			name:  "anonymous visitor may read a public guide",
+			guide: publicGuide(models.StatusPublished),
+		},
+		{
+			name:  "user outside the team may read a public guide",
+			actor: newActor(),
+			guide: publicGuide(models.StatusPublished),
+		},
+		{
+			name:    "anonymous visitor may not read a public draft",
+			guide:   publicGuide(models.StatusDraft),
+			wantErr: constants.ErrUnauthorized,
+		},
+		{
+			name:    "anonymous visitor may not read a public guide in the trash",
+			guide:   publicGuide(models.StatusDeleted),
+			wantErr: constants.ErrUnauthorized,
+		},
+		{
+			name:    "anonymous visitor may not read a team guide",
+			guide:   teamGuide(),
+			wantErr: constants.ErrUnauthorized,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Arrange
+			teamsService := new(tests.MockTeamsService)
+			svc := authservice.NewDefaultAuthorizationService(organizationsplugin.API{}, teamsService)
+
+			// Act
+			err := svc.CanReadGuide(context.Background(), tt.actor, testTeamID, tt.guide)
+
+			// Assert
+			if tt.wantErr == nil {
+				require.NoError(t, err)
+			} else {
+				assert.ErrorIs(t, err, tt.wantErr)
+			}
+			teamsService.AssertNotCalled(t, "GetAccessibleByUserID", mock.Anything, mock.Anything, mock.Anything)
+		})
+	}
+}
+
 func TestDefaultAuthorizationService_CanEditGuide(t *testing.T) {
 	t.Parallel()
 
@@ -174,19 +236,19 @@ func TestDefaultAuthorizationService_CanEditGuide(t *testing.T) {
 			name:  "accessible team and sufficient scope is allowed",
 			team:  accessibleTeam(),
 			actor: newActor(constants.GuidesEditPermission),
-			guide: publicGuide(),
+			guide: teamGuide(),
 		},
 		{
 			name:    "inaccessible team is denied",
 			actor:   newActor(constants.GuidesEditPermission),
-			guide:   publicGuide(),
+			guide:   teamGuide(),
 			wantErr: constants.ErrGuideEditDenied,
 		},
 		{
 			name:    "lookup failure propagates unwrapped",
 			err:     errLookup,
 			actor:   newActor(constants.GuidesEditPermission),
-			guide:   publicGuide(),
+			guide:   teamGuide(),
 			wantErr: errLookup,
 		},
 		{
@@ -220,26 +282,26 @@ func TestDefaultAuthorizationService_CanDeleteGuide(t *testing.T) {
 			name:  "an org admin may delete another user's team guide",
 			team:  accessibleTeam(),
 			actor: newActor(constants.GuidesDeletePermission, orgconstants.OrganizationsAllPermission),
-			guide: publicGuide(),
+			guide: teamGuide(),
 		},
 		{
 			name:    "inaccessible team is denied",
 			actor:   newActor(constants.GuidesDeletePermission, orgconstants.OrganizationsAllPermission),
-			guide:   publicGuide(),
+			guide:   teamGuide(),
 			wantErr: constants.ErrGuideDeleteDenied,
 		},
 		{
 			name:    "lookup failure propagates unwrapped",
 			err:     errLookup,
 			actor:   newActor(constants.GuidesDeletePermission, orgconstants.OrganizationsAllPermission),
-			guide:   publicGuide(),
+			guide:   teamGuide(),
 			wantErr: errLookup,
 		},
 		{
 			name:    "missing scope is denied",
 			team:    accessibleTeam(),
 			actor:   newActor(),
-			guide:   publicGuide(),
+			guide:   teamGuide(),
 			wantErr: constants.ErrGuideDeleteDenied,
 		},
 	}, func(svc *authservice.DefaultAuthorizationService, actor *authulamodels.Actor, guide *models.Guide) error {
