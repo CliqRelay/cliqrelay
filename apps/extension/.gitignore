@@ -39,3 +39,6 @@ dist-ssr
 .output
 .vinxi
 __unconfig*
+
+# Vitest browser mode failure screenshots
+.vitest

@@ -3,6 +3,7 @@
   "ignorePatterns": [".wxt/**", "dist/**"],
   "plugins": ["react"],
   "rules": {
-    "react/no-children-prop": "warn"
+    "react/no-children-prop": "warn",
+    "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "expect*"] }]
   }
 }
