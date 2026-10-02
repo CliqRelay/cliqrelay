@@ -215,7 +215,7 @@ func TestBunStarredGuidesRepository_GetAllByStatusExcludesTrash(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, wantTotal, total)
 			require.Len(t, result, wantTotal)
-			assert.Equal(t, wantID, result[0].Guide.ID)
+			assert.Equal(t, wantID, result[0].ID)
 		})
 	}
 }
