@@ -368,6 +368,78 @@ func TestBunGuidesRepository_GetAllByStatus(t *testing.T) {
 	}
 }
 
+func TestBunGuidesRepository_GetAllByStatusExcludesTrash(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name   string
+		status models.GuideStatus
+		setup  func(bun.IDB) (viewerID string, wantID uuid.UUID, wantTotal int)
+	}{
+		{
+			name:   "excludes trashed guides when filtering by draft",
+			status: models.StatusDraft,
+			setup: func(db bun.IDB) (string, uuid.UUID, int) {
+				trashed := seedGuide(t, db, "", "Trashed Guide")
+				softDeleteGuide(t, db, trashed.ID)
+				live := seedGuide(t, db, *trashed.CreatorID, "Live Draft")
+				return *live.CreatorID, live.ID, 1
+			},
+		},
+		{
+			name:   "returns only trashed guides when filtering by deleted",
+			status: models.StatusDeleted,
+			setup: func(db bun.IDB) (string, uuid.UUID, int) {
+				trashed := seedGuide(t, db, "", "Trashed Guide")
+				softDeleteGuide(t, db, trashed.ID)
+				live := seedGuide(t, db, *trashed.CreatorID, "Live Draft")
+				return *live.CreatorID, trashed.ID, 1
+			},
+		},
+		{
+			name:   "excludes guides with deleted status but null deleted_at when filtering by deleted",
+			status: models.StatusDeleted,
+			setup: func(db bun.IDB) (string, uuid.UUID, int) {
+				trashed := seedGuide(t, db, "", "Trashed Guide")
+				softDeleteGuide(t, db, trashed.ID)
+				live := seedGuide(t, db, *trashed.CreatorID, "Live Draft")
+				_, err := db.NewUpdate().
+					Model((*models.Guide)(nil)).
+					Set("status = 'deleted'").
+					Where("id = ?", live.ID).
+					Exec(context.Background())
+				require.NoError(t, err)
+				return *live.CreatorID, trashed.ID, 1
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tx, err := guidesDB.Begin()
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = tx.Rollback() })
+
+			repo := guides.NewBunGuidesRepository(tx)
+			ctx := context.Background()
+
+			viewerID, wantID, wantTotal := tt.setup(tx)
+
+			result, total, err := repo.GetAll(ctx, &types.GuideFilter{
+				ViewerUserID:   new(viewerID),
+				AccessibleOnly: true,
+				Status:         new(tt.status),
+			})
+			require.NoError(t, err)
+			assert.Equal(t, wantTotal, total)
+			require.Len(t, result, wantTotal)
+			assert.Equal(t, wantID, result[0].ID)
+		})
+	}
+}
+
 func TestBunGuidesRepository_GetByID(t *testing.T) {
 	t.Parallel()
 
