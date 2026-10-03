@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { ArrowLeft, Eye, PenLine } from "lucide-react";
 
@@ -99,7 +99,6 @@ function GuideDetailSkeleton() {
 
 function GuideDetailPage() {
   const { guideId } = Route.useParams();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { toggleStar } = useToggleStar();
 
@@ -116,12 +115,17 @@ function GuideDetailPage() {
   });
 
   const guide = guideQuery.data?.guide ?? null;
-  const [currentGuide, setCurrentGuide] = useState<Guide | null>(guide);
-  const [syncedGuide, setSyncedGuide] = useState<Guide | null>(guide);
-  if (guide && guide !== syncedGuide) {
-    setSyncedGuide(guide);
-    setCurrentGuide(guide);
-  }
+  const currentGuide = guide;
+
+  const updateCachedGuide = (updater: (prev: Guide) => Guide) => {
+    queryClient.setQueryData(api.guides.getGetGuideByIdQueryKey(guideId), (old: unknown) => {
+      const prev = (old as { guide?: Guide | null } | undefined)?.guide;
+      if (!prev) {
+        return old;
+      }
+      return { guide: updater(prev) };
+    });
+  };
 
   const recordViewMutation = api.guides.useRecordGuideView({
     mutation: {
@@ -170,23 +174,31 @@ function GuideDetailPage() {
         return;
       }
 
-      await updateGuide({
+      const updatedGuide = await updateGuide({
         data: {
           guideId: currentGuide.id,
           input: updates,
         },
       });
       if (updates.title !== undefined || updates.description !== undefined) {
-        setCurrentGuide((prev) => {
-          if (!prev) {
-            return prev;
-          }
-          return {
-            ...prev,
-            title: updates.title ?? prev.title,
-            description: updates.description !== undefined ? updates.description : prev.description,
-          };
-        });
+        // The update response is hydrated (creator included) but never carries
+        // isStarred (star state is enriched only on the Get path), so keep the
+        // cached star state. Functional form avoids clobbering concurrent saves.
+        queryClient.setQueryData(
+          api.guides.getGetGuideByIdQueryKey(currentGuide.id),
+          (old: unknown) => {
+            const prev = (old as { guide?: Guide | null } | undefined)?.guide ?? currentGuide;
+            const mergedGuide: Guide = updatedGuide
+              ? { ...updatedGuide, isStarred: prev.isStarred }
+              : {
+                  ...prev,
+                  title: updates.title ?? prev.title,
+                  description:
+                    updates.description !== undefined ? updates.description : prev.description,
+                };
+            return { guide: mergedGuide };
+          },
+        );
       }
       queryClient.invalidateQueries({
         queryKey: api.guides.getGetAllGuidesQueryKey(),
@@ -194,7 +206,6 @@ function GuideDetailPage() {
       queryClient.invalidateQueries({
         queryKey: api.guides.getGetStarredGuidesQueryKey(),
       });
-      router.invalidate();
     } catch (error) {
       toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to save",
@@ -203,7 +214,10 @@ function GuideDetailPage() {
   };
 
   const toggleStarred = () => {
-    setCurrentGuide((prev) => (prev ? { ...prev, isStarred: !prev.isStarred } : prev));
+    if (!currentGuide) {
+      return;
+    }
+    updateCachedGuide((prev) => ({ ...prev, isStarred: !prev.isStarred }));
   };
 
   const handleStarToggle = async () => {
