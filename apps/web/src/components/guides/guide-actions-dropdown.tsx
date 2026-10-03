@@ -40,6 +40,7 @@ import {
   unpublishGuide,
 } from "@/server-fns/guides";
 import { useOrgStore, useUserStore } from "@/stores";
+import { invalidateGuideQueries } from "@/utils/guides-cache.utils";
 
 type Props = {
   guide: Pick<Guide, "id" | "title" | "status" | "creatorId" | "visibility">;
@@ -71,15 +72,7 @@ export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: P
       setPublishDialogOpen(false);
       toast("Published", { description: "Guide published successfully" });
       router.invalidate();
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetAllGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetStarredGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetGuideByIdQueryKey(guide.id),
-      });
+      invalidateGuideQueries(queryClient, guide.id);
     } catch (error) {
       toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to publish",
@@ -93,15 +86,7 @@ export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: P
       setUnpublishDialogOpen(false);
       toast("Unpublished", { description: "Guide returned to draft" });
       router.invalidate();
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetAllGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetStarredGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetGuideByIdQueryKey(guide.id),
-      });
+      invalidateGuideQueries(queryClient, guide.id);
     } catch (error) {
       toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to unpublish",
@@ -115,15 +100,7 @@ export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: P
       setArchiveDialogOpen(false);
       toast("Archived", { description: "Guide archived" });
       router.invalidate();
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetAllGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetStarredGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetGuideByIdQueryKey(guide.id),
-      });
+      invalidateGuideQueries(queryClient, guide.id);
     } catch (error) {
       toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to archive",
@@ -137,15 +114,7 @@ export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: P
       setUnarchiveDialogOpen(false);
       toast("Unarchived", { description: "Guide returned to draft" });
       router.invalidate();
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetAllGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetStarredGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetGuideByIdQueryKey(guide.id),
-      });
+      invalidateGuideQueries(queryClient, guide.id);
     } catch (error) {
       toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to unarchive",
@@ -158,12 +127,7 @@ export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: P
       await deleteGuide({ data: { guideId: guide.id } });
       setDeleteDialogOpen(false);
       toast("Deleted", { description: "Guide moved to trash" });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetAllGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetStarredGuidesQueryKey(),
-      });
+      invalidateGuideQueries(queryClient, guide.id);
       queryClient.invalidateQueries({
         queryKey: api.guides.getGetGuidesCountQueryKey(),
       });

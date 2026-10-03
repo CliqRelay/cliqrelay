@@ -19,6 +19,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/lib/toast";
 import { updateGuide } from "@/server-fns/guides";
 import { useOrgStore, useUserStore } from "@/stores";
+import { invalidateGuideLists } from "@/utils/guides-cache.utils";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 export const Route = createFileRoute("/dashboard/guides/$guideId")({
@@ -188,18 +189,17 @@ function GuideDetailPage() {
           api.guides.getGetGuideByIdQueryKey(currentGuide.id),
           (old: unknown) => {
             const prev = (old as { guide?: Guide | null } | undefined)?.guide ?? currentGuide;
-            // Use the previous starred state since the update operation doesn't return it until the next guide fetch is performed.
-            const mergedGuide: Guide = { ...updatedGuide, isStarred: prev.isStarred };
+            const mergedGuide: Guide = {
+              ...prev,
+              ...updatedGuide,
+              isStarred: prev.isStarred,
+              creator: updatedGuide.creator ?? prev.creator,
+            };
             return { guide: mergedGuide };
           },
         );
       }
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetAllGuidesQueryKey(),
-      });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetStarredGuidesQueryKey(),
-      });
+      invalidateGuideLists(queryClient);
     } catch (error) {
       toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to save",
