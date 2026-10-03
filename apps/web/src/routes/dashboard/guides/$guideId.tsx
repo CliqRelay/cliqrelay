@@ -180,6 +180,9 @@ function GuideDetailPage() {
           input: updates,
         },
       });
+      if (!updatedGuide) {
+        return;
+      }
       if (updates.title !== undefined || updates.description !== undefined) {
         // The update response is hydrated (creator included) but never carries
         // isStarred (star state is enriched only on the Get path), so keep the
@@ -188,14 +191,7 @@ function GuideDetailPage() {
           api.guides.getGetGuideByIdQueryKey(currentGuide.id),
           (old: unknown) => {
             const prev = (old as { guide?: Guide | null } | undefined)?.guide ?? currentGuide;
-            const mergedGuide: Guide = updatedGuide
-              ? { ...updatedGuide, isStarred: prev.isStarred }
-              : {
-                  ...prev,
-                  title: updates.title ?? prev.title,
-                  description:
-                    updates.description !== undefined ? updates.description : prev.description,
-                };
+            const mergedGuide: Guide = { ...updatedGuide, isStarred: prev.isStarred };
             return { guide: mergedGuide };
           },
         );
