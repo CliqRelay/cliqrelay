@@ -67,7 +67,7 @@ func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuide
 		return nil, err
 	}
 
-	return guide, nil
+	return r.GetByID(ctx, guide.ID.String())
 }
 
 func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error) {
@@ -252,39 +252,27 @@ func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuid
 		return r.getLive(ctx, data.ID.String())
 	}
 
-	return dbutil.ExecReturningOne(ctx, query, guide)
+	updated, err := dbutil.ExecReturningOne(ctx, query, guide)
+	if err != nil {
+		return nil, err
+	}
+	if updated == nil {
+		return nil, nil
+	}
+
+	return r.GetByID(ctx, data.ID.String())
 }
 
 func (r *BunGuidesRepository) getLive(ctx context.Context, id string) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	err := r.db.NewSelect().
-		Model(guide).
-		Where("id = ?", id).
-		Where("deleted_at IS NULL").
-		Scan(ctx)
+	guide, err := r.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
 		return nil, err
+	}
+	if guide == nil || guide.DeletedAt != nil {
+		return nil, nil
 	}
 
 	return guide, nil
-}
-
-// Applies a single UPDATE ... RETURNING * to one guide, returning nil when no row matched.
-func (r *BunGuidesRepository) updateOne(ctx context.Context, id string, deletedFilter string, set func(*bun.UpdateQuery)) (*models.Guide, error) {
-	guide := &models.Guide{}
-
-	query := r.db.NewUpdate().
-		Model(guide).
-		Where("id = ?", id).
-		Where(deletedFilter).
-		Returning("*")
-	set(query)
-
-	return dbutil.ExecReturningOne(ctx, query, guide)
 }
 
 func (r *BunGuidesRepository) Delete(ctx context.Context, id string) (*models.Guide, error) {
@@ -478,4 +466,25 @@ func (r *BunGuidesRepository) Restore(ctx context.Context, id string) (*models.G
 			Set("archived_at = NULL").
 			Set("deleted_at = NULL")
 	})
+}
+
+func (r *BunGuidesRepository) updateOne(ctx context.Context, id string, deletedFilter string, set func(*bun.UpdateQuery)) (*models.Guide, error) {
+	guide := &models.Guide{}
+
+	query := r.db.NewUpdate().
+		Model(guide).
+		Where("id = ?", id).
+		Where(deletedFilter).
+		Returning("*")
+	set(query)
+
+	updated, err := dbutil.ExecReturningOne(ctx, query, guide)
+	if err != nil {
+		return nil, err
+	}
+	if updated == nil {
+		return nil, nil
+	}
+
+	return r.GetByID(ctx, id)
 }
