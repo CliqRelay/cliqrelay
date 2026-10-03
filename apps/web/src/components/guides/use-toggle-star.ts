@@ -4,6 +4,7 @@ import { api, type Guide } from "@repo/api-client";
 
 import { toast } from "@/lib/toast";
 import { starGuide, unstarGuide } from "@/server-fns/starred-guides";
+import { invalidateGuideLists } from "@/utils/guides-cache.utils";
 
 export function useToggleStar() {
   const queryClient = useQueryClient();
@@ -15,12 +16,14 @@ export function useToggleStar() {
       } else {
         await starGuide({ data: { guideId: guide.id } });
       }
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetAllGuidesQueryKey(),
+      queryClient.setQueryData(api.guides.getGetGuideByIdQueryKey(guide.id), (old: unknown) => {
+        const prev = (old as { guide?: Guide } | undefined)?.guide;
+        if (!prev) {
+          return old;
+        }
+        return { guide: { ...prev, isStarred: !guide.isStarred } };
       });
-      queryClient.invalidateQueries({
-        queryKey: api.guides.getGetStarredGuidesQueryKey(),
-      });
+      invalidateGuideLists(queryClient);
       return true;
     } catch (error) {
       toast.error("Error", {

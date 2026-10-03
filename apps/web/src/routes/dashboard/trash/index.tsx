@@ -14,7 +14,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { toast } from "@/lib/toast";
 import { useTeamStore } from "@/stores";
-import { invalidateGetAllGuides, invalidateGuidesCount } from "@/utils/guides-cache.utils";
+import {
+  invalidateGetAllGuides,
+  invalidateGuideDetail,
+  invalidateGuidesCount,
+} from "@/utils/guides-cache.utils";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 const PAGE_SIZE = 12;
@@ -138,6 +142,7 @@ function TrashGuides() {
       }
       invalidateGetAllGuides(queryClient);
       invalidateGuidesCount(queryClient);
+      invalidateGuideDetail(queryClient, guideId);
     } catch (error) {
       toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to restore",
@@ -168,6 +173,9 @@ function TrashGuides() {
       }
       invalidateGetAllGuides(queryClient);
       invalidateGuidesCount(queryClient);
+      for (const id of selectedIds) {
+        invalidateGuideDetail(queryClient, id);
+      }
     } catch (error) {
       toast.error("Error", {
         description: error instanceof Error ? error.message : "Failed to restore",
@@ -215,6 +223,13 @@ function TrashGuides() {
       setDeleteDialogGuideId(null);
       invalidateGetAllGuides(queryClient);
       invalidateGuidesCount(queryClient);
+      if (deleteDialogGuideId === "__bulk__") {
+        for (const id of selectedIds) {
+          invalidateGuideDetail(queryClient, id);
+        }
+      } else {
+        invalidateGuideDetail(queryClient, deleteDialogGuideId);
+      }
     }
   };
 

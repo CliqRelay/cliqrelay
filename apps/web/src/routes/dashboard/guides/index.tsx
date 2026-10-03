@@ -15,6 +15,7 @@ import { useToggleStar } from "@/components/guides/use-toggle-star";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { updateGuideVisibility } from "@/server-fns/guides";
 import { useGuidesStore, useTeamStore } from "@/stores";
+import { invalidateGuideLists, invalidateGuideQueries } from "@/utils/guides-cache.utils";
 
 const PAGE_SIZE = 12;
 
@@ -89,12 +90,7 @@ function Guides() {
   const [pendingGuideId, setPendingGuideId] = useState<string | null>(null);
 
   const invalidateGuides = () => {
-    queryClient.invalidateQueries({
-      queryKey: api.guides.getGetAllGuidesQueryKey(),
-    });
-    queryClient.invalidateQueries({
-      queryKey: api.guides.getGetStarredGuidesQueryKey(),
-    });
+    invalidateGuideLists(queryClient);
   };
 
   const { confirmAction, setConfirmAction, loading, confirm } = useGuideActions(() =>
@@ -158,7 +154,7 @@ function Guides() {
 
   const handleVisibilityChange = async (guideId: string, visibility: Visibility) => {
     await updateGuideVisibility({ data: { guideId, visibility } });
-    invalidateGuides();
+    invalidateGuideQueries(queryClient, guideId);
   };
 
   return (

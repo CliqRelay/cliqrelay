@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { updateGuideVisibility } from "@/server-fns/guides";
 import { useTeamStore } from "@/stores";
+import { invalidateGuideLists, invalidateGuideQueries } from "@/utils/guides-cache.utils";
 
 const PAGE_SIZE = 10;
 
@@ -74,12 +75,7 @@ function StarredGuides() {
   const [pendingGuideId, setPendingGuideId] = useState<string | null>(null);
 
   const invalidateStarred = () => {
-    queryClient.invalidateQueries({
-      queryKey: api.guides.getGetStarredGuidesQueryKey(),
-    });
-    queryClient.invalidateQueries({
-      queryKey: api.guides.getGetAllGuidesQueryKey(),
-    });
+    invalidateGuideLists(queryClient);
   };
 
   const { confirmAction, setConfirmAction, loading, confirm } = useGuideActions(() =>
@@ -139,7 +135,7 @@ function StarredGuides() {
 
   const handleVisibilityChange = async (guideId: string, visibility: Visibility) => {
     await updateGuideVisibility({ data: { guideId, visibility } });
-    invalidateStarred();
+    invalidateGuideQueries(queryClient, guideId);
   };
 
   const handleConfirm = () => {

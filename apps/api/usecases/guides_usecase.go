@@ -100,7 +100,19 @@ func (uc *GuidesUseCase) Update(ctx context.Context, actor *authulamodels.Actor,
 		return nil, constants.ErrCannotSetGuideToPrivate
 	}
 
-	return uc.guidesService.Update(ctx, actor, guideID, req)
+	updated, err := uc.guidesService.Update(ctx, actor, guideID, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if uc.starredService != nil && actor != nil && updated != nil {
+		starred, err := uc.starredService.IsStarred(ctx, guideID, actor.ID)
+		if err == nil {
+			updated.IsStarred = starred
+		}
+	}
+
+	return updated, nil
 }
 
 func (uc *GuidesUseCase) Delete(ctx context.Context, actor *authulamodels.Actor, guideID string) (*models.Guide, error) {
