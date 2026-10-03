@@ -93,7 +93,7 @@ export const updateGuide = createServerFn({ method: "POST", strict: false })
       return updatedGuideResponse.guide;
     } catch (error) {
       console.error("Failed to update guide:", error);
-      return null;
+      throw error;
     }
   });
 

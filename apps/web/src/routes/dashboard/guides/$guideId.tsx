@@ -180,22 +180,16 @@ function GuideDetailPage() {
           input: updates,
         },
       });
+      if (!updatedGuide) {
+        return;
+      }
       if (updates.title !== undefined || updates.description !== undefined) {
-        // The update response is hydrated (creator included) but never carries
-        // isStarred (star state is enriched only on the Get path), so keep the
-        // cached star state. Functional form avoids clobbering concurrent saves.
         queryClient.setQueryData(
           api.guides.getGetGuideByIdQueryKey(currentGuide.id),
           (old: unknown) => {
             const prev = (old as { guide?: Guide | null } | undefined)?.guide ?? currentGuide;
-            const mergedGuide: Guide = updatedGuide
-              ? { ...updatedGuide, isStarred: prev.isStarred }
-              : {
-                  ...prev,
-                  title: updates.title ?? prev.title,
-                  description:
-                    updates.description !== undefined ? updates.description : prev.description,
-                };
+            // Use the previous starred state since the update operation doesn't return it until the next guide fetch is performed.
+            const mergedGuide: Guide = { ...updatedGuide, isStarred: prev.isStarred };
             return { guide: mergedGuide };
           },
         );
