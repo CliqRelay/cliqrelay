@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18
+    image: postgres:18-alpine
     container_name: cliqrelay-postgres
     ports:
       - "${POSTGRES_PORT}:5432"
@@ -14,7 +14,7 @@ services:
       - cliqrelay_network
 
   redis:
-    image: redis:8.10
+    image: redis:8.10-alpine
     container_name: cliqrelay-redis
     command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
