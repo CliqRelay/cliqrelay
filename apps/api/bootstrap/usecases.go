@@ -27,7 +27,6 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 	}
 
 	guidesUseCase := usecases.NewGuidesUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.StarredGuidesService, svcs.Domain.ExportService)
-	guideViewsUseCase := usecases.NewGuideViewsUseCase(authorizationService, svcs.Domain.GuidesService, svcs.Domain.GuideViewsService)
 	stepsUseCase := usecases.NewStepsUseCase(authorizationService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
 	mediaAssetsUseCase := usecases.NewMediaAssetsUseCase(authorizationService, svcs.Domain.MediaAssetsService, svcs.Domain.StepsService, svcs.Domain.GuidesService)
 	organizationsUseCase := usecases.NewOrganizationsUseCase(orgPlugin.Api)
@@ -36,7 +35,6 @@ func buildUseCases(o *options, svcs *builtServices) (*interfaces.DomainUseCases,
 
 	return &interfaces.DomainUseCases{
 		GuidesUseCase:        guidesUseCase,
-		GuideViewsUseCase:    guideViewsUseCase,
 		StepsUseCase:         stepsUseCase,
 		MediaAssetsUseCase:   mediaAssetsUseCase,
 		UploadsUseCase:       uploadsUseCase,

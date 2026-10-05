@@ -146,6 +146,32 @@ describe("ExtensionSlot", () => {
     expect(screen.getByText("Slot Content")).toBeDefined();
   });
 
+  it("forwards props to the registered slot component", () => {
+    const SlotContent: ComponentType<Record<string, unknown>> = ({ label }) => (
+      <div>{String(label)}</div>
+    );
+
+    extensionRegistry.install({
+      id: "slot-props-test",
+      slots: [{ name: "prop-slot", component: SlotContent }],
+      navItems: [],
+    });
+
+    render(<ExtensionSlot name="prop-slot" props={{ label: "forwarded" }} />);
+
+    expect(screen.getByText("forwarded")).toBeDefined();
+  });
+
+  it("forwards props to the fallback component", () => {
+    const Fallback: ComponentType<Record<string, unknown>> = ({ label }) => (
+      <div>{String(label)}</div>
+    );
+
+    render(<ExtensionSlot name="missing" fallback={Fallback} props={{ label: "fallback" }} />);
+
+    expect(screen.getByText("fallback")).toBeDefined();
+  });
+
   it("prefers registered slot over fallback", () => {
     const SlotContent: ComponentType<Record<string, unknown>> = () => <div>Registered</div>;
     const Fallback: ComponentType<Record<string, unknown>> = () => <div>Fallback</div>;

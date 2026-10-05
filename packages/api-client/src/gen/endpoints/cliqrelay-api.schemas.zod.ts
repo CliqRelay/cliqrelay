@@ -360,13 +360,6 @@ export const GetGuideByIDResponse = zod.object({
 export type GetGuideByIDResponse = zod.input<typeof GetGuideByIDResponse>;
 export type GetGuideByIDResponseOutput = zod.output<typeof GetGuideByIDResponse>;
 
-export const GetGuideViewsCountResponse = zod.object({
-  count: zod.int(),
-});
-
-export type GetGuideViewsCountResponse = zod.input<typeof GetGuideViewsCountResponse>;
-export type GetGuideViewsCountResponseOutput = zod.output<typeof GetGuideViewsCountResponse>;
-
 export const GetGuidesCountResponse = zod.object({
   count: zod.int(),
 });
@@ -397,14 +390,6 @@ export const GetStepByIDResponse = zod.object({
 
 export type GetStepByIDResponse = zod.input<typeof GetStepByIDResponse>;
 export type GetStepByIDResponseOutput = zod.output<typeof GetStepByIDResponse>;
-
-export const GetTimeSavedResponse = zod.object({
-  timeSavedHours: zod.number(),
-  timeSavedSeconds: zod.int(),
-});
-
-export type GetTimeSavedResponse = zod.input<typeof GetTimeSavedResponse>;
-export type GetTimeSavedResponseOutput = zod.output<typeof GetTimeSavedResponse>;
 
 export const GuideSortField = zod
   .enum(["created_at", "updated_at"])
@@ -484,13 +469,6 @@ export const RecalculateDurationResponse = zod.object({
 
 export type RecalculateDurationResponse = zod.input<typeof RecalculateDurationResponse>;
 export type RecalculateDurationResponseOutput = zod.output<typeof RecalculateDurationResponse>;
-
-export const RecordGuideViewResponse = zod.object({
-  message: zod.string(),
-});
-
-export type RecordGuideViewResponse = zod.input<typeof RecordGuideViewResponse>;
-export type RecordGuideViewResponseOutput = zod.output<typeof RecordGuideViewResponse>;
 
 export const ReorderStepsRequest = zod.object({
   guideId: Uuid,

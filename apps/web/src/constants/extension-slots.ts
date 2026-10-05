@@ -11,6 +11,9 @@ export enum ExtensionSlotKeys {
   DASHBOARD_SIDEBAR_PRO_UPGRADE_COLLAPSED = "dashboard-sidebar-pro-upgrade-collapsed",
   DASHBOARD_SIDEBAR_PRO_UPGRADE = "dashboard-sidebar-pro-upgrade",
 
+  // Guides
+  GUIDE_DETAIL_VIEW_TRACKER = "guide-detail-view-tracker",
+
   // Organization Settings
   ORG_SETTINGS_MEMBERS = "org-settings-members",
   ORG_SETTINGS_TEAMS = "org-settings-teams",
