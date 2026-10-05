@@ -30,7 +30,7 @@ Skills live in `.agents/skills/` and contain the playbooks to follow for each do
 
 - `web` and `extension` work → follow the **frontend** skills.
 - `api` work → follow the **backend** skills.
-- Writing or generating a plan → use the **don't waffle** skill.
+- When summarising anything, replying to user queries and writing or generating a plan → use the **don't waffle** skill.
 
 ## General Principles
 
