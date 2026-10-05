@@ -5,7 +5,6 @@ type DomainServices struct {
 	StepsService           StepsService
 	StarredGuidesService   StarredGuidesService
 	MediaAssetsService     MediaAssetsService
-	GuideViewsService      GuideViewsService
 	ExportService          ExportService
 	UploadsService         UploadsService
 	PurgeService           PurgeService

@@ -12,14 +12,10 @@ const PluginCliqRelay = "cliqrelay"
 
 type Option func(*migrationOptions)
 
-type migrationOptions struct {
-	guideViewsMigrationEnabled bool
-}
+type migrationOptions struct{}
 
 func defaultMigrationOptions() *migrationOptions {
-	return &migrationOptions{
-		guideViewsMigrationEnabled: true,
-	}
+	return &migrationOptions{}
 }
 
 func (o *migrationOptions) apply(opts ...Option) {
@@ -28,10 +24,6 @@ func (o *migrationOptions) apply(opts ...Option) {
 			opt(o)
 		}
 	}
-}
-
-func WithGuideViewsMigration(enabled bool) Option {
-	return func(o *migrationOptions) { o.guideViewsMigrationEnabled = enabled }
 }
 
 func RunMigrations(ctx context.Context, auth *authula.Auth, opts ...Option) error {
@@ -50,9 +42,6 @@ func RunMigrations(ctx context.Context, auth *authula.Auth, opts ...Option) erro
 		mediaAssetsInitial(),
 		starredGuidesInitial(),
 		guideExportsInitial(),
-	}
-	if o.guideViewsMigrationEnabled {
-		migrations = append(migrations, guideViewsInitial())
 	}
 
 	migrationSet := []authulamigrations.MigrationSet{

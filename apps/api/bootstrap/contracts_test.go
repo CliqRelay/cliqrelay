@@ -5,7 +5,6 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	bunGuideExports "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
-	bunGuideViews "github.com/CliqRelay/cliqrelay/repositories/guide_views"
 	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
 	bunMediaAssets "github.com/CliqRelay/cliqrelay/repositories/media_assets"
 	bunStarredGuides "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
@@ -20,7 +19,6 @@ var (
 	_ interfaces.StepsRepository         = (*bunSteps.BunStepsRepository)(nil)
 	_ interfaces.MediaAssetsRepository   = (*bunMediaAssets.BunMediaAssetsRepository)(nil)
 	_ interfaces.GuideExportsRepository  = (*bunGuideExports.BunGuideExportsRepository)(nil)
-	_ interfaces.GuideViewsRepository    = (*bunGuideViews.BunGuideViewsRepository)(nil)
 	_ interfaces.TeamsRepository         = (*bunTeams.BunTeamsRepository)(nil)
 )
 

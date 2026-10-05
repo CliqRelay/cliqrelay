@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -6,6 +6,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Eye, PenLine } from "lucide-react";
 
 import { api, type Guide } from "@repo/api-client";
+import { ExtensionSlot } from "@repo/extensions-sdk";
 
 import { GuideEditor } from "@/components/editor/guides/guide-editor";
 import { GuideActionsDropdown } from "@/components/guides/guide-actions-dropdown";
@@ -16,11 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 import { toast } from "@/lib/toast";
 import { updateGuide } from "@/server-fns/guides";
-import { useOrgStore, useUserStore } from "@/stores";
+import { useOrgStore } from "@/stores";
 import { invalidateGuideLists } from "@/utils/guides-cache.utils";
-import { getCsrfTokenHeader } from "@/utils/http.utils";
 
 export const Route = createFileRoute("/dashboard/guides/$guideId")({
   component: GuideDetailPage,
@@ -103,10 +104,7 @@ function GuideDetailPage() {
   const queryClient = useQueryClient();
   const { toggleStar } = useToggleStar();
 
-  const currentUserId = useUserStore((s) => s.userId);
   const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
-
-  const hasTrackedView = useRef<boolean>(false);
 
   const [mode, setMode] = useState<"view" | "edit">("view");
   const canEdit = !!currentMemberRole && currentMemberRole !== "viewer";
@@ -127,47 +125,6 @@ function GuideDetailPage() {
       return { guide: updater(prev) };
     });
   };
-
-  const recordViewMutation = api.guides.useRecordGuideView({
-    mutation: {
-      // The dashboard stats are only correct once the view has actually been
-      // persisted, so both cards are invalidated after the write succeeds.
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: api.guides.getGetGuideViewsCountQueryKey(),
-        });
-        queryClient.invalidateQueries({
-          queryKey: api.guides.getGetGuidesTimeSavedQueryKey(),
-        });
-      },
-    },
-    request: {
-      credentials: "include",
-      headers: {
-        ...getCsrfTokenHeader(),
-      },
-    },
-  });
-
-  useEffect(() => {
-    if (
-      mode === "view" &&
-      currentGuide?.status === "published" &&
-      currentGuide.creatorId !== currentUserId &&
-      !hasTrackedView.current &&
-      currentGuide.id
-    ) {
-      hasTrackedView.current = true;
-      recordViewMutation.mutate({ id: currentGuide.id });
-    }
-  }, [
-    mode,
-    currentGuide?.status,
-    currentGuide?.creatorId,
-    currentUserId,
-    currentGuide?.id,
-    recordViewMutation,
-  ]);
 
   const handleUpdateGuide = async (updates: { title?: string; description?: string | null }) => {
     try {
@@ -236,6 +193,14 @@ function GuideDetailPage() {
 
   return (
     <div className="flex flex-col">
+      <ExtensionSlot
+        name={ExtensionSlotKeys.GUIDE_DETAIL_VIEW_TRACKER}
+        props={{
+          guideId: guide.id,
+          status: guide.status,
+          creatorId: guide.creatorId,
+        }}
+      />
       <header className="sticky top-0 z-10 flex flex-col border-b bg-background">
         <div className="flex items-center gap-3 px-4 py-3">
           <Button asChild variant="ghost" size="sm">

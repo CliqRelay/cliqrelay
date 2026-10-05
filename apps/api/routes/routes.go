@@ -15,7 +15,7 @@ func InitRoutes(cfg *config.HTTPConfig, useCases *interfaces.DomainUseCases, ser
 	routes = append(routes, HealthRoutes(cfg)...)
 	routes = append(routes, OrganizationsRoutes(cfg, useCases.OrganizationsUseCase)...)
 	routes = append(routes, TeamsRoutes(cfg, useCases.TeamsUseCase)...)
-	routes = append(routes, GuidesRoutes(cfg, useCases.GuidesUseCase, useCases.GuideViewsUseCase)...)
+	routes = append(routes, GuidesRoutes(cfg, useCases.GuidesUseCase)...)
 	routes = append(routes, StepsRoutes(cfg, useCases.StepsUseCase)...)
 	routes = append(routes, MediaAssetsRoutes(cfg, useCases.MediaAssetsUseCase)...)
 	routes = append(routes, UploadRoutes(cfg, useCases.UploadsUseCase)...)

@@ -5,7 +5,6 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/services/export"
-	guideviewsservice "github.com/CliqRelay/cliqrelay/services/guide_views"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	mediaassetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
 	orphaneduploadsservice "github.com/CliqRelay/cliqrelay/services/orphaned_uploads"
@@ -34,9 +33,8 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(repos.MediaAssets, repos.Steps, repos.Guides, o.infraCfg.RedisClient, o.infraCfg.Logger, o.mediaHooks)
 	exportService := export.NewExportService(repos.GuideExports, repos.Guides, repos.Steps, storageService, presignService, o.infraCfg.RedisClient, o.infraCfg.S3Bucket)
 	uploadsService := uploadsservice.NewUploadsService(repos.Guides, repos.Steps, repos.MediaAssets, presignService, o.infraCfg.RedisClient, o.infraCfg.Logger, o.infraCfg.S3Bucket)
-	guideViewsService := guideviewsservice.NewGuideViewsService(repos.GuideViews, o.infraCfg.RedisClient)
 	teamsService := teamsservice.NewTeamsService(repos.Teams)
-	purgeService := purge.NewPurgeService(repos.Guides, storageService, guideViewsService, o.infraCfg.S3Bucket)
+	purgeService := purge.NewPurgeService(repos.Guides, storageService, o.infraCfg.S3Bucket)
 	orphanedUploadsService := orphaneduploadsservice.NewOrphanedUploadsService(repos.MediaAssets, storageService, o.infraCfg.S3Bucket)
 
 	return &builtServices{
@@ -47,7 +45,6 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 			StepsService:           stepsService,
 			StarredGuidesService:   starredService,
 			MediaAssetsService:     mediaAssetsService,
-			GuideViewsService:      guideViewsService,
 			ExportService:          exportService,
 			UploadsService:         uploadsService,
 			PurgeService:           purgeService,

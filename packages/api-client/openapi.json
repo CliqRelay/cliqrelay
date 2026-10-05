@@ -316,79 +316,6 @@
         }
       }
     },
-    "/api/v1/guides/time-saved": {
-      "get": {
-        "tags": [
-          "Guides"
-        ],
-        "summary": "Get guides time saved",
-        "description": "Returns the total time saved from guide views for a team",
-        "operationId": "getGuidesTimeSaved",
-        "parameters": [
-          {
-            "name": "team_id",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/UUID"
-            }
-          },
-          {
-            "name": "since",
-            "in": "query",
-            "schema": {
-              "format": "date-time",
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetTimeSavedResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/guides/views/count": {
-      "get": {
-        "tags": [
-          "Guides"
-        ],
-        "summary": "Get guide views count",
-        "description": "Returns the total count of guide views for a team",
-        "operationId": "getGuideViewsCount",
-        "parameters": [
-          {
-            "name": "team_id",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/UUID"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetGuideViewsCountResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/guides/{id}": {
       "get": {
         "tags": [
@@ -810,38 +737,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnpublishGuideResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/guides/{id}/view": {
-      "post": {
-        "tags": [
-          "Guides"
-        ],
-        "summary": "Record guide view",
-        "description": "Records a view of a guide.",
-        "operationId": "recordGuideView",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RecordGuideViewResponse"
                 }
               }
             }
@@ -1841,17 +1736,6 @@
         ],
         "type": "object"
       },
-      "GetGuideViewsCountResponse": {
-        "properties": {
-          "count": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "count"
-        ],
-        "type": "object"
-      },
       "GetGuidesCountResponse": {
         "properties": {
           "count": {
@@ -1922,22 +1806,6 @@
         },
         "required": [
           "step"
-        ],
-        "type": "object"
-      },
-      "GetTimeSavedResponse": {
-        "properties": {
-          "time_saved_hours": {
-            "format": "double",
-            "type": "number"
-          },
-          "time_saved_seconds": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "time_saved_seconds",
-          "time_saved_hours"
         ],
         "type": "object"
       },
@@ -2324,17 +2192,6 @@
         },
         "required": [
           "guide"
-        ],
-        "type": "object"
-      },
-      "RecordGuideViewResponse": {
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
         ],
         "type": "object"
       },

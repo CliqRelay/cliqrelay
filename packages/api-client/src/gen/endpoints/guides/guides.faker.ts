@@ -18,14 +18,11 @@ import type {
   GetAllGuidesResponse,
   GetExportStatusResponse,
   GetGuideByIDResponse,
-  GetGuideViewsCountResponse,
   GetGuidesCountResponse,
   GetStarredGuidesResponse,
-  GetTimeSavedResponse,
   PermanentlyDeleteGuideResponse,
   PublishGuideResponse,
   RecalculateDurationResponse,
-  RecordGuideViewResponse,
   RestoreGuideResponse,
   StarGuideResponse,
   UnarchiveGuideResponse,
@@ -276,18 +273,6 @@ export const getGetStarredGuidesResponseMock = (
   total: faker.number.int(),
   ...overrideResponse,
 });
-
-export const getGetGuidesTimeSavedResponseMock = (
-  overrideResponse: Partial<Extract<GetTimeSavedResponse, object>> = {},
-): GetTimeSavedResponse => ({
-  timeSavedHours: faker.number.float({ fractionDigits: 2 }),
-  timeSavedSeconds: faker.number.int(),
-  ...overrideResponse,
-});
-
-export const getGetGuideViewsCountResponseMock = (
-  overrideResponse: Partial<Extract<GetGuideViewsCountResponse, object>> = {},
-): GetGuideViewsCountResponse => ({ count: faker.number.int(), ...overrideResponse });
 
 export const getGetGuideByIdResponseMock = (
   overrideResponse: Partial<Extract<GetGuideByIDResponse, object>> = {},
@@ -941,12 +926,5 @@ export const getUnpublishGuideResponseMock = (
     updatedAt: faker.date.past().toISOString().slice(0, 19) + "Z",
     visibility: faker.helpers.arrayElement(Object.values(Visibility)),
   },
-  ...overrideResponse,
-});
-
-export const getRecordGuideViewResponseMock = (
-  overrideResponse: Partial<Extract<RecordGuideViewResponse, object>> = {},
-): RecordGuideViewResponse => ({
-  message: faker.string.alpha({ length: { min: 10, max: 20 } }),
   ...overrideResponse,
 });

@@ -184,8 +184,6 @@ func InitAuth(envConfig *constants.EnvConfig, authServiceHooks config.AuthServic
 					fmt.Sprintf("GET:%s/guides", apiBasePath),
 					fmt.Sprintf("GET:%s/guides/count", apiBasePath),
 					fmt.Sprintf("GET:%s/guides/starred", apiBasePath),
-					fmt.Sprintf("GET:%s/guides/views/count", apiBasePath),
-					fmt.Sprintf("GET:%s/guides/time-saved", apiBasePath),
 					fmt.Sprintf("DELETE:%s/guides/*", apiBasePath),
 				},
 				Plugins: []string{

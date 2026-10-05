@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	bunGuideExports "github.com/CliqRelay/cliqrelay/repositories/guide_exports"
-	bunGuideViews "github.com/CliqRelay/cliqrelay/repositories/guide_views"
 	bunGuides "github.com/CliqRelay/cliqrelay/repositories/guides"
 	bunMediaAssets "github.com/CliqRelay/cliqrelay/repositories/media_assets"
 	bunStarredGuides "github.com/CliqRelay/cliqrelay/repositories/starred_guides"
@@ -23,7 +22,6 @@ func buildRepositories(o *options) (*interfaces.Repositories, error) {
 		MediaAssets:   o.mediaAssetsRepo,
 		StarredGuides: o.starredGuidesRepo,
 		GuideExports:  o.guideExportsRepo,
-		GuideViews:    o.guideViewsRepo,
 		Teams:         o.teamsRepo,
 	}
 
@@ -41,9 +39,6 @@ func buildRepositories(o *options) (*interfaces.Repositories, error) {
 	}
 	if repos.GuideExports == nil {
 		repos.GuideExports = bunGuideExports.NewBunGuideExportsRepository(db)
-	}
-	if repos.GuideViews == nil {
-		repos.GuideViews = bunGuideViews.NewBunGuideViewsRepository(db)
 	}
 	if repos.Teams == nil {
 		repos.Teams = bunTeams.NewBunTeamsRepository(db)
