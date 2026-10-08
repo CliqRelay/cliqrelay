@@ -35,6 +35,7 @@ type options struct {
 	mediaHooks *interfaces.MediaAssetHooks
 
 	authorizationService interfaces.AuthorizationService
+	exportService        interfaces.ExportService
 
 	extraRoutes []authulamodels.Route
 
@@ -132,6 +133,10 @@ func WithMediaAssetHooks(hooks *interfaces.MediaAssetHooks) Option {
 
 func WithAuthorizationService(svc interfaces.AuthorizationService) Option {
 	return func(o *options) { o.authorizationService = svc }
+}
+
+func WithExportService(svc interfaces.ExportService) Option {
+	return func(o *options) { o.exportService = svc }
 }
 
 func WithExtraRoutes(routes ...authulamodels.Route) Option {

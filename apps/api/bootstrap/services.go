@@ -31,7 +31,7 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 	starredService := starredguidesservice.NewStarredGuidesService(repos.StarredGuides, repos.Guides)
 	stepsService := stepsservice.NewStepsService(o.infraCfg.RedisClient, repos.Steps, repos.Guides, presignService, storageService, repos.MediaAssets, o.infraCfg.S3Bucket, o.infraCfg.Logger, o.stepHooks)
 	mediaAssetsService := mediaassetsservice.NewMediaAssetsService(repos.MediaAssets, repos.Steps, repos.Guides, o.infraCfg.RedisClient, o.infraCfg.Logger, o.mediaHooks)
-	exportService := export.NewExportService(repos.GuideExports, repos.Guides, repos.Steps, storageService, presignService, o.infraCfg.RedisClient, o.infraCfg.S3Bucket)
+	exportService := resolveExportService(o, repos, storageService, presignService)
 	uploadsService := uploadsservice.NewUploadsService(repos.Guides, repos.Steps, repos.MediaAssets, presignService, o.infraCfg.RedisClient, o.infraCfg.Logger, o.infraCfg.S3Bucket)
 	teamsService := teamsservice.NewTeamsService(repos.Teams)
 	purgeService := purge.NewPurgeService(repos.Guides, storageService, o.infraCfg.S3Bucket)
@@ -52,4 +52,19 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 			TeamsService:           teamsService,
 		},
 	}
+}
+
+func resolveExportService(
+	o *options,
+	repos *interfaces.Repositories,
+	storage interfaces.StorageService,
+	presign interfaces.PresignService,
+) interfaces.ExportService {
+	if o.exportService != nil {
+		return o.exportService
+	}
+	return export.NewExportService(
+		repos.GuideExports, repos.Guides, repos.Steps,
+		storage, presign, o.infraCfg.RedisClient, o.infraCfg.S3Bucket,
+	)
 }
