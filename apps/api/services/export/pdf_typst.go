@@ -22,7 +22,16 @@ const (
 	typstOutputFile = "output.pdf"
 	typstDataFile   = "data.json"
 	typstLogoFile   = "logo.png"
+	typstOrgLogoPfx = "org-logo."
 )
+
+// PDFRenderOptions customises the rendered PDF. A nil value keeps the
+// default, unbranded output.
+type PDFRenderOptions struct {
+	AccentColor   string // hex, e.g. "#00bcff"; empty keeps the default
+	HideWatermark bool
+	Logo          []byte // optional custom logo image bytes
+}
 
 // -------- Typst input JSON structures --------
 
@@ -67,19 +76,29 @@ type typstInputStep struct {
 	Media         *typstInputMedia         `json:"media"`
 }
 
+type typstInputTheme struct {
+	AccentColor   string `json:"accent_color,omitempty"`
+	HideWatermark bool   `json:"hide_watermark,omitempty"`
+	LogoFile      string `json:"logo_file,omitempty"`
+}
+
 type typstInput struct {
 	Guide typstInputGuide  `json:"guide"`
 	Steps []typstInputStep `json:"steps"`
+	Theme *typstInputTheme `json:"theme,omitempty"`
 }
 
-func generatePDFWithTypst(
+// GeneratePDFWithTypst renders a guide to PDF using the shared Typst template.
+// opts may be nil for the default output.
+func GeneratePDFWithTypst(
 	ctx context.Context,
 	guide *models.Guide,
 	steps []*models.Step,
 	storageService interfaces.StorageService,
 	bucket string,
+	opts *PDFRenderOptions,
 ) ([]byte, error) {
-	input := buildTypstInput(guide, steps)
+	input := buildTypstInput(guide, steps, opts)
 
 	tmpDir, err := os.MkdirTemp("", "guide-typst-*")
 	if err != nil {
@@ -97,9 +116,16 @@ func generatePDFWithTypst(
 		return nil, fmt.Errorf("write %s: %w", typstFontFile, err)
 	}
 
-	// Write the logo
+	// Write the default logo
 	if err := os.WriteFile(filepath.Join(tmpDir, typstLogoFile), assets.LogoPNG, 0644); err != nil {
 		return nil, fmt.Errorf("write %s: %w", typstLogoFile, err)
+	}
+
+	// Write a custom logo when supplied
+	if opts != nil && len(opts.Logo) > 0 {
+		if err := os.WriteFile(filepath.Join(tmpDir, input.Theme.LogoFile), opts.Logo, 0644); err != nil {
+			return nil, fmt.Errorf("write %s: %w", input.Theme.LogoFile, err)
+		}
 	}
 
 	// Write media images and populate file names
@@ -142,7 +168,7 @@ func generatePDFWithTypst(
 	return pdfBytes, nil
 }
 
-func buildTypstInput(guide *models.Guide, steps []*models.Step) typstInput {
+func buildTypstInput(guide *models.Guide, steps []*models.Step, opts *PDFRenderOptions) typstInput {
 	stepCount := 0
 	for _, step := range steps {
 		if step.Type == models.StepTypeInteraction {
@@ -159,6 +185,7 @@ func buildTypstInput(guide *models.Guide, steps []*models.Step) typstInput {
 			CreatedAt:   guide.CreatedAt.Format("January 2, 2006"),
 		},
 		Steps: make([]typstInputStep, 0, len(steps)),
+		Theme: buildTypstTheme(opts),
 	}
 
 	for _, step := range steps {
@@ -182,6 +209,26 @@ func buildTypstInput(guide *models.Guide, steps []*models.Step) typstInput {
 	}
 
 	return input
+}
+
+func buildTypstTheme(opts *PDFRenderOptions) *typstInputTheme {
+	if opts == nil {
+		return nil
+	}
+
+	theme := &typstInputTheme{
+		AccentColor:   opts.AccentColor,
+		HideWatermark: opts.HideWatermark,
+	}
+	if len(opts.Logo) > 0 {
+		theme.LogoFile = orgLogoFileName(opts.Logo)
+	}
+
+	return theme
+}
+
+func orgLogoFileName(data []byte) string {
+	return typstOrgLogoPfx + detectImageExt(data)
 }
 
 func writeMediaFiles(
@@ -228,7 +275,7 @@ func writeMediaFiles(
 // Image format magic bytes.
 var (
 	pngSignature  = []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
-	jpegSignature = []byte{0xFF, 0xD8, 0xFF}
+	jpegSignature = []byte{0xFF, 0xD8, 0xFF} // SOI + marker prefix; bytes after this vary (APP0/APP1/...)
 	gifSignature  = []byte{0x47, 0x49, 0x46, 0x38}
 )
 
