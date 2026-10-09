@@ -5,6 +5,7 @@
 #let data = json("data.json")
 #let g = data.guide
 #let steps = data.steps
+#let theme = if "theme" in data { data.theme } else { (:) }
 
 // -------- Colors (matching frontend Tailwind palette) --------
 #let foreground = oklch(18%, 1%, 250deg)
@@ -24,8 +25,14 @@
 #let alert-border = rgb("#EF4444")
 #let alert-fg = rgb("#B91C1C")
 
+// -------- Theme (optional, injected by branded exports) --------
+#let accent-color = if "accent_color" in theme { rgb(theme.accent_color) } else { foreground }
+#let hide-watermark = if "hide_watermark" in theme { theme.hide_watermark } else { false }
+#let custom-logo = if "logo_file" in theme { theme.logo_file } else { none }
+#let accent-stroke = if "accent_color" in theme { 1.5pt } else { 1pt }
+
 // -------- Logo --------
-#let logo-img = image("logo.png", height: 32pt)
+#let default-logo = image("logo.png", height: 32pt)
 
 // -------- Page Setup --------
 #set page(paper: "a4", margin: (top: 2.5cm, bottom: 2.5cm, left: 2cm, right: 2cm))
@@ -33,14 +40,14 @@
 #set page(footer: context {
   grid(
     columns: (1fr, auto),
-    align(left, text(size: 8pt, fill: muted-fg, "Made with CliqRelay")),
+    align(left, text(size: 8pt, fill: muted-fg, if hide-watermark { "" } else { "Made with CliqRelay" })),
     align(right, text(size: 8pt, fill: muted-fg, counter(page).display())),
   )
 })
 
 // -------- Guide Header (centred on first page) --------
 #align(center + horizon, [
-  #logo-img
+  #if custom-logo != none { image(custom-logo, height: 32pt) } else { default-logo }
   #v(8pt)
   #text(size: 18pt, weight: "bold", g.title)
   #if g.description != none {
@@ -49,6 +56,10 @@
   }
   #v(4pt)
   #text(size: 9pt, fill: muted-fg, "Steps: " + str(g.step_count) + "  ·  Duration: " + g.duration + "  ·  Created on: " + g.created_at)
+  #if "accent_color" in theme {
+    v(10pt)
+    line(length: 55%, stroke: 2.5pt + accent-color)
+  }
 ])
 #pagebreak()
 
@@ -58,8 +69,8 @@
   circle(
     radius: 12pt,
     fill: white,
-    stroke: 1pt + foreground,
-    text(size: 10pt, weight: "bold", fill: foreground, str(n)),
+    stroke: accent-stroke + accent-color,
+    text(size: 10pt, weight: "bold", fill: accent-color, str(n)),
   )
 }
 
