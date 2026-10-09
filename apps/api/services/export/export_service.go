@@ -125,7 +125,7 @@ func (s *ExportService) GeneratePDF(ctx context.Context, exportID uuid.UUID, gui
 		return fmt.Errorf("fetch steps: %w", err)
 	}
 
-	pdfBytes, err := generatePDFWithTypst(ctx, guide, steps, s.storageService, s.bucket)
+	pdfBytes, err := GeneratePDFWithTypst(ctx, guide, steps, s.storageService, s.bucket, nil)
 	if err != nil {
 		s.markFailed(ctx, exportID, fmt.Sprintf("generate PDF: %v", err))
 		return fmt.Errorf("generate PDF: %w", err)

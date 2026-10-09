@@ -51,8 +51,17 @@ jobs:
           cache: true
           cache-dependency-path: apps/api/go.sum
 
+      - name: Install typst
+        run: |
+          curl -sL "https://github.com/typst/typst/releases/download/v0.15.1/typst-x86_64-unknown-linux-musl.tar.xz" -o /tmp/typst.tar.xz
+          tar -xJf /tmp/typst.tar.xz -C /tmp
+          sudo mv /tmp/typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst
+          typst --version
+
       - name: Run tests
         run: make test
+        env:
+          TYPST_REQUIRE: "1"
 
   lint:
     name: Lint API
