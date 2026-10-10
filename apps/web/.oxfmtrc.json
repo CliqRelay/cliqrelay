@@ -1,6 +1,11 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": [".output/**", "src/components/ui/**", "src/components/motion/**"],
+  "ignorePatterns": [
+    ".output/**",
+    "src/components/ui/**",
+    "src/components/motion/**",
+    "src/components/shadcn-space/**"
+  ],
   "tabWidth": 2,
   "sortTailwindcss": {
     "stylesheet": "./src/styles.css",
