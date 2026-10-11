@@ -32,7 +32,7 @@
 #let accent-stroke = if "accent_color" in theme { 1.5pt } else { 1pt }
 
 // -------- Logo --------
-#let default-logo = image("logo.png", height: 32pt)
+#let default-logo = image("logo.png", height: 64pt)
 
 // -------- Page Setup --------
 #set page(paper: "a4", margin: (top: 2.5cm, bottom: 2.5cm, left: 2cm, right: 2cm))
@@ -47,7 +47,7 @@
 
 // -------- Guide Header (centred on first page) --------
 #align(center + horizon, [
-  #if custom-logo != none { image(custom-logo, height: 32pt) } else { default-logo }
+  #if custom-logo != none { image(custom-logo, height: 64pt) } else { default-logo }
   #v(8pt)
   #text(size: 18pt, weight: "bold", g.title)
   #if g.description != none {
