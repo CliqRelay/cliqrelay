@@ -14,6 +14,9 @@ export enum ExtensionSlotKeys {
   // Guides
   GUIDE_DETAIL_VIEW_TRACKER = "guide-detail-view-tracker",
 
+  // Steps
+  STEP_MEDIA_TOOLBAR = "step-media-toolbar",
+
   // Organization Settings
   ORG_SETTINGS_MEMBERS = "org-settings-members",
   ORG_SETTINGS_TEAMS = "org-settings-teams",
