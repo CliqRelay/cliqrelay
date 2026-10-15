@@ -3,11 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { CameraIcon, ImageIcon, ImageUpIcon, Loader2Icon, UploadIcon } from "lucide-react";
 
 import type { Step } from "@repo/api-client";
+import { ExtensionSlot, extensionRegistry } from "@repo/extensions-sdk";
 
 import { StepMediaToolbar, StepMediaToolbarButton } from "./step-media-toolbar";
 import { StepOverlay } from "./step-overlay";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 import { cn } from "@/lib/utils";
 import type { MediaLayoutTarget } from "@/models";
 import { resolveMediaLayout } from "@/utils/media.utils";
@@ -48,16 +50,23 @@ export function StepMedia({ step, onReplaceMedia, isReplacing, className }: Prop
     setShowOverlay(true);
   };
 
-  const mediaToolbar = onReplaceMedia && (
-    <StepMediaToolbar visible={isReplacing}>
-      <StepMediaToolbarButton
-        label={isReplacing ? "Uploading…" : "Replace screenshot"}
-        disabled={isReplacing}
-        onClick={onReplaceMedia}
-        icon={isReplacing ? <Loader2Icon className="animate-spin" /> : <ImageUpIcon />}
-      />
-    </StepMediaToolbar>
-  );
+  const slotName = ExtensionSlotKeys.STEP_MEDIA_TOOLBAR;
+  const hasSlot = extensionRegistry.getSlot(slotName) != null;
+
+  const mediaToolbar =
+    onReplaceMedia || hasSlot ? (
+      <StepMediaToolbar visible={isReplacing}>
+        {onReplaceMedia && (
+          <StepMediaToolbarButton
+            label={isReplacing ? "Uploading…" : "Replace screenshot"}
+            disabled={isReplacing}
+            onClick={onReplaceMedia}
+            icon={isReplacing ? <Loader2Icon className="animate-spin" /> : <ImageUpIcon />}
+          />
+        )}
+        <ExtensionSlot name={slotName} props={{ step }} />
+      </StepMediaToolbar>
+    ) : null;
 
   if (media) {
     const hasScreenshot = media.mimeType?.startsWith("image/");

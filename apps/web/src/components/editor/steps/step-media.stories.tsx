@@ -2,13 +2,20 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { expect, fn, userEvent, within } from "storybook/test";
 
+import { extensionRegistry } from "@repo/extensions-sdk";
+
 import { StepMedia } from "./step-media";
+import { ExtensionSlotKeys } from "@/constants/extension-slots";
 import { makeCanvasStep, makeInteractionStep, makeMediaAsset } from "@/test/fixtures/steps";
 
 const meta = {
   title: "Editor/Steps/StepMedia",
   component: StepMedia,
   args: { step: makeInteractionStep({ mediaAssets: [makeMediaAsset()] }) },
+  beforeEach: () => {
+    extensionRegistry.clear();
+    return () => extensionRegistry.clear();
+  },
 } satisfies Meta<typeof StepMedia>;
 
 export default meta;
@@ -29,6 +36,30 @@ export const ScreenshotWithReplaceToolbar: Story = {
       within(canvasElement).getByRole("button", { name: "Replace screenshot" }),
     );
     await expect(args.onReplaceMedia).toHaveBeenCalledTimes(1);
+  },
+};
+
+export const ScreenshotWithRedactSlot: Story = {
+  args: { onReplaceMedia: fn() },
+  decorators: [
+    (Story) => {
+      extensionRegistry.install({
+        id: "test",
+        slots: [
+          {
+            name: ExtensionSlotKeys.STEP_MEDIA_TOOLBAR,
+            component: () => <button>Redact</button>,
+          },
+        ],
+        navItems: [],
+      });
+      return <Story />;
+    },
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: "Redact" })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Replace screenshot" })).toBeInTheDocument();
   },
 };
 
