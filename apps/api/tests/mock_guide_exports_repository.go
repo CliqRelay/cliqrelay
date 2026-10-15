@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -32,4 +33,9 @@ func (m *MockGuideExportsRepository) GetByID(ctx context.Context, id uuid.UUID, 
 func (m *MockGuideExportsRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status models.ExportStatus, storagePath string, errMsg string) error {
 	args := m.Called(ctx, id, status, storagePath, errMsg)
 	return args.Error(0)
+}
+
+func (m *MockGuideExportsRepository) DeleteOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
+	args := m.Called(ctx, cutoff)
+	return args.Get(0).(int64), args.Error(1)
 }

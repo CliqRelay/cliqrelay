@@ -12,6 +12,7 @@ import (
 	"github.com/CliqRelay/cliqrelay/events"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	cliqmodels "github.com/CliqRelay/cliqrelay/models"
+	"github.com/CliqRelay/cliqrelay/utils"
 )
 
 type ExportService struct {
@@ -131,7 +132,7 @@ func (s *ExportService) GeneratePDF(ctx context.Context, exportID uuid.UUID, gui
 		return fmt.Errorf("generate PDF: %w", err)
 	}
 
-	storagePath := fmt.Sprintf("exports/guides/%s/%s.pdf", guideID.String(), exportID.String())
+	storagePath := fmt.Sprintf("%s%s.pdf", utils.GuideExportsPrefix(guideID.String()), exportID.String())
 	if err := s.storageService.PutObject(ctx, s.bucket, storagePath, bytes.NewReader(pdfBytes), "application/pdf"); err != nil {
 		s.markFailed(ctx, exportID, fmt.Sprintf("upload PDF: %v", err))
 		return fmt.Errorf("upload PDF: %w", err)

@@ -30,6 +30,7 @@ func guideExportsInitial() authulamigrations.Migration {
 				`CREATE INDEX idx_guide_exports_guide_id ON guide_exports (guide_id);`,
 				`CREATE INDEX idx_guide_exports_user_id ON guide_exports (user_id);`,
 				`CREATE INDEX idx_guide_exports_status ON guide_exports (status);`,
+				`CREATE INDEX idx_guide_exports_created_at ON guide_exports (created_at);`,
 				`DROP TRIGGER IF EXISTS update_guide_exports_updated_at_trigger ON guide_exports;`,
 				`CREATE TRIGGER update_guide_exports_updated_at_trigger
 					BEFORE UPDATE ON guide_exports

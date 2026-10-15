@@ -47,6 +47,9 @@ func NewWorker(opts ...Option) (*Worker, error) {
 		if err := worker.RegisterOrphanedUploadsSweepCron(cronService.Scheduler(), svcs.Domain.OrphanedUploadsService); err != nil {
 			return nil, err
 		}
+		if err := worker.RegisterExportCleanupCron(cronService.Scheduler(), svcs.Domain.ExportCleanupService); err != nil {
+			return nil, err
+		}
 		w.cron = cronService
 	}
 

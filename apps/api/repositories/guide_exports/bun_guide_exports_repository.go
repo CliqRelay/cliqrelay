@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -73,4 +74,16 @@ func (r *BunGuideExportsRepository) UpdateStatus(ctx context.Context, id uuid.UU
 		Exec(ctx)
 
 	return err
+}
+
+func (r *BunGuideExportsRepository) DeleteOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
+	result, err := r.db.NewDelete().
+		Model((*models.GuideExport)(nil)).
+		Where("created_at < ?", cutoff).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
 }

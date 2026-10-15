@@ -5,6 +5,7 @@ import (
 
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/services/export"
+	exportcleanupservice "github.com/CliqRelay/cliqrelay/services/export_cleanup"
 	guidesservice "github.com/CliqRelay/cliqrelay/services/guides"
 	mediaassetsservice "github.com/CliqRelay/cliqrelay/services/media_assets"
 	orphaneduploadsservice "github.com/CliqRelay/cliqrelay/services/orphaned_uploads"
@@ -36,6 +37,7 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 	teamsService := teamsservice.NewTeamsService(repos.Teams)
 	purgeService := purge.NewPurgeService(repos.Guides, storageService, o.infraCfg.S3Bucket)
 	orphanedUploadsService := orphaneduploadsservice.NewOrphanedUploadsService(repos.MediaAssets, storageService, o.infraCfg.S3Bucket)
+	exportCleanupService := exportcleanupservice.NewExportCleanupService(storageService, repos.GuideExports, o.infraCfg.S3Bucket)
 
 	return &builtServices{
 		Storage: storageService,
@@ -49,6 +51,7 @@ func buildServices(o *options, repos *interfaces.Repositories) *builtServices {
 			UploadsService:         uploadsService,
 			PurgeService:           purgeService,
 			OrphanedUploadsService: orphanedUploadsService,
+			ExportCleanupService:   exportCleanupService,
 			TeamsService:           teamsService,
 		},
 	}

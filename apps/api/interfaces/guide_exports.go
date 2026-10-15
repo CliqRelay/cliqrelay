@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -12,4 +13,5 @@ type GuideExportsRepository interface {
 	Create(ctx context.Context, guideID uuid.UUID, userID string, format models.ExportGuideFormat) (*models.GuideExport, error)
 	GetByID(ctx context.Context, id uuid.UUID, userID string) (*models.GuideExport, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.ExportStatus, storagePath string, errMsg string) error
+	DeleteOlderThan(ctx context.Context, cutoff time.Time) (int64, error)
 }

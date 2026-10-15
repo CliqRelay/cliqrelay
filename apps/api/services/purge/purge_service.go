@@ -47,6 +47,12 @@ func (s *PurgeService) PurgeGuide(ctx context.Context, guideID string) error {
 		return fmt.Errorf("delete S3 objects: %w", err)
 	}
 
+	exportPrefix := utils.GuideExportsPrefix(guideID)
+	if err := s.storageService.DeleteObjectsByPrefix(ctx, s.bucket, exportPrefix); err != nil {
+		slog.Error("failed to delete exported guides", "guide_id", guideID, "prefix", exportPrefix, "err", err)
+		return fmt.Errorf("delete exported guides: %w", err)
+	}
+
 	if err := s.guidesRepo.HardDelete(ctx, guideID); err != nil {
 		slog.Error("failed to hard delete guide", "guide_id", guideID, "err", err)
 		return fmt.Errorf("hard delete guide: %w", err)
