@@ -1,4 +1,4 @@
-import { createClient } from "authula";
+import { createClient } from "authula/react";
 import { CorePlugin, CSRFPlugin } from "authula/plugins";
 
 import { COOKIE_CONSTANTS, HEADER_CONSTANTS } from "@repo/data-commons";

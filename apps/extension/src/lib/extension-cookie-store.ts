@@ -1,4 +1,4 @@
-import type { CookieStore } from "authula";
+import type { CookieStore } from "authula/core";
 
 import { browser } from "wxt/browser";
 

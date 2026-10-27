@@ -14,21 +14,21 @@
   },
   "dependencies": {
     "ms": "^2.1.3",
-    "zod": "^4.6.5",
+    "zod": "^4.6.7",
     "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
     "@types/ms": "^2.1.0",
-    "@vitest/coverage-v8": "^5.0.3",
-    "@vitest/ui": "^5.0.3",
-    "oxfmt": "^0.72.0",
-    "oxlint": "^1.87.0",
+    "@vitest/coverage-v8": "^5.0.5",
+    "@vitest/ui": "^5.0.5",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   },
   "peerDependencies": {
     "ms": "^2.1.3",
-    "zod": "^4.6.5",
+    "zod": "^4.6.7",
     "zod-validation-error": "^5.0.0"
   }
 }

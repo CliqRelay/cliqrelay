@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 
-import type { OrganizationTeam } from "authula";
+import type { OrganizationTeam } from "authula/models";
 
 import { z } from "zod";
 

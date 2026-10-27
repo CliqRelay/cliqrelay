@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
-import type { User } from "authula";
+import type { User } from "authula/models";
 
 import { QueryKeys } from "@/constants/query-keys";
 import { authulaClient } from "@/lib/authula-client";

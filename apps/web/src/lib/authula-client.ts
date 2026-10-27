@@ -1,4 +1,4 @@
-import type { ClientWithPlugins } from "authula";
+import type { ClientWithPlugins } from "authula/core";
 import type {
 	AdminPlugin,
 	CorePlugin,

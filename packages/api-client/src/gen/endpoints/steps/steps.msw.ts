@@ -6,15 +6,19 @@
  * OpenAPI spec version: 0.1.0
  */
 import { HttpResponse, http } from "msw";
-import type { RequestHandlerOptions } from "msw";
+import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from "msw";
 
 import type {
+  CreateStepRequest,
   CreateStepResponse,
   DeleteStepResponse,
+  DuplicateStepRequest,
   DuplicateStepResponse,
   GetAllStepsResponse,
   GetStepByIDResponse,
+  ReorderStepsRequest,
   ReorderStepsResponse,
+  UpdateStepRequest,
   UpdateStepResponse,
 } from "../../models";
 
@@ -42,13 +46,13 @@ export const getGetAllStepsByGuideIdMockHandler = (
   overrideResponse?:
     | GetAllStepsResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<GetAllStepsResponse> | GetAllStepsResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/api/v1/steps",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -66,13 +70,13 @@ export const getCreateStepMockHandler = (
   overrideResponse?:
     | CreateStepResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<PathParams, CreateStepRequest>>[0],
       ) => Promise<CreateStepResponse> | CreateStepResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<PathParams, CreateStepRequest>(
     "*/api/v1/steps",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, CreateStepRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -90,13 +94,13 @@ export const getReorderStepsMockHandler = (
   overrideResponse?:
     | ReorderStepsResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<PathParams, ReorderStepsRequest>>[0],
       ) => Promise<ReorderStepsResponse> | ReorderStepsResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<PathParams, ReorderStepsRequest>(
     "*/api/v1/steps/reorder",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, ReorderStepsRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -114,13 +118,13 @@ export const getGetStepByIdMockHandler = (
   overrideResponse?:
     | GetStepByIDResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<GetStepByIDResponse> | GetStepByIDResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ id: string }>(
     "*/api/v1/steps/:id",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -138,13 +142,13 @@ export const getDeleteStepMockHandler = (
   overrideResponse?:
     | DeleteStepResponse
     | ((
-        info: Parameters<Parameters<typeof http.delete>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<DeleteStepResponse> | DeleteStepResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.delete(
+  return http.delete<{ id: string }>(
     "*/api/v1/steps/:id",
-    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -162,13 +166,13 @@ export const getUpdateStepMockHandler = (
   overrideResponse?:
     | UpdateStepResponse
     | ((
-        info: Parameters<Parameters<typeof http.patch>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }, UpdateStepRequest>>[0],
       ) => Promise<UpdateStepResponse> | UpdateStepResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.patch(
+  return http.patch<{ id: string }, UpdateStepRequest>(
     "*/api/v1/steps/:id",
-    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }, UpdateStepRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -186,13 +190,13 @@ export const getDuplicateStepMockHandler = (
   overrideResponse?:
     | DuplicateStepResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }, DuplicateStepRequest>>[0],
       ) => Promise<DuplicateStepResponse> | DuplicateStepResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }, DuplicateStepRequest>(
     "*/api/v1/steps/:id/duplicate",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }, DuplicateStepRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"

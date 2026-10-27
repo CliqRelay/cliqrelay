@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import { HttpResponse, http } from "msw";
-import type { RequestHandlerOptions } from "msw";
+import type { HttpResponseResolver, RequestHandlerOptions } from "msw";
 
 import type { GetAllTeamsResponse } from "../../models";
 
@@ -18,13 +18,13 @@ export const getGetTeamsMockHandler = (
   overrideResponse?:
     | GetAllTeamsResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<GetAllTeamsResponse> | GetAllTeamsResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/api/v1/teams",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"

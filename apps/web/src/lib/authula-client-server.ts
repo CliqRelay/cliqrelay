@@ -1,4 +1,4 @@
-import { createClient } from "authula";
+import { createClient } from "authula/core";
 import {
 	AdminPlugin,
 	CorePlugin,

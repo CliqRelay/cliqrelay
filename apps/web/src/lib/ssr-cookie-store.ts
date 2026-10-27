@@ -1,10 +1,11 @@
 import {
-	getCookies,
-	getRequestProtocol,
-	getResponse,
-	setCookie,
+  getCookies,
+  getRequestProtocol,
+  getResponseHeaders,
+  setCookie,
 } from "@tanstack/react-start/server";
-import type { CookieAttributes, CookieStore } from "authula";
+
+import type { CookieAttributes, CookieStore } from "authula/core";
 
 import { COOKIE_CONSTANTS } from "@repo/data-commons";
 
@@ -20,13 +21,11 @@ import { envServer } from "@/constants/env-server";
  * The API reads whichever it sees first, so the duplicate is worse than the
  * dropped refresh.
  */
-const RELAYED_COOKIE_NAMES: ReadonlySet<string> = new Set([
-	COOKIE_CONSTANTS.csrf.name,
-]);
+const RELAYED_COOKIE_NAMES: ReadonlySet<string> = new Set([COOKIE_CONSTANTS.csrf.name]);
 
 const NOOP_STORE: CookieStore = {
-	getAll: () => [],
-	set: () => {},
+  getAll: () => [],
+  set: () => {},
 };
 
 /**
@@ -39,19 +38,19 @@ const NOOP_STORE: CookieStore = {
  * relaying them here is what puts the token in front of the browser.
  */
 export const createSsrCookieStore = (): CookieStore => {
-	try {
-		// Probe the request context up front so a missing one degrades to a no-op
-		// store rather than throwing on first use.
-		getCookies();
+  try {
+    // Probe the request context up front so a missing one degrades to a no-op
+    // store rather than throwing on first use.
+    getCookies();
 
-		return {
-			getAll: getRequestAndStagedCookies,
-			set: relayCookieToResponse,
-		};
-	} catch {
-		// Not inside a request context (e.g. prerender).
-		return NOOP_STORE;
-	}
+    return {
+      getAll: getRequestAndStagedCookies,
+      set: relayCookieToResponse,
+    };
+  } catch {
+    // Not inside a request context (e.g. prerender).
+    return NOOP_STORE;
+  }
 };
 
 /**
@@ -65,68 +64,62 @@ export const createSsrCookieStore = (): CookieStore => {
  * values win, since they are newer than the request.
  */
 const getRequestAndStagedCookies = (): Array<{
-	name: string;
-	value: string;
+  name: string;
+  value: string;
 }> => {
-	try {
-		const cookies = new Map(Object.entries(getCookies()));
+  try {
+    const cookies = new Map(Object.entries(getCookies()));
 
-		for (const [name, value] of getStagedResponseCookies()) {
-			cookies.set(name, value);
-		}
+    for (const [name, value] of getStagedResponseCookies()) {
+      cookies.set(name, value);
+    }
 
-		return Array.from(cookies, ([name, value]) => ({ name, value }));
-	} catch {
-		return [];
-	}
+    return Array.from(cookies, ([name, value]) => ({ name, value }));
+  } catch {
+    return [];
+  }
 };
 
 const getStagedResponseCookies = (): Array<[string, string]> => {
-	try {
-		return getResponse()
-			.headers.getSetCookie()
-			.flatMap((setCookieHeader) => {
-				const [pair] = setCookieHeader.split(";");
-				const separatorIndex = pair?.indexOf("=") ?? -1;
-				if (!pair || separatorIndex < 1) return [];
+  try {
+    return getResponseHeaders()
+      .getSetCookie()
+      .flatMap((setCookieHeader) => {
+        const [pair] = setCookieHeader.split(";");
+        const separatorIndex = pair?.indexOf("=") ?? -1;
+        if (!pair || separatorIndex < 1) return [];
 
-				const name = pair.slice(0, separatorIndex).trim();
-				const value = pair.slice(separatorIndex + 1).trim();
-				return RELAYED_COOKIE_NAMES.has(name)
-					? [[name, value] as [string, string]]
-					: [];
-			});
-	} catch {
-		// Response not available in this context.
-		return [];
-	}
+        const name = pair.slice(0, separatorIndex).trim();
+        const value = pair.slice(separatorIndex + 1).trim();
+        return RELAYED_COOKIE_NAMES.has(name) ? [[name, value] as [string, string]] : [];
+      });
+  } catch {
+    // Response not available in this context.
+    return [];
+  }
 };
 
-const relayCookieToResponse = (
-	name: string,
-	value: string,
-	options?: CookieAttributes,
-): void => {
-	if (!RELAYED_COOKIE_NAMES.has(name)) return;
+const relayCookieToResponse = (name: string, value: string, options?: CookieAttributes): void => {
+  if (!RELAYED_COOKIE_NAMES.has(name)) return;
 
-	try {
-		setCookie(name, value, {
-			path: options?.path,
-			expires: options?.expires,
-			maxAge: options?.maxAge,
-			sameSite: options?.sameSite,
-			httpOnly: options?.httpOnly ?? false,
-			// Authula derives `secure` from `Request.URL.Scheme`, which is always
-			// empty on a Go server, so the upstream value is always false. Derive it
-			// from the request the browser actually made instead.
-			secure: getRequestProtocol() === "https",
-			// The upstream domain describes the internal API origin and would be
-			// meaningless to the browser. Web and API are separate hostnames in
-			// production, so the cookie needs the shared parent domain to be both
-			// readable by the browser and sent back to the API.
-			domain: envServer.authCookieDomain,
-		});
-	} catch {
-		// Response headers already sent, or no request context.
-	}
+  try {
+    setCookie(name, value, {
+      path: options?.path,
+      expires: options?.expires,
+      maxAge: options?.maxAge,
+      sameSite: options?.sameSite,
+      httpOnly: options?.httpOnly ?? false,
+      // Authula derives `secure` from `Request.URL.Scheme`, which is always
+      // empty on a Go server, so the upstream value is always false. Derive it
+      // from the request the browser actually made instead.
+      secure: getRequestProtocol() === "https",
+      // The upstream domain describes the internal API origin and would be
+      // meaningless to the browser. Web and API are separate hostnames in
+      // production, so the cookie needs the shared parent domain to be both
+      // readable by the browser and sent back to the API.
+      domain: envServer.authCookieDomain,
+    });
+  } catch {
+    // Response headers already sent, or no request context.
+  }
 };

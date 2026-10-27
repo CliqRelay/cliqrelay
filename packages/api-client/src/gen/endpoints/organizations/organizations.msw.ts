@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import { HttpResponse, http } from "msw";
-import type { RequestHandlerOptions } from "msw";
+import type { HttpResponseResolver, RequestHandlerOptions } from "msw";
 
 import type { OrganizationMemberResponse } from "../../models";
 
@@ -18,13 +18,13 @@ export const getGetMyOrgMembershipMockHandler = (
   overrideResponse?:
     | OrganizationMemberResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ orgId: string }>>[0],
       ) => Promise<OrganizationMemberResponse> | OrganizationMemberResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ orgId: string }>(
     "*/api/v1/organizations/:orgId/members/me",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ orgId: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"

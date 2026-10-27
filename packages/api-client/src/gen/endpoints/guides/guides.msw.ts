@@ -6,14 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 import { HttpResponse, http } from "msw";
-import type { RequestHandlerOptions } from "msw";
+import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from "msw";
 
 import type {
   ArchiveGuideResponse,
+  BulkGuidesRequest,
   BulkGuidesResponse,
+  CreateDemoGuideRequest,
   CreateDemoGuideResponse,
+  CreateGuideRequest,
   CreateGuideResponse,
   DeleteGuideResponse,
+  ExportGuideRequest,
   ExportGuideResponse,
   GetAllGuidesResponse,
   GetExportStatusResponse,
@@ -28,6 +32,7 @@ import type {
   UnarchiveGuideResponse,
   UnpublishGuideResponse,
   UnstarGuideResponse,
+  UpdateGuideRequest,
   UpdateGuideResponse,
 } from "../../models";
 
@@ -81,13 +86,13 @@ export const getGetExportStatusMockHandler = (
   overrideResponse?:
     | GetExportStatusResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ exportID: string }>>[0],
       ) => Promise<GetExportStatusResponse> | GetExportStatusResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ exportID: string }>(
     "*/api/v1/guide-exports/:exportID",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ exportID: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -105,13 +110,13 @@ export const getGetAllGuidesMockHandler = (
   overrideResponse?:
     | GetAllGuidesResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<GetAllGuidesResponse> | GetAllGuidesResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/api/v1/guides",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -129,13 +134,13 @@ export const getCreateGuideMockHandler = (
   overrideResponse?:
     | CreateGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<PathParams, CreateGuideRequest>>[0],
       ) => Promise<CreateGuideResponse> | CreateGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<PathParams, CreateGuideRequest>(
     "*/api/v1/guides",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, CreateGuideRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -153,13 +158,13 @@ export const getBulkGuidesActionMockHandler = (
   overrideResponse?:
     | BulkGuidesResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<PathParams, BulkGuidesRequest>>[0],
       ) => Promise<BulkGuidesResponse> | BulkGuidesResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<PathParams, BulkGuidesRequest>(
     "*/api/v1/guides/bulk",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, BulkGuidesRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -177,13 +182,13 @@ export const getGetGuidesCountMockHandler = (
   overrideResponse?:
     | GetGuidesCountResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<GetGuidesCountResponse> | GetGuidesCountResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/api/v1/guides/count",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -201,13 +206,13 @@ export const getCreateDemoGuideMockHandler = (
   overrideResponse?:
     | CreateDemoGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<PathParams, CreateDemoGuideRequest>>[0],
       ) => Promise<CreateDemoGuideResponse> | CreateDemoGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<PathParams, CreateDemoGuideRequest>(
     "*/api/v1/guides/demo",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, CreateDemoGuideRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -225,13 +230,13 @@ export const getGetStarredGuidesMockHandler = (
   overrideResponse?:
     | GetStarredGuidesResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<GetStarredGuidesResponse> | GetStarredGuidesResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/api/v1/guides/starred",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -249,13 +254,13 @@ export const getGetGuideByIdMockHandler = (
   overrideResponse?:
     | GetGuideByIDResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<GetGuideByIDResponse> | GetGuideByIDResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ id: string }>(
     "*/api/v1/guides/:id",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -273,13 +278,13 @@ export const getDeleteGuideMockHandler = (
   overrideResponse?:
     | DeleteGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.delete>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<DeleteGuideResponse> | DeleteGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.delete(
+  return http.delete<{ id: string }>(
     "*/api/v1/guides/:id",
-    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -297,13 +302,13 @@ export const getUpdateGuideMockHandler = (
   overrideResponse?:
     | UpdateGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.patch>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }, UpdateGuideRequest>>[0],
       ) => Promise<UpdateGuideResponse> | UpdateGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.patch(
+  return http.patch<{ id: string }, UpdateGuideRequest>(
     "*/api/v1/guides/:id",
-    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }, UpdateGuideRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -321,13 +326,13 @@ export const getArchiveGuideMockHandler = (
   overrideResponse?:
     | ArchiveGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<ArchiveGuideResponse> | ArchiveGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     "*/api/v1/guides/:id/archive",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -345,13 +350,13 @@ export const getExportGuideMockHandler = (
   overrideResponse?:
     | ExportGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }, ExportGuideRequest>>[0],
       ) => Promise<ExportGuideResponse> | ExportGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }, ExportGuideRequest>(
     "*/api/v1/guides/:id/export",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }, ExportGuideRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -369,13 +374,13 @@ export const getPermanentlyDeleteGuideMockHandler = (
   overrideResponse?:
     | PermanentlyDeleteGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<PermanentlyDeleteGuideResponse> | PermanentlyDeleteGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     "*/api/v1/guides/:id/permanently-delete",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -393,13 +398,13 @@ export const getPublishGuideMockHandler = (
   overrideResponse?:
     | PublishGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<PublishGuideResponse> | PublishGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     "*/api/v1/guides/:id/publish",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -417,13 +422,13 @@ export const getRecalculateGuideDurationMockHandler = (
   overrideResponse?:
     | RecalculateDurationResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<RecalculateDurationResponse> | RecalculateDurationResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     "*/api/v1/guides/:id/recalculate-duration",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -441,13 +446,13 @@ export const getRestoreGuideMockHandler = (
   overrideResponse?:
     | RestoreGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<RestoreGuideResponse> | RestoreGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     "*/api/v1/guides/:id/restore",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -465,13 +470,13 @@ export const getStarGuideMockHandler = (
   overrideResponse?:
     | StarGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<StarGuideResponse> | StarGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     "*/api/v1/guides/:id/star",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -489,13 +494,13 @@ export const getUnstarGuideMockHandler = (
   overrideResponse?:
     | UnstarGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.delete>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<UnstarGuideResponse> | UnstarGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.delete(
+  return http.delete<{ id: string }>(
     "*/api/v1/guides/:id/star",
-    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -513,13 +518,13 @@ export const getUnarchiveGuideMockHandler = (
   overrideResponse?:
     | UnarchiveGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<UnarchiveGuideResponse> | UnarchiveGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     "*/api/v1/guides/:id/unarchive",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -537,13 +542,13 @@ export const getUnpublishGuideMockHandler = (
   overrideResponse?:
     | UnpublishGuideResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<UnpublishGuideResponse> | UnpublishGuideResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<{ id: string }>(
     "*/api/v1/guides/:id/unpublish",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"

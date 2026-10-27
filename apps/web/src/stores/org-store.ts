@@ -1,4 +1,4 @@
-import type { OrganizationMemberResponse } from "authula";
+import type { OrganizationMemberResponse } from "authula/models";
 import { create } from "zustand";
 
 interface Organization {

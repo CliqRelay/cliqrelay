@@ -6,13 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 import { HttpResponse, http } from "msw";
-import type { RequestHandlerOptions } from "msw";
+import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from "msw";
 
 import type {
+  CreateMediaAssetRequest,
   CreateMediaAssetResponse,
   DeleteMediaAssetResponse,
   GetAllMediaAssetsResponse,
   GetMediaAssetByIDResponse,
+  UpdateMediaAssetRequest,
   UpdateMediaAssetResponse,
 } from "../../models";
 
@@ -36,13 +38,13 @@ export const getGetAllMediaAssetsByStepIdMockHandler = (
   overrideResponse?:
     | GetAllMediaAssetsResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver>[0],
       ) => Promise<GetAllMediaAssetsResponse> | GetAllMediaAssetsResponse),
   options?: RequestHandlerOptions,
 ) => {
   return http.get(
     "*/api/v1/media-assets",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -60,13 +62,13 @@ export const getCreateMediaAssetMockHandler = (
   overrideResponse?:
     | CreateMediaAssetResponse
     | ((
-        info: Parameters<Parameters<typeof http.post>[1]>[0],
+        info: Parameters<HttpResponseResolver<PathParams, CreateMediaAssetRequest>>[0],
       ) => Promise<CreateMediaAssetResponse> | CreateMediaAssetResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.post(
+  return http.post<PathParams, CreateMediaAssetRequest>(
     "*/api/v1/media-assets",
-    async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<PathParams, CreateMediaAssetRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -84,13 +86,13 @@ export const getGetMediaAssetByIdMockHandler = (
   overrideResponse?:
     | GetMediaAssetByIDResponse
     | ((
-        info: Parameters<Parameters<typeof http.get>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<GetMediaAssetByIDResponse> | GetMediaAssetByIDResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.get(
+  return http.get<{ id: string }>(
     "*/api/v1/media-assets/:id",
-    async (info: Parameters<Parameters<typeof http.get>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -108,13 +110,13 @@ export const getDeleteMediaAssetMockHandler = (
   overrideResponse?:
     | DeleteMediaAssetResponse
     | ((
-        info: Parameters<Parameters<typeof http.delete>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
       ) => Promise<DeleteMediaAssetResponse> | DeleteMediaAssetResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.delete(
+  return http.delete<{ id: string }>(
     "*/api/v1/media-assets/:id",
-    async (info: Parameters<Parameters<typeof http.delete>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"
@@ -132,13 +134,13 @@ export const getUpdateMediaAssetMockHandler = (
   overrideResponse?:
     | UpdateMediaAssetResponse
     | ((
-        info: Parameters<Parameters<typeof http.patch>[1]>[0],
+        info: Parameters<HttpResponseResolver<{ id: string }, UpdateMediaAssetRequest>>[0],
       ) => Promise<UpdateMediaAssetResponse> | UpdateMediaAssetResponse),
   options?: RequestHandlerOptions,
 ) => {
-  return http.patch(
+  return http.patch<{ id: string }, UpdateMediaAssetRequest>(
     "*/api/v1/media-assets/:id",
-    async (info: Parameters<Parameters<typeof http.patch>[1]>[0]) => {
+    async (info: Parameters<HttpResponseResolver<{ id: string }, UpdateMediaAssetRequest>>[0]) => {
       return HttpResponse.json(
         overrideResponse !== undefined
           ? typeof overrideResponse === "function"

@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 
-// Reads a package.json, resolves the latest published version of every entry in
-// `dependencies` and `devDependencies` from the npm registry, and writes the ones
-// whose latest release has been public for at least N hours (24 by default) back
-// into the manifest, keeping each range's existing operator (`^`, `~`, exact, ...).
-// Releases younger than the threshold are held back, so the manifest never picks
-// up a version that has not had time to be pulled from the registry.
+// Reads package.json and selects the newest stable npm release that has been
+// published for at least N hours (24 by default), rather than blindly trusting
+// the `latest` dist-tag. If no stable release meets the age threshold, the newest
+// stable release is reported as held back. Existing range operators are preserved.
 
 import { readFile, writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
+import * as semver from "semver";
 
 // Dependencies this script must never bump. Entries are matched against the package
 // name and may use `*` as a wildcard, e.g. "@types/*" or "eslint-plugin-*".
-const EXCLUDED_DEPENDENCIES: readonly string[] = [];
+const EXCLUDED_DEPENDENCIES: readonly string[] = ["typescript"];
 
 const DEFAULT_REGISTRY = "https://registry.npmjs.org";
 const DEFAULT_MIN_HOURS = 24;
@@ -46,6 +45,7 @@ type Manifest = Partial<Record<DependencySection, Record<string, string>>>;
 
 type RegistryDocument = {
   "dist-tags"?: Record<string, string>;
+  versions?: Record<string, unknown>;
   time?: Record<string, string>;
 };
 
@@ -119,11 +119,11 @@ type Classification =
 
 const USAGE = `Usage: pnpm run update-npm-deps [options] [path/to/package.json]
 
-Resolves the latest release of every registry-backed dependency and writes the ones
-that have been published for at least --hours back into the package.json.
+Selects the newest stable release published at least --hours ago for each
+registry-backed dependency and writes eligible upgrades into package.json.
 
 Options:
-  -h, --hours <n>          Minimum age in hours of the latest release (default: ${DEFAULT_MIN_HOURS})
+  -h, --hours <n>          Minimum age in hours for a release (default: ${DEFAULT_MIN_HOURS})
   -c, --concurrency <n>    Parallel registry requests (default: ${DEFAULT_CONCURRENCY})
   -x, --exclude <name>     Package to leave alone; repeatable, supports "*" wildcards
   -n, --dry-run            Report the updates without touching the file
@@ -146,30 +146,6 @@ const toMessage = (error: unknown): string =>
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
-
-// Compares two release versions well enough to tell an upgrade from a downgrade:
-// numeric core first, then any prerelease suffix, which always sorts below a release.
-const compareVersions = (left: string, right: string): number => {
-  const [leftCore = "", leftPre = ""] = left.split("-", 2);
-  const [rightCore = "", rightPre = ""] = right.split("-", 2);
-  const leftParts = leftCore.split(".").map(Number);
-  const rightParts = rightCore.split(".").map(Number);
-
-  for (let index = 0; index < 3; index += 1) {
-    const difference = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
-    if (difference !== 0) {
-      return difference;
-    }
-  }
-
-  if (leftPre === rightPre) {
-    return 0;
-  }
-  if (leftPre === "" || rightPre === "") {
-    return leftPre === "" ? 1 : -1;
-  }
-  return leftPre < rightPre ? -1 : 1;
-};
 
 // --- exclusions -------------------------------------------------------------
 
@@ -206,18 +182,44 @@ const createRegistryClient = (registry: string, timeoutMs = REQUEST_TIMEOUT_MS) 
     return (await response.json()) as RegistryDocument;
   };
 
-  const fetchLatest = async (name: string, now: number): Promise<LookupResult> => {
+  const fetchLatest = async (
+    name: string,
+    now: number,
+    minHours: number,
+  ): Promise<LookupResult> => {
     try {
       const document = await readDocument(name);
-      const version = document["dist-tags"]?.latest;
-      const publishedAt = version ? document.time?.[version] : undefined;
+      const publicationTimes = document.time ?? {};
+      const publishedVersions = Object.keys(document.versions ?? {})
+        .filter((version) => semver.valid(version) !== null)
+        // Default to stable releases. Prereleases require an explicit policy change.
+        .filter((version) => semver.prerelease(version) === null)
+        .map((version) => {
+          const publishedAt = publicationTimes[version];
+          const publishedMs = publishedAt ? Date.parse(publishedAt) : Number.NaN;
+          const ageHours = (now - publishedMs) / MS_PER_HOUR;
+          return { version, publishedAt, ageHours };
+        })
+        .filter(
+          (entry) => entry.publishedAt && Number.isFinite(entry.ageHours) && entry.ageHours >= 0,
+        )
+        .sort((a, b) => semver.rcompare(a.version, b.version));
 
-      if (!version || !publishedAt) {
-        return { name, error: "no latest version or publish time" };
+      if (publishedVersions.length === 0) {
+        return { name, error: "no valid stable versions or publish times in registry metadata" };
       }
 
-      const ageHours = (now - Date.parse(publishedAt)) / MS_PER_HOUR;
-      return { name, version, publishedAt, ageHours: Math.round(ageHours * 100) / 100 };
+      // Prefer the highest stable version old enough to pass the age gate. If none
+      // qualifies yet, return the newest stable release so reporting can show it held.
+      const eligible = publishedVersions.find((entry) => entry.ageHours >= minHours);
+      const selected = eligible ?? publishedVersions[0];
+
+      return {
+        name,
+        version: selected.version,
+        publishedAt: selected.publishedAt,
+        ageHours: Math.round(selected.ageHours * 100) / 100,
+      };
     } catch (error) {
       return { name, error: toMessage(error) };
     }
@@ -425,7 +427,10 @@ const createReportBuilder = (minHours: number, exclusions: ExclusionMatcher) => 
     }
 
     const [, operator = "", current = ""] = parsed;
-    const comparison = compareVersions(lookup.version, current);
+    if (semver.valid(current) === null) {
+      return skip("unsupported semantic version");
+    }
+    const comparison = semver.compare(lookup.version, current);
 
     if (comparison === 0) {
       return { kind: "up-to-date" };
@@ -606,7 +611,9 @@ const createUpdateRunner = (options: CliOptions) => {
     );
 
     const now = Date.now();
-    const results = await pool.map(names, (name) => registry.fetchLatest(name, now));
+    const results = await pool.map(names, (name) =>
+      registry.fetchLatest(name, now, options.minHours),
+    );
 
     return new Map(results.map((result) => [result.name, result]));
   };
