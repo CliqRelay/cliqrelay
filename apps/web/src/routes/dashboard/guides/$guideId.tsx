@@ -254,6 +254,7 @@ function GuideDetailPage() {
           <GuideEditor
             guide={currentGuide}
             mode={mode}
+            canEdit={canEdit}
             onModeChange={setMode}
             onUpdateGuide={handleUpdateGuide}
           />

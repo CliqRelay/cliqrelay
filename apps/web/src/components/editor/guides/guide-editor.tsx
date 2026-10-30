@@ -1,22 +1,25 @@
-import { Activity } from "react";
+import { Activity, useEffect } from "react";
 
 import type { Guide } from "@repo/api-client";
 
+import { GuideEditorWidgetPanel } from "../widgets/guide-editor-widget-panel";
 import { GuideHeader } from "./guide-header";
 import { GuideWorkflowEditMode } from "./guide-workflow-edit-mode";
 import { GuideWorkflowViewMode } from "./guide-workflow-view-mode";
 import { useGuideStepMutations } from "@/hooks/useGuideStepMutations";
 import { useStepEditor } from "@/hooks/useStepEditor";
 import { useStepMediaReplace } from "@/hooks/useStepMediaReplace";
+import { useEditorStore } from "@/stores";
 
 type Props = {
   guide: Guide;
   mode: "view" | "edit";
+  canEdit?: boolean;
   onModeChange?: (mode: "view" | "edit") => void;
   onUpdateGuide?: (updates: { title?: string; description?: string | null }) => void;
 };
 
-export function GuideEditor({ guide, mode, onUpdateGuide }: Props) {
+export function GuideEditor({ guide, mode, canEdit = true, onUpdateGuide }: Props) {
   const {
     steps,
     totalSteps,
@@ -32,48 +35,68 @@ export function GuideEditor({ guide, mode, onUpdateGuide }: Props) {
     useGuideStepMutations(guide.id);
   const { handleReplaceMedia, replacingStepIds } = useStepMediaReplace(guide.id);
 
+  const resetEditor = useEditorStore((state) => state.reset);
+
+  useEffect(() => {
+    resetEditor();
+  }, [guide.id, mode, resetEditor]);
+
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-      <GuideHeader
-        guide={guide}
-        isEditMode={mode === "edit"}
-        stepCount={totalSteps}
-        onUpdateGuide={mode === "edit" ? onUpdateGuide : undefined}
-      />
-
-      <div className="h-px bg-linear-to-r from-transparent via-slate-200 to-transparent" />
-
+    <>
       <Activity mode={mode === "edit" ? "visible" : "hidden"}>
-        <GuideWorkflowEditMode
-          steps={steps}
-          stepsLoading={stepsLoading}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          onLoadMore={fetchNextPage}
-          selectedStepId={selectedStepId}
-          onSelectStep={selectStep}
-          onUpdateStep={handleSave}
-          onAddStepWithType={(type) => handleAddStepWithType(type, selectStep)}
-          onAddStepBeforeWithType={(stepId, type) =>
-            handleAddStepWithType(type, selectStep, stepId)
-          }
-          onDeleteStep={(stepId) => handleDelete(stepId, selectedStepId, selectStep)}
-          onDuplicateStep={(stepId) => handleDuplicate(stepId)}
-          onReplaceStepMedia={handleReplaceMedia}
-          replacingStepIds={replacingStepIds}
-          onReorderSteps={handleReorder}
-        />
+        {canEdit && (
+          <GuideEditorWidgetPanel
+            guide={guide}
+            steps={steps}
+            stepsLoading={stepsLoading}
+            selectedStepId={selectedStepId}
+            onSelectStep={selectStep}
+          />
+        )}
       </Activity>
 
-      <Activity mode={mode === "view" ? "visible" : "hidden"}>
-        <GuideWorkflowViewMode
-          steps={steps}
-          stepsLoading={stepsLoading}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          onLoadMore={fetchNextPage}
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+        <GuideHeader
+          guide={guide}
+          isEditMode={mode === "edit"}
+          stepCount={totalSteps}
+          onUpdateGuide={mode === "edit" ? onUpdateGuide : undefined}
         />
-      </Activity>
-    </div>
+
+        <div className="h-px bg-linear-to-r from-transparent via-slate-200 to-transparent" />
+
+        <Activity mode={mode === "edit" ? "visible" : "hidden"}>
+          <GuideWorkflowEditMode
+            steps={steps}
+            stepsLoading={stepsLoading}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={fetchNextPage}
+            selectedStepId={selectedStepId}
+            onSelectStep={selectStep}
+            onUpdateStep={handleSave}
+            onAddStepWithType={(type) => handleAddStepWithType(type, selectStep)}
+            onAddStepBeforeWithType={(stepId, type) =>
+              handleAddStepWithType(type, selectStep, stepId)
+            }
+            onDeleteStep={(stepId) => handleDelete(stepId, selectedStepId, selectStep)}
+            onDuplicateStep={(stepId) => handleDuplicate(stepId)}
+            onReplaceStepMedia={handleReplaceMedia}
+            replacingStepIds={replacingStepIds}
+            onReorderSteps={handleReorder}
+          />
+        </Activity>
+
+        <Activity mode={mode === "view" ? "visible" : "hidden"}>
+          <GuideWorkflowViewMode
+            steps={steps}
+            stepsLoading={stepsLoading}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={fetchNextPage}
+          />
+        </Activity>
+      </div>
+    </>
   );
 }

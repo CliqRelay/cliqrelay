@@ -25,6 +25,7 @@ import { StepEditCard } from "../steps/step-edit-card";
 import { StepTypeDock } from "../steps/step-type-dock";
 import { GuideStepsLoadMore } from "./guide-steps-load-more";
 import { Button } from "@/components/ui/button";
+import { EDITOR_POINTER_IGNORE_SELECTOR } from "@/constants/editor";
 import type { StepTypeOption } from "@/models";
 
 type Props = {
@@ -48,9 +49,7 @@ type Props = {
   ) => void;
 };
 
-// Radix portals (Select, DropdownMenu, Tooltip) render outside the timeline but belong to it
-const FLOATING_LAYER_SELECTOR = "[data-radix-popper-content-wrapper], [data-slot='select-content']";
-
+// Radix portals (Select, DropdownMenu, Tooltip, ...) render outside the timeline but belong to it
 export function GuideWorkflowTimeline({
   steps,
   hasNextPage = false,
@@ -83,7 +82,7 @@ export function GuideWorkflowTimeline({
       if (
         timelineRef.current &&
         !timelineRef.current.contains(target) &&
-        !target.closest(FLOATING_LAYER_SELECTOR)
+        !target.closest(EDITOR_POINTER_IGNORE_SELECTOR)
       ) {
         onSelectStep?.(null);
       }

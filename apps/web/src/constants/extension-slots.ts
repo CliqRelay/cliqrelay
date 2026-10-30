@@ -13,6 +13,8 @@ export enum ExtensionSlotKeys {
 
   // Guides
   GUIDE_DETAIL_VIEW_TRACKER = "guide-detail-view-tracker",
+  GUIDE_EDITOR_WIDGET_RAIL = "guide-editor-widget-rail",
+  GUIDE_EDITOR_WIDGET_PANEL = "guide-editor-widget-panel",
 
   // Steps
   STEP_MEDIA_TOOLBAR = "step-media-toolbar",
