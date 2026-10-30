@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./editor-widgets";
 export * from "./guides";
 export * from "./media";
 export * from "./members";
