@@ -5,6 +5,7 @@ export const EDITOR_POINTER_IGNORE_SELECTOR = [
   "[data-slot='dropdown-menu-content']",
   "[data-slot='tooltip-content']",
   "[data-slot='dialog-content']",
+  "[data-slot='dialog-overlay']",
   "[data-slot='drawer-content']",
   "[data-slot='sheet-content']",
   "[data-editor-widget-surface]",

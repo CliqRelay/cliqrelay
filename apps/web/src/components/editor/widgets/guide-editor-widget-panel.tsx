@@ -3,13 +3,14 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Step } from "@repo/api-client";
 import { ExtensionSlot, extensionRegistry } from "@repo/extensions-sdk";
 
+import { CORE_WIDGET_MANIFESTS } from "./core-widget-manifests";
 import { useEditorWidgetPanel } from "./use-editor-widget-panel";
 import { WidgetPanelHeader } from "./widget-panel-header";
 import { WidgetRail, WIDGET_PANEL_ID } from "./widget-rail";
 import { ExtensionSlotKeys } from "@/constants/extension-slots";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { CORE_WIDGET_MANIFESTS, type EditorWidgetManifest, type EditorWidgetProps } from "@/models";
+import type { EditorWidgetManifest, EditorWidgetProps } from "@/models";
 
 type Props = {
   guide: EditorWidgetProps["guide"];
@@ -17,6 +18,11 @@ type Props = {
   stepsLoading?: boolean;
   selectedStepId: string | null;
   onSelectStep: (stepId: string | null) => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
+  onReorderSteps?: EditorWidgetProps["onReorderSteps"];
+  onRevealStep?: (stepId: string) => void;
   widgets?: readonly EditorWidgetManifest[];
 };
 
@@ -26,6 +32,11 @@ export function GuideEditorWidgetPanel({
   stepsLoading = false,
   selectedStepId,
   onSelectStep,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+  onReorderSteps,
+  onRevealStep,
   widgets = CORE_WIDGET_MANIFESTS,
 }: Props) {
   const { activeWidgetId, panelRef, toggleWidget, closeWidget } = useEditorWidgetPanel();
@@ -38,6 +49,11 @@ export function GuideEditorWidgetPanel({
     stepsLoading,
     selectedStepId,
     onSelectStep,
+    hasNextPage,
+    isFetchingNextPage,
+    onLoadMore,
+    onReorderSteps,
+    onRevealStep,
   };
 
   const activeManifest = widgets.find((widget) => widget.id === activeWidgetId);

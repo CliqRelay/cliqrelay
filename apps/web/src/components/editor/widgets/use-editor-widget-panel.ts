@@ -34,6 +34,7 @@ export function useEditorWidgetPanel() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (document.querySelector("[data-slot='dialog-content'][data-state='open']")) return;
       closeWidget();
     };
 
