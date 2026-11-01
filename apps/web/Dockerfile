@@ -1,5 +1,5 @@
 # ---------- Base ----------
-FROM node:lts-alpine AS base
+FROM node:24-alpine AS base
 
 WORKDIR /app
 
@@ -42,7 +42,7 @@ ARG VITE_APP_NAME
 RUN pnpm dlx turbo run build --filter=web... --env-mode loose
 
 # ---------- Runtime ----------
-FROM node:lts-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
