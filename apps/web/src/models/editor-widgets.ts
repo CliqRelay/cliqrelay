@@ -10,6 +10,15 @@ export type EditorWidgetProps = {
   stepsLoading: boolean;
   selectedStepId: string | null;
   onSelectStep: (stepId: string | null) => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
+  onReorderSteps?: (
+    targetStepId: string,
+    prevStepId: string | null,
+    nextStepId: string | null,
+  ) => void;
+  onRevealStep?: (stepId: string) => void;
 };
 
 export type EditorWidgetManifest = {
@@ -18,5 +27,3 @@ export type EditorWidgetManifest = {
   icon: ComponentType<{ className?: string }>;
   component: ComponentType<EditorWidgetProps>;
 };
-
-export const CORE_WIDGET_MANIFESTS = [] as const satisfies readonly EditorWidgetManifest[];

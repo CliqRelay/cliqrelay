@@ -19,7 +19,7 @@ import { StepTypeDock } from "./step-type-dock";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { StepTypeOption } from "@/models";
+import { getStepAnchorId, type StepTypeOption } from "@/models";
 import { stepSupportsMedia } from "@/utils/steps.utils";
 
 type EditableStepItemActions = {
@@ -207,7 +207,13 @@ export function StepEditCard({ step, stepNumber, selectedStepId, actions, isRepl
         </div>
       )}
 
-      <div ref={setNodeRef} style={style} className="group flex items-start gap-2">
+      <div
+        ref={setNodeRef}
+        id={getStepAnchorId(step.id)}
+        tabIndex={-1}
+        style={style}
+        className="group flex items-start gap-2"
+      >
         <div
           className="mt-3 cursor-grab touch-none opacity-0 transition-all duration-300 group-hover:opacity-100"
           {...attributes}

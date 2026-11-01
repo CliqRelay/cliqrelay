@@ -7,6 +7,7 @@ import { GuideHeader } from "./guide-header";
 import { GuideWorkflowEditMode } from "./guide-workflow-edit-mode";
 import { GuideWorkflowViewMode } from "./guide-workflow-view-mode";
 import { useGuideStepMutations } from "@/hooks/useGuideStepMutations";
+import { useRevealStep } from "@/hooks/useRevealStep";
 import { useStepEditor } from "@/hooks/useStepEditor";
 import { useStepMediaReplace } from "@/hooks/useStepMediaReplace";
 import { useEditorStore } from "@/stores";
@@ -34,6 +35,7 @@ export function GuideEditor({ guide, mode, canEdit = true, onUpdateGuide }: Prop
   const { handleAddStepWithType, handleSave, handleDelete, handleDuplicate, handleReorder } =
     useGuideStepMutations(guide.id);
   const { handleReplaceMedia, replacingStepIds } = useStepMediaReplace(guide.id);
+  const revealStep = useRevealStep(selectStep);
 
   const resetEditor = useEditorStore((state) => state.reset);
 
@@ -51,6 +53,11 @@ export function GuideEditor({ guide, mode, canEdit = true, onUpdateGuide }: Prop
             stepsLoading={stepsLoading}
             selectedStepId={selectedStepId}
             onSelectStep={selectStep}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={fetchNextPage}
+            onReorderSteps={handleReorder}
+            onRevealStep={revealStep}
           />
         )}
       </Activity>

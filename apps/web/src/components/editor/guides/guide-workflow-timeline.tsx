@@ -1,21 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
-import {
-  closestCorners,
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { closestCorners, DndContext, DragOverlay } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { PlusIcon } from "lucide-react";
 
 import type { Step } from "@repo/api-client";
@@ -26,6 +12,7 @@ import { StepTypeDock } from "../steps/step-type-dock";
 import { GuideStepsLoadMore } from "./guide-steps-load-more";
 import { Button } from "@/components/ui/button";
 import { EDITOR_POINTER_IGNORE_SELECTOR } from "@/constants/editor";
+import { useStepReorder } from "@/hooks/useStepReorder";
 import type { StepTypeOption } from "@/models";
 
 type Props = {
@@ -66,13 +53,17 @@ export function GuideWorkflowTimeline({
   replacingStepIds = [],
   onReorderSteps,
 }: Props) {
-  const [activeId, setActiveId] = useState<string | null>(null);
   const sortedSteps = [...steps];
   const stepsMap = new Map(
     steps.filter((step) => step.type === "interaction").map((step, index) => [step.id, index + 1]),
   );
 
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  const { activeId, sensors, handleDragStart, handleDragEnd, handleDragCancel } = useStepReorder({
+    steps: sortedSteps,
+    onReorder: onReorderSteps,
+  });
 
   useEffect(() => {
     if (!selectedStepId) return;
@@ -94,58 +85,6 @@ export function GuideWorkflowTimeline({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [selectedStepId, onSelectStep]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveId(null);
-
-    if (!onReorderSteps) {
-      return;
-    }
-
-    const { active, over } = event;
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = sortedSteps.findIndex((s) => s.id === active.id);
-    const newIndex = sortedSteps.findIndex((s) => s.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) {
-      return;
-    }
-
-    const targetStepId = active.id as string;
-    let prevStepId: string | null;
-    let nextStepId: string | null;
-
-    if (oldIndex < newIndex) {
-      // Dragging DOWN: place target AFTER the over item
-      prevStepId = sortedSteps[newIndex].id;
-      nextStepId = newIndex + 1 < sortedSteps.length ? sortedSteps[newIndex + 1].id : null;
-    } else {
-      // Dragging UP: place target BEFORE the over item
-      prevStepId = newIndex > 0 ? sortedSteps[newIndex - 1].id : null;
-      nextStepId = sortedSteps[newIndex].id;
-    }
-
-    onReorderSteps(targetStepId, prevStepId, nextStepId);
-  };
-
-  const handleDragCancel = () => {
-    setActiveId(null);
-  };
 
   return (
     <DndContext
