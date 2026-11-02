@@ -103,6 +103,12 @@ export const getGetAllGuidesResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -169,6 +175,12 @@ export const getCreateGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -250,6 +262,12 @@ export const getGetStarredGuidesResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -318,6 +336,12 @@ export const getGetGuideByIdResponseMock = (
       durationSeconds: faker.number.int(),
       id: faker.string.uuid(),
       isStarred: faker.datatype.boolean(),
+      metadata: faker.helpers.arrayElement([
+        {
+          [faker.string.alphanumeric(5)]: {},
+        },
+        null,
+      ]),
       publishedAt: faker.helpers.arrayElement([
         faker.date.past().toISOString().slice(0, 19) + "Z",
         null,
@@ -382,6 +406,12 @@ export const getDeleteGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -445,6 +475,12 @@ export const getUpdateGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -508,6 +544,12 @@ export const getArchiveGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -579,6 +621,12 @@ export const getPermanentlyDeleteGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -642,6 +690,12 @@ export const getPublishGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -705,6 +759,12 @@ export const getRecalculateGuideDurationResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -768,6 +828,12 @@ export const getRestoreGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -845,6 +911,12 @@ export const getUnarchiveGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,
@@ -908,6 +980,12 @@ export const getUnpublishGuideResponseMock = (
     durationSeconds: faker.number.int(),
     id: faker.string.uuid(),
     isStarred: faker.datatype.boolean(),
+    metadata: faker.helpers.arrayElement([
+      {
+        [faker.string.alphanumeric(5)]: {},
+      },
+      null,
+    ]),
     publishedAt: faker.helpers.arrayElement([
       faker.date.past().toISOString().slice(0, 19) + "Z",
       null,

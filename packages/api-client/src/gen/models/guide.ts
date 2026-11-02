@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GuideCreator } from "./guide-creator";
+import type { GuideMetadata } from "./guide-metadata";
 import type { GuideStatus } from "./guide-status";
 import type { Uuid } from "./uuid";
 import type { Visibility } from "./visibility";
@@ -24,6 +25,8 @@ export type Guide = {
   durationSeconds: number;
   id: Uuid;
   isStarred: boolean;
+  /** @nullable */
+  metadata?: GuideMetadata;
   /** @nullable */
   publishedAt?: string | null;
   /** @nullable */
