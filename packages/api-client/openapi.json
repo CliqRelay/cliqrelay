@@ -1860,6 +1860,13 @@
           "is_starred": {
             "type": "boolean"
           },
+          "metadata": {
+            "additionalProperties": {},
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "published_at": {
             "format": "date-time",
             "type": [

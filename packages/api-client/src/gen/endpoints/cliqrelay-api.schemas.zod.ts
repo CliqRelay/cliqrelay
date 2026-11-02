@@ -47,6 +47,7 @@ export const Guide = zod.object({
   durationSeconds: zod.int(),
   id: Uuid,
   isStarred: zod.boolean(),
+  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
   publishedAt: zod.iso.datetime({ offset: true }).nullish(),
   purgeRequestedAt: zod.iso.datetime({ offset: true }).nullish(),
   restoredAt: zod.iso.datetime({ offset: true }).nullish(),

@@ -45,6 +45,7 @@ export * from "./get-step-by-id-response";
 export * from "./guide-creator-metadata";
 export * from "./guide-creator";
 export * from "./guide-export";
+export * from "./guide-metadata";
 export * from "./guide-sort-field";
 export * from "./guide-status";
 export * from "./guide";
