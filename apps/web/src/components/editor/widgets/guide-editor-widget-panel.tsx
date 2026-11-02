@@ -57,8 +57,9 @@ export function GuideEditorWidgetPanel({
   };
 
   const activeManifest = widgets.find((widget) => widget.id === activeWidgetId);
-  const ActiveWidget = activeManifest?.component;
+  const ActivePanel = activeManifest?.panel;
   const title = activeManifest?.label ?? "Widget";
+  const showPanel = activeWidgetId !== null && (!activeManifest || ActivePanel != null);
 
   const hasRailExtension =
     extensionRegistry.getSlot(ExtensionSlotKeys.GUIDE_EDITOR_WIDGET_RAIL) != null;
@@ -78,13 +79,14 @@ export function GuideEditorWidgetPanel({
       widgets={widgets}
       activeWidgetId={activeWidgetId}
       onToggleWidget={toggleWidget}
+      onCloseWidget={closeWidget}
       widgetProps={widgetProps}
     />
   );
 
   const panel = (
     <AnimatePresence>
-      {activeWidgetId && (
+      {showPanel && (
         <motion.section
           id={WIDGET_PANEL_ID}
           ref={panelRef}
@@ -111,8 +113,8 @@ export function GuideEditorWidgetPanel({
           />
 
           <div className="flex-1 overflow-y-auto p-3">
-            {ActiveWidget ? (
-              <ActiveWidget {...widgetProps} />
+            {ActivePanel ? (
+              <ActivePanel {...widgetProps} />
             ) : (
               <ExtensionSlot
                 name={ExtensionSlotKeys.GUIDE_EDITOR_WIDGET_PANEL}
@@ -136,7 +138,7 @@ export function GuideEditorWidgetPanel({
         </div>
 
         <AnimatePresence>
-          {activeWidgetId && (
+          {showPanel && (
             <motion.div
               className="fixed inset-0 z-30 bg-black/40 md:hidden"
               initial={{ opacity: 0 }}
@@ -148,12 +150,14 @@ export function GuideEditorWidgetPanel({
           )}
         </AnimatePresence>
 
-        <div
-          data-editor-widget-surface
-          className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex"
-        >
-          {panel}
-        </div>
+        {showPanel && (
+          <div
+            data-editor-widget-surface
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex"
+          >
+            {panel}
+          </div>
+        )}
       </>
     );
   }

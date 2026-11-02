@@ -1,24 +1,11 @@
+import { useState } from "react";
+
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 
-import type { Guide } from "@repo/api-client";
-
-import { StepsReorderWidget } from "./steps-reorder-widget";
+import { StepsReorderDialog } from "./steps-reorder-dialog";
 import { makeCanvasStep, makeInteractionStep } from "@/test/fixtures/steps";
-
-const guide: Guide = {
-  id: "guide-1",
-  title: "Test guide",
-  status: "draft",
-  visibility: "private",
-  creatorId: null,
-  durationSeconds: 0,
-  isStarred: false,
-  teamId: "team-1",
-  createdAt: "2026-01-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
-};
 
 const steps = [
   makeInteractionStep({ id: "step-1", sortOrder: "a0", actionText: "First step" }),
@@ -27,33 +14,36 @@ const steps = [
 ];
 
 const meta = {
-  title: "Editor/Widgets/StepsReorderWidget",
-  component: StepsReorderWidget,
+  title: "Editor/Widgets/StepsReorderDialog",
+  component: StepsReorderDialog,
   args: {
-    guide,
+    open: true,
+    onOpenChange: fn(),
     steps,
     stepsLoading: false,
-    selectedStepId: null,
-    onSelectStep: fn(),
     hasNextPage: false,
     isFetchingNextPage: false,
     onLoadMore: fn(),
     onReorderSteps: fn(),
     onRevealStep: fn(),
   },
-} satisfies Meta<typeof StepsReorderWidget>;
+  render: function Render(args) {
+    const [open, setOpen] = useState(true);
+
+    return <StepsReorderDialog {...args} open={open} onOpenChange={setOpen} />;
+  },
+} satisfies Meta<typeof StepsReorderDialog>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-async function openDialog(canvasElement: HTMLElement) {
-  await userEvent.click(within(canvasElement).getByRole("button", { name: "Reorder steps" }));
+async function findDialog() {
   return screen.findByRole("dialog", { name: "Reorder steps" });
 }
 
-export const OpensDialogAndListsSteps: Story = {
-  play: async ({ canvasElement }) => {
-    const dialog = await openDialog(canvasElement);
+export const ListsSteps: Story = {
+  play: async () => {
+    const dialog = await findDialog();
 
     const titles = within(dialog)
       .getAllByRole("button")
@@ -72,8 +62,8 @@ export const SkipsNumberingForCanvasSteps: Story = {
       makeInteractionStep({ id: "step-3", sortOrder: "a2", actionText: "Second step" }),
     ],
   },
-  play: async ({ canvasElement }) => {
-    const dialog = await openDialog(canvasElement);
+  play: async () => {
+    const dialog = await findDialog();
 
     const titles = within(dialog)
       .getAllByRole("button")
@@ -86,8 +76,8 @@ export const SkipsNumberingForCanvasSteps: Story = {
 
 export const ShowsEmptyState: Story = {
   args: { steps: [] },
-  play: async ({ canvasElement }) => {
-    const dialog = await openDialog(canvasElement);
+  play: async () => {
+    const dialog = await findDialog();
 
     await expect(within(dialog).getByText("No steps to reorder yet.")).toBeInTheDocument();
   },
@@ -95,16 +85,16 @@ export const ShowsEmptyState: Story = {
 
 export const ShowsSpinnerWhileLoadingMore: Story = {
   args: { hasNextPage: true, isFetchingNextPage: true },
-  play: async ({ canvasElement }) => {
-    const dialog = await openDialog(canvasElement);
+  play: async () => {
+    const dialog = await findDialog();
 
     await expect(await within(dialog).findByLabelText("Loading")).toBeInTheDocument();
   },
 };
 
 export const ClickingCardRevealsAndCloses: Story = {
-  play: async ({ canvasElement, args }) => {
-    const dialog = await openDialog(canvasElement);
+  play: async ({ args }) => {
+    const dialog = await findDialog();
 
     await userEvent.click(within(dialog).getByRole("button", { name: /First step/ }));
 
@@ -114,8 +104,8 @@ export const ClickingCardRevealsAndCloses: Story = {
 };
 
 export const KeyboardReorderMovesTheStep: Story = {
-  play: async ({ canvasElement, args }) => {
-    const dialog = await openDialog(canvasElement);
+  play: async ({ args }) => {
+    const dialog = await findDialog();
     const handle = within(dialog).getByRole("button", { name: "Reorder step 1" });
 
     handle.focus();
@@ -130,8 +120,8 @@ export const KeyboardReorderMovesTheStep: Story = {
 };
 
 export const DragOverlayEscapesTheDialogTransform: Story = {
-  play: async ({ canvasElement }) => {
-    const dialog = await openDialog(canvasElement);
+  play: async () => {
+    const dialog = await findDialog();
     const handle = within(dialog).getByRole("button", { name: "Reorder step 1" });
 
     handle.focus();

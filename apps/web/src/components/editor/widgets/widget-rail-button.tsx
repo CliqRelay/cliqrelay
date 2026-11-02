@@ -9,6 +9,7 @@ type Props = {
   icon: ComponentType<{ className?: string }>;
   isActive?: boolean;
   controlsId?: string;
+  hasPopup?: "dialog";
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
   ref?: Ref<HTMLButtonElement>;
   className?: string;
@@ -19,6 +20,7 @@ export function WidgetRailButton({
   icon: Icon,
   isActive = false,
   controlsId,
+  hasPopup,
   onClick,
   ref,
   className,
@@ -34,6 +36,7 @@ export function WidgetRailButton({
           aria-label={label}
           aria-expanded={isActive}
           aria-controls={controlsId}
+          aria-haspopup={hasPopup}
           onClick={onClick}
           className={cn(
             "pointer-events-auto rounded-full border bg-muted/60 text-muted-foreground hover:bg-foreground/5! hover:text-foreground focus-visible:ring-2",

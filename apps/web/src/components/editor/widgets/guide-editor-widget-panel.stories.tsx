@@ -6,6 +6,7 @@ import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 import type { Guide } from "@repo/api-client";
 import { extensionRegistry } from "@repo/extensions-sdk";
 
+import { CORE_WIDGET_MANIFESTS } from "./core-widget-manifests";
 import { GuideEditorWidgetPanel } from "./guide-editor-widget-panel";
 import { WIDGET_PANEL_ID } from "./widget-rail";
 import { WidgetRailButton } from "./widget-rail-button";
@@ -41,14 +42,14 @@ const stepsWidget: EditorWidgetManifest = {
   id: "steps-reorder",
   label: "Reorder steps",
   icon: ListOrderedIcon,
-  component: TestWidget,
+  panel: TestWidget,
 };
 
 const emptyStateWidget: EditorWidgetManifest = {
   ...stepsWidget,
   id: "empty-state",
   label: "Empty state",
-  component: () => <p>Nothing to show</p>,
+  panel: () => <p>Nothing to show</p>,
 };
 
 const eeWidgetId = "ee-redaction";
@@ -199,6 +200,40 @@ export const SwitchingWidgetsKeepsPanelOpen: Story = {
 
     await userEvent.click(canvas.getByRole("button", { name: "Empty state" }));
     await expect(canvas.getByText("Nothing to show")).toBeInTheDocument();
+  },
+};
+
+export const RailButtonOpensDialogDirectly: Story = {
+  args: { widgets: CORE_WIDGET_MANIFESTS },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const railButton = canvas.getByRole("button", { name: "Reorder steps" });
+
+    await expect(railButton).toHaveAttribute("aria-haspopup", "dialog");
+
+    await userEvent.click(railButton);
+
+    await expect(await screen.findByRole("dialog", { name: "Reorder steps" })).toBeInTheDocument();
+    await expect(railButton).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.queryByRole("region", { name: "Reorder steps" })).not.toBeInTheDocument();
+  },
+};
+
+export const EscapeClosesDialogAndRestoresFocus: Story = {
+  args: { widgets: CORE_WIDGET_MANIFESTS },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const railButton = canvas.getByRole("button", { name: "Reorder steps" });
+
+    await userEvent.click(railButton);
+    await screen.findByRole("dialog", { name: "Reorder steps" });
+
+    await userEvent.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Reorder steps" })).not.toBeInTheDocument(),
+    );
+    await expect(railButton).toHaveFocus();
   },
 };
 
