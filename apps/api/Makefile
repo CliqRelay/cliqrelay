@@ -4,7 +4,7 @@ BINARY_PATH=./tmp/$(APP_NAME)
 OPENAPI_EXPORT_BINARY=./tmp/openapi-export
 WORKER_BINARY=./tmp/$(APP_NAME)-worker
 BIN_DIR=$(CURDIR)/bin
-GOLANGCI_LINT_VERSION?=v2.13.2
+GOLANGCI_LINT_VERSION?=v2.15.0
 AIR_VERSION?=latest
 
 .PHONY: help build build-exe run dev test clean install setup
