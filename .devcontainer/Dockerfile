@@ -42,7 +42,7 @@ RUN npx playwright install-deps
 # --------------------------------------
 # Go & tools
 # --------------------------------------
-RUN curl -sSL https://go.dev/dl/go1.26.4.linux-amd64.tar.gz | tar -C /usr/local -xz
+RUN curl -sSL https://go.dev/dl/go1.27.3.linux-amd64.tar.gz | tar -C /usr/local -xz
 ENV PATH="${PATH}:/usr/local/go/bin"
 
 # Install Go tools useful for dev
