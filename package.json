@@ -11,15 +11,15 @@
     "update-npm-deps": "tsx ./scripts/update-npm-deps.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/semver": "^7.8.0",
-    "oxfmt": "^0.74.0",
-    "oxlint": "^1.89.0",
-    "semver": "^7.8.5",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "semver": "^7.8.6",
     "tsx": "^4.23.15",
-    "turbo": "^2.11.10",
+    "turbo": "^2.11.11",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   },
   "engines": {
     "node": ">=24"

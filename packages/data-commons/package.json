@@ -19,12 +19,12 @@
   },
   "devDependencies": {
     "@types/ms": "^2.1.0",
-    "@vitest/coverage-v8": "^5.0.5",
-    "@vitest/ui": "^5.0.5",
-    "oxfmt": "^0.74.0",
-    "oxlint": "^1.89.0",
+    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/ui": "^5.1.0",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   },
   "peerDependencies": {
     "ms": "^2.1.3",
