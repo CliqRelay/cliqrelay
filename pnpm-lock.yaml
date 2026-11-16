@@ -506,6 +506,9 @@ importers:
       authula:
         specifier: ^0.9.1
         version: 0.9.1(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(react@19.3.1)(solid-js@1.9.17)
+      avvvatars-react:
+        specifier: ^0.4.2
+        version: 0.4.2(csstype@3.2.3)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       blobatar:
         specifier: ^2.7.0
         version: 2.7.0(react@19.3.1)
@@ -4240,6 +4243,12 @@ packages:
         optional: true
       vue:
         optional: true
+
+  avvvatars-react@0.4.2:
+    resolution: {integrity: sha512-D/bnSM+P6pQi71dFeFVqQsqmv+ct5XG7uO2lvJoiksALpXLd6kPgpRR1SUQxFZJkJNrkmg0NPgbhIgJgOsDYRQ==}
+    peerDependencies:
+      react: '>= 16'
+      react-dom: '>= 16'
 
   babel-dead-code-elimination@1.0.12:
     resolution: {integrity: sha512-GERT7L2TiYcYDtYk1IpD+ASAYXjKbLTDPhBtYj7X1NuRMDTMtAx9kyBenub1Ev41lo91OHCKdmP+egTDmfQ7Ig==}
@@ -9909,6 +9918,14 @@ snapshots:
       '@tanstack/react-query': 5.107.1(@types/react@19.3.0)(react@19.3.1)
       react: 19.3.1
       solid-js: 1.9.17
+
+  avvvatars-react@0.4.2(csstype@3.2.3)(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+    dependencies:
+      goober: 2.1.19(csstype@3.2.3)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+    transitivePeerDependencies:
+      - csstype
 
   babel-dead-code-elimination@1.0.12(supports-color@7.2.0):
     dependencies:

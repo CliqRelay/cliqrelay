@@ -151,7 +151,7 @@ export function GuideCard({
           </div>
           {guide.creator?.name && (
             <div className="mt-auto flex items-center gap-1 pt-2 text-[11px] text-muted-foreground/50">
-              <UserAvatar user={guide.creator} className="size-4" />
+              <UserAvatar user={guide.creator} avatar={{ size: 16 }} />
               <span className="text-muted-foreground/70">{guide.creator.name}</span>
             </div>
           )}

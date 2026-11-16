@@ -5,7 +5,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { AvatarBadge } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,10 +65,7 @@ export default function UserDropdown({ user, trigger, defaultOpen, align = "end"
         >
           <DropdownMenuGroup>
             <DropdownMenuLabel className="flex items-center gap-3 px-4 py-3">
-              <UserAvatar user={user} size="lg" className="overflow-visible">
-                <AvatarBadge className="bg-green-600" />
-              </UserAvatar>
-
+              <UserAvatar user={user} />
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-popover-foreground">{user.name}</span>
                 <span className="text-sm text-muted-foreground">{user.email}</span>

@@ -18,7 +18,7 @@ export function GuideMetadataCard({ guide, stepCount }: Props) {
       <CardContent className="flex flex-row items-center gap-4 px-4 py-2 text-xs text-muted-foreground *:border-r *:pr-4 *:last:border-r-0">
         {guide.creator?.name && (
           <span className="flex items-center gap-1">
-            <UserAvatar user={guide.creator} className="size-4" />
+            <UserAvatar user={guide.creator} avatar={{ size: 16 }} />
             {guide.creator.name}
           </span>
         )}
