@@ -42,14 +42,19 @@ RUN npx playwright install-deps
 # --------------------------------------
 # Go & tools
 # --------------------------------------
-RUN curl -sSL https://go.dev/dl/go1.27.3.linux-amd64.tar.gz | tar -C /usr/local -xz
-ENV PATH="${PATH}:/usr/local/go/bin"
+ENV GO_VERSION=1.27.4
+ENV GOPATH=/root/go
+ENV PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 
-# Install Go tools useful for dev
-RUN go install github.com/go-delve/delve/cmd/dlv@latest \
+RUN ARCH="$(dpkg --print-architecture)" \
+    && case "${ARCH}" in \
+        amd64) GO_ARCH='amd64' ;; \
+        arm64) GO_ARCH='arm64' ;; \
+        *) echo "Unsupported architecture: ${ARCH}"; exit 1 ;; \
+      esac \
+    && curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" | tar -C /usr/local -xz \
+    && go install github.com/go-delve/delve/cmd/dlv@latest \
     && go install golang.org/x/tools/gopls@latest
-
-ENV PATH="$PATH:$(go env GOPATH)/bin"
 # --------------------------------------
 
 # --------------------------------------
