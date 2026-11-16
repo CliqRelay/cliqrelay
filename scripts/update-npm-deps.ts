@@ -153,7 +153,10 @@ const toWildcardPattern = (pattern: string): RegExp =>
   new RegExp(`^${pattern.split("*").map(escapeRegExp).join(".*")}$`);
 
 const createExclusionMatcher = (patterns: readonly string[]) => {
-  const matchers = patterns.map((pattern) => ({ pattern, matches: toWildcardPattern(pattern) }));
+  const matchers = patterns.map((pattern) => ({
+    pattern,
+    matches: toWildcardPattern(pattern),
+  }));
 
   return {
     // The pattern that excludes `name`, or undefined when the package is fair game.
@@ -206,7 +209,10 @@ const createRegistryClient = (registry: string, timeoutMs = REQUEST_TIMEOUT_MS) 
         .sort((a, b) => semver.rcompare(a.version, b.version));
 
       if (publishedVersions.length === 0) {
-        return { name, error: "no valid stable versions or publish times in registry metadata" };
+        return {
+          name,
+          error: "no valid stable versions or publish times in registry metadata",
+        };
       }
 
       // Prefer the highest stable version old enough to pass the age gate. If none
@@ -376,13 +382,22 @@ const collect = (buckets: Buckets, classification: Classification): Buckets => {
     case "up-to-date":
       return { ...buckets, upToDate: buckets.upToDate + 1 };
     case "update":
-      return { ...buckets, updates: [...buckets.updates, classification.entry] };
+      return {
+        ...buckets,
+        updates: [...buckets.updates, classification.entry],
+      };
     case "held":
       return { ...buckets, held: [...buckets.held, classification.entry] };
     case "excluded":
-      return { ...buckets, excluded: [...buckets.excluded, classification.entry] };
+      return {
+        ...buckets,
+        excluded: [...buckets.excluded, classification.entry],
+      };
     case "skipped":
-      return { ...buckets, skipped: [...buckets.skipped, classification.entry] };
+      return {
+        ...buckets,
+        skipped: [...buckets.skipped, classification.entry],
+      };
     case "error":
       return { ...buckets, errors: [...buckets.errors, classification.entry] };
   }
@@ -566,11 +581,18 @@ const parseCliOptions = (argv: string[]): CliOptions => {
     allowPositionals: true,
     options: {
       hours: { type: "string", short: "h", default: String(DEFAULT_MIN_HOURS) },
-      concurrency: { type: "string", short: "c", default: String(DEFAULT_CONCURRENCY) },
+      concurrency: {
+        type: "string",
+        short: "c",
+        default: String(DEFAULT_CONCURRENCY),
+      },
       exclude: { type: "string", short: "x", multiple: true, default: [] },
       "dry-run": { type: "boolean", short: "n", default: false },
       json: { type: "boolean", short: "j", default: false },
-      registry: { type: "string", default: process.env.NPM_REGISTRY ?? DEFAULT_REGISTRY },
+      registry: {
+        type: "string",
+        default: process.env.NPM_REGISTRY ?? DEFAULT_REGISTRY,
+      },
       help: { type: "boolean", default: false },
     },
   });
