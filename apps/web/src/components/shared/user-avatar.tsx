@@ -1,9 +1,21 @@
-import { Blobatar, type BlobatarProps } from "@/components/ui/blobatar";
+import Avvvatars from "avvvatars-react";
 
-type AvatarUser = { id: string; name: string; image?: string | null };
+type Props = {
+  user: {
+    id: string;
+  };
+  avatar?: {
+    // These params are copied from the library as it doesn't export the interface/type.
+    displayValue?: string;
+    size?: number;
+    shadow?: boolean;
+    border?: boolean;
+    borderSize?: number;
+    borderColor?: string;
+    radius?: number;
+  };
+};
 
-type Props = Omit<BlobatarProps, "name" | "src" | "alt"> & { user: AvatarUser };
-
-export function UserAvatar({ user, ...props }: Props) {
-  return <Blobatar name={user.id} src={user.image ?? undefined} alt={user.name} {...props} />;
+export function UserAvatar({ user, avatar }: Props) {
+  return <Avvvatars value={user.id} style="shape" {...avatar} />;
 }

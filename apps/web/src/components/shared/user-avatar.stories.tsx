@@ -4,53 +4,39 @@ import { expect, within } from "storybook/test";
 
 import { UserAvatar } from "./user-avatar";
 
-const alice = { id: "user_alice", name: "Alice Example", image: null };
+const user = { id: "b9da4246-4cc5-4785-a4bf-fca7b33a7444" };
 
 const meta = {
   title: "Shared/UserAvatar",
   component: UserAvatar,
-  args: { user: alice },
+  args: { user },
 } satisfies Meta<typeof UserAvatar>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const generatedImages = (root: HTMLElement) =>
-  Array.from(root.querySelectorAll<HTMLImageElement>('img[src^="data:image/svg+xml"]'));
+const generatedAvatars = (root: HTMLElement) => within(root).getAllByRole("img");
 
 export const Generated: Story = {
   play: async ({ canvasElement }) => {
-    await expect(generatedImages(canvasElement)).toHaveLength(1);
-  },
-};
-
-export const WithPhoto: Story = {
-  args: {
-    user: {
-      ...alice,
-      image: "https://api.dicebear.com/9.x/shapes/svg?seed=alice",
-    },
-  },
-  play: async ({ canvasElement }) => {
-    const photo = await within(canvasElement).findByAltText("Alice Example");
-    await expect(photo).toHaveAttribute(
-      "src",
-      "https://api.dicebear.com/9.x/shapes/svg?seed=alice",
-    );
+    await expect(generatedAvatars(canvasElement)).toHaveLength(1);
   },
 };
 
 export const Deterministic: Story = {
   render: () => (
     <div className="flex gap-2">
-      <UserAvatar user={alice} />
-      <UserAvatar user={{ ...alice, name: "Alice Renamed" }} />
-      <UserAvatar user={{ id: "user_bob", name: "Bob Example" }} />
+      <UserAvatar user={user} />
+      <UserAvatar user={user} />
+      <UserAvatar user={{ id: "user_bob" }} />
     </div>
   ),
   play: async ({ canvasElement }) => {
-    const [first, renamed, other] = generatedImages(canvasElement).map((img) => img.src);
-    await expect(first).toBe(renamed);
+    const [first, repeated, other] = generatedAvatars(canvasElement).map(
+      (avatar) => avatar.parentElement?.outerHTML,
+    );
+
+    await expect(first).toBe(repeated);
     await expect(first).not.toBe(other);
   },
 };
@@ -58,10 +44,24 @@ export const Deterministic: Story = {
 export const Sizes: Story = {
   render: () => (
     <div className="flex items-center gap-2">
-      <UserAvatar user={alice} className="size-4" />
-      <UserAvatar user={alice} size="sm" />
-      <UserAvatar user={alice} size="default" />
-      <UserAvatar user={alice} size="lg" />
+      <UserAvatar user={user} avatar={{ size: 16 }} />
+      <UserAvatar user={user} avatar={{ size: 24 }} />
+      <UserAvatar user={user} avatar={{ size: 32 }} />
+      <UserAvatar user={user} avatar={{ size: 40 }} />
     </div>
   ),
+};
+
+export const Customization: Story = {
+  args: {
+    user,
+    avatar: {
+      size: 48,
+      border: true,
+      borderSize: 2,
+      borderColor: "#ffffff",
+      shadow: true,
+      radius: 12,
+    },
+  },
 };

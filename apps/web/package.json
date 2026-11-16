@@ -16,7 +16,7 @@
     "lint:fix": "oxlint --fix",
     "check-types": "tsc --noEmit",
     "fmt": "oxfmt",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 6006 --no-open",
     "build-storybook": "storybook build"
   },
   "dependencies": {
@@ -69,6 +69,7 @@
     "@tanstack/start-storage-context": "^1.167.41",
     "@tanstack/virtual-file-routes": "^1.162.0",
     "authula": "^0.9.1",
+    "avvvatars-react": "^0.4.2",
     "blobatar": "^2.7.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
