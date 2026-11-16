@@ -28,7 +28,7 @@ export const Deterministic: Story = {
     <div className="flex gap-2">
       <UserAvatar user={user} />
       <UserAvatar user={user} />
-      <UserAvatar user={{ id: "user_bob" }} />
+      <UserAvatar user={{ id: "89b582cf-b08f-45a1-b475-4706037a92f4" }} />
     </div>
   ),
   play: async ({ canvasElement }) => {
