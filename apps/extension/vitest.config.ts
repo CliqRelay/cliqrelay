@@ -1,5 +1,6 @@
 import type { BrowserCommand } from "vitest/node";
 
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
 import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
@@ -39,6 +40,7 @@ export default defineConfig({
           include: ["src/**/*.test.ts"],
           exclude: ["src/**/*.browser.test.ts"],
           setupFiles: ["src/__tests__/setup.ts"],
+          testTimeout: 15000,
         },
       },
       {
@@ -53,6 +55,20 @@ export default defineConfig({
             instances: [{ browser: "chromium" }],
             commands: { movePointer, pressPointer, releasePointer },
           },
+        },
+      },
+      {
+        plugins: [storybookTest({ configDir: resolve(import.meta.dirname, ".storybook") })],
+        resolve: { alias },
+        test: {
+          name: "storybook",
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            instances: [{ browser: "chromium" }],
+          },
+          setupFiles: [".storybook/vitest.setup.ts"],
         },
       },
     ],
