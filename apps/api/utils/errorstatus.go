@@ -28,6 +28,8 @@ func ErrorStatus(err error) int {
 		errors.Is(err, constants.ErrCannotSetGuideToPrivate),
 		errors.Is(err, constants.ErrOrganizationAccessDenied):
 		return http.StatusForbidden
+	case errors.Is(err, constants.ErrClientIDConflict):
+		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError
 	}

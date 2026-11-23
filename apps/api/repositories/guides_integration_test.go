@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/repositories/guides"
@@ -1472,4 +1473,89 @@ func TestBunGuidesRepository_RestoreConcurrent_OrgLock(t *testing.T) {
 	count, err := repo.GetCount(ctx, &types.GuideFilter{OrganizationID: &parsedOrgID})
 	require.NoError(t, err)
 	assert.Equal(t, limit, count)
+}
+
+func TestBunGuidesRepository_ClientGuideID(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	clientGuideID := uuid.New().String()
+
+	newRepo := func(t *testing.T) (interfaces.GuidesRepository, bun.IDB, string, uuid.UUID) {
+		t.Helper()
+
+		tx, err := guidesDB.Begin()
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = tx.Rollback() })
+
+		userID := uuid.New().String()
+		insertTestUserWithID(ctx, tx, t, userID)
+		teamID, _ := createTestOrgTeam(ctx, tx, t)
+
+		return guides.NewBunGuidesRepository(tx), tx, userID, teamID
+	}
+
+	t.Run("creates and reads back by client id", func(t *testing.T) {
+		t.Parallel()
+
+		repo, _, userID, teamID := newRepo(t)
+
+		created, err := repo.Create(ctx, &types.CreateGuideDTO{
+			TeamID:        teamID,
+			CreatorID:     new(userID),
+			Title:         "Recorded Guide",
+			ClientGuideID: new(clientGuideID),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, created.ClientGuideID)
+		assert.Equal(t, clientGuideID, *created.ClientGuideID)
+
+		found, err := repo.GetByClientID(ctx, clientGuideID)
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		assert.Equal(t, created.ID, found.ID)
+	})
+
+	t.Run("rejects a duplicate client id for the same creator", func(t *testing.T) {
+		t.Parallel()
+
+		repo, _, userID, teamID := newRepo(t)
+		dto := &types.CreateGuideDTO{
+			TeamID:        teamID,
+			CreatorID:     new(userID),
+			Title:         "Recorded Guide",
+			ClientGuideID: new(clientGuideID),
+		}
+
+		_, err := repo.Create(ctx, dto)
+		require.NoError(t, err)
+
+		_, err = repo.Create(ctx, dto)
+		assert.ErrorIs(t, err, constants.ErrDuplicateClientID)
+	})
+
+	t.Run("allows the same client id for another creator", func(t *testing.T) {
+		t.Parallel()
+
+		repo, tx, userID, teamID := newRepo(t)
+		created, err := repo.Create(ctx, &types.CreateGuideDTO{
+			TeamID:        teamID,
+			CreatorID:     new(userID),
+			Title:         "Recorded Guide",
+			ClientGuideID: new(clientGuideID),
+		})
+		require.NoError(t, err)
+
+		otherUserID := uuid.New().String()
+		insertTestUserWithID(ctx, tx, t, otherUserID)
+
+		otherGuide, err := repo.Create(ctx, &types.CreateGuideDTO{
+			TeamID:        teamID,
+			CreatorID:     new(otherUserID),
+			Title:         "Recorded Guide",
+			ClientGuideID: new(clientGuideID),
+		})
+		require.NoError(t, err, "the unique index is scoped to the creator")
+		assert.NotEqual(t, created.ID, otherGuide.ID)
+	})
 }

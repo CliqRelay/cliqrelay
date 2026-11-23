@@ -103,9 +103,10 @@ type GuideFilter struct {
 }
 
 type CreateGuideRequest struct {
-	TeamID      uuid.UUID `json:"team_id" validate:"required,uuid" required:"true"`
-	Title       string    `json:"title" validate:"required,lte=255" required:"true"`
-	Description *string   `json:"description,omitempty" nullable:"true"`
+	TeamID        uuid.UUID `json:"team_id" validate:"required,uuid" required:"true"`
+	Title         string    `json:"title" validate:"required,lte=255" required:"true"`
+	Description   *string   `json:"description,omitempty" nullable:"true"`
+	ClientGuideID *string   `json:"client_guide_id,omitempty" validate:"omitempty,uuid"`
 }
 
 func (r *CreateGuideRequest) Validate() error {
@@ -116,10 +117,11 @@ func (r *CreateGuideRequest) Validate() error {
 }
 
 type CreateGuideDTO struct {
-	TeamID      uuid.UUID `json:"team_id" validate:"required"`
-	CreatorID   *string   `json:"-"`
-	Title       string    `json:"title" required:"true" validate:"required,lte=255"`
-	Description *string   `json:"description,omitempty"`
+	TeamID        uuid.UUID `json:"team_id" validate:"required"`
+	CreatorID     *string   `json:"-"`
+	Title         string    `json:"title" required:"true" validate:"required,lte=255"`
+	Description   *string   `json:"description,omitempty"`
+	ClientGuideID *string   `json:"-" validate:"omitempty,uuid"`
 }
 
 func (r *CreateGuideDTO) Validate() error {

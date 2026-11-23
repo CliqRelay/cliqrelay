@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/models"
 	stepsrepositories "github.com/CliqRelay/cliqrelay/repositories/steps"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -946,4 +947,48 @@ func TestBunStepsRepository_Reorder(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBunStepsRepository_ClientStepID(t *testing.T) {
+	t.Parallel()
+
+	db := stepsDB
+	repo := stepsrepositories.NewBunStepsRepository(db)
+	ctx := context.Background()
+	clientStepID := uuid.New().String()
+
+	guide := seedGuide(t, db, "", "Client Step ID Guide")
+	otherGuide := seedGuide(t, db, *guide.CreatorID, "Other Client Step ID Guide")
+
+	created, err := repo.Create(ctx, &types.CreateStepDTO{
+		GuideID:      guide.ID,
+		Type:         models.StepTypeInteraction,
+		Action:       new(models.StepActionClick),
+		ClientStepID: new(clientStepID),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, created.ClientStepID)
+	assert.Equal(t, clientStepID, *created.ClientStepID)
+
+	found, err := repo.GetByClientID(ctx, clientStepID)
+	require.NoError(t, err)
+	require.NotNil(t, found)
+	assert.Equal(t, created.ID, found.ID)
+
+	_, err = repo.Create(ctx, &types.CreateStepDTO{
+		GuideID:      guide.ID,
+		Type:         models.StepTypeInteraction,
+		Action:       new(models.StepActionClick),
+		ClientStepID: new(clientStepID),
+	})
+	assert.ErrorIs(t, err, constants.ErrDuplicateClientID)
+
+	otherGuideStep, err := repo.Create(ctx, &types.CreateStepDTO{
+		GuideID:      otherGuide.ID,
+		Type:         models.StepTypeInteraction,
+		Action:       new(models.StepActionClick),
+		ClientStepID: new(clientStepID),
+	})
+	require.NoError(t, err, "the unique index is scoped to the guide")
+	assert.NotEqual(t, created.ID, otherGuideStep.ID)
 }

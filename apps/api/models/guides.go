@@ -108,6 +108,7 @@ type Guide struct {
 	PurgeRequestedAt *time.Time     `json:"purge_requested_at,omitempty" bun:"column:purge_requested_at" nullable:"true"`
 	IsStarred        bool           `json:"is_starred" bun:"-" required:"true"`
 	Metadata         map[string]any `json:"metadata" bun:"column:metadata,type:jsonb" nullable:"true"`
+	ClientGuideID    *string        `json:"-" bun:"column:client_guide_id"`
 	CreatedAt        time.Time      `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true"`
 	UpdatedAt        time.Time      `json:"updated_at" bun:"column:updated_at,default:current_timestamp" required:"true"`
 }

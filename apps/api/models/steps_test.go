@@ -1,9 +1,12 @@
 package models
 
 import (
+	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStep_SupportsMedia(t *testing.T) {
@@ -28,4 +31,14 @@ func TestStep_SupportsMedia(t *testing.T) {
 			assert.Equal(t, tt.want, tt.step.SupportsMedia())
 		})
 	}
+}
+
+func TestStep_JSONOmitsClientStepID(t *testing.T) {
+	t.Parallel()
+
+	step := Step{ID: uuid.New(), Type: StepTypeInteraction, ClientStepID: new(uuid.New().String())}
+
+	data, err := json.Marshal(step)
+	require.NoError(t, err)
+	assert.NotContains(t, string(data), "client_step_id")
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/uptrace/bun"
 	"roci.dev/fracdex"
 
@@ -43,6 +44,7 @@ func (r *BunStepsRepository) Create(ctx context.Context, dto *types.CreateStepDT
 		Notes:         dto.Notes,
 		TargetElement: dto.TargetElement,
 		CanvasContent: dto.CanvasContent,
+		ClientStepID:  dto.ClientStepID,
 	}
 
 	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -172,7 +174,40 @@ func (r *BunStepsRepository) Create(ctx context.Context, dto *types.CreateStepDT
 		return err
 	})
 
-	return step, err
+	if err != nil {
+		if isClientStepIDConflict(err) {
+			return nil, constants.ErrDuplicateClientID
+		}
+		return nil, err
+	}
+
+	return step, nil
+}
+
+func isClientStepIDConflict(err error) bool {
+	var pqErr *pq.Error
+	return errors.As(err, &pqErr) &&
+		pqErr.Code == "23505" &&
+		pqErr.Constraint == "idx_steps_guide_client_step_id"
+}
+
+func (r *BunStepsRepository) GetByClientID(ctx context.Context, clientStepID string) (*models.Step, error) {
+	step := &models.Step{}
+
+	err := r.db.NewSelect().
+		Model(step).
+		Where("client_step_id = ?", clientStepID).
+		Order("created_at ASC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return step, nil
 }
 
 func (r *BunStepsRepository) GetByID(ctx context.Context, id string) (*models.Step, error) {

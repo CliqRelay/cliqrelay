@@ -1,10 +1,12 @@
 package steps
 
 import (
+	"errors"
 	"net/http"
 
 	authulamodels "github.com/Authula/authula/models"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/types"
 	"github.com/CliqRelay/cliqrelay/utils"
@@ -38,7 +40,7 @@ func (h *CreateStepHandler) Handle() http.HandlerFunc {
 
 		step, err := h.stepsUseCase.Create(ctx, actor, &request)
 		if err != nil {
-			reqCtx.SetJSONResponse(http.StatusInternalServerError, map[string]any{"message": err.Error()})
+			reqCtx.SetJSONResponse(createStepErrorStatus(err), map[string]any{"message": err.Error()})
 			reqCtx.Handled = true
 			return
 		}
@@ -47,4 +49,12 @@ func (h *CreateStepHandler) Handle() http.HandlerFunc {
 			Step: step,
 		})
 	}
+}
+
+func createStepErrorStatus(err error) int {
+	if errors.Is(err, constants.ErrClientIDConflict) || errors.Is(err, constants.ErrGuideDeleted) {
+		return http.StatusConflict
+	}
+
+	return http.StatusInternalServerError
 }

@@ -10,6 +10,7 @@ import (
 type StepsRepository interface {
 	Create(ctx context.Context, dto *types.CreateStepDTO) (*models.Step, error)
 	GetByID(ctx context.Context, id string) (*models.Step, error)
+	GetByClientID(ctx context.Context, clientStepID string) (*models.Step, error)
 	GetByGuideID(ctx context.Context, guideID string) ([]*models.Step, error)
 	ListByGuideID(ctx context.Context, params *types.ListStepsParams) (*types.StepsPage, error)
 	Update(ctx context.Context, dto *types.UpdateStepDTO) (*models.Step, error)

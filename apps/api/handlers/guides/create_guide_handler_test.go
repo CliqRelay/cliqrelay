@@ -69,6 +69,37 @@ func TestCreateGuideHandler(t *testing.T) {
 			expectedBody:   "failed on the 'required' tag",
 		},
 		{
+			name: "invalid client_guide_id",
+			payload: types.CreateGuideRequest{
+				TeamID:        uuid.New(),
+				Title:         "Test Guide",
+				ClientGuideID: new("not-a-uuid"),
+			},
+			setup:          func(mockRepo *tests.MockGuidesRepository) {},
+			expectedStatus: http.StatusUnprocessableEntity,
+			expectedBody:   "failed on the 'uuid' tag",
+		},
+		{
+			name: "conflicts with another user's client guide id",
+			payload: types.CreateGuideRequest{
+				TeamID:        uuid.New(),
+				Title:         "Test Guide",
+				ClientGuideID: new(uuid.New().String()),
+			},
+			setup: func(mockRepo *tests.MockGuidesRepository) {
+				mockRepo.On("GetByClientID", mock.Anything, mock.Anything).
+					Return(&models.Guide{
+						ID:        uuid.New(),
+						CreatorID: new("another-user"),
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
+			},
+			expectedStatus: http.StatusConflict,
+			expectedBody:   "client guide id belongs to another user",
+		},
+		{
 			name: "service error",
 			payload: types.CreateGuideRequest{
 				TeamID: uuid.New(),

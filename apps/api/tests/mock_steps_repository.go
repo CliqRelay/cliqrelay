@@ -30,6 +30,14 @@ func (m *MockStepsRepository) GetByID(ctx context.Context, id string) (*models.S
 	return args.Get(0).(*models.Step), args.Error(1)
 }
 
+func (m *MockStepsRepository) GetByClientID(ctx context.Context, clientStepID string) (*models.Step, error) {
+	args := m.Called(ctx, clientStepID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Step), args.Error(1)
+}
+
 func (m *MockStepsRepository) GetByGuideID(ctx context.Context, guideID string) ([]*models.Step, error) {
 	args := m.Called(ctx, guideID)
 	return args.Get(0).([]*models.Step), args.Error(1)

@@ -42,6 +42,7 @@ func RunMigrations(ctx context.Context, auth *authula.Auth, opts ...Option) erro
 		mediaAssetsInitial(),
 		starredGuidesInitial(),
 		guideExportsInitial(),
+		clientIDsInitial(),
 	}
 
 	migrationSet := []authulamigrations.MigrationSet{

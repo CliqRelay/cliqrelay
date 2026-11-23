@@ -93,6 +93,7 @@ type Step struct {
 	URL           *string            `json:"url,omitempty" bun:"column:url" nullable:"true"`
 	TargetElement map[string]any     `json:"target_element,omitempty" bun:"column:target_element,type:jsonb" nullable:"true"`
 	CanvasContent *StepCanvasContent `json:"canvas_content,omitempty" bun:"column:canvas_content,type:jsonb" nullable:"true"`
+	ClientStepID  *string            `json:"-" bun:"column:client_step_id"`
 	CreatedAt     time.Time          `json:"created_at" bun:"column:created_at,default:current_timestamp" required:"true"`
 	UpdatedAt     time.Time          `json:"updated_at" bun:"column:updated_at,default:current_timestamp" required:"true"`
 

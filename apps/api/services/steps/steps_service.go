@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -99,6 +100,16 @@ func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest)
 		return nil, err
 	}
 
+	if req.ClientStepID != nil {
+		existing, err := s.resolveClientStep(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		if existing != nil {
+			return existing, nil
+		}
+	}
+
 	if err := runCreateStepHooks(s.hooks.BeforeCreateHooks(), ctx, req); err != nil {
 		return nil, err
 	}
@@ -114,8 +125,12 @@ func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest)
 		CanvasContent:      req.CanvasContent,
 		InsertBeforeStepID: req.InsertBeforeStepID,
 		InsertAfterStepID:  req.InsertAfterStepID,
+		ClientStepID:       req.ClientStepID,
 	})
 	if err != nil {
+		if req.ClientStepID != nil && errors.Is(err, constants.ErrDuplicateClientID) {
+			return s.resolveClientStepAfterRace(ctx, req)
+		}
 		return nil, err
 	}
 
@@ -126,6 +141,50 @@ func (s *StepsService) Create(ctx context.Context, req *types.CreateStepRequest)
 	}
 
 	return step, nil
+}
+
+func (s *StepsService) resolveClientStepAfterRace(ctx context.Context, req *types.CreateStepRequest) (*models.Step, error) {
+	existing, err := s.resolveClientStep(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, fmt.Errorf("%w: step was created concurrently but could not be read back", constants.ErrClientIDConflict)
+	}
+
+	return existing, nil
+}
+
+// resolveClientStep returns the step already created for the request's client id,
+// or nil when the client id has not been used yet.
+func (s *StepsService) resolveClientStep(ctx context.Context, req *types.CreateStepRequest) (*models.Step, error) {
+	existing, err := s.stepsRepo.GetByClientID(ctx, *req.ClientStepID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, nil
+	}
+	if existing.GuideID != req.GuideID {
+		return nil, fmt.Errorf("%w: client step id belongs to another guide", constants.ErrClientIDConflict)
+	}
+	if !sameStepCreatePayload(existing, req) {
+		return nil, fmt.Errorf("%w: payload does not match the original create request", constants.ErrClientIDConflict)
+	}
+
+	return existing, nil
+}
+
+// Insert anchors are excluded from the payload identity because retries may anchor
+// the same step differently.
+func sameStepCreatePayload(step *models.Step, req *types.CreateStepRequest) bool {
+	return step.Type == req.Type &&
+		reflect.DeepEqual(step.Action, req.Action) &&
+		reflect.DeepEqual(step.ActionText, req.ActionText) &&
+		reflect.DeepEqual(step.URL, req.URL) &&
+		reflect.DeepEqual(step.Notes, req.Notes) &&
+		reflect.DeepEqual(step.TargetElement, req.TargetElement) &&
+		reflect.DeepEqual(step.CanvasContent, req.CanvasContent)
 }
 
 func (s *StepsService) GetByID(ctx context.Context, stepID string) (*models.Step, error) {

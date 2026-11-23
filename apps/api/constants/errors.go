@@ -21,6 +21,7 @@ var (
 	ErrInvalidContentType    = errors.New("invalid content type")
 	ErrInvalidFileSize       = errors.New("invalid file size")
 	ErrStepNotInGuide        = errors.New("step does not belong to the specified guide")
+	ErrDuplicateClientID     = errors.New("client id already exists")
 	ErrMediaAssetCopyFailed  = errors.New("failed to copy media asset")
 	ErrStepMediaNotSupported = errors.New("step does not support media")
 
@@ -30,6 +31,8 @@ var (
 
 	ErrTeamNotFound     = errors.New("team not found")
 	ErrTeamAccessDenied = errors.New("team access denied")
+
+	ErrClientIDConflict = errors.New("client id conflicts with an existing resource")
 
 	ErrGuideAccessDenied       = errors.New("you do not have permission to access this guide")
 	ErrGuideCreateDenied       = errors.New("you do not have permission to create guides")

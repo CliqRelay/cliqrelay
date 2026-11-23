@@ -9,6 +9,8 @@ import type { Uuid } from "./uuid";
 
 export type CreateGuideRequest = {
   /** @nullable */
+  clientGuideId?: string | null;
+  /** @nullable */
   description?: string | null;
   teamId: Uuid;
   title: string;
