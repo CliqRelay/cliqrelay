@@ -32,6 +32,11 @@ export const createRecordingStateMachine = (
 
   return {
     getSnapshot,
+    restore: (restoredStatus) => {
+      status = restoredStatus;
+      bufferedEvents = [];
+      return getSnapshot();
+    },
     start: () => {
       bufferedEvents = [];
       return setStatus("recording");

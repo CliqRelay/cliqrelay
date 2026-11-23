@@ -2,8 +2,10 @@ import { browser } from "wxt/browser";
 
 import { COOKIE_CONSTANTS } from "@repo/data-commons";
 
+import { createBootGate } from "@/background/boot-gate.service";
 import { createCaptureHandler } from "@/background/capture-handler";
 import { handleOnMessageExternalEvents } from "@/background/external-messages-handler";
+import { restoreRecordingSession } from "@/background/recording-boot.service";
 import { createSessionManager } from "@/background/session-manager";
 import { env } from "@/constants/env";
 import { firefoxBrowser } from "@/constants/firefox-browser";
@@ -12,7 +14,11 @@ import { isSessionCookieCleared } from "@/lib/auth-session";
 import type { RecordingStatus } from "@/models";
 import { SIDEPANEL_PORT_NAME } from "@/models/sidepanel";
 import { createNavigationListener } from "@/services/background";
-import { createRecordingStateMachine, recordingStatusStore } from "@/services/recording";
+import {
+  createRecordingLifecycleStore,
+  createRecordingStateMachine,
+  recordingStatusStore,
+} from "@/services/recording";
 import { screenshotService } from "@/services/screenshot";
 import { sessionService } from "@/services/session";
 import { getSettings, updateSettings } from "@/services/settings";
@@ -21,11 +27,20 @@ import { generateCaptureId } from "@/utils/id";
 import { isOffscreenEvent, isSidePanelCommand } from "@/utils/message";
 
 export default defineBackground(() => {
+  const recordingLifecycleStore = createRecordingLifecycleStore(browser.storage.session);
+
   const mirrorRecordingStatus = (status: RecordingStatus) => {
     void recordingStatusStore.set(status).catch(() => {});
+    void recordingLifecycleStore
+      .set({
+        status,
+        ...(status === "recording" || status === "paused"
+          ? { sessionId: sessionManager.offscreenManager.getSessionId() ?? undefined }
+          : {}),
+      })
+      .catch(() => {});
   };
   const recording = createRecordingStateMachine("idle", mirrorRecordingStatus);
-  mirrorRecordingStatus("idle");
 
   const sessionManager = createSessionManager(
     recording,
@@ -117,21 +132,23 @@ export default defineBackground(() => {
       }
     }
 
-    if (captureHandler.handleCapture(message, sender)) {
-      return;
-    }
+    return bootGate.run(() => {
+      if (captureHandler.handleCapture(message, sender)) {
+        return;
+      }
 
-    if (isSidePanelCommand(message)) {
-      return sessionManager.handleSidePanelCommand(message);
-    }
+      if (isSidePanelCommand(message)) {
+        return sessionManager.handleSidePanelCommand(message);
+      }
 
-    if (isOffscreenEvent(message)) {
-      void sessionManager.handleOffscreenEvent(message);
-    }
+      if (isOffscreenEvent(message)) {
+        void sessionManager.handleOffscreenEvent(message);
+      }
 
-    if (typeof message === "object" && message !== null && "action" in message) {
-      return handleOnMessageExternalEvents(message, sender, sendResponse);
-    }
+      if (typeof message === "object" && message !== null && "action" in message) {
+        return handleOnMessageExternalEvents(message, sender, sendResponse);
+      }
+    });
   });
 
   browser.cookies.onChanged.addListener((change) => {
@@ -145,7 +162,7 @@ export default defineBackground(() => {
     if (port.name !== SIDEPANEL_PORT_NAME) {
       return;
     }
-    portManager.registerPort(port);
+    void panelGate.run(() => portManager.registerPort(port));
   });
 
   browser.action.onClicked.addListener(async (tab) => {
@@ -163,4 +180,23 @@ export default defineBackground(() => {
   });
 
   browser.runtime.onMessageExternal.addListener(handleOnMessageExternalEvents);
+
+  // Hydration is started last so every listener is registered before the
+  // offscreen session can reply. Captures only wait for the local lifecycle
+  // restore; the panel additionally waits for the step history so its first
+  // paint is complete.
+  const hydration = restoreRecordingSession({
+    lifecycleStore: recordingLifecycleStore,
+    recording,
+    offscreenManager: sessionManager.offscreenManager,
+    mirrorStatus: (status) => recordingStatusStore.set(status),
+  });
+  const bootGate = createBootGate(hydration);
+  const panelGate = createBootGate(
+    hydration.then(async (status) => {
+      if (status === "recording" || status === "paused") {
+        await sessionManager.restoreProgress();
+      }
+    }),
+  );
 });

@@ -62,5 +62,19 @@ describe("capture handler", () => {
 
       expect(screenshotService.captureWithThrottle).not.toHaveBeenCalled();
     });
+
+    test("warns at most once when captures arrive without a recording session", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { handleCapture, screenshotService } = setup(createRecordingStateMachine("idle"));
+
+      handleCapture(clickMessage, { tab: { id: TAB_ID } } as never);
+      handleCapture(clickMessage, { tab: { id: TAB_ID } } as never);
+
+      expect(screenshotService.captureWithThrottle).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith("[background] Dropped capture: status=idle action=click");
+
+      warn.mockRestore();
+    });
   });
 });

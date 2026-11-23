@@ -76,7 +76,7 @@ export default defineConfig({
         : "script-src 'self'; object-src 'self'";
 
     const baseConfig: UserManifest = {
-      version: "0.1.0",
+      version: "0.2.0",
       permissions,
       host_permissions: ["<all_urls>"],
       name: "CliqRelay",
@@ -96,6 +96,8 @@ export default defineConfig({
     if (isChrome) {
       return {
         ...baseConfig,
+        // `sidePanel` requires Chrome 114; `storage.session` and offscreen are older.
+        minimum_chrome_version: "114",
         content_security_policy: {
           ...baseConfig.content_security_policy,
           // Safely attach sandbox properties exclusively for Chrome engines
@@ -116,7 +118,8 @@ export default defineConfig({
         browser_specific_settings: {
           gecko: {
             id: "extension@cliqrelay.com",
-            strict_min_version: "109.0",
+            // `storage.session` requires Firefox 115.
+            strict_min_version: "115",
           },
         },
         sidebar_action: {
