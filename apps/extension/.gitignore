@@ -42,3 +42,6 @@ __unconfig*
 
 # Vitest browser mode failure screenshots
 .vitest
+
+# Storybook static build
+storybook-static/
