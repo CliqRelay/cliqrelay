@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/CliqRelay/cliqrelay/constants"
 	handlerssteps "github.com/CliqRelay/cliqrelay/handlers/steps"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
@@ -178,6 +180,64 @@ func TestCreateStepHandler(t *testing.T) {
 			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedBody:   "canvas_content is not applicable for interaction steps",
+		},
+		{
+			name: "invalid client_step_id",
+			payload: types.CreateStepRequest{
+				GuideID:      uuid.New(),
+				Type:         models.StepTypeInteraction,
+				ClientStepID: new("not-a-uuid"),
+			},
+			setup:          func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {},
+			expectedStatus: http.StatusUnprocessableEntity,
+			expectedBody:   "failed on the 'uuid' tag",
+		},
+		{
+			name: "guide is soft deleted",
+			payload: types.CreateStepRequest{
+				GuideID:      uuid.New(),
+				Type:         models.StepTypeInteraction,
+				ClientStepID: new(uuid.New().String()),
+			},
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
+					Return(&models.Guide{
+						ID:        uuid.New(),
+						CreatorID: new("test-user-123"),
+						Title:     "Deleted Guide",
+						Status:    models.StatusDeleted,
+						DeletedAt: new(time.Now()),
+					}, nil).
+					Once()
+			},
+			expectedStatus: http.StatusConflict,
+			expectedBody:   constants.ErrGuideDeleted.Error(),
+		},
+		{
+			name: "client step id belongs to another guide",
+			payload: types.CreateStepRequest{
+				GuideID:      uuid.New(),
+				Type:         models.StepTypeInteraction,
+				ClientStepID: new(uuid.New().String()),
+			},
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
+					Return(&models.Guide{
+						ID:        uuid.New(),
+						CreatorID: new("test-user-123"),
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Twice()
+				mockStepsRepo.On("GetByClientID", mock.Anything, mock.Anything).
+					Return(&models.Step{
+						ID:      uuid.New(),
+						GuideID: uuid.New(),
+					}, nil).
+					Once()
+			},
+			expectedStatus: http.StatusConflict,
+			expectedBody:   "client step id belongs to another guide",
 		},
 		{
 			name: "guide not found",

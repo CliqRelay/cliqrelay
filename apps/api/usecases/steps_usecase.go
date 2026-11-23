@@ -4,6 +4,7 @@ import (
 	"context"
 
 	authulamodels "github.com/Authula/authula/models"
+	"github.com/CliqRelay/cliqrelay/constants"
 	"github.com/CliqRelay/cliqrelay/interfaces"
 	"github.com/CliqRelay/cliqrelay/models"
 	"github.com/CliqRelay/cliqrelay/types"
@@ -28,13 +29,17 @@ func NewStepsUseCase(
 }
 
 func (uc *StepsUseCase) Create(ctx context.Context, actor *authulamodels.Actor, req *types.CreateStepRequest) (*models.Step, error) {
-	guide, err := uc.guidesService.GetByID(ctx, req.GuideID.String())
+	guide, err := uc.guidesService.GetByIDUnfiltered(ctx, req.GuideID.String())
 	if err != nil {
 		return nil, err
 	}
 
 	if err := uc.authzService.CanEditGuide(ctx, actor, guide.TeamID.String(), guide); err != nil {
 		return nil, err
+	}
+
+	if guide.DeletedAt != nil {
+		return nil, constants.ErrGuideDeleted
 	}
 
 	return uc.stepsService.Create(ctx, req)

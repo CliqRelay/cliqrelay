@@ -16,6 +16,8 @@ export type CreateStepRequest = {
   /** @nullable */
   actionText?: string | null;
   canvasContent?: null | StepCanvasContent;
+  /** @nullable */
+  clientStepId?: string | null;
   guideId: Uuid;
   /** @nullable */
   insertAfterStepId?: string | null;

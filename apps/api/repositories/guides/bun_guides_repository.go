@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/uptrace/bun"
 
 	"github.com/CliqRelay/cliqrelay/constants"
@@ -50,13 +51,14 @@ func (r *BunGuidesRepository) LockOrganizationForUpdate(ctx context.Context, tea
 
 func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuideDTO) (*models.Guide, error) {
 	guide := &models.Guide{
-		ID:          uuid.New(),
-		TeamID:      dto.TeamID,
-		CreatorID:   dto.CreatorID,
-		Title:       dto.Title,
-		Description: dto.Description,
-		Status:      models.StatusDraft,
-		Visibility:  models.VisibilityPrivate,
+		ID:            uuid.New(),
+		TeamID:        dto.TeamID,
+		CreatorID:     dto.CreatorID,
+		Title:         dto.Title,
+		Description:   dto.Description,
+		Status:        models.StatusDraft,
+		Visibility:    models.VisibilityPrivate,
+		ClientGuideID: dto.ClientGuideID,
 	}
 
 	_, err := r.db.NewInsert().
@@ -64,10 +66,39 @@ func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuide
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
+		if isClientGuideIDConflict(err) {
+			return nil, constants.ErrDuplicateClientID
+		}
 		return nil, err
 	}
 
 	return r.GetByID(ctx, guide.ID.String())
+}
+
+func isClientGuideIDConflict(err error) bool {
+	var pqErr *pq.Error
+	return errors.As(err, &pqErr) &&
+		pqErr.Code == "23505" &&
+		pqErr.Constraint == "idx_guides_creator_client_guide_id"
+}
+
+func (r *BunGuidesRepository) GetByClientID(ctx context.Context, clientGuideID string) (*models.Guide, error) {
+	guide := &models.Guide{}
+
+	err := r.db.NewSelect().
+		Model(guide).
+		Where("client_guide_id = ?", clientGuideID).
+		Order("created_at ASC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return guide, nil
 }
 
 func (r *BunGuidesRepository) GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error) {

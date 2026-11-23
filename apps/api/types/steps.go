@@ -29,6 +29,7 @@ type CreateStepRequest struct {
 	CanvasContent      *models.StepCanvasContent `json:"canvas_content,omitempty" nullable:"true"`
 	InsertBeforeStepID *string                   `json:"insert_before_step_id,omitempty" nullable:"true"`
 	InsertAfterStepID  *string                   `json:"insert_after_step_id,omitempty" nullable:"true"`
+	ClientStepID       *string                   `json:"client_step_id,omitempty" validate:"omitempty,uuid"`
 }
 
 func (r *CreateStepRequest) Validate() error {
@@ -68,6 +69,7 @@ type CreateStepDTO struct {
 	CanvasContent      *models.StepCanvasContent `json:"canvas_content,omitempty"`
 	InsertBeforeStepID *string                   `json:"insert_before_step_id,omitempty"`
 	InsertAfterStepID  *string                   `json:"insert_after_step_id,omitempty"`
+	ClientStepID       *string                   `json:"-" validate:"omitempty,uuid"`
 }
 
 type CreateStepResponse struct {

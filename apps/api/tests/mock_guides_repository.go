@@ -45,6 +45,14 @@ func (m *MockGuidesRepository) GetByID(ctx context.Context, id string) (*models.
 	return args.Get(0).(*models.Guide), args.Error(1)
 }
 
+func (m *MockGuidesRepository) GetByClientID(ctx context.Context, clientGuideID string) (*models.Guide, error) {
+	args := m.Called(ctx, clientGuideID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Guide), args.Error(1)
+}
+
 func (m *MockGuidesRepository) Update(ctx context.Context, data *types.UpdateGuideDTO) (*models.Guide, error) {
 	args := m.Called(ctx, data)
 	if args.Get(0) == nil {

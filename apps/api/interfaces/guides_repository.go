@@ -14,6 +14,7 @@ type GuidesRepository interface {
 	LockOrganizationForUpdate(ctx context.Context, teamID uuid.UUID) error
 	Create(ctx context.Context, data *types.CreateGuideDTO) (*models.Guide, error)
 	GetByID(ctx context.Context, id string) (*models.Guide, error)
+	GetByClientID(ctx context.Context, clientGuideID string) (*models.Guide, error)
 	GetAll(ctx context.Context, filter *types.GuideFilter) ([]*models.Guide, int, error)
 	Update(ctx context.Context, data *types.UpdateGuideDTO) (*models.Guide, error)
 	Delete(ctx context.Context, id string) (*models.Guide, error)

@@ -2,8 +2,10 @@ package guides
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -88,6 +90,16 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 		return nil, constants.ErrTeamNotFound
 	}
 
+	if req.ClientGuideID != nil {
+		existing, err := s.resolveClientGuide(ctx, actor, parsedTeamID, req)
+		if err != nil {
+			return nil, err
+		}
+		if existing != nil {
+			return existing, nil
+		}
+	}
+
 	var guideCreated *models.Guide
 	err = s.guidesRepo.Tx(ctx, func(ctx context.Context, txRepo interfaces.GuidesRepository) error {
 		if err := txRepo.LockOrganizationForUpdate(ctx, parsedTeamID); err != nil {
@@ -99,14 +111,18 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 		}
 
 		guideCreated, err = txRepo.Create(ctx, &types.CreateGuideDTO{
-			TeamID:      parsedTeamID,
-			CreatorID:   new(actor.ID),
-			Title:       req.Title,
-			Description: req.Description,
+			TeamID:        parsedTeamID,
+			CreatorID:     new(actor.ID),
+			Title:         req.Title,
+			Description:   req.Description,
+			ClientGuideID: req.ClientGuideID,
 		})
 		return err
 	})
 	if err != nil {
+		if req.ClientGuideID != nil && errors.Is(err, constants.ErrDuplicateClientID) {
+			return s.resolveClientGuideAfterRace(ctx, actor, parsedTeamID, req)
+		}
 		return nil, err
 	}
 
@@ -115,6 +131,47 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 	}
 
 	return guideCreated, nil
+}
+
+func (s *GuidesService) resolveClientGuideAfterRace(ctx context.Context, actor *authulamodels.Actor, teamID uuid.UUID, req *types.CreateGuideRequest) (*models.Guide, error) {
+	existing, err := s.resolveClientGuide(ctx, actor, teamID, req)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, fmt.Errorf("%w: guide was created concurrently but could not be read back", constants.ErrClientIDConflict)
+	}
+
+	return existing, nil
+}
+
+// resolveClientGuide returns the guide already created for the request's client id,
+// or nil when the client id has not been used yet.
+func (s *GuidesService) resolveClientGuide(ctx context.Context, actor *authulamodels.Actor, teamID uuid.UUID, req *types.CreateGuideRequest) (*models.Guide, error) {
+	existing, err := s.guidesRepo.GetByClientID(ctx, *req.ClientGuideID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, nil
+	}
+	if existing.DeletedAt != nil {
+		return nil, fmt.Errorf("%w: %w", constants.ErrClientIDConflict, constants.ErrGuideDeleted)
+	}
+	if existing.CreatorID == nil || *existing.CreatorID != actor.ID {
+		return nil, fmt.Errorf("%w: client guide id belongs to another user", constants.ErrClientIDConflict)
+	}
+	if !sameGuideCreatePayload(existing, teamID, req) {
+		return nil, fmt.Errorf("%w: payload does not match the original create request", constants.ErrClientIDConflict)
+	}
+
+	return existing, nil
+}
+
+func sameGuideCreatePayload(guide *models.Guide, teamID uuid.UUID, req *types.CreateGuideRequest) bool {
+	return guide.TeamID == teamID &&
+		guide.Title == req.Title &&
+		reflect.DeepEqual(guide.Description, req.Description)
 }
 
 func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error) {

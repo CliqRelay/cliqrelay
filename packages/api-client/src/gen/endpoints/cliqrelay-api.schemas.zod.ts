@@ -98,6 +98,7 @@ export type CreateDemoGuideResponse = zod.input<typeof CreateDemoGuideResponse>;
 export type CreateDemoGuideResponseOutput = zod.output<typeof CreateDemoGuideResponse>;
 
 export const CreateGuideRequest = zod.object({
+  clientGuideId: zod.string().nullish(),
   description: zod.string().nullish(),
   teamId: Uuid,
   title: zod.string(),
@@ -186,6 +187,7 @@ export const CreateStepRequest = zod.object({
   action: StepAction.optional(),
   actionText: zod.string().nullish(),
   canvasContent: zod.union([zod.null(), StepCanvasContent]).optional(),
+  clientStepId: zod.string().nullish(),
   guideId: Uuid,
   insertAfterStepId: zod.string().nullish(),
   insertBeforeStepId: zod.string().nullish(),
