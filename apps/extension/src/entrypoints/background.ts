@@ -162,7 +162,7 @@ export default defineBackground(() => {
     if (port.name !== SIDEPANEL_PORT_NAME) {
       return;
     }
-    void bootGate.run(() => portManager.registerPort(port));
+    void panelGate.run(() => portManager.registerPort(port));
   });
 
   browser.action.onClicked.addListener(async (tab) => {
@@ -182,14 +182,18 @@ export default defineBackground(() => {
   browser.runtime.onMessageExternal.addListener(handleOnMessageExternalEvents);
 
   // Hydration is started last so every listener is registered before the
-  // offscreen session can reply. All capture handling waits on `bootGate`.
-  const bootGate = createBootGate(
-    restoreRecordingSession({
-      lifecycleStore: recordingLifecycleStore,
-      recording,
-      offscreenManager: sessionManager.offscreenManager,
-      mirrorStatus: (status) => recordingStatusStore.set(status),
-    }).then(async (status) => {
+  // offscreen session can reply. Captures only wait for the local lifecycle
+  // restore; the panel additionally waits for the step history so its first
+  // paint is complete.
+  const hydration = restoreRecordingSession({
+    lifecycleStore: recordingLifecycleStore,
+    recording,
+    offscreenManager: sessionManager.offscreenManager,
+    mirrorStatus: (status) => recordingStatusStore.set(status),
+  });
+  const bootGate = createBootGate(hydration);
+  const panelGate = createBootGate(
+    hydration.then(async (status) => {
       if (status === "recording" || status === "paused") {
         await sessionManager.restoreProgress();
       }
