@@ -1,11 +1,18 @@
 import { z } from "zod";
 
 import type { BufferedCapture } from "@/models/capture";
+import type { BrowserStorage } from "@/models/storage";
 
 export const recordingStatusValues = ["idle", "recording", "paused", "stopped"] as const;
 
 export const recordingStatusSchema = z.enum(recordingStatusValues);
 export type RecordingStatus = z.infer<typeof recordingStatusSchema>;
+
+export const recordingLifecycleSchema = z.object({
+  status: recordingStatusSchema,
+  sessionId: z.string().optional(),
+});
+export type RecordingLifecycle = z.infer<typeof recordingLifecycleSchema>;
 
 export type RecordingSnapshot = {
   status: RecordingStatus;
@@ -19,6 +26,7 @@ export type RecordingFlushResult = {
 
 export type RecordingStateMachine = {
   getSnapshot: () => RecordingSnapshot;
+  restore: (status: RecordingStatus) => RecordingSnapshot;
   start: () => RecordingSnapshot;
   pause: () => RecordingSnapshot;
   resume: () => RecordingSnapshot;
@@ -43,6 +51,13 @@ export type StorageChangeEvent = {
 export type RecordingStatusStorage = {
   get: (keys: string[]) => Promise<Record<string, unknown>>;
   set: (items: Record<string, unknown>) => Promise<void>;
+};
+
+export type RecordingLifecycleStorage = BrowserStorage;
+
+export type RecordingLifecycleStore = {
+  get: () => Promise<RecordingLifecycle>;
+  set: (lifecycle: RecordingLifecycle) => Promise<void>;
 };
 
 export type RecordingStatusStore = {

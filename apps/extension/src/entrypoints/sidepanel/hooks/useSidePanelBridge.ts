@@ -93,14 +93,43 @@ const handleMessage = (message: SidePanelPushMessage) => {
 
 export const useSidePanelBridge = () => {
   useEffect(() => {
+    let port: ReturnType<typeof browser.runtime.connect> | null = null;
+    let isDisposed = false;
+
+    const connect = () => {
+      if (isDisposed) {
+        return;
+      }
+
+      try {
+        port = browser.runtime.connect({ name: SIDEPANEL_PORT_NAME });
+      } catch (error) {
+        // The extension context is gone (reload/update); reconnecting cannot help.
+        console.warn("[sidepanel] Failed to connect to background:", error);
+        return;
+      }
+
+      port.onMessage.addListener(handleMessage);
+      port.onDisconnect.addListener(() => {
+        port = null;
+        if (isDisposed) {
+          return;
+        }
+        // The worker was stopped while the port was open. Reconnecting wakes it
+        // and restores the state; PR 6 replaces the port with storage events.
+        void getStatus();
+        connect();
+      });
+    };
+
+    connect();
     void getStatus();
     void getSettings();
 
-    const port = browser.runtime.connect({ name: SIDEPANEL_PORT_NAME });
-    port.onMessage.addListener(handleMessage);
-
     return () => {
-      port.disconnect();
+      isDisposed = true;
+      port?.disconnect();
+      port = null;
     };
   }, []);
 

@@ -119,6 +119,17 @@ describe("recording state machine", () => {
     expect(recording.getSnapshot().bufferedCount).toBe(0);
   });
 
+  test("restores a persisted status without notifying listeners", () => {
+    const onStatusChange = vi.fn();
+    const machine = createRecordingStateMachine("idle", onStatusChange);
+
+    expect(machine.restore("paused")).toEqual({
+      status: "paused",
+      bufferedCount: 0,
+    });
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
   test("notifies onStatusChange only when the status changes", () => {
     const onStatusChange = vi.fn();
     const machine = createRecordingStateMachine("idle", onStatusChange);

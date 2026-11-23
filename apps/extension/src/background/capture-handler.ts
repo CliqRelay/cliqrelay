@@ -1,125 +1,121 @@
 import type { Browser } from "wxt/browser";
 
 import type { CreateStepWithoutScreenshot } from "@/models";
-import type { PortManager } from "@/services/sidepanel/port-manager.service";
-import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
 import type {
-	CaptureMetadataEntry,
-	RecordingStateMachine,
-	ScreenshotService,
-	SidePanelStateUpdate,
+  CaptureMetadataEntry,
+  RecordingStateMachine,
+  ScreenshotService,
+  SidePanelStateUpdate,
 } from "@/models";
+import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
+import type { PortManager } from "@/services/sidepanel/port-manager.service";
 import { buildActionText } from "@/utils/action-text";
+import { createDroppedCaptureReporter } from "@/utils/diagnostics";
 import { generateCaptureId } from "@/utils/id";
 import { isCaptureBridgeMessage } from "@/utils/message";
 
 export const createCaptureHandler = (
-	screenshotService: ScreenshotService,
-	offscreenManager: OffscreenManager,
-	recording: RecordingStateMachine,
-	stateUpdateBuilder: () => Promise<SidePanelStateUpdate>,
-	portManager: PortManager,
-	captureMetadataMap: Map<string, CaptureMetadataEntry>,
-	createStepWithoutScreenshot: CreateStepWithoutScreenshot,
-	clearPendingFreeTyping: () => void,
+  screenshotService: ScreenshotService,
+  offscreenManager: OffscreenManager,
+  recording: RecordingStateMachine,
+  stateUpdateBuilder: () => Promise<SidePanelStateUpdate>,
+  portManager: PortManager,
+  captureMetadataMap: Map<string, CaptureMetadataEntry>,
+  createStepWithoutScreenshot: CreateStepWithoutScreenshot,
+  clearPendingFreeTyping: () => void,
 ) => {
-	const handleCapture = (
-		message: unknown,
-		sender: Browser.runtime.MessageSender,
-	) => {
-		if (!isCaptureBridgeMessage(message)) {
-			return false;
-		}
+  const reportDroppedCapture = createDroppedCaptureReporter();
 
-		const tabId = sender.tab?.id;
-		if (tabId == null) {
-			return true;
-		}
+  const handleCapture = (message: unknown, sender: Browser.runtime.MessageSender) => {
+    if (!isCaptureBridgeMessage(message)) {
+      return false;
+    }
 
-		if (recording.getSnapshot().status !== "recording") {
-			return true;
-		}
+    const tabId = sender.tab?.id;
+    if (tabId == null) {
+      return true;
+    }
 
-		const captureId = generateCaptureId();
-		const payload = message.payload;
-		const targetElement = payload.targetElement;
-		const actionText = buildActionText(
-			payload.action,
-			payload.targetElement,
-			payload.typedText,
-			payload.keyCombo,
-		);
+    const { status } = recording.getSnapshot();
+    if (status !== "recording") {
+      reportDroppedCapture(`status=${status} action=${message.payload.action}`);
+      return true;
+    }
 
-		captureMetadataMap.set(captureId, {
-			action: payload.action,
-			actionText,
-			url: payload.url,
-			capturedAt: payload.capturedAt,
-			...(targetElement
-				? {
-					targetElement: {
-						clickX: targetElement.clickX,
-						clickY: targetElement.clickY,
-						viewportWidth: targetElement.viewportWidth,
-						viewportHeight: targetElement.viewportHeight,
-					},
-				}
-				: {}),
-		});
+    const captureId = generateCaptureId();
+    const payload = message.payload;
+    const targetElement = payload.targetElement;
+    const actionText = buildActionText(
+      payload.action,
+      payload.targetElement,
+      payload.typedText,
+      payload.keyCombo,
+    );
 
-		const isFreeTyping = payload.action === "input" && payload.typedText != null;
+    captureMetadataMap.set(captureId, {
+      action: payload.action,
+      actionText,
+      url: payload.url,
+      capturedAt: payload.capturedAt,
+      ...(targetElement
+        ? {
+            targetElement: {
+              clickX: targetElement.clickX,
+              clickY: targetElement.clickY,
+              viewportWidth: targetElement.viewportWidth,
+              viewportHeight: targetElement.viewportHeight,
+            },
+          }
+        : {}),
+    });
 
-		if (isFreeTyping) {
-			void (async () => {
-				try {
-					await createStepWithoutScreenshot(captureId, message);
-				} catch (error) {
-					console.warn("[background] Free typing step creation failed:", error);
-				}
-				const stateUpdate = await stateUpdateBuilder();
-				portManager.broadcast({ type: "state_update", state: stateUpdate });
-			})();
-			return true;
-		}
+    const isFreeTyping = payload.action === "input" && payload.typedText != null;
 
-		clearPendingFreeTyping();
+    if (isFreeTyping) {
+      void (async () => {
+        try {
+          await createStepWithoutScreenshot(captureId, message);
+        } catch (error) {
+          console.warn("[background] Free typing step creation failed:", error);
+        }
+        const stateUpdate = await stateUpdateBuilder();
+        portManager.broadcast({ type: "state_update", state: stateUpdate });
+      })();
+      return true;
+    }
 
-		recording.ingestCapture({
-			tabId,
-			message: {
-				source: "background",
-				type: message.type,
-				payload: { ...payload, captureId, tabId: tabId.toString() },
-			},
-		});
+    clearPendingFreeTyping();
 
-		const processCapture = async () => {
-			try {
-				const capturedDataUrl =
-					await screenshotService.captureWithThrottle(tabId);
-				if (!capturedDataUrl) {
-					return;
-				}
+    recording.ingestCapture({
+      tabId,
+      message: {
+        source: "background",
+        type: message.type,
+        payload: { ...payload, captureId, tabId: tabId.toString() },
+      },
+    });
 
-				await offscreenManager.sendJob(
-					captureId,
-					message,
-					capturedDataUrl,
-					tabId,
-				);
-			} catch (error) {
-				console.warn("[background] Capture processing failed:", error);
-			}
+    const processCapture = async () => {
+      try {
+        const capturedDataUrl = await screenshotService.captureWithThrottle(tabId);
+        if (!capturedDataUrl) {
+          return;
+        }
 
-			const stateUpdate = await stateUpdateBuilder();
-			portManager.broadcast({ type: "state_update", state: stateUpdate });
-		};
+        await offscreenManager.sendJob(captureId, message, capturedDataUrl, tabId);
+      } catch (error) {
+        console.warn("[background] Capture processing failed:", error);
+      }
 
-		void processCapture();
-		return true;
-	};
+      const stateUpdate = await stateUpdateBuilder();
+      portManager.broadcast({ type: "state_update", state: stateUpdate });
+    };
 
-	return { handleCapture };
+    void processCapture();
+    return true;
+  };
+
+  return { handleCapture };
 };
 
 export type CaptureHandler = ReturnType<typeof createCaptureHandler>;

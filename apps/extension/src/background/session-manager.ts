@@ -1,6 +1,7 @@
 import { api } from "@repo/api-client";
 import { createGuideTitle } from "@repo/data-commons";
 
+import { restoreStepProgress } from "./session-progress.service";
 import { getActiveTeamId } from "@/lib/active-team";
 import { isUnauthorizedError } from "@/lib/api-error";
 import { withCsrf } from "@/lib/csrf";
@@ -149,6 +150,27 @@ export const createSessionManager = (
     if (!currentPortManager) return;
     const stateUpdate = await stateUpdateBuilder();
     currentPortManager.broadcast({ type: "state_update", state: stateUpdate });
+  };
+
+  const restoreProgress = async (): Promise<void> => {
+    const restored = await restoreStepProgress({
+      getActiveGuideId: () => sessionService.getActiveGuideId(),
+      listSteps: async (guideId) => {
+        const response = await api.steps.getAllStepsByGuideId(
+          { guide_id: guideId, limit: 200 },
+          await withCsrf(),
+        );
+        return response.steps;
+      },
+    });
+
+    for (const progress of restored) {
+      jobProgressMap.set(progress.jobId, progress);
+    }
+
+    if (restored.length > 0) {
+      await broadcastUpdate();
+    }
   };
 
   const handleOffscreenEvent = async (event: OffscreenEvent) => {
@@ -344,9 +366,9 @@ export const createSessionManager = (
       clearPendingFreeTyping();
       clearDedupe?.();
       clearPendingActivations?.();
-      void offscreenManager
-        .closeDocument()
-        .then(() => offscreenManager.startSession(generateCaptureId()));
+      const sessionId = generateCaptureId();
+      await offscreenManager.closeDocument();
+      await offscreenManager.startSession(sessionId);
     }
     if (message.command === "stop_recording") {
       isDraining = true;
@@ -355,7 +377,9 @@ export const createSessionManager = (
     if (message.command === "get_status") {
       isSignedOut = false;
       const snapshot = recording.getSnapshot();
-      if (snapshot.status !== "recording" && !isDraining) {
+      // Paused is still a live session: clearing the guide here would send the
+      // resumed captures to a brand new guide.
+      if (snapshot.status !== "recording" && snapshot.status !== "paused" && !isDraining) {
         await sessionService.setActiveGuideId(null);
       }
     }
@@ -389,6 +413,7 @@ export const createSessionManager = (
     handleOffscreenEvent,
     handleFreeTypingCapture,
     clearPendingFreeTyping,
+    restoreProgress,
   };
 };
 
