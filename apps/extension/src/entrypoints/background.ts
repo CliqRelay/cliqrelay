@@ -97,6 +97,7 @@ export default defineBackground(() => {
     getSettings,
     updateSettings,
     drainer,
+    deleter,
     scheduler,
     auth,
     stepState,

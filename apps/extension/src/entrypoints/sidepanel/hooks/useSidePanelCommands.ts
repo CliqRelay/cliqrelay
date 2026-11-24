@@ -27,10 +27,6 @@ const getSettings = async (): Promise<ExtensionSettings | undefined> => {
   return parsed.success ? parsed.data : undefined;
 };
 
-/**
- * Every sidepanel action is a runtime message. The sidepanel never writes
- * Dexie: the background owns local captures.
- */
 export const sidePanelCommands = {
   startRecording: () => sendCommand({ type: sidePanelCommandType, command: "start_recording" }),
   pauseRecording: () => sendCommand({ type: sidePanelCommandType, command: "pause_recording" }),
@@ -41,6 +37,18 @@ export const sidePanelCommands = {
       type: sidePanelCommandType,
       command: "dismiss_step",
       stepId,
+    }),
+  deleteStep: (stepId: string) =>
+    sendCommand({
+      type: sidePanelCommandType,
+      command: "delete_step",
+      stepId,
+    }),
+  deleteGuide: (guideId: string) =>
+    sendCommand({
+      type: sidePanelCommandType,
+      command: "delete_guide",
+      guideId,
     }),
   retryFailed: (sessionId?: string) =>
     sendCommand({

@@ -18,6 +18,8 @@ export const sidePanelCommandTypes = [
   "discard_session",
   "discard_user_data",
   "dismiss_step",
+  "delete_step",
+  "delete_guide",
 ] as const;
 
 export const sidePanelCommandTypeSchema = z.enum(sidePanelCommandTypes);
@@ -29,6 +31,7 @@ export const sidePanelCommandSchema = z.object({
   payload: extensionSettingsSchema.partial().optional(),
   stepId: z.string().optional(),
   sessionId: z.string().optional(),
+  guideId: z.string().optional(),
 });
 export type SidePanelCommand = z.infer<typeof sidePanelCommandSchema>;
 
