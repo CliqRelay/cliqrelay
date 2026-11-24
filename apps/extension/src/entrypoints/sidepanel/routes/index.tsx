@@ -16,9 +16,13 @@ import {
 } from "../components";
 import { useActiveTeamId } from "../hooks/useActiveTeamId";
 import { fetchAuthSession } from "../hooks/useAuthSession";
-import { useSidePanelBridge } from "../hooks/useSidePanelBridge";
+import { useLiveSession } from "../hooks/useLiveSession";
+import { useRecordingLifecycle } from "../hooks/useRecordingLifecycle";
+import { useSessionSteps } from "../hooks/useSessionSteps";
+import { useSidePanelCommands } from "../hooks/useSidePanelCommands";
 import { useSignedOutRedirect } from "../hooks/useSignedOutRedirect";
-import { useSidePanelStore } from "../stores/sidepanel-store";
+import { useSyncCounts } from "../hooks/useSyncCounts";
+import { deriveIsDraining, toUploadQueueInfo } from "@/models";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async ({ context }) => {
@@ -32,17 +36,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  useSignedOutRedirect();
+  const lifecycle = useRecordingLifecycle();
+  useSignedOutRedirect(lifecycle.isSignedOut);
 
-  const bridge = useSidePanelBridge();
-  const status = useSidePanelStore((s) => s.status);
-  const isDraining = useSidePanelStore((s) => s.isDraining);
-  const uploadQueue = useSidePanelStore((s) => s.uploadQueue);
-  const activeGuideId = useSidePanelStore((s) => s.activeGuideId);
-  const jobProgress = useSidePanelStore((s) => s.jobProgress);
-  const bufferedCount = useSidePanelStore((s) => s.bufferedCount);
-  const removeJobProgress = useSidePanelStore((s) => s.removeJobProgress);
-  const clearStore = useSidePanelStore((s) => s.clear);
+  const commands = useSidePanelCommands();
+  const session = useLiveSession(lifecycle.sessionId);
+  const { steps, progress } = useSessionSteps(lifecycle.sessionId);
+  const counts = useSyncCounts(lifecycle.sessionId);
 
   const queryClient = useQueryClient();
 
@@ -57,8 +57,12 @@ function Home() {
     setViewingGuideId(null);
   }
 
-  const stepCount = jobProgress.length;
+  const status = lifecycle.status;
+  const guideId = session?.guideId ?? null;
+  const uploadQueue = toUploadQueueInfo(counts);
+  const isDraining = deriveIsDraining(status, counts);
   const isActive = status === "recording" || status === "paused";
+  const stepCount = steps.length;
 
   const invalidateGuides = () =>
     queryClient.invalidateQueries({
@@ -72,14 +76,6 @@ function Home() {
     request: { credentials: "include" },
   });
 
-  const showPersistedView = !!(
-    status !== "recording" &&
-    status !== "paused" &&
-    activeGuideId &&
-    !isDraining &&
-    jobProgress.length === 0
-  );
-
   const [deletingStep, setDeletingStep] = useState<{
     id: string;
     actionText?: string | null;
@@ -88,7 +84,7 @@ function Home() {
 
   const [deleteGuideDialogOpen, setDeleteGuideDialogOpen] = useState(false);
 
-  const withPending = async (fn: () => Promise<void>) => {
+  const withPending = async (fn: () => Promise<unknown>) => {
     if (isPending) return;
     setError(null);
     setIsPending(true);
@@ -110,12 +106,11 @@ function Home() {
     if (!deletingStep) return;
     try {
       await deleteStepMutation.mutateAsync({ id: deletingStep.id });
-      const match = jobProgress.find(
-        (jp) => jp.stepId === deletingStep.id || jp.jobId === deletingStep.id,
+      const local = steps.find(
+        (step) => step.serverStepId === deletingStep.id || step.id === deletingStep.id,
       );
-      if (match) {
-        bridge.dismissJob(match.jobId);
-        removeJobProgress(match.jobId);
+      if (local) {
+        void commands.dismissStep(local.id);
       }
     } catch (err) {
       console.error("[sidepanel] Failed to delete step:", err);
@@ -125,9 +120,8 @@ function Home() {
     }
   };
 
-  const handleDismiss = (jobId: string) => {
-    bridge.dismissJob(jobId);
-    removeJobProgress(jobId);
+  const handleDismiss = (stepId: string) => {
+    void commands.dismissStep(stepId);
   };
 
   const handleDeleteGuide = () => {
@@ -139,11 +133,10 @@ function Home() {
     setError(null);
     setIsPending(true);
     try {
-      await bridge.stopRecording();
-      if (activeGuideId) {
-        await deleteGuideMutation.mutateAsync({ id: activeGuideId });
+      await commands.stopRecording();
+      if (guideId) {
+        await deleteGuideMutation.mutateAsync({ id: guideId });
       }
-      clearStore();
       await invalidateGuides();
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred");
@@ -156,26 +149,32 @@ function Home() {
   const handleStart = () =>
     withPending(async () => {
       setViewingGuideId(null);
-      await bridge.startRecording();
+      await commands.startRecording();
     });
   const handleStop = () =>
     withPending(async () => {
-      await bridge.stopRecording();
+      await commands.stopRecording();
       await invalidateGuides();
     });
-  const handlePause = () => withPending(bridge.pauseRecording);
-  const handleResume = () => withPending(bridge.resumeRecording);
+  const handlePause = () => withPending(commands.pauseRecording);
+  const handleResume = () => withPending(commands.resumeRecording);
+  const handleRetryFailed = () => {
+    void commands.retryFailed(lifecycle.sessionId);
+  };
 
-  if (isActive) {
+  if (viewingGuideId) {
+    return <PersistedGuideView guideId={viewingGuideId} onBack={() => setViewingGuideId(null)} />;
+  }
+
+  if (isActive || isDraining) {
     return (
       <>
         <CaptureSessionPanel
-          status={status}
-          jobProgress={jobProgress}
-          bufferedCount={bufferedCount}
+          status={status ?? "idle"}
+          steps={progress}
           uploadQueue={uploadQueue}
           isDraining={isDraining}
-          activeGuideId={activeGuideId}
+          guideId={guideId}
           stepCount={stepCount}
           isPending={isPending}
           error={error}
@@ -184,6 +183,7 @@ function Home() {
           onStop={handleStop}
           onDeleteStep={handleDeleteRequest}
           onDismiss={handleDismiss}
+          onRetryFailed={handleRetryFailed}
           onDeleteGuide={handleDeleteGuide}
         />
         <DeleteStepDialog
@@ -192,26 +192,6 @@ function Home() {
           onOpenChange={setDeleteDialogOpen}
           onConfirm={handleDeleteConfirm}
         />
-        <DeleteGuideDialog
-          open={deleteGuideDialogOpen}
-          onOpenChange={setDeleteGuideDialogOpen}
-          onConfirm={handleDeleteGuideConfirm}
-          isPending={isPending}
-        />
-      </>
-    );
-  }
-
-  if (viewingGuideId) {
-    return (
-      <PersistedGuideView activeGuideId={viewingGuideId} onBack={() => setViewingGuideId(null)} />
-    );
-  }
-
-  if (showPersistedView && activeGuideId) {
-    return (
-      <>
-        <PersistedGuideView activeGuideId={activeGuideId} />
         <DeleteGuideDialog
           open={deleteGuideDialogOpen}
           onOpenChange={setDeleteGuideDialogOpen}
@@ -237,22 +217,21 @@ function Home() {
           uploadQueue={uploadQueue}
         />
       </div>
-      {jobProgress.length === 0 && <RecentGuidesList onSelectGuide={setViewingGuideId} />}
-      {jobProgress.length > 0 && (
+      {progress.length === 0 && <RecentGuidesList onSelectGuide={setViewingGuideId} />}
+      {progress.length > 0 && (
         <>
           <span className="shrink-0 text-[11px] font-semibold text-muted-foreground/60">Steps</span>
           <div className="min-h-0 flex-1">
             <StepList
               mode="recording"
-              steps={jobProgress}
-              bufferedCount={bufferedCount}
+              steps={progress}
               onDeleteStep={handleDeleteRequest}
               onDismiss={handleDismiss}
             />
           </div>
         </>
       )}
-      {activeGuideId && (
+      {guideId && (
         <button
           type="button"
           onClick={handleDeleteGuide}
