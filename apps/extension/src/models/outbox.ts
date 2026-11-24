@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { recordingStatusSchema } from "./recording";
+
 const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
 const HOURS_PER_DAY = 24;
 
@@ -23,6 +25,19 @@ export const localBlobKindValues = ["screenshot", "thumbnail"] as const;
 
 export const localBlobKindSchema = z.enum(localBlobKindValues);
 export type LocalBlobKind = z.infer<typeof localBlobKindSchema>;
+
+export const outboxLifecycleSchema = z.object({
+  status: recordingStatusSchema,
+  sessionId: z.string().min(1).optional(),
+  isSignedOut: z.boolean(),
+  pendingStart: z
+    .object({
+      clientGuideId: z.string().min(1),
+      startedAt: z.string().min(1),
+    })
+    .optional(),
+});
+export type OutboxLifecycle = z.infer<typeof outboxLifecycleSchema>;
 
 export const localSessionSchema = z.object({
   id: z.string().min(1),
@@ -111,6 +126,24 @@ export type AppendStepInput = {
 
 export type UpsertTypingStepInput = AppendStepInput & {
   typingSessionId: string;
+};
+
+export type AppendStepWithBlobsInput = Omit<
+  AppendStepInput,
+  "screenshotBlobId" | "thumbnailBlobId"
+>;
+
+export type AppendNavigationStepInput = {
+  sessionId: string;
+  url: string;
+  capturedAt: DateInput;
+  guideId?: string | null;
+  now?: DateInput;
+};
+
+export type CaptureBlobsInput = {
+  screenshot: Blob;
+  thumbnail: Blob;
 };
 
 export type PutBlobInput = {
