@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { CreateStepRequest } from "@repo/api-client";
+import type { CreateStepRequest, StepAction } from "@repo/api-client";
 
 import { recordingStatusSchema } from "./recording";
 
@@ -178,7 +178,7 @@ export type OutboxCleanupResult = {
 export type OutboxCreateStepInput = {
   guideId: string;
   clientStepId: string;
-  action: string;
+  action: StepAction;
   actionText?: string;
   url: string;
   targetElement?: CreateStepRequest["targetElement"];

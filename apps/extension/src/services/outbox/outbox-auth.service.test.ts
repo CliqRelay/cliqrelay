@@ -1,8 +1,16 @@
+import { ApiError as AuthulaApiError } from "authula/core";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+
+import { ApiError } from "@repo/api-client";
 
 import { createOutboxAuth } from "./outbox-auth.service";
 
 const NOW = 1_000_000;
+
+const unauthorized = (status: number) => new ApiError("Unauthorized", status, null, new Headers());
+const authulaUnauthorized = (status: number) =>
+  new AuthulaApiError("Unauthorized", status, null, new Headers());
+const serverError = () => new ApiError("Server error", 500, null, new Headers());
 
 type SetupOptions = {
   userId?: string | null;
@@ -12,7 +20,7 @@ type SetupOptions = {
 const setup = ({ userId = "user-1", ttlMs = 1000 }: SetupOptions = {}) => {
   const getMe = vi.fn(async () => {
     if (!userId) {
-      throw new Error("Unauthorized");
+      throw unauthorized(401);
     }
     return { user: { id: userId } };
   });
@@ -52,6 +60,33 @@ describe("outbox auth", () => {
 
     await expect(auth.getUserId()).resolves.toBeNull();
     await expect(auth.getUserId()).resolves.toBeNull();
+
+    expect(getMe).toHaveBeenCalledTimes(2);
+  });
+
+  test.each([
+    ["an api 401", unauthorized(401)],
+    ["an api 403", unauthorized(403)],
+    ["an authula 401", authulaUnauthorized(401)],
+  ] as const)("treats %s as signed out without caching", async (_label, error) => {
+    const { auth, getMe } = setup();
+    getMe.mockRejectedValue(error);
+
+    await expect(auth.getUserId()).resolves.toBeNull();
+    await expect(auth.getUserId()).resolves.toBeNull();
+
+    expect(getMe).toHaveBeenCalledTimes(2);
+  });
+
+  test.each([
+    ["a network error", new Error("network down")],
+    ["a 500 response", serverError()],
+  ] as const)("propagates %s without caching", async (_label, error) => {
+    const { auth, getMe } = setup();
+    getMe.mockRejectedValueOnce(error);
+
+    await expect(auth.getUserId()).rejects.toBe(error);
+    await expect(auth.getUserId()).resolves.toBe("user-1");
 
     expect(getMe).toHaveBeenCalledTimes(2);
   });

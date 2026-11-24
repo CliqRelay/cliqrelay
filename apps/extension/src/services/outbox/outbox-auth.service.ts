@@ -1,6 +1,14 @@
+import { ApiError as AuthulaApiError } from "authula/core";
+
+import { isUnauthorizedError } from "@/lib/api-error";
 import { authulaClient } from "@/lib/authula-client";
 
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
+const UNAUTHORIZED_STATUSES = [401, 403];
+
+const isAuthenticationFailure = (error: unknown): boolean =>
+  isUnauthorizedError(error) ||
+  (error instanceof AuthulaApiError && UNAUTHORIZED_STATUSES.includes(error.status));
 
 type GetMe = () => Promise<{ user: { id: string } }>;
 
@@ -26,9 +34,12 @@ export const createOutboxAuth = ({
       const { user } = await getMe();
       cached = { userId: user.id, resolvedAt: now() };
       return user.id;
-    } catch {
+    } catch (error) {
       cached = null;
-      return null;
+      if (isAuthenticationFailure(error)) {
+        return null;
+      }
+      throw error;
     }
   };
 

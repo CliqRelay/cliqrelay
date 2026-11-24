@@ -1,18 +1,43 @@
-import { api, type CreateStepRequest, type StepAction } from "@repo/api-client";
+import { api, type CreateStepRequest } from "@repo/api-client";
 
 import { withCsrf } from "@/lib/csrf";
-import type { OutboxApi, OutboxCreateStepInput } from "@/models";
+import { captureActionSchema, type OutboxApi, type OutboxCreateStepInput } from "@/models";
 
-const toCreateStepRequest = (input: OutboxCreateStepInput): CreateStepRequest => ({
-  guideId: input.guideId,
-  clientStepId: input.clientStepId,
-  type: "interaction",
-  action: input.action as StepAction,
-  url: input.url,
-  ...(input.actionText !== undefined ? { actionText: input.actionText } : {}),
-  ...(input.insertAfterStepId !== undefined ? { insertAfterStepId: input.insertAfterStepId } : {}),
-  ...(input.targetElement !== undefined ? { targetElement: input.targetElement } : {}),
-});
+export type OutboxFailureKind = "step-conflict";
+
+export class OutboxPermanentError extends Error {
+  readonly kind: OutboxFailureKind;
+
+  constructor(kind: OutboxFailureKind, message: string) {
+    super(message);
+    this.name = "OutboxPermanentError";
+    this.kind = kind;
+  }
+}
+
+const toCreateStepRequest = (input: OutboxCreateStepInput): CreateStepRequest => {
+  const action = captureActionSchema.safeParse(input.action);
+
+  if (!action.success) {
+    throw new OutboxPermanentError(
+      "step-conflict",
+      `Step ${input.clientStepId} has an invalid stored action: ${String(input.action)}`,
+    );
+  }
+
+  return {
+    guideId: input.guideId,
+    clientStepId: input.clientStepId,
+    type: "interaction",
+    action: action.data,
+    url: input.url,
+    ...(input.actionText !== undefined ? { actionText: input.actionText } : {}),
+    ...(input.insertAfterStepId !== undefined
+      ? { insertAfterStepId: input.insertAfterStepId }
+      : {}),
+    ...(input.targetElement !== undefined ? { targetElement: input.targetElement } : {}),
+  };
+};
 
 export const createOutboxApi = (): OutboxApi => ({
   createGuide: async (input) => {
