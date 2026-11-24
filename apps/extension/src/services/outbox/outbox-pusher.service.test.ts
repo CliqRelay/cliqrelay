@@ -76,7 +76,9 @@ const setup = ({
 
   const api: OutboxApi = {
     createGuide: vi.fn().mockResolvedValue({ id: "guide-created" }),
+    deleteGuide: vi.fn().mockResolvedValue(undefined),
     createStep: vi.fn().mockResolvedValue({ id: "server-step-1" }),
+    deleteStep: vi.fn().mockResolvedValue(undefined),
     presignUpload: vi
       .fn()
       .mockResolvedValue({ presignedUrl: "https://s3.test/put", storagePath: "path/one" }),

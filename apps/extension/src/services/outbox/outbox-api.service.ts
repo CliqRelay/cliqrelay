@@ -29,7 +29,9 @@ export type OutboxReplaceUploadInput = {
 
 export type OutboxApi = {
   createGuide: (input: OutboxCreateGuideInput) => Promise<{ id: string }>;
+  deleteGuide: (guideId: string) => Promise<void>;
   createStep: (input: OutboxCreateStepInput) => Promise<{ id: string }>;
+  deleteStep: (serverStepId: string) => Promise<void>;
   presignUpload: (input: {
     stepId: string;
     guideId: string;
@@ -64,9 +66,17 @@ export const createOutboxApi = (): OutboxApi => ({
     return { id: response.guide.id };
   },
 
+  deleteGuide: async (guideId) => {
+    await api.guides.deleteGuide(guideId, await withCsrf());
+  },
+
   createStep: async (input) => {
     const response = await api.steps.createStep(toCreateStepRequest(input), await withCsrf());
     return { id: response.step.id };
+  },
+
+  deleteStep: async (serverStepId) => {
+    await api.steps.deleteStep(serverStepId, await withCsrf());
   },
 
   presignUpload: async (input) => {

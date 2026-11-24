@@ -121,4 +121,94 @@ describe("outbox step state repository", () => {
       await expect(stepState.countFailedSteps("nobody")).resolves.toBe(0);
     });
   });
+
+  describe("deletion state", () => {
+    test("reads a step by id", async () => {
+      const { steps } = await createSessionWithSteps("user-1", 1);
+
+      await expect(stepState.getStep(steps[0]!.id)).resolves.toMatchObject({
+        id: steps[0]!.id,
+      });
+      await expect(stepState.getStep("missing")).resolves.toBeUndefined();
+    });
+
+    test("marks any step deleted without removing it", async () => {
+      const { steps } = await createSessionWithSteps("user-1", 1);
+      const step = steps[0]!;
+      await stepState.setServerStepId(step.id, "server-step-1", NOW);
+      await repository.markStepFailed(step.id, "upload failed", NOW);
+
+      await stepState.markStepDeleted(step.id, NOW);
+
+      expect(await db.steps.get(step.id)).toMatchObject({
+        syncStatus: "deleted",
+        serverStepId: "server-step-1",
+      });
+    });
+
+    test("discards unsynced steps and their blobs but keeps synced ones", async () => {
+      const { session } = await createSessionWithSteps("user-1", 0);
+      const pending = await repository.appendStep({
+        sessionId: session.id,
+        kind: "interaction",
+        action: "click",
+        url: "https://example.com",
+        capturedAt: NOW,
+        now: NOW,
+      });
+      const failed = await repository.appendStep({
+        sessionId: session.id,
+        kind: "interaction",
+        action: "click",
+        url: "https://example.com",
+        capturedAt: NOW,
+        now: NOW,
+      });
+      const synced = await repository.appendStep({
+        sessionId: session.id,
+        kind: "interaction",
+        action: "click",
+        url: "https://example.com",
+        capturedAt: NOW,
+        now: NOW,
+      });
+
+      await repository.putBlob({
+        stepId: pending.id,
+        kind: "screenshot",
+        blob: new Blob(["pending"]),
+        createdAt: NOW,
+      });
+      await repository.markStepFailed(failed.id, "boom", NOW);
+      await repository.markStepSynced(synced.id, { serverStepId: "server-3", now: NOW });
+
+      await expect(stepState.discardUnsyncedSteps(session.id)).resolves.toBe(2);
+
+      const remaining = await repository.listSteps(session.id);
+      expect(remaining.map((step) => step.id)).toEqual([synced.id]);
+      expect(await db.blobs.where("stepId").equals(pending.id).count()).toBe(0);
+    });
+
+    test("counts only server deletes that still need to retry", async () => {
+      const mine = await createSessionWithSteps("user-1", 2);
+      const other = await createSessionWithSteps("user-2", 1);
+
+      await stepState.setServerStepId(mine.steps[0]!.id, "server-1", NOW);
+      await stepState.setServerStepId(mine.steps[1]!.id, "server-2", NOW);
+      await stepState.setServerStepId(other.steps[0]!.id, "server-3", NOW);
+      await stepState.markStepDeleted(mine.steps[0]!.id, NOW);
+      await stepState.markStepDeleted(other.steps[0]!.id, NOW);
+
+      await expect(stepState.countPendingDeletions()).resolves.toBe(2);
+      await expect(stepState.countPendingDeletions("user-1")).resolves.toBe(1);
+      await expect(stepState.countPendingDeletions("nobody")).resolves.toBe(0);
+    });
+
+    test("does not count a deleted step that never reached the server", async () => {
+      const { steps } = await createSessionWithSteps("user-1", 1);
+      await stepState.markStepDeleted(steps[0]!.id, NOW);
+
+      await expect(stepState.countPendingDeletions()).resolves.toBe(0);
+    });
+  });
 });

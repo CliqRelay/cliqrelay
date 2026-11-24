@@ -20,6 +20,7 @@ import { db, outboxRepository } from "@/services/outbox";
 import { createOutboxApi } from "@/services/outbox/outbox-api.service";
 import { createOutboxAuth } from "@/services/outbox/outbox-auth.service";
 import { createOutboxBadge } from "@/services/outbox/outbox-badge.service";
+import { createOutboxDeleter } from "@/services/outbox/outbox-deleter.service";
 import { createOutboxDiagnostics } from "@/services/outbox/outbox-diagnostics.service";
 import { createOutboxDrainer } from "@/services/outbox/outbox-drainer.service";
 import { createOutboxPusher } from "@/services/outbox/outbox-pusher.service";
@@ -71,10 +72,16 @@ export default defineBackground(() => {
     api: outboxApi,
     getActiveTeamId,
   });
+  const deleter = createOutboxDeleter({
+    repository: outboxRepository,
+    stepState,
+    api: outboxApi,
+  });
 
   const drainer = createOutboxDrainer({
     repository: outboxRepository,
     pusher,
+    deleter,
     auth,
     lifecycleStore: recordingLifecycleStore,
     onStepFailed: () => badge.refresh(),
@@ -99,6 +106,7 @@ export default defineBackground(() => {
     getSettings,
     updateSettings,
     drainer,
+    deleter,
     scheduler,
     auth,
     stepState,

@@ -43,6 +43,8 @@ const setup = ({
   userId = "user-1" as string | null,
   activeSession = session(),
   pushStep = vi.fn().mockResolvedValue(undefined),
+  pushDeletion = vi.fn().mockResolvedValue("removed"),
+  pendingDeletions = 0 as number,
 } = {}) => {
   const repository = {
     getSession: vi.fn().mockResolvedValue(activeSession),
@@ -50,6 +52,7 @@ const setup = ({
     listSyncableSteps: vi
       .fn()
       .mockResolvedValue(steps.filter((entry) => entry.syncStatus !== "synced")),
+    listSessionsByUserId: vi.fn().mockResolvedValue([activeSession]),
     markStepFailed: vi.fn().mockResolvedValue(undefined),
     listSessions: vi.fn().mockResolvedValue([activeSession]),
     getCounts: vi.fn().mockResolvedValue({
@@ -65,6 +68,13 @@ const setup = ({
   const pusher = {
     ensureGuide: vi.fn().mockResolvedValue(activeSession.guideId ?? "guide-new"),
     pushStep,
+  };
+
+  const deleter = {
+    deleteStep: vi.fn().mockResolvedValue("removed"),
+    pushDeletion,
+    deleteGuide: vi.fn().mockResolvedValue("deleted"),
+    countPendingDeletions: vi.fn().mockResolvedValue(pendingDeletions),
   };
 
   const auth = {
@@ -90,6 +100,7 @@ const setup = ({
   const drainer = createOutboxDrainer({
     repository,
     pusher,
+    deleter,
     auth,
     lifecycleStore,
     waitMs: 0,
@@ -105,6 +116,7 @@ const setup = ({
     drainer,
     repository,
     pusher,
+    deleter,
     auth,
     lifecycleStore,
     onStepFailed,
@@ -320,11 +332,97 @@ describe("outbox drainer", () => {
       expect(repository.listSyncableSteps).toHaveBeenCalledWith({ userId: "user-1" });
     });
 
+    test("counts server deletes that still need to retry", async () => {
+      const { drainer } = setup({ pendingDeletions: 2 });
+
+      await expect(drainer.countOutstanding()).resolves.toBe(3);
+    });
+
     test("falls back to every session when signed out so retained data still wakes the alarm", async () => {
       const { drainer, repository } = setup({ userId: null });
 
       await expect(drainer.countOutstanding()).resolves.toBe(1);
       expect(repository.listSessions).toHaveBeenCalled();
+    });
+  });
+
+  describe("deletions", () => {
+    test("queues sessions that only hold a pending server delete", async () => {
+      const deleted = step({
+        id: "step-9",
+        stepIndex: 9,
+        syncStatus: "deleted",
+        serverStepId: "server-9",
+      });
+      const { drainer, deleter, pusher, repository } = setup({ steps: [deleted] });
+
+      await drainer.drainAll();
+      await waitForIdle(drainer);
+
+      expect(repository.listSessionsByUserId).toHaveBeenCalledWith("user-1");
+      expect(deleter.pushDeletion).toHaveBeenCalledWith(deleted);
+      expect(pusher.ensureGuide).not.toHaveBeenCalled();
+      expect(pusher.pushStep).not.toHaveBeenCalled();
+    });
+
+    test("leaves a failed delete for the next drain instead of looping in one", async () => {
+      const deleted = step({
+        id: "step-9",
+        stepIndex: 9,
+        syncStatus: "deleted",
+        serverStepId: "server-9",
+      });
+      const pushDeletion = vi.fn().mockResolvedValue("retrying");
+      const { drainer, onDrainCompleted } = setup({ steps: [deleted], pushDeletion });
+
+      await drainer.drainAll();
+      await waitForIdle(drainer);
+
+      expect(pushDeletion).toHaveBeenCalledTimes(1);
+      expect(onDrainCompleted).toHaveBeenCalled();
+      expect(drainer.getState().lastError).toContain("retrying on the next drain");
+
+      await drainer.drainAll();
+      await waitForIdle(drainer);
+
+      expect(pushDeletion).toHaveBeenCalledTimes(2);
+    });
+
+    test("pauses when a delete hits an auth failure", async () => {
+      const deleted = step({
+        id: "step-9",
+        stepIndex: 9,
+        syncStatus: "deleted",
+        serverStepId: "server-9",
+      });
+      const pushDeletion = vi
+        .fn()
+        .mockRejectedValue(new OutboxPermanentError("auth", "Unauthorized"));
+      const { drainer, onAuthLost } = setup({ steps: [deleted], pushDeletion });
+
+      await drainer.drainAll();
+      await waitForIdle(drainer);
+
+      expect(pushDeletion).toHaveBeenCalledTimes(1);
+      expect(onAuthLost).toHaveBeenCalledTimes(1);
+      expect(drainer.getState().isPaused).toBe(true);
+    });
+
+    test("pushes uploads and deletions for the same session", async () => {
+      const pending = step({ id: "step-1", stepIndex: 1 });
+      const deleted = step({
+        id: "step-0",
+        stepIndex: 0,
+        syncStatus: "deleted",
+        serverStepId: "server-0",
+      });
+      const { drainer, pusher, deleter } = setup({ steps: [deleted, pending] });
+
+      await drainer.drainAll();
+      await waitForIdle(drainer);
+
+      expect(pusher.pushStep).toHaveBeenCalledTimes(1);
+      expect(deleter.pushDeletion).toHaveBeenCalledWith(deleted);
     });
   });
 
