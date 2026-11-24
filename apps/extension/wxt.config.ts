@@ -50,7 +50,15 @@ export default defineConfig({
     const isChrome = browser === "chrome";
     const isFirefox = browser === "firefox";
 
-    const permissions: string[] = ["cookies", "storage", "activeTab", "tabs", "webNavigation"];
+    const permissions: string[] = [
+      "cookies",
+      "storage",
+      "unlimitedStorage",
+      "activeTab",
+      "tabs",
+      "webNavigation",
+      "alarms",
+    ];
 
     if (isChrome) {
       permissions.push("sidePanel");

@@ -4,7 +4,6 @@ export * from "./highlight";
 export * from "./outbox";
 export * from "./recording";
 export * from "./screenshot";
-export * from "./session";
 export * from "./settings";
 export * from "./sidepanel";
 export * from "./storage";

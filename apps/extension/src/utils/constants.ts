@@ -7,7 +7,6 @@ export const NAVIGATION_DEDUPE_MS = 1000;
 export const NAVIGATION_TIMEOUT_MS = 10000;
 export const RECORDING_PENDING_START_TTL_MS = 5 * 60 * 1000;
 export const STORAGE_KEY_SETTINGS = "cliqrelay.extension-settings";
-export const STORAGE_KEY_ACTIVE_GUIDE = "activeGuideId";
 export const STORAGE_KEY_RECORDING_STATUS = "cliqrelay.recording-status";
 export const STORAGE_KEY_RECORDING_LIFECYCLE = "cliqrelay.recording-lifecycle";
 export const HIGHLIGHT_SUPPRESS_TIMEOUT_MS = 100;
