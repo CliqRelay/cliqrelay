@@ -1,29 +1,17 @@
 import type { Browser } from "wxt/browser";
 
-import type { CreateStepWithoutScreenshot } from "@/models";
-import type {
-  CaptureMetadataEntry,
-  RecordingStateMachine,
-  ScreenshotService,
-  SidePanelStateUpdate,
-} from "@/models";
-import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
-import type { PortManager } from "@/services/sidepanel/port-manager.service";
-import { buildActionText } from "@/utils/action-text";
+import type { RecordingStateMachine } from "@/models";
+import type { OutboxWriter } from "@/services/outbox/outbox-writer.service";
 import { createDroppedCaptureReporter } from "@/utils/diagnostics";
-import { generateCaptureId } from "@/utils/id";
 import { isCaptureBridgeMessage } from "@/utils/message";
 
-export const createCaptureHandler = (
-  screenshotService: ScreenshotService,
-  offscreenManager: OffscreenManager,
-  recording: RecordingStateMachine,
-  stateUpdateBuilder: () => Promise<SidePanelStateUpdate>,
-  portManager: PortManager,
-  captureMetadataMap: Map<string, CaptureMetadataEntry>,
-  createStepWithoutScreenshot: CreateStepWithoutScreenshot,
-  clearPendingFreeTyping: () => void,
-) => {
+type CaptureHandlerDeps = {
+  writer: OutboxWriter;
+  recording: RecordingStateMachine;
+  onStateChanged?: () => void | Promise<void>;
+};
+
+export const createCaptureHandler = ({ writer, recording, onStateChanged }: CaptureHandlerDeps) => {
   const reportDroppedCapture = createDroppedCaptureReporter();
 
   const handleCapture = (message: unknown, sender: Browser.runtime.MessageSender) => {
@@ -42,76 +30,17 @@ export const createCaptureHandler = (
       return true;
     }
 
-    const captureId = generateCaptureId();
-    const payload = message.payload;
-    const targetElement = payload.targetElement;
-    const actionText = buildActionText(
-      payload.action,
-      payload.targetElement,
-      payload.typedText,
-      payload.keyCombo,
-    );
+    const isTyping = message.payload.action === "input" && message.payload.typedText != null;
+    const write = isTyping ? writer.writeTyping(message) : writer.writeCapture(message, tabId);
 
-    captureMetadataMap.set(captureId, {
-      action: payload.action,
-      actionText,
-      url: payload.url,
-      capturedAt: payload.capturedAt,
-      ...(targetElement
-        ? {
-            targetElement: {
-              clickX: targetElement.clickX,
-              clickY: targetElement.clickY,
-              viewportWidth: targetElement.viewportWidth,
-              viewportHeight: targetElement.viewportHeight,
-            },
-          }
-        : {}),
-    });
+    void write
+      .catch((error) => {
+        console.warn("[background] Local capture write failed:", error);
+      })
+      .finally(() => {
+        void onStateChanged?.();
+      });
 
-    const isFreeTyping = payload.action === "input" && payload.typedText != null;
-
-    if (isFreeTyping) {
-      void (async () => {
-        try {
-          await createStepWithoutScreenshot(captureId, message);
-        } catch (error) {
-          console.warn("[background] Free typing step creation failed:", error);
-        }
-        const stateUpdate = await stateUpdateBuilder();
-        portManager.broadcast({ type: "state_update", state: stateUpdate });
-      })();
-      return true;
-    }
-
-    clearPendingFreeTyping();
-
-    recording.ingestCapture({
-      tabId,
-      message: {
-        source: "background",
-        type: message.type,
-        payload: { ...payload, captureId, tabId: tabId.toString() },
-      },
-    });
-
-    const processCapture = async () => {
-      try {
-        const capturedDataUrl = await screenshotService.captureWithThrottle(tabId);
-        if (!capturedDataUrl) {
-          return;
-        }
-
-        await offscreenManager.sendJob(captureId, message, capturedDataUrl, tabId);
-      } catch (error) {
-        console.warn("[background] Capture processing failed:", error);
-      }
-
-      const stateUpdate = await stateUpdateBuilder();
-      portManager.broadcast({ type: "state_update", state: stateUpdate });
-    };
-
-    void processCapture();
     return true;
   };
 
