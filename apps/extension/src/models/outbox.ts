@@ -169,6 +169,12 @@ export type ListSyncableStepsScope = {
 
 export type StepDeletionOutcome = "removed" | "marked";
 
+export type StepDeleteOutcome = "removed" | "retrying" | "missing";
+
+export type GuideDeleteOutcome = "deleted" | "missing";
+
+export type OutboxFailureKind = "auth" | "guide-gone" | "step-conflict" | "guide-required";
+
 export type OutboxCleanupResult = {
   sessions: number;
   steps: number;
