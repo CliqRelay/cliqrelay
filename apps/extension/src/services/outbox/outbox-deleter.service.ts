@@ -1,35 +1,19 @@
-import { ApiError } from "@repo/api-client";
-
-import { isAuthError } from "./outbox-pusher.service";
+import { classifyOutboxError } from "./outbox-pusher.service";
 import type { OutboxStepStateRepository } from "./outbox-step-state.repository";
 import type { OutboxRepository } from "./outbox.repository";
 import type { LocalStep, OutboxApi } from "@/models";
 
-const GONE_STATUSES = [404, 409];
-
 export type StepDeleteOutcome = "removed" | "retrying" | "missing";
 export type GuideDeleteOutcome = "deleted" | "missing";
 
-const isGoneError = (error: unknown): boolean =>
-  error instanceof ApiError && GONE_STATUSES.includes(error.status);
-
 type OutboxDeleterDeps = {
   repository: Pick<OutboxRepository, "removeStep">;
-  stepState: Pick<
-    OutboxStepStateRepository,
-    "getStep" | "markStepDeleted" | "countPendingDeletions"
-  >;
+  stepState: Pick<OutboxStepStateRepository, "getStep" | "markStepDeleted">;
   api: Pick<OutboxApi, "deleteStep" | "deleteGuide">;
   now?: () => Date;
   log?: (message: string, error: unknown) => void;
 };
 
-/**
- * Local-first deletion. A local-only step disappears immediately; a step that
- * exists on the server is marked `deleted` first so a failed request keeps the
- * row (and thumbnail) for the drainer to retry. A step already gone on the
- * server (404, or a soft-deleted 409) is a success.
- */
 export const createOutboxDeleter = ({
   repository,
   stepState,
@@ -37,26 +21,20 @@ export const createOutboxDeleter = ({
   now = () => new Date(),
   log = (message, error) => console.warn(message, error),
 }: OutboxDeleterDeps) => {
-  const confirmServerDelete = async (step: LocalStep): Promise<void> => {
-    if (!step.serverStepId) {
-      await repository.removeStep(step.id);
-      return;
-    }
-
-    try {
-      await api.deleteStep(step.serverStepId);
-    } catch (error) {
-      if (isGoneError(error)) {
-        await repository.removeStep(step.id);
-        return;
+  const removeServerStep = async (step: LocalStep): Promise<void> => {
+    if (step.serverStepId) {
+      try {
+        await api.deleteStep(step.serverStepId);
+      } catch (error) {
+        if (classifyOutboxError(error) !== "guide-gone") {
+          throw error;
+        }
       }
-      throw error;
     }
 
     await repository.removeStep(step.id);
   };
 
-  /** Sidepanel command: returns `retrying` when the server delete must wait. */
   const deleteStep = async (stepId: string): Promise<StepDeleteOutcome> => {
     const step = await stepState.getStep(stepId);
 
@@ -72,7 +50,7 @@ export const createOutboxDeleter = ({
     await stepState.markStepDeleted(step.id, now());
 
     try {
-      await confirmServerDelete(step);
+      await removeServerStep(step);
       return "removed";
     } catch (error) {
       log(`[background] Step ${step.id} will be deleted on the next drain`, error);
@@ -80,13 +58,12 @@ export const createOutboxDeleter = ({
     }
   };
 
-  /** Drainer path for rows already marked `deleted`; auth failures bubble up. */
   const pushDeletion = async (step: LocalStep): Promise<StepDeleteOutcome> => {
     try {
-      await confirmServerDelete(step);
+      await removeServerStep(step);
       return "removed";
     } catch (error) {
-      if (isAuthError(error)) {
+      if (classifyOutboxError(error) === "auth") {
         throw error;
       }
       log(`[background] Step ${step.id} delete failed; retrying later`, error);
@@ -94,25 +71,19 @@ export const createOutboxDeleter = ({
     }
   };
 
-  /** Guide deletion stays synchronous: a failure leaves the session for retry. */
   const deleteGuide = async (guideId: string): Promise<GuideDeleteOutcome> => {
     try {
       await api.deleteGuide(guideId);
       return "deleted";
     } catch (error) {
-      if (isGoneError(error)) {
+      if (classifyOutboxError(error) === "guide-gone") {
         return "missing";
       }
       throw error;
     }
   };
 
-  return {
-    deleteStep,
-    pushDeletion,
-    deleteGuide,
-    countPendingDeletions: (userId?: string) => stepState.countPendingDeletions(userId),
-  };
+  return { deleteStep, pushDeletion, deleteGuide };
 };
 
 export type OutboxDeleter = ReturnType<typeof createOutboxDeleter>;

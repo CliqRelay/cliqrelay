@@ -35,7 +35,6 @@ const setup = ({ activeStep = step() }: { activeStep?: LocalStep | null } = {}) 
   const stepState = {
     getStep: vi.fn().mockResolvedValue(activeStep ?? undefined),
     markStepDeleted: vi.fn().mockResolvedValue(undefined),
-    countPendingDeletions: vi.fn().mockResolvedValue(3),
   };
 
   const api = {
@@ -71,17 +70,6 @@ describe("outbox deleter", () => {
 
       expect(api.deleteStep).not.toHaveBeenCalled();
       expect(stepState.markStepDeleted).not.toHaveBeenCalled();
-      expect(repository.removeStep).toHaveBeenCalledWith("step-1");
-    });
-
-    test("removes a failed step that never reached the server", async () => {
-      const { deleter, api, repository } = setup({
-        activeStep: step({ syncStatus: "failed", serverStepId: undefined }),
-      });
-
-      await expect(deleter.deleteStep("step-1")).resolves.toBe("removed");
-
-      expect(api.deleteStep).not.toHaveBeenCalled();
       expect(repository.removeStep).toHaveBeenCalledWith("step-1");
     });
 
@@ -126,14 +114,17 @@ describe("outbox deleter", () => {
       expect(log).toHaveBeenCalled();
     });
 
-    test("keeps the deleted row when the session is signed out", async () => {
-      const { deleter, repository, api } = setup();
-      vi.mocked(api.deleteStep).mockRejectedValue(createApiError(401));
+    test.each([401, 403])(
+      "keeps the deleted row when the user is signed out (%s)",
+      async (status) => {
+        const { deleter, repository, api } = setup();
+        vi.mocked(api.deleteStep).mockRejectedValue(createApiError(status));
 
-      await expect(deleter.deleteStep("step-1")).resolves.toBe("retrying");
+        await expect(deleter.deleteStep("step-1")).resolves.toBe("retrying");
 
-      expect(repository.removeStep).not.toHaveBeenCalled();
-    });
+        expect(repository.removeStep).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe("pushDeletion", () => {
@@ -194,12 +185,5 @@ describe("outbox deleter", () => {
 
       await expect(deleter.deleteGuide("guide-1")).rejects.toThrow("boom");
     });
-  });
-
-  test("reports how many server deletes are still pending", async () => {
-    const { deleter, stepState } = setup();
-
-    await expect(deleter.countPendingDeletions("user-1")).resolves.toBe(3);
-    expect(stepState.countPendingDeletions).toHaveBeenCalledWith("user-1");
   });
 });

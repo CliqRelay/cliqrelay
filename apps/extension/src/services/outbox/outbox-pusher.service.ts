@@ -1,4 +1,4 @@
-import { ApiError, type CreateStepRequest } from "@repo/api-client";
+import { ApiError } from "@repo/api-client";
 
 import type { OutboxStepStateRepository } from "./outbox-step-state.repository";
 import type { OutboxRepository } from "./outbox.repository";
@@ -11,10 +11,6 @@ export type OutboxFailureKind = "auth" | "guide-gone";
 const AUTH_STATUSES = [401, 403];
 const GUIDE_GONE_STATUSES = [404, 409];
 
-/**
- * A failure the drainer must not retry: the session is signed out or the guide
- * no longer exists on the server. Everything else is transient.
- */
 export class OutboxPermanentError extends Error {
   readonly kind: OutboxFailureKind;
 
@@ -25,28 +21,25 @@ export class OutboxPermanentError extends Error {
   }
 }
 
-export const isAuthError = (error: unknown): boolean =>
-  error instanceof ApiError && AUTH_STATUSES.includes(error.status);
-
 export const classifyOutboxError = (error: unknown): OutboxFailureKind | null => {
   if (error instanceof OutboxPermanentError) {
     return error.kind;
   }
 
-  if (error instanceof ApiError) {
-    if (AUTH_STATUSES.includes(error.status)) {
-      return "auth";
-    }
-    if (GUIDE_GONE_STATUSES.includes(error.status)) {
-      return "guide-gone";
-    }
+  if (!(error instanceof ApiError)) {
+    return null;
+  }
+
+  if (AUTH_STATUSES.includes(error.status)) {
+    return "auth";
+  }
+
+  if (GUIDE_GONE_STATUSES.includes(error.status)) {
+    return "guide-gone";
   }
 
   return null;
 };
-
-const toError = (error: unknown): Error =>
-  error instanceof Error ? error : new Error(String(error));
 
 const guideTitleForSession = (session: LocalSession): string => {
   const startedAt = Date.parse(session.startedAt);
@@ -83,13 +76,6 @@ export type PushStepInput = {
   insertAfterStepId?: string;
 };
 
-/**
- * Turns one local step into a server step plus its screenshot.
- *
- * Every write that matters happens in an order that survives a killed worker:
- * `serverStepId` is persisted before the upload, and a step that already has a
- * `serverStepId` skips the create so the replay path cannot duplicate it.
- */
 export const createOutboxPusher = ({
   repository,
   stepState,
@@ -118,25 +104,16 @@ export const createOutboxPusher = ({
     }
 
     if (!(await hasFreshPendingStart())) {
-      throw new Error("Local session has no guide to upload to");
+      throw new OutboxPermanentError("guide-gone", "Local session has no guide to upload to");
     }
 
-    const teamId = (await getActiveTeamId()) ?? "";
-
-    try {
-      const guide = await api.createGuide({
-        title: guideTitleForSession(session),
-        teamId,
-        clientGuideId: session.clientGuideId,
-      });
-      await repository.setSessionGuideId(session.id, guide.id);
-      return guide.id;
-    } catch (error) {
-      if (isAuthError(error)) {
-        throw error;
-      }
-      throw new Error(`Failed to create guide: ${toError(error).message}`);
-    }
+    const guide = await api.createGuide({
+      title: guideTitleForSession(session),
+      teamId: (await getActiveTeamId()) ?? "",
+      clientGuideId: session.clientGuideId,
+    });
+    await repository.setSessionGuideId(session.id, guide.id);
+    return guide.id;
   };
 
   const uploadScreenshot = async (
@@ -186,11 +163,7 @@ export const createOutboxPusher = ({
         action: step.action,
         url: step.url,
         ...(step.actionText !== undefined ? { actionText: step.actionText } : {}),
-        ...(step.targetElement !== undefined
-          ? {
-              targetElement: step.targetElement as CreateStepRequest["targetElement"],
-            }
-          : {}),
+        ...(step.targetElement !== undefined ? { targetElement: step.targetElement } : {}),
         ...(insertAfterStepId !== undefined ? { insertAfterStepId } : {}),
       });
 

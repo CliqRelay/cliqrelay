@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { ApiError } from "@repo/api-client";
 
-import { classifyOutboxError, createOutboxPusher } from "./outbox-pusher.service";
+import {
+  classifyOutboxError,
+  createOutboxPusher,
+  OutboxPermanentError,
+} from "./outbox-pusher.service";
 import type { OutboxStepStateRepository } from "./outbox-step-state.repository";
 import type { OutboxRepository } from "./outbox.repository";
 import type { LocalSession, LocalStep, OutboxApi, RecordingLifecycleStore } from "@/models";
@@ -42,27 +46,20 @@ const step = (overrides: Partial<LocalStep> = {}): LocalStep => ({
 
 const createApiError = (status: number) => new ApiError("boom", status, {}, new Headers());
 
-const setup = ({
-  activeSession = session(),
-  pendingStart,
-  screenshot = new Blob(["screenshot"], { type: "image/webp" }),
-  thumbnail = new Blob(["thumb"], { type: "image/webp" }),
-}: {
+type SetupOptions = {
   activeSession?: LocalSession;
   pendingStart?: { clientGuideId: string; startedAt: string };
-  screenshot?: Blob;
-  thumbnail?: Blob;
-} = {}) => {
+};
+
+const setup = ({ activeSession = session(), pendingStart }: SetupOptions = {}) => {
   const repository = {
-    getBlob: vi.fn(async (id: string) => {
-      if (id === "blob-screenshot" && screenshot) {
-        return { id, stepId: "step-1", kind: "screenshot", blob: screenshot, createdAt: "" };
-      }
-      if (id === "blob-thumbnail" && thumbnail) {
-        return { id, stepId: "step-1", kind: "thumbnail", blob: thumbnail, createdAt: "" };
-      }
-      return undefined;
-    }),
+    getBlob: vi.fn(async (id: string) => ({
+      id,
+      stepId: "step-1",
+      kind: id === "blob-screenshot" ? "screenshot" : "thumbnail",
+      blob: new Blob([id === "blob-screenshot" ? "screenshot" : "thumb"], { type: "image/webp" }),
+      createdAt: "",
+    })),
     markStepUploading: vi.fn().mockResolvedValue(undefined),
     markStepSynced: vi.fn().mockResolvedValue(undefined),
     setSessionGuideId: vi.fn().mockResolvedValue(activeSession),
@@ -105,8 +102,15 @@ const setup = ({
     now: () => NOW,
   });
 
-  return { pusher, repository, stepState, api, lifecycleStore };
+  return { pusher, repository, stepState, api };
 };
+
+const withoutGuide = () => session({ guideId: null });
+
+const freshPendingStart = () => ({
+  clientGuideId: "client-guide-1",
+  startedAt: new Date(NOW.getTime() - 1000).toISOString(),
+});
 
 describe("outbox pusher", () => {
   beforeEach(() => {
@@ -122,18 +126,14 @@ describe("outbox pusher", () => {
       expect(repository.setSessionGuideId).not.toHaveBeenCalled();
     });
 
-    test("creates the guide once with the session's client id and persists it", async () => {
+    test("creates the guide with the session's client id and a title derived from the start time", async () => {
       const { pusher, api, repository } = setup({
-        activeSession: session({ guideId: null }),
-        pendingStart: {
-          clientGuideId: "client-guide-1",
-          startedAt: new Date(NOW.getTime() - 1000).toISOString(),
-        },
+        activeSession: withoutGuide(),
+        pendingStart: freshPendingStart(),
       });
 
-      await expect(pusher.ensureGuide(session({ guideId: null }))).resolves.toBe("guide-created");
+      await expect(pusher.ensureGuide(withoutGuide())).resolves.toBe("guide-created");
 
-      expect(api.createGuide).toHaveBeenCalledTimes(1);
       expect(api.createGuide).toHaveBeenCalledWith({
         title: `guide-${NOW.getTime()}`,
         teamId: "team-1",
@@ -142,52 +142,56 @@ describe("outbox pusher", () => {
       expect(repository.setSessionGuideId).toHaveBeenCalledWith("session-1", "guide-created");
     });
 
-    test("never regenerates a client id after the pending start window closes", async () => {
+    test("never recreates a guide after the pending start window closes", async () => {
       const { pusher, api } = setup({
-        activeSession: session({ guideId: null }),
+        activeSession: withoutGuide(),
         pendingStart: {
-          clientGuideId: "stale-client-guide",
+          clientGuideId: "client-guide-1",
           startedAt: new Date(NOW.getTime() - RECORDING_PENDING_START_TTL_MS - 1).toISOString(),
         },
       });
 
-      await expect(pusher.ensureGuide(session({ guideId: null }))).rejects.toThrow(
-        "Local session has no guide to upload to",
-      );
+      const error = await pusher.ensureGuide(withoutGuide()).catch((err) => err);
+
+      expect(error).toBeInstanceOf(OutboxPermanentError);
+      expect(classifyOutboxError(error)).toBe("guide-gone");
       expect(api.createGuide).not.toHaveBeenCalled();
     });
 
-    test("surfaces a guide creation conflict as a retryable failure", async () => {
+    test("classifies a guide creation conflict as guide-gone", async () => {
       const { pusher, api } = setup({
-        activeSession: session({ guideId: null }),
-        pendingStart: { clientGuideId: "client-guide-1", startedAt: NOW.toISOString() },
+        activeSession: withoutGuide(),
+        pendingStart: freshPendingStart(),
       });
       vi.mocked(api.createGuide).mockRejectedValue(createApiError(409));
 
-      const error = await pusher.ensureGuide(session({ guideId: null })).catch((err) => err);
+      const error = await pusher.ensureGuide(withoutGuide()).catch((err) => err);
 
-      expect(classifyOutboxError(error)).toBeNull();
-      expect(error).toBeInstanceOf(Error);
+      expect(classifyOutboxError(error)).toBe("guide-gone");
     });
 
-    test("keeps an auth failure authoritative", async () => {
+    test("propagates a server error so the drainer can retry it", async () => {
       const { pusher, api } = setup({
-        activeSession: session({ guideId: null }),
-        pendingStart: { clientGuideId: "client-guide-1", startedAt: NOW.toISOString() },
+        activeSession: withoutGuide(),
+        pendingStart: freshPendingStart(),
       });
-      vi.mocked(api.createGuide).mockRejectedValue(createApiError(401));
+      vi.mocked(api.createGuide).mockRejectedValue(createApiError(500));
 
-      const error = await pusher.ensureGuide(session({ guideId: null })).catch((err) => err);
+      const error = await pusher.ensureGuide(withoutGuide()).catch((err) => err);
 
-      expect(classifyOutboxError(error)).toBe("auth");
+      expect(classifyOutboxError(error)).toBeNull();
     });
   });
 
   describe("pushStep", () => {
-    test("creates the step with its local id as clientStepId and persists the server id before uploading", async () => {
+    test("creates the step with its local id and anchor, persisting the server id before uploading", async () => {
       const { pusher, api, repository, stepState } = setup();
 
-      await pusher.pushStep({ step: step(), guideId: "guide-1", insertAfterStepId: "server-0" });
+      await pusher.pushStep({
+        step: step({ targetElement: { selector: "#sign-in" } }),
+        guideId: "guide-1",
+        insertAfterStepId: "server-0",
+      });
 
       expect(api.createStep).toHaveBeenCalledWith({
         guideId: "guide-1",
@@ -195,6 +199,7 @@ describe("outbox pusher", () => {
         action: "click",
         actionText: 'Click "Sign in"',
         url: "https://angular.dev",
+        targetElement: { selector: "#sign-in" },
         insertAfterStepId: "server-0",
       });
       expect(stepState.setServerStepId).toHaveBeenCalledWith("step-1", "server-step-1", NOW);
@@ -206,7 +211,7 @@ describe("outbox pusher", () => {
       );
     });
 
-    test("uploads the screenshot and replaces the step's local blob with the server URL", async () => {
+    test("uploads the screenshot and replaces the local blob with the server URL", async () => {
       const { pusher, api, repository } = setup();
 
       await pusher.pushStep({ step: step(), guideId: "guide-1" });
@@ -247,16 +252,16 @@ describe("outbox pusher", () => {
       });
     });
 
-    test("replays the same clientStepId after a worker died before persisting the server id", async () => {
+    test("replays the same clientStepId when the server id was never persisted", async () => {
       const { pusher, api } = setup();
 
       await pusher.pushStep({ step: step(), guideId: "guide-1" });
       await pusher.pushStep({ step: step(), guideId: "guide-1" });
 
-      const clientIds = vi
-        .mocked(api.createStep)
-        .mock.calls.map(([input]) => (input as { clientStepId: string }).clientStepId);
-      expect(clientIds).toEqual(["step-1", "step-1"]);
+      expect(vi.mocked(api.createStep).mock.calls.map(([input]) => input.clientStepId)).toEqual([
+        "step-1",
+        "step-1",
+      ]);
     });
 
     test("resumes a step whose screenshot was already replaced without uploading twice", async () => {
@@ -301,10 +306,14 @@ describe("outbox pusher", () => {
       [403, "auth"],
       [404, "guide-gone"],
       [409, "guide-gone"],
-      [500, null],
       [400, null],
+      [500, null],
     ])("classifies a %s response as %s", (status, expected) => {
       expect(classifyOutboxError(createApiError(status))).toBe(expected);
+    });
+
+    test.each(["auth", "guide-gone"] as const)("classifies a permanent %s error", (kind) => {
+      expect(classifyOutboxError(new OutboxPermanentError(kind, "boom"))).toBe(kind);
     });
 
     test("classifies plain errors as retryable", () => {
