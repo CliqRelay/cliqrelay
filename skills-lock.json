@@ -1,29 +1,39 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "grill-me": {
       "source": "mattpocock/skills",
+      "commit": "d65391149dbb5fe76478e76fa8d5122b2aa5a70e",
       "sourceType": "github",
       "skillPath": "skills/productivity/grill-me/SKILL.md",
-      "computedHash": "f361db4e15e6bfd562a9282b1dccda513910a50061f9e838ce017be9c69dde3f"
+      "computedHash": "ab1acb9fbd9eaee03da254abb8a8de228d1e7a07475fe959da4a5eefa34ea4b9"
     },
     "grilling": {
       "source": "mattpocock/skills",
+      "commit": "d65391149dbb5fe76478e76fa8d5122b2aa5a70e",
       "sourceType": "github",
       "skillPath": "skills/productivity/grilling/SKILL.md",
-      "computedHash": "4ebdd12fe61ff3abf20cff6683740e2b9b3739454be0a3f4a928a1c4d07d6b34"
+      "computedHash": "485451958784497cd4c4dbea13cb5bbb579da58fac0d0e45f3bcb310fab68ac7"
     },
     "handoff": {
       "source": "mattpocock/skills",
+      "commit": "d65391149dbb5fe76478e76fa8d5122b2aa5a70e",
       "sourceType": "github",
       "skillPath": "skills/productivity/handoff/SKILL.md",
-      "computedHash": "ad03e8d4ea3cbbff66420eb7ba3cc375b5cbe1821a2449b53e863256cf5b5cde"
+      "computedHash": "f60a2c3688379b7a306b3a7b8dd4120eab39da44c74fa2cb62d6424935f04aa7"
     },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
-      "computedHash": "80a6226e78f6d1fe464214ae0ef449d49d8ffaa3e7704f011e9b418c678ad4d1"
+      "computedHash": "28c135d75a16a268e26a44330ed70c831e35c6b8b6d8d384061e4adae5896a22"
+    },
+    "typescript": {
+      "source": "pproenca/dot-skills",
+      "commit": "cf93c57cac89d6fc3e4194686000411567f5caf3",
+      "sourceType": "github",
+      "skillPath": "skills/.curated/typescript/SKILL.md",
+      "computedHash": "7782639977ee14f35ec63904045edf0aeaeddb65593deab8dac5da19024dfb48"
     }
   }
 }
