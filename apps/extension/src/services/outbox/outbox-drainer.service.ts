@@ -161,6 +161,11 @@ export const createOutboxDrainer = ({
           await handleGuideGone(session, error);
           return;
         }
+        if (kind === "guide-required") {
+          lastError = toError(error).message;
+          await markStepsFailed(steps, lastError);
+          return;
+        }
 
         await markStepsFailed(steps, toError(error).message);
         throw error;
@@ -186,6 +191,11 @@ export const createOutboxDrainer = ({
           if (kind === "guide-gone") {
             await handleGuideGone(session, error);
             return;
+          }
+          if (kind === "step-conflict") {
+            lastError = toError(error).message;
+            await markStepsFailed([step], lastError);
+            continue;
           }
 
           transientFailure = toError(error);

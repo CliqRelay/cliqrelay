@@ -560,5 +560,40 @@ describe("outbox drainer", () => {
       expect(repository.markStepFailed).not.toHaveBeenCalled();
       expect(drainer.getState().isPaused).toBe(true);
     });
+
+    test("keeps captures when the session has no guide", async () => {
+      const { drainer, pusher, repository } = setup();
+      pusher.ensureGuide.mockRejectedValue(
+        new OutboxPermanentError("guide-required", "Guide is missing"),
+      );
+
+      await drainer.drainAll();
+      await waitForIdle(drainer);
+
+      expect(repository.markStepFailed).toHaveBeenCalledTimes(1);
+      expect(repository.deleteSessionData).not.toHaveBeenCalled();
+      expect(drainer.getState().lastError).toBe("Guide is missing");
+    });
+  });
+
+  describe("step conflicts", () => {
+    test("fails the conflicting step and continues with the rest", async () => {
+      const { drainer, pusher, repository } = setup({
+        steps: [step(), step({ id: "step-2", stepIndex: 1 })],
+      });
+      pusher.pushStep
+        .mockRejectedValueOnce(new OutboxPermanentError("step-conflict", "Step conflicts"))
+        .mockResolvedValueOnce(undefined);
+
+      await drainer.drainAll();
+      await waitForIdle(drainer);
+
+      expect(pusher.pushStep).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(repository.markStepFailed).mock.calls[0]?.slice(0, 2)).toEqual([
+        "step-1",
+        "Step conflicts",
+      ]);
+      expect(repository.deleteSessionData).not.toHaveBeenCalled();
+    });
   });
 });
