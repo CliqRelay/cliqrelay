@@ -1,25 +1,17 @@
 import { browser } from "wxt/browser";
 import { z } from "zod";
 
-import { CliqRelayEvents } from "@repo/data-commons";
-
-import type { CaptureBridgeMessage, CaptureMetadataEntry, RecordingStateMachine } from "@/models";
-import type { ScreenshotService } from "@/models/screenshot";
-import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
+import type { RecordingStateMachine } from "@/models";
+import type { OutboxWriter } from "@/services/outbox/outbox-writer.service";
 import { NAVIGATION_DEDUPE_MS, NAVIGATION_TIMEOUT_MS } from "@/utils/constants";
 
 const urlSchema = z.url();
-
-export type GenerateCaptureId = () => string;
 
 export type NavigationListener = ReturnType<typeof createNavigationListener>;
 
 export const createNavigationListener = (
   recording: RecordingStateMachine,
-  screenshotService: ScreenshotService,
-  offscreenManager: OffscreenManager,
-  captureMetadataMap: Map<string, CaptureMetadataEntry>,
-  generateCaptureId: GenerateCaptureId,
+  writer: Pick<OutboxWriter, "writeNavigation">,
 ) => {
   const dedupeMap = new Map<number, { url: string; time: number }>();
   const pendingActivations = new Map<
@@ -48,29 +40,6 @@ export const createNavigationListener = (
     dedupeMap.set(tabId, { url, time: Date.now() });
   };
 
-  const getViewportDimensions = async (
-    tabId: number,
-  ): Promise<{ viewportWidth: number; viewportHeight: number } | null> => {
-    try {
-      const response = await browser.tabs.sendMessage(tabId, {
-        type: "get_viewport",
-      });
-      if (
-        response &&
-        typeof response.viewportWidth === "number" &&
-        typeof response.viewportHeight === "number"
-      ) {
-        return {
-          viewportWidth: response.viewportWidth,
-          viewportHeight: response.viewportHeight,
-        };
-      }
-    } catch {
-      // Content script may not be available
-    }
-    return null;
-  };
-
   const processNavigation = async (tabId: number, url: string, capturedAt: string) => {
     if (!isRecording()) {
       return;
@@ -80,37 +49,10 @@ export const createNavigationListener = (
     }
     updateDedupe(tabId, url);
 
-    const captureId = generateCaptureId();
-
-    const viewportDimensions = await getViewportDimensions(tabId);
-    captureMetadataMap.set(captureId, {
-      action: "navigation",
-      url,
-      capturedAt,
-      ...(viewportDimensions ? { targetElement: viewportDimensions } : {}),
-    });
-
     try {
-      const dataUrl = await screenshotService.captureWithThrottle(tabId, {
-        hideHighlightFirst: true,
-      });
-      if (!dataUrl) return;
-
-      const message: CaptureBridgeMessage = {
-        source: "background",
-        type: CliqRelayEvents.CAPTURE_EVENT,
-        payload: {
-          action: "navigation",
-          url,
-          capturedAt,
-          captureId,
-          tabId: tabId.toString(),
-        },
-      };
-
-      await offscreenManager.sendJob(captureId, message, dataUrl, tabId);
+      await writer.writeNavigation({ url, capturedAt, tabId });
     } catch (error) {
-      console.warn("[navigation-listener] Failed to process navigation:", error);
+      console.warn("[navigation-listener] Failed to write navigation:", error);
     }
   };
 

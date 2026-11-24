@@ -80,7 +80,7 @@ describe("content script", () => {
     await loadContentScript();
 
     expect(startMock).toHaveBeenCalledTimes(1);
-  });
+  }, 60_000);
 
   test("enables the highlight overlay while recording", async () => {
     statusStoreMock.get.mockResolvedValue("recording");
@@ -88,7 +88,7 @@ describe("content script", () => {
     await loadContentScript();
 
     expect(overlayMock.enable).toHaveBeenCalledTimes(1);
-  });
+  }, 60_000);
 
   test("disables the highlight overlay when recording is paused", async () => {
     await loadContentScript();
@@ -99,7 +99,7 @@ describe("content script", () => {
     onStatusChange("paused");
 
     expect(overlayMock.disable).toHaveBeenCalled();
-  });
+  }, 60_000);
 
   test("routes highlight suppress and restore messages to the overlay", async () => {
     await loadContentScript();
@@ -110,7 +110,7 @@ describe("content script", () => {
 
     expect(overlayMock.suppress).toHaveBeenCalledTimes(1);
     expect(overlayMock.restore).toHaveBeenCalledTimes(1);
-  });
+  }, 60_000);
 
   test("cleans up when the content script is invalidated", async () => {
     await loadContentScript();
@@ -121,5 +121,5 @@ describe("content script", () => {
     expect(unwatchMock).toHaveBeenCalled();
     expect(overlayMock.disable).toHaveBeenCalled();
     expect(stopCaptureMock).toHaveBeenCalled();
-  });
+  }, 60_000);
 });

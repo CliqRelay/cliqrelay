@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { OutboxLifecycle } from "./outbox";
 import type { BufferedCapture } from "@/models/capture";
 import type { BrowserStorage } from "@/models/storage";
 
@@ -56,8 +57,9 @@ export type RecordingStatusStorage = {
 export type RecordingLifecycleStorage = BrowserStorage;
 
 export type RecordingLifecycleStore = {
-  get: () => Promise<RecordingLifecycle>;
-  set: (lifecycle: RecordingLifecycle) => Promise<void>;
+  get: () => Promise<OutboxLifecycle>;
+  set: (lifecycle: OutboxLifecycle) => Promise<void>;
+  patch: (changes: Partial<OutboxLifecycle>) => Promise<OutboxLifecycle>;
 };
 
 export type RecordingStatusStore = {

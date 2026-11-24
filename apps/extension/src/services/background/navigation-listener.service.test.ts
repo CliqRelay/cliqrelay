@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { createNavigationListener } from "./navigation-listener.service";
-import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
 import { createRecordingStateMachine } from "@/services/recording/recording.service";
 
 const TAB_ID = 5;
@@ -38,28 +37,32 @@ describe("navigation listener", () => {
   });
 
   describe("onCompleted", () => {
-    test("should hide the highlight before screenshotting a loaded page", async () => {
-      const screenshotService = {
-        captureWithThrottle: vi.fn().mockResolvedValue("data:image/png;base64,abc123"),
-      };
-      const offscreenManager = { sendJob: vi.fn().mockResolvedValue(undefined) };
-      createNavigationListener(
-        createRecordingStateMachine("recording"),
-        screenshotService,
-        offscreenManager as unknown as OffscreenManager,
-        new Map(),
-        () => "capture_1",
-      ).start();
+    test("writes a first-class local navigation record", async () => {
+      const writer = { writeNavigation: vi.fn().mockResolvedValue(null) };
+      createNavigationListener(createRecordingStateMachine("recording"), writer).start();
       const [[onCompleted]] = browserMock.webNavigation.onCompleted.addListener.mock
         .calls as unknown as [[OnCompleted]];
 
       onCompleted({ url: "https://angular.dev", tabId: TAB_ID, frameId: 0 });
 
-      await vi.waitFor(() =>
-        expect(screenshotService.captureWithThrottle).toHaveBeenCalledWith(TAB_ID, {
-          hideHighlightFirst: true,
-        }),
-      );
+      await vi.waitFor(() => expect(writer.writeNavigation).toHaveBeenCalled());
+      expect(writer.writeNavigation).toHaveBeenCalledWith({
+        url: "https://angular.dev",
+        capturedAt: expect.any(String),
+        tabId: TAB_ID,
+      });
+    });
+
+    test("does not write navigation while recording is paused", async () => {
+      const writer = { writeNavigation: vi.fn().mockResolvedValue(null) };
+      createNavigationListener(createRecordingStateMachine("paused"), writer).start();
+      const [[onCompleted]] = browserMock.webNavigation.onCompleted.addListener.mock
+        .calls as unknown as [[OnCompleted]];
+
+      onCompleted({ url: "https://angular.dev", tabId: TAB_ID, frameId: 0 });
+
+      await Promise.resolve();
+      expect(writer.writeNavigation).not.toHaveBeenCalled();
     });
   });
 });

@@ -12,11 +12,33 @@ describe("recording lifecycle store", () => {
   test("returns the persisted lifecycle", async () => {
     const store = createRecordingLifecycleStore(
       createStorage({
-        [STORAGE_KEY_RECORDING_LIFECYCLE]: { status: "paused", sessionId: "session-1" },
+        [STORAGE_KEY_RECORDING_LIFECYCLE]: {
+          status: "paused",
+          sessionId: "session-1",
+          isSignedOut: false,
+        },
       }),
     );
 
-    await expect(store.get()).resolves.toEqual({ status: "paused", sessionId: "session-1" });
+    await expect(store.get()).resolves.toEqual({
+      status: "paused",
+      sessionId: "session-1",
+      isSignedOut: false,
+    });
+  });
+
+  test("accepts a 0.2.0 lifecycle without isSignedOut", async () => {
+    const store = createRecordingLifecycleStore(
+      createStorage({
+        [STORAGE_KEY_RECORDING_LIFECYCLE]: { status: "recording", sessionId: "session-1" },
+      }),
+    );
+
+    await expect(store.get()).resolves.toEqual({
+      status: "recording",
+      sessionId: "session-1",
+      isSignedOut: false,
+    });
   });
 
   test("falls back to idle when the record is missing or invalid", async () => {
@@ -25,8 +47,8 @@ describe("recording lifecycle store", () => {
       createStorage({ [STORAGE_KEY_RECORDING_LIFECYCLE]: { status: "nope" } }),
     );
 
-    await expect(missing.get()).resolves.toEqual({ status: "idle" });
-    await expect(invalid.get()).resolves.toEqual({ status: "idle" });
+    await expect(missing.get()).resolves.toEqual({ status: "idle", isSignedOut: false });
+    await expect(invalid.get()).resolves.toEqual({ status: "idle", isSignedOut: false });
   });
 
   test("falls back to idle when storage is unavailable", async () => {
@@ -36,17 +58,64 @@ describe("recording lifecycle store", () => {
 
     const store = createRecordingLifecycleStore(storage);
 
-    await expect(store.get()).resolves.toEqual({ status: "idle" });
-    await expect(store.set({ status: "recording" })).resolves.toBeUndefined();
+    await expect(store.get()).resolves.toEqual({ status: "idle", isSignedOut: false });
+    await expect(store.set({ status: "recording", isSignedOut: false })).resolves.toBeUndefined();
   });
 
   test("writes the lifecycle under its key", async () => {
     const storage = createStorage();
 
-    await createRecordingLifecycleStore(storage).set({ status: "recording", sessionId: "abc" });
+    await createRecordingLifecycleStore(storage).set({
+      status: "recording",
+      sessionId: "abc",
+      isSignedOut: false,
+    });
 
     expect(storage.set).toHaveBeenCalledWith({
-      [STORAGE_KEY_RECORDING_LIFECYCLE]: { status: "recording", sessionId: "abc" },
+      [STORAGE_KEY_RECORDING_LIFECYCLE]: {
+        status: "recording",
+        sessionId: "abc",
+        isSignedOut: false,
+      },
     });
+  });
+
+  test("patch merges fields and preserves the rest of the lifecycle", async () => {
+    const storage = createStorage({
+      [STORAGE_KEY_RECORDING_LIFECYCLE]: {
+        status: "idle",
+        sessionId: "session-1",
+        isSignedOut: true,
+        pendingStart: { clientGuideId: "client-1", startedAt: "2026-11-24T10:00:00.000Z" },
+      },
+    });
+    const store = createRecordingLifecycleStore(storage);
+
+    const lifecycle = await store.patch({ status: "recording", isSignedOut: false });
+
+    expect(lifecycle).toEqual({
+      status: "recording",
+      sessionId: "session-1",
+      isSignedOut: false,
+      pendingStart: { clientGuideId: "client-1", startedAt: "2026-11-24T10:00:00.000Z" },
+    });
+    expect(storage.set).toHaveBeenCalledWith({
+      [STORAGE_KEY_RECORDING_LIFECYCLE]: lifecycle,
+    });
+  });
+
+  test("patch can clear pendingStart", async () => {
+    const storage = createStorage({
+      [STORAGE_KEY_RECORDING_LIFECYCLE]: {
+        status: "recording",
+        isSignedOut: false,
+        pendingStart: { clientGuideId: "client-1", startedAt: "2026-11-24T10:00:00.000Z" },
+      },
+    });
+    const store = createRecordingLifecycleStore(storage);
+
+    const lifecycle = await store.patch({ pendingStart: undefined });
+
+    expect(lifecycle.pendingStart).toBeUndefined();
   });
 });

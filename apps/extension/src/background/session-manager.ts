@@ -4,37 +4,56 @@ import { createGuideTitle } from "@repo/data-commons";
 import { restoreStepProgress } from "./session-progress.service";
 import { getActiveTeamId } from "@/lib/active-team";
 import { isUnauthorizedError } from "@/lib/api-error";
+import { authulaClient } from "@/lib/authula-client";
 import { withCsrf } from "@/lib/csrf";
 import type {
-  CaptureBridgeMessage,
-  CaptureMetadataEntry,
-  OffscreenEvent,
+  ExtensionSettings,
+  RecordingLifecycleStore,
   RecordingStateMachine,
-  SessionService,
   SidePanelCommand,
+  SidePanelStateUpdate,
   StepJobProgress,
 } from "@/models";
-import { createOffscreenManager } from "@/services/background/offscreen-manager.service";
+import type { OutboxRepository } from "@/services/outbox/outbox.repository";
+import { createRecordingSessionService } from "@/services/recording/recording-session.service";
 import type { GetSettings, UpdateSettings } from "@/services/settings";
 import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
 import type { PortManager } from "@/services/sidepanel/port-manager.service";
-import { buildActionText } from "@/utils/action-text";
-import { generateCaptureId } from "@/utils/id";
 
 export const createSessionManager = (
   recording: RecordingStateMachine,
-  sessionService: SessionService,
+  lifecycleStore: RecordingLifecycleStore,
+  repository: OutboxRepository,
   getSettings: GetSettings,
   updateSettings: UpdateSettings,
 ) => {
   const jobProgressMap = new Map<string, StepJobProgress>();
-  const captureMetadataMap = new Map<string, CaptureMetadataEntry>();
-  const dismissedJobIds = new Set<string>();
   let isDraining = false;
   let isSignedOut = false;
   let currentPortManager: PortManager | null = null;
   let clearDedupe: (() => void) | undefined;
   let clearPendingActivations: (() => void) | undefined;
+
+  const recordingSession = createRecordingSessionService({
+    lifecycleStore,
+    repository,
+    resolveUserId: async () => (await authulaClient.core.getMe()).user.id,
+    createGuide: async ({ clientGuideId }) => {
+      const teamId = await getActiveTeamId();
+      const response = await api.guides.createGuide(
+        {
+          title: createGuideTitle(),
+          teamId: teamId ?? "",
+          clientGuideId,
+        },
+        await withCsrf(),
+      );
+      return { id: response.guide.id };
+    },
+    deleteGuide: async (guideId) => {
+      await api.guides.deleteGuide(guideId, await withCsrf());
+    },
+  });
 
   const setClearDedupe = (fn: () => void) => {
     clearDedupe = fn;
@@ -44,62 +63,12 @@ export const createSessionManager = (
     clearPendingActivations = fn;
   };
 
-  const getOrCreateGuideId = async (): Promise<{
-    guideId: string;
-    isNew: boolean;
-  }> => {
-    const activeGuideId = await sessionService.getActiveGuideId();
-    if (activeGuideId) {
-      return { guideId: activeGuideId, isNew: false };
-    }
-    const teamId = await getActiveTeamId();
-    try {
-      const guideResponse = await api.guides.createGuide(
-        { title: createGuideTitle(), teamId: teamId ?? "" },
-        await withCsrf(),
-      );
-      await sessionService.setActiveGuideId(guideResponse.guide.id);
-      return { guideId: guideResponse.guide.id, isNew: true };
-    } catch (error) {
-      if (isUnauthorizedError(error)) {
-        // Without this the state machine would keep saying "recording" while
-        // every capture is rejected, so the user would think it was working.
-        await handleSessionExpired();
-      }
-      throw error;
-    }
-  };
-
-  const handleSessionExpired = async () => {
-    if (isSignedOut) {
-      return;
-    }
-    isSignedOut = true;
-    isDraining = false;
-
-    recording.stop();
-    await offscreenManager.stopSession();
-    await offscreenManager.closeDocument();
-    await sessionService.setActiveGuideId(null);
-    clearProgressMap();
-    await broadcastUpdate();
-  };
-
   const setPortManager = (pm: PortManager) => {
     currentPortManager = pm;
   };
 
-  const updateJobProgress = (jobId: string, updates: Partial<StepJobProgress>) => {
-    const existing = jobProgressMap.get(jobId);
-    if (existing) {
-      Object.assign(existing, updates);
-    }
-  };
-
-  const removeJobProgress = (jobId: string) => {
-    jobProgressMap.delete(jobId);
-    captureMetadataMap.delete(jobId);
-    dismissedJobIds.add(jobId);
+  const clearProgressMap = () => {
+    jobProgressMap.clear();
   };
 
   const getUploadQueueSnapshot = () => {
@@ -131,16 +100,19 @@ export const createSessionManager = (
     return { pending, inProgress, completed, failed, total: entries.length };
   };
 
-  const clearProgressMap = () => {
-    jobProgressMap.clear();
-    captureMetadataMap.clear();
-    dismissedJobIds.clear();
+  const getActiveGuideId = async (): Promise<string | undefined> => {
+    const lifecycle = await lifecycleStore.get();
+    if (!lifecycle.sessionId) {
+      return undefined;
+    }
+    const session = await repository.getSession(lifecycle.sessionId);
+    return session?.guideId ?? undefined;
   };
 
   const stateUpdateBuilder = createStateUpdateBuilder(
     () => recording.getSnapshot(),
     getUploadQueueSnapshot,
-    () => sessionService.getActiveGuideId(),
+    getActiveGuideId,
     () => Array.from(jobProgressMap.values()),
     () => isDraining,
     () => isSignedOut,
@@ -154,7 +126,7 @@ export const createSessionManager = (
 
   const restoreProgress = async (): Promise<void> => {
     const restored = await restoreStepProgress({
-      getActiveGuideId: () => sessionService.getActiveGuideId(),
+      getActiveGuideId,
       listSteps: async (guideId) => {
         const response = await api.steps.getAllStepsByGuideId(
           { guide_id: guideId, limit: 200 },
@@ -173,247 +145,97 @@ export const createSessionManager = (
     }
   };
 
-  const handleOffscreenEvent = async (event: OffscreenEvent) => {
-    switch (event.type) {
-      case "upload_progress": {
-        updateJobProgress(event.jobId, { phase: event.phase });
-        break;
-      }
-      case "job_completed": {
-        if (dismissedJobIds.has(event.jobId)) {
-          dismissedJobIds.delete(event.jobId);
-          captureMetadataMap.delete(event.jobId);
-          break;
-        }
-        const meta = captureMetadataMap.get(event.jobId);
-        jobProgressMap.set(event.jobId, {
-          jobId: event.jobId,
-          stepId: event.stepId,
-          guideId: event.guideId,
-          action: meta?.action ?? "",
-          actionText: event.actionText,
-          url: meta?.url ?? "",
-          capturedAt: meta?.capturedAt ?? new Date().toISOString(),
-          phase: "completed",
-          screenshotUrl: event.screenshotUrl,
-          thumbnail: event.thumbnail,
-          ...(meta?.targetElement ? { targetElement: meta.targetElement } : {}),
-        });
-        captureMetadataMap.delete(event.jobId);
-        await sessionService.setActiveGuideId(event.guideId);
-
-        if (event.navStepId && event.navUrl) {
-          const navJobId = `nav-${event.navStepId}`;
-          if (!jobProgressMap.has(navJobId)) {
-            const navCapturedAt = event.navCapturedAt ?? new Date().toISOString();
-            const navTime = new Date(navCapturedAt).getTime() - 1;
-            const { viewportWidth, viewportHeight } = meta?.targetElement ?? {};
-            jobProgressMap.set(navJobId, {
-              jobId: navJobId,
-              stepId: event.navStepId,
-              guideId: event.guideId,
-              action: "navigation",
-              actionText: `Navigate to "${event.navUrl}"`,
-              url: event.navUrl,
-              capturedAt: new Date(navTime).toISOString(),
-              phase: "completed",
-              screenshotUrl: event.navScreenshotUrl,
-              thumbnail: event.navThumbnail,
-              ...(viewportWidth != null && viewportHeight != null
-                ? { targetElement: { viewportWidth, viewportHeight } }
-                : {}),
-            });
-          }
-        }
-        break;
-      }
-      case "job_failed": {
-        if (event.isUnauthorized) {
-          await handleSessionExpired();
-          break;
-        }
-        if (dismissedJobIds.has(event.jobId)) {
-          dismissedJobIds.delete(event.jobId);
-          captureMetadataMap.delete(event.jobId);
-          break;
-        }
-        const existing = jobProgressMap.get(event.jobId);
-        if (existing) {
-          existing.phase = "failed";
-          existing.error = event.error;
-          existing.attempts = event.attempt;
-        } else {
-          const meta = captureMetadataMap.get(event.jobId);
-          jobProgressMap.set(event.jobId, {
-            jobId: event.jobId,
-            stepId: "",
-            guideId: "",
-            action: meta?.action ?? "",
-            actionText: meta?.actionText,
-            url: meta?.url ?? "",
-            capturedAt: meta?.capturedAt ?? new Date().toISOString(),
-            phase: "failed",
-            error: event.error,
-            attempts: event.attempt,
-            ...(meta?.targetElement ? { targetElement: meta.targetElement } : {}),
-          });
-          captureMetadataMap.delete(event.jobId);
-        }
-        break;
-      }
-      case "session_state":
-        break;
-      case "drain_complete": {
-        isDraining = false;
-        clearProgressMap();
-        await sessionService.setActiveGuideId(null);
-        await offscreenManager.closeDocument();
-        break;
-      }
+  const handleSessionExpired = async () => {
+    if (isSignedOut) {
+      return;
     }
+    isSignedOut = true;
+    isDraining = false;
 
+    recording.stop();
+    await recordingSession.expire();
+    clearProgressMap();
     await broadcastUpdate();
   };
-
-  const offscreenManager = createOffscreenManager(handleOffscreenEvent, getOrCreateGuideId);
 
   const commandHandler = createCommandHandler(
     stateUpdateBuilder,
     recording,
-    sessionService,
+    { getActiveGuideId, setActiveGuideId: async () => {} },
     clearProgressMap,
     getSettings,
     updateSettings,
   );
 
-  let pendingFreeTypingStepId: string | null = null;
-  let pendingFreeTypingCaptureId: string | null = null;
-  let pendingFreeTypingGuideId: string | null = null;
-  let pendingFreeTypingOp: Promise<void> = Promise.resolve();
+  const handleSidePanelCommand = async (
+    message: SidePanelCommand,
+  ): Promise<SidePanelStateUpdate | ExtensionSettings | undefined> => {
+    switch (message.command) {
+      case "start_recording": {
+        isDraining = false;
+        isSignedOut = false;
+        clearProgressMap();
+        clearDedupe?.();
+        clearPendingActivations?.();
 
-  const clearPendingFreeTyping = () => {
-    pendingFreeTypingStepId = null;
-    pendingFreeTypingCaptureId = null;
-    pendingFreeTypingGuideId = null;
-  };
-
-  const executeFreeTypingCapture = async (captureId: string, message: CaptureBridgeMessage) => {
-    const payload = message.payload;
-
-    if (payload.typedText === "") {
-      if (pendingFreeTypingStepId) {
-        await api.steps.deleteStep(pendingFreeTypingStepId, await withCsrf());
-        if (pendingFreeTypingCaptureId) {
-          jobProgressMap.delete(pendingFreeTypingCaptureId);
+        try {
+          await recordingSession.start();
+        } catch (error) {
+          if (isUnauthorizedError(error)) {
+            isSignedOut = true;
+          }
+          await broadcastUpdate();
+          throw error;
         }
-        clearPendingFreeTyping();
+
+        recording.start();
+        await broadcastUpdate();
+        return stateUpdateBuilder();
       }
-      return;
-    }
-
-    const guideId = pendingFreeTypingGuideId ?? (await getOrCreateGuideId()).guideId;
-    const actionText = buildActionText("input", undefined, payload.typedText);
-
-    if (pendingFreeTypingStepId) {
-      await api.steps.updateStep(pendingFreeTypingStepId, { actionText }, await withCsrf());
-
-      const existing = pendingFreeTypingCaptureId && jobProgressMap.get(pendingFreeTypingCaptureId);
-      if (existing) {
-        existing.actionText = actionText;
+      case "pause_recording": {
+        recording.pause();
+        await recordingSession.pause();
+        await broadcastUpdate();
+        return stateUpdateBuilder();
       }
-    } else {
-      const stepResponse = await api.steps.createStep(
-        {
-          guideId,
-          type: "interaction",
-          action: "input",
-          url: payload.url,
-          actionText,
-        },
-        await withCsrf(),
-      );
-
-      pendingFreeTypingStepId = stepResponse.step.id;
-      pendingFreeTypingCaptureId = captureId;
-      pendingFreeTypingGuideId = guideId;
-
-      jobProgressMap.set(captureId, {
-        jobId: captureId,
-        stepId: stepResponse.step.id,
-        guideId,
-        action: "input",
-        actionText,
-        url: payload.url ?? "",
-        capturedAt: payload.capturedAt,
-        phase: "completed",
-      });
-    }
-  };
-
-  const handleFreeTypingCapture = async (captureId: string, message: CaptureBridgeMessage) => {
-    const currentOp = pendingFreeTypingOp.then(() => executeFreeTypingCapture(captureId, message));
-
-    pendingFreeTypingOp = currentOp.catch(() => {});
-    await currentOp;
-  };
-
-  const handleSidePanelCommand = async (message: SidePanelCommand) => {
-    if (message.command === "start_recording") {
-      isDraining = false;
-      isSignedOut = false;
-      jobProgressMap.clear();
-      captureMetadataMap.clear();
-      clearPendingFreeTyping();
-      clearDedupe?.();
-      clearPendingActivations?.();
-      const sessionId = generateCaptureId();
-      await offscreenManager.closeDocument();
-      await offscreenManager.startSession(sessionId);
-    }
-    if (message.command === "stop_recording") {
-      isDraining = true;
-      void offscreenManager.stopSession();
-    }
-    if (message.command === "get_status") {
-      isSignedOut = false;
-      const snapshot = recording.getSnapshot();
-      // Paused is still a live session: clearing the guide here would send the
-      // resumed captures to a brand new guide.
-      if (snapshot.status !== "recording" && snapshot.status !== "paused" && !isDraining) {
-        await sessionService.setActiveGuideId(null);
+      case "resume_recording": {
+        await recordingSession.resume();
+        recording.resume();
+        await broadcastUpdate();
+        return stateUpdateBuilder();
       }
+      case "stop_recording": {
+        recording.stop();
+        isDraining = false;
+        await recordingSession.stop();
+        await broadcastUpdate();
+        return stateUpdateBuilder();
+      }
+      case "get_status": {
+        isSignedOut = (await lifecycleStore.get()).isSignedOut;
+        return stateUpdateBuilder();
+      }
+      case "dismiss_job": {
+        if (message.jobId) {
+          jobProgressMap.delete(message.jobId);
+        }
+        await broadcastUpdate();
+        return stateUpdateBuilder();
+      }
+      default:
+        return commandHandler.handleCommand(message);
     }
-    if (message.command === "dismiss_job" && message.jobId) {
-      removeJobProgress(message.jobId);
-      await broadcastUpdate();
-      return;
-    }
-    const result = await commandHandler.handleCommand(message);
-    const mutationCommands = [
-      "start_recording",
-      "pause_recording",
-      "resume_recording",
-      "stop_recording",
-    ] as const;
-    if (mutationCommands.includes(message.command as (typeof mutationCommands)[number])) {
-      await broadcastUpdate();
-    }
-    return result;
   };
 
   return {
-    offscreenManager,
     stateUpdateBuilder,
-    captureMetadataMap,
     setPortManager,
     setClearDedupe,
     setClearPendingActivations,
     handleSessionExpired,
     handleSidePanelCommand,
-    handleOffscreenEvent,
-    handleFreeTypingCapture,
-    clearPendingFreeTyping,
     restoreProgress,
+    broadcastUpdate,
   };
 };
 

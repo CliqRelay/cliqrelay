@@ -1,14 +1,16 @@
-import type { RecordingLifecycleStore, RecordingStateMachine, RecordingStatus } from "@/models";
-import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
+import type {
+  OutboxLifecycle,
+  RecordingLifecycleStore,
+  RecordingStateMachine,
+  RecordingStatus,
+} from "@/models";
 import { isDeveloperBuild } from "@/utils/diagnostics";
-
-type RestorableOffscreenManager = Pick<OffscreenManager, "restoreSession" | "getSessionId">;
 
 type RestoreRecordingSessionDeps = {
   lifecycleStore: RecordingLifecycleStore;
   recording: RecordingStateMachine;
-  offscreenManager: RestorableOffscreenManager;
   mirrorStatus: (status: RecordingStatus) => Promise<void>;
+  hasSession?: (sessionId: string) => Promise<boolean>;
   isDev?: boolean;
   log?: (message: string, details: Record<string, unknown>) => void;
 };
@@ -21,31 +23,33 @@ const isLiveStatus = (status: RecordingStatus): boolean => liveStatuses.includes
  * Restores the recording session that was live when the worker last suspended.
  *
  * `storage.session` survives worker restarts but not browser restarts or
- * extension reloads, so a missing record means "idle". A record is only
- * honoured when the offscreen upload session can be reattached; otherwise the
- * worker would claim to record while every capture is silently dropped.
+ * extension reloads, so a missing record means "idle". Captures now write
+ * straight to Dexie, so a live status only needs its local session to exist;
+ * there is no upload session to reattach.
  */
 export const restoreRecordingSession = async ({
   lifecycleStore,
   recording,
-  offscreenManager,
   mirrorStatus,
+  hasSession = async () => true,
   isDev = isDeveloperBuild,
   log = console.info,
 }: RestoreRecordingSessionDeps): Promise<RecordingStatus> => {
-  const lifecycle = await lifecycleStore.get();
+  const lifecycle: OutboxLifecycle = await lifecycleStore.get();
 
   let status: RecordingStatus = "idle";
-  if (isLiveStatus(lifecycle.status)) {
-    const isReattached = await offscreenManager.restoreSession(lifecycle.sessionId);
-    if (isReattached) {
+  if (isLiveStatus(lifecycle.status) && lifecycle.sessionId) {
+    if (await hasSession(lifecycle.sessionId)) {
       recording.restore(lifecycle.status);
       status = lifecycle.status;
     }
   }
 
   if (lifecycle.status !== status) {
-    await lifecycleStore.set({ status });
+    await lifecycleStore.patch({
+      status,
+      ...(status === "idle" ? { sessionId: undefined } : {}),
+    });
   }
 
   await mirrorStatus(status);
@@ -54,7 +58,7 @@ export const restoreRecordingSession = async ({
     log("[background] Recording session boot", {
       status,
       persistedStatus: lifecycle.status,
-      sessionId: offscreenManager.getSessionId() ?? null,
+      sessionId: lifecycle.sessionId ?? null,
     });
   }
 

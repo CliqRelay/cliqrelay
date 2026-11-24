@@ -14,42 +14,35 @@ import { isSessionCookieCleared } from "@/lib/auth-session";
 import type { RecordingStatus } from "@/models";
 import { SIDEPANEL_PORT_NAME } from "@/models/sidepanel";
 import { createNavigationListener } from "@/services/background";
+import { outboxRepository } from "@/services/outbox";
+import { createOutboxWriter } from "@/services/outbox/outbox-writer.service";
 import {
   createRecordingLifecycleStore,
   createRecordingStateMachine,
   recordingStatusStore,
 } from "@/services/recording";
 import { screenshotService } from "@/services/screenshot";
-import { sessionService } from "@/services/session";
 import { getSettings, updateSettings } from "@/services/settings";
 import { createPortManager } from "@/services/sidepanel/port-manager.service";
-import { generateCaptureId } from "@/utils/id";
-import { isOffscreenEvent, isSidePanelCommand } from "@/utils/message";
+import { isSidePanelCommand } from "@/utils/message";
 
 export default defineBackground(() => {
   const recordingLifecycleStore = createRecordingLifecycleStore(browser.storage.session);
 
   const mirrorRecordingStatus = (status: RecordingStatus) => {
     void recordingStatusStore.set(status).catch(() => {});
-    void recordingLifecycleStore
-      .set({
-        status,
-        ...(status === "recording" || status === "paused"
-          ? { sessionId: sessionManager.offscreenManager.getSessionId() ?? undefined }
-          : {}),
-      })
-      .catch(() => {});
   };
   const recording = createRecordingStateMachine("idle", mirrorRecordingStatus);
 
   const sessionManager = createSessionManager(
     recording,
-    sessionService,
+    recordingLifecycleStore,
+    outboxRepository,
     getSettings,
     updateSettings,
   );
 
-  const { stateUpdateBuilder } = sessionManager;
+  const { stateUpdateBuilder, broadcastUpdate } = sessionManager;
 
   const portManager = createPortManager(async () => {
     return await stateUpdateBuilder();
@@ -57,43 +50,19 @@ export default defineBackground(() => {
 
   sessionManager.setPortManager(portManager);
 
-  const captureHandler = createCaptureHandler(
+  const outboxWriter = createOutboxWriter({
+    repository: outboxRepository,
+    lifecycleStore: recordingLifecycleStore,
     screenshotService,
-    sessionManager.offscreenManager,
-    recording,
-    stateUpdateBuilder,
-    portManager,
-    sessionManager.captureMetadataMap,
-    sessionManager.handleFreeTypingCapture,
-    sessionManager.clearPendingFreeTyping,
-  );
-
-  recording.setProcessBufferedCapture(async (captures) => {
-    for (const capture of captures) {
-      try {
-        const dataUrl = await screenshotService.captureWithThrottle(capture.tabId);
-        if (!dataUrl) continue;
-        await sessionManager.offscreenManager.sendJob(
-          capture.message.payload.captureId!,
-          capture.message,
-          dataUrl,
-          capture.tabId,
-        );
-      } catch (error) {
-        console.warn("[background] Failed to process buffered capture:", error);
-      }
-    }
-    const stateUpdate = await stateUpdateBuilder();
-    portManager.broadcast({ type: "state_update", state: stateUpdate });
   });
 
-  const navigationListener = createNavigationListener(
+  const captureHandler = createCaptureHandler({
+    writer: outboxWriter,
     recording,
-    screenshotService,
-    sessionManager.offscreenManager,
-    sessionManager.captureMetadataMap,
-    generateCaptureId,
-  );
+    onStateChanged: () => broadcastUpdate(),
+  });
+
+  const navigationListener = createNavigationListener(recording, outboxWriter);
 
   const { clearDedupe, clearPendingActivations } = navigationListener.start();
   sessionManager.setClearDedupe(clearDedupe);
@@ -141,10 +110,6 @@ export default defineBackground(() => {
         return sessionManager.handleSidePanelCommand(message);
       }
 
-      if (isOffscreenEvent(message)) {
-        void sessionManager.handleOffscreenEvent(message);
-      }
-
       if (typeof message === "object" && message !== null && "action" in message) {
         return handleOnMessageExternalEvents(message, sender, sendResponse);
       }
@@ -181,15 +146,14 @@ export default defineBackground(() => {
 
   browser.runtime.onMessageExternal.addListener(handleOnMessageExternalEvents);
 
-  // Hydration is started last so every listener is registered before the
-  // offscreen session can reply. Captures only wait for the local lifecycle
-  // restore; the panel additionally waits for the step history so its first
-  // paint is complete.
+  // Hydration is started last so every listener is registered before boot
+  // completes. Captures wait for the local lifecycle restore; the panel also
+  // waits for the synced step history so its first paint is complete.
   const hydration = restoreRecordingSession({
     lifecycleStore: recordingLifecycleStore,
     recording,
-    offscreenManager: sessionManager.offscreenManager,
     mirrorStatus: (status) => recordingStatusStore.set(status),
+    hasSession: async (sessionId) => Boolean(await outboxRepository.getSession(sessionId)),
   });
   const bootGate = createBootGate(hydration);
   const panelGate = createBootGate(

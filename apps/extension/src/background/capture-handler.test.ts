@@ -3,10 +3,8 @@ import { describe, expect, test, vi } from "vitest";
 import { CliqRelayEvents } from "@repo/data-commons";
 
 import { createCaptureHandler } from "./capture-handler";
-import type { RecordingStateMachine, SidePanelStateUpdate } from "@/models";
-import type { OffscreenManager } from "@/services/background/offscreen-manager.service";
+import type { RecordingStateMachine } from "@/models";
 import { createRecordingStateMachine } from "@/services/recording/recording.service";
-import type { PortManager } from "@/services/sidepanel/port-manager.service";
 
 const TAB_ID = 5;
 
@@ -20,57 +18,71 @@ const clickMessage = {
   },
 };
 
+const typingMessage = {
+  source: "content-script" as const,
+  type: CliqRelayEvents.CAPTURE_EVENT,
+  payload: {
+    action: "input" as const,
+    url: "https://angular.dev",
+    capturedAt: "2026-09-28T12:00:00.000Z",
+    typedText: "hello",
+    typingSessionId: "typing-1",
+  },
+};
+
 const setup = (recording: RecordingStateMachine = createRecordingStateMachine("recording")) => {
-  const screenshotService = {
-    captureWithThrottle: vi.fn().mockResolvedValue("data:image/png;base64,abc123"),
+  const writer = {
+    writeCapture: vi.fn().mockResolvedValue(null),
+    writeTyping: vi.fn().mockResolvedValue(null),
+    writeNavigation: vi.fn().mockResolvedValue(null),
   };
-  const offscreenManager = { sendJob: vi.fn().mockResolvedValue(undefined) };
-  const portManager = { broadcast: vi.fn() };
+  const onStateChanged = vi.fn().mockResolvedValue(undefined);
 
-  const { handleCapture } = createCaptureHandler(
-    screenshotService,
-    offscreenManager as unknown as OffscreenManager,
-    recording,
-    vi.fn().mockResolvedValue({} as SidePanelStateUpdate),
-    portManager as unknown as PortManager,
-    new Map(),
-    vi.fn().mockResolvedValue(undefined),
-    vi.fn(),
-  );
+  const { handleCapture } = createCaptureHandler({ writer, recording, onStateChanged });
 
-  return { handleCapture, screenshotService, offscreenManager };
+  return { handleCapture, writer, onStateChanged };
 };
 
 describe("capture handler", () => {
   describe("handleCapture", () => {
-    test("should screenshot a click without asking the tab to hide the highlight first", async () => {
-      const { handleCapture, screenshotService, offscreenManager } = setup();
+    test("writes a click through the local outbox writer", async () => {
+      const { handleCapture, writer, onStateChanged } = setup();
 
       handleCapture(clickMessage, { tab: { id: TAB_ID } } as never);
 
-      await vi.waitFor(() => expect(offscreenManager.sendJob).toHaveBeenCalled());
-      // Waiting on the tab delays the capture until the page has reacted to the click,
-      // so transient UI such as cookie banners disappears from the screenshot.
-      expect(screenshotService.captureWithThrottle).toHaveBeenCalledTimes(1);
-      expect(screenshotService.captureWithThrottle.mock.calls[0]).toEqual([TAB_ID]);
+      await vi.waitFor(() => expect(onStateChanged).toHaveBeenCalled());
+      expect(writer.writeCapture).toHaveBeenCalledTimes(1);
+      expect(writer.writeCapture).toHaveBeenCalledWith(clickMessage, TAB_ID);
+      expect(writer.writeTyping).not.toHaveBeenCalled();
     });
 
-    test("should not screenshot when recording is paused", () => {
-      const { handleCapture, screenshotService } = setup(createRecordingStateMachine("paused"));
+    test("writes free typing through the typing upsert path", async () => {
+      const { handleCapture, writer } = setup();
+
+      handleCapture(typingMessage, { tab: { id: TAB_ID } } as never);
+
+      await vi.waitFor(() => expect(writer.writeTyping).toHaveBeenCalled());
+      expect(writer.writeTyping).toHaveBeenCalledWith(typingMessage);
+      expect(writer.writeCapture).not.toHaveBeenCalled();
+    });
+
+    test("does not write when recording is paused", () => {
+      const { handleCapture, writer } = setup(createRecordingStateMachine("paused"));
 
       handleCapture(clickMessage, { tab: { id: TAB_ID } } as never);
 
-      expect(screenshotService.captureWithThrottle).not.toHaveBeenCalled();
+      expect(writer.writeCapture).not.toHaveBeenCalled();
+      expect(writer.writeTyping).not.toHaveBeenCalled();
     });
 
     test("warns at most once when captures arrive without a recording session", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const { handleCapture, screenshotService } = setup(createRecordingStateMachine("idle"));
+      const { handleCapture, writer } = setup(createRecordingStateMachine("idle"));
 
       handleCapture(clickMessage, { tab: { id: TAB_ID } } as never);
       handleCapture(clickMessage, { tab: { id: TAB_ID } } as never);
 
-      expect(screenshotService.captureWithThrottle).not.toHaveBeenCalled();
+      expect(writer.writeCapture).not.toHaveBeenCalled();
       expect(warn).toHaveBeenCalledTimes(1);
       expect(warn).toHaveBeenCalledWith("[background] Dropped capture: status=idle action=click");
 
