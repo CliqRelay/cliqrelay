@@ -42,6 +42,18 @@ export const sidePanelCommands = {
       command: "dismiss_step",
       stepId,
     }),
+  deleteStep: (stepId: string) =>
+    sendCommand({
+      type: sidePanelCommandType,
+      command: "delete_step",
+      stepId,
+    }),
+  deleteGuide: (guideId: string) =>
+    sendCommand({
+      type: sidePanelCommandType,
+      command: "delete_guide",
+      guideId,
+    }),
   retryFailed: (sessionId?: string) =>
     sendCommand({
       type: sidePanelCommandType,

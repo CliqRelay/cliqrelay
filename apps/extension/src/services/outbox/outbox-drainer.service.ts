@@ -1,6 +1,7 @@
 import { AsyncQueuer } from "@tanstack/pacer";
 
 import type { OutboxAuth } from "./outbox-auth.service";
+import type { OutboxDeleter } from "./outbox-deleter.service";
 import type { OutboxPusher } from "./outbox-pusher.service";
 import { classifyOutboxError } from "./outbox-pusher.service";
 import type { OutboxRepository } from "./outbox.repository";
@@ -15,6 +16,7 @@ type QueueItem = { sessionId: string };
 type OutboxDrainerDeps = {
   repository: OutboxRepository;
   pusher: OutboxPusher;
+  deleter: OutboxDeleter;
   auth: OutboxAuth;
   lifecycleStore: RecordingLifecycleStore;
   now?: () => Date;
@@ -64,6 +66,7 @@ export const findInsertAfterStepId = (
 export const createOutboxDrainer = ({
   repository,
   pusher,
+  deleter,
   auth,
   lifecycleStore,
   now = () => new Date(),
@@ -132,43 +135,21 @@ export const createOutboxDrainer = ({
     // pushed. Synced predecessors supply `insertAfterStepId`.
     const allSteps = await repository.listSteps(sessionId);
     const steps = allSteps.filter((step) => syncableStatuses.includes(step.syncStatus));
-    if (steps.length === 0) {
+    const deletions = allSteps.filter(
+      (step) => step.syncStatus === "deleted" && step.serverStepId !== undefined,
+    );
+
+    if (steps.length === 0 && deletions.length === 0) {
       return;
     }
 
     lastRunDidWork = true;
-
-    let guideId: string;
-    try {
-      guideId = await pusher.ensureGuide(session);
-    } catch (error) {
-      const kind = classifyOutboxError(error);
-      if (kind === "auth") {
-        await handleAuthLost(error);
-        return;
-      }
-      if (kind === "guide-gone") {
-        await handleGuideGone(session, error);
-        return;
-      }
-
-      await markStepsFailed(steps, toError(error).message);
-      throw error;
-    }
-
     let transientFailure: Error | undefined;
 
-    for (const step of steps) {
-      if (isPaused) {
-        return;
-      }
-
+    if (steps.length > 0) {
+      let guideId: string;
       try {
-        await pusher.pushStep({
-          step,
-          guideId,
-          insertAfterStepId: findInsertAfterStepId(allSteps, step.stepIndex),
-        });
+        guideId = await pusher.ensureGuide(session);
       } catch (error) {
         const kind = classifyOutboxError(error);
         if (kind === "auth") {
@@ -180,9 +161,58 @@ export const createOutboxDrainer = ({
           return;
         }
 
-        transientFailure = toError(error);
-        lastError = transientFailure.message;
-        await markStepsFailed([step], transientFailure.message);
+        await markStepsFailed(steps, toError(error).message);
+        throw error;
+      }
+
+      for (const step of steps) {
+        if (isPaused) {
+          return;
+        }
+
+        try {
+          await pusher.pushStep({
+            step,
+            guideId,
+            insertAfterStepId: findInsertAfterStepId(allSteps, step.stepIndex),
+          });
+        } catch (error) {
+          const kind = classifyOutboxError(error);
+          if (kind === "auth") {
+            await handleAuthLost(error);
+            return;
+          }
+          if (kind === "guide-gone") {
+            await handleGuideGone(session, error);
+            return;
+          }
+
+          transientFailure = toError(error);
+          lastError = transientFailure.message;
+          await markStepsFailed([step], transientFailure.message);
+        }
+      }
+    }
+
+    // Server deletes do not need a guide and are retried on every drain until
+    // the API confirms (or reports the step gone).
+    for (const step of deletions) {
+      if (isPaused) {
+        return;
+      }
+
+      try {
+        const outcome = await deleter.pushDeletion(step);
+        if (outcome === "retrying") {
+          lastError = `Step ${step.id} delete failed; retrying on the next drain`;
+        }
+      } catch (error) {
+        if (classifyOutboxError(error) === "auth") {
+          await handleAuthLost(error);
+          return;
+        }
+
+        lastError = toError(error).message;
       }
     }
 
@@ -277,25 +307,28 @@ export const createOutboxDrainer = ({
       return;
     }
 
-    const steps = await repository.listSyncableSteps({ userId });
-    const sessionIds = new Set(steps.map((step) => step.sessionId));
-    for (const sessionId of sessionIds) {
-      enqueue(sessionId);
+    // Every session is queued, not just those with uploads: a session can hold
+    // only pending server deletes.
+    const sessions = await repository.listSessionsByUserId(userId);
+    for (const session of sessions) {
+      enqueue(session.id);
     }
   };
 
   const countOutstanding = async (): Promise<number> => {
     const userId = await auth.getUserId();
+    const pendingDeletions = await deleter.countPendingDeletions(userId ?? undefined);
 
     if (userId) {
       const steps = await repository.listSyncableSteps({ userId });
-      return steps.filter(
+      const uploads = steps.filter(
         (step) => step.syncStatus === "pending" || step.syncStatus === "uploading",
       ).length;
+      return uploads + pendingDeletions;
     }
 
     const sessions = await repository.listSessions();
-    let total = 0;
+    let total = pendingDeletions;
     for (const session of sessions) {
       const counts = await repository.getCounts(session.id);
       total += counts.pending + counts.uploading;

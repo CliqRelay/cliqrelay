@@ -1,4 +1,4 @@
-import type { DateInput } from "@/models";
+import type { DateInput, SyncStatus } from "@/models";
 import type { OutboxDatabase } from "@/services/db";
 
 const toIso = (value: DateInput): string =>
@@ -18,12 +18,17 @@ const resolveSessionIds = async (
   return sessions.map((session) => session.id);
 };
 
+const unsyncedStatuses: SyncStatus[] = ["pending", "uploading", "failed"];
+
 /**
  * Step bookkeeping the drainer needs but the outbox repository does not expose:
  * persisting the server id the moment it exists (so a killed worker resumes
- * without a second create) and resetting manual retries.
+ * without a second create), resetting manual retries, and the local-first
+ * deletion states.
  */
 export const createOutboxStepStateRepository = (db: OutboxDatabase) => {
+  const getStep = (stepId: string) => db.steps.get(stepId);
+
   const setServerStepId = async (
     stepId: string,
     serverStepId: string,
@@ -38,6 +43,40 @@ export const createOutboxStepStateRepository = (db: OutboxDatabase) => {
     now: DateInput = new Date(),
   ): Promise<void> => {
     await db.steps.update(stepId, { serverScreenshotUrl, updatedAt: toIso(now) });
+  };
+
+  const markStepDeleted = async (stepId: string, now: DateInput = new Date()): Promise<void> => {
+    await db.steps.update(stepId, { syncStatus: "deleted", updatedAt: toIso(now) });
+  };
+
+  const discardUnsyncedSteps = (sessionId: string): Promise<number> =>
+    db.transaction("rw", db.steps, db.blobs, async () => {
+      const steps = await db.steps.where("sessionId").equals(sessionId).toArray();
+      const stepIds = steps
+        .filter((step) => unsyncedStatuses.includes(step.syncStatus))
+        .map((step) => step.id);
+
+      if (stepIds.length === 0) {
+        return 0;
+      }
+
+      await db.blobs.where("stepId").anyOf(stepIds).delete();
+      await db.steps.bulkDelete(stepIds);
+
+      return stepIds.length;
+    });
+
+  const countPendingDeletions = async (userId?: string): Promise<number> => {
+    const deleted = await db.steps.where("syncStatus").equals("deleted").toArray();
+    const withServerStep = deleted.filter((step) => step.serverStepId !== undefined);
+
+    if (!userId) {
+      return withServerStep.length;
+    }
+
+    const sessions = await db.sessions.where("userId").equals(userId).toArray();
+    const sessionIds = new Set(sessions.map((session) => session.id));
+    return withServerStep.filter((step) => sessionIds.has(step.sessionId)).length;
   };
 
   const retryFailedSteps = (
@@ -83,8 +122,12 @@ export const createOutboxStepStateRepository = (db: OutboxDatabase) => {
   };
 
   return {
+    getStep,
     setServerStepId,
     setServerScreenshotUrl,
+    markStepDeleted,
+    discardUnsyncedSteps,
+    countPendingDeletions,
     retryFailedSteps,
     countFailedSteps,
   };

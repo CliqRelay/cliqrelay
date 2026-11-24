@@ -62,16 +62,13 @@ function Home() {
   const uploadQueue = toUploadQueueInfo(counts);
   const isDraining = deriveIsDraining(status, counts);
   const isActive = status === "recording" || status === "paused";
-  const stepCount = steps.length;
+  const stepCount = progress.length;
 
   const invalidateGuides = () =>
     queryClient.invalidateQueries({
       queryKey: api.guides.getGetAllGuidesQueryKey(),
     });
 
-  const deleteGuideMutation = api.guides.useDeleteGuide({
-    request: { credentials: "include" },
-  });
   const deleteStepMutation = api.steps.useDeleteStep({
     request: { credentials: "include" },
   });
@@ -104,13 +101,15 @@ function Home() {
 
   const handleDeleteConfirm = async () => {
     if (!deletingStep) return;
+    const local = steps.find(
+      (step) => step.id === deletingStep.id || step.serverStepId === deletingStep.id,
+    );
+
     try {
-      await deleteStepMutation.mutateAsync({ id: deletingStep.id });
-      const local = steps.find(
-        (step) => step.serverStepId === deletingStep.id || step.id === deletingStep.id,
-      );
       if (local) {
-        void commands.dismissStep(local.id);
+        await commands.deleteStep(local.id);
+      } else {
+        await deleteStepMutation.mutateAsync({ id: deletingStep.id });
       }
     } catch (err) {
       console.error("[sidepanel] Failed to delete step:", err);
@@ -133,9 +132,8 @@ function Home() {
     setError(null);
     setIsPending(true);
     try {
-      await commands.stopRecording();
       if (guideId) {
-        await deleteGuideMutation.mutateAsync({ id: guideId });
+        await commands.deleteGuide(guideId);
       }
       await invalidateGuides();
     } catch (err) {

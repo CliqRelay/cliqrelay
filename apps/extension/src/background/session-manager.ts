@@ -13,6 +13,7 @@ import type {
 } from "@/models";
 import type { OutboxAuth } from "@/services/outbox/outbox-auth.service";
 import type { OutboxBadge } from "@/services/outbox/outbox-badge.service";
+import type { OutboxDeleter } from "@/services/outbox/outbox-deleter.service";
 import type { OutboxDrainer } from "@/services/outbox/outbox-drainer.service";
 import type { OutboxScheduler } from "@/services/outbox/outbox-scheduler.service";
 import type { OutboxStepStateRepository } from "@/services/outbox/outbox-step-state.repository";
@@ -27,9 +28,10 @@ type SessionManagerDeps = {
   getSettings: GetSettings;
   updateSettings: UpdateSettings;
   drainer: Pick<OutboxDrainer, "kick" | "kickSession" | "drainAll" | "pause">;
+  deleter: Pick<OutboxDeleter, "deleteStep" | "deleteGuide">;
   scheduler: Pick<OutboxScheduler, "start" | "sync">;
   auth: Pick<OutboxAuth, "getUserId">;
-  stepState: Pick<OutboxStepStateRepository, "retryFailedSteps">;
+  stepState: Pick<OutboxStepStateRepository, "retryFailedSteps" | "discardUnsyncedSteps">;
   badge: Pick<OutboxBadge, "refresh">;
 };
 
@@ -40,6 +42,7 @@ export const createSessionManager = ({
   getSettings,
   updateSettings,
   drainer,
+  deleter,
   scheduler,
   auth,
   stepState,
@@ -129,6 +132,50 @@ export const createSessionManager = ({
     await drainer.drainAll();
   };
 
+  const handleDeleteStep = async (stepId?: string): Promise<void> => {
+    if (!stepId) {
+      return;
+    }
+
+    await deleter.deleteStep(stepId);
+    await badge.refresh();
+    await scheduler.sync();
+  };
+
+  /**
+   * Deletes the guide of the current local session. Unsynced captures are
+   * discarded up front, then the server guide is deleted; the local session is
+   * only cleared once the server confirms (or reports it already gone), so a
+   * transient failure keeps the rows for a retry instead of losing them.
+   */
+  const handleDeleteGuide = async (guideId?: string): Promise<void> => {
+    const lifecycle = await lifecycleStore.get();
+    const session = lifecycle.sessionId
+      ? await repository.getSession(lifecycle.sessionId)
+      : undefined;
+
+    if (!session || (guideId !== undefined && guideId !== session.guideId)) {
+      return;
+    }
+
+    recording.stop();
+    await lifecycleStore.patch({
+      status: "stopped",
+      pendingStart: undefined,
+    });
+
+    await stepState.discardUnsyncedSteps(session.id);
+
+    if (session.guideId) {
+      await deleter.deleteGuide(session.guideId);
+    }
+
+    await repository.deleteSessionData(session.id);
+    await lifecycleStore.patch({ status: "idle", sessionId: undefined });
+    await badge.refresh();
+    await scheduler.sync();
+  };
+
   const handleDiscardSession = async (sessionId?: string): Promise<void> => {
     if (!sessionId) {
       return;
@@ -211,11 +258,15 @@ export const createSessionManager = ({
         return getSettings();
       }
       case "dismiss_step": {
-        if (message.stepId) {
-          await repository.removeStep(message.stepId);
-          await badge.refresh();
-          await scheduler.sync();
-        }
+        await handleDeleteStep(message.stepId);
+        return undefined;
+      }
+      case "delete_step": {
+        await handleDeleteStep(message.stepId);
+        return undefined;
+      }
+      case "delete_guide": {
+        await handleDeleteGuide(message.guideId);
         return undefined;
       }
       case "retry_failed": {
