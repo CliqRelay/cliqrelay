@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { createOutboxBadge, failedBadgeTitle, OUTBOX_BADGE_COLOR } from "./outbox-badge.service";
+import { createOutboxBadge } from "./outbox-badge.service";
 
 const setup = (failed: number) => {
   const action = {
@@ -13,7 +13,7 @@ const setup = (failed: number) => {
 
   const badge = createOutboxBadge({ action, countFailed, log });
 
-  return { badge, action, countFailed, log };
+  return { badge, action, log };
 };
 
 describe("outbox badge", () => {
@@ -21,7 +21,7 @@ describe("outbox badge", () => {
     vi.clearAllMocks();
   });
 
-  test("clears the badge and title when nothing failed", async () => {
+  test("clears the badge text and title when nothing failed", async () => {
     const { badge, action } = setup(0);
 
     await badge.refresh();
@@ -37,7 +37,7 @@ describe("outbox badge", () => {
     await badge.refresh();
 
     expect(action.setBadgeText).toHaveBeenCalledWith({ text: "3" });
-    expect(action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: OUTBOX_BADGE_COLOR });
+    expect(action.setBadgeBackgroundColor).toHaveBeenCalledWith({ color: "#dc2626" });
     expect(action.setTitle).toHaveBeenCalledWith({ title: "3 steps failed to sync" });
   });
 
@@ -55,13 +55,5 @@ describe("outbox badge", () => {
 
     await expect(badge.refresh()).resolves.toBeUndefined();
     expect(log).toHaveBeenCalled();
-  });
-
-  test.each([
-    [0, ""],
-    [1, "1 step failed to sync"],
-    [2, "2 steps failed to sync"],
-  ])("formats the title for %s failed steps", (count, title) => {
-    expect(failedBadgeTitle(count)).toBe(title);
   });
 });

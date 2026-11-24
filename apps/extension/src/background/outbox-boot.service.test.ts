@@ -4,7 +4,7 @@ import { createOutboxBoot } from "./outbox-boot.service";
 
 const setup = () => {
   const order: string[] = [];
-  const track = <T>(name: string, value: T) => {
+  const track = <T>(name: string, value: T): T => {
     order.push(name);
     return value;
   };
@@ -14,7 +14,7 @@ const setup = () => {
   };
   const scheduler = {
     ensureMaintenanceAlarm: vi.fn(async () => track("ensureMaintenanceAlarm", undefined)),
-    sync: vi.fn(async () => track("sync", undefined)),
+    sync: vi.fn(async () => track("sync", "stopped" as const)),
     runMaintenance: vi.fn(async () => track("runMaintenance", undefined)),
   };
   const drainer = { drainAll: vi.fn(async () => track("drainAll", undefined)) };
@@ -39,7 +39,6 @@ const setup = () => {
     drainer,
     badge,
     runLegacyCleanup,
-    restoreRecording,
   };
 };
 
@@ -48,25 +47,51 @@ describe("outbox boot", () => {
     vi.clearAllMocks();
   });
 
-  test("cleans up legacy storage before hydrating and recovers stale uploads", async () => {
+  test("runs cleanup, recovery, retention, drain and badge refresh in order", async () => {
     const { runBoot, order } = setup();
 
     await expect(runBoot()).resolves.toBe("recording");
 
-    expect(order.indexOf("legacyCleanup")).toBeLessThan(order.indexOf("restoreRecording"));
-    expect(order.indexOf("resetStaleUploading")).toBeLessThan(order.indexOf("restoreRecording"));
+    expect(order).toEqual([
+      "legacyCleanup",
+      "resetStaleUploading",
+      "ensureMaintenanceAlarm",
+      "restoreRecording",
+      "runMaintenance",
+      "drainAll",
+      "sync",
+      "badge",
+    ]);
   });
 
-  test("restores the session, refreshes the badge, drains and keeps retention running", async () => {
-    const { runBoot, repository, scheduler, drainer, badge } = setup();
+  test("runs once when boot is triggered more than once", async () => {
+    const { runBoot, repository, drainer } = setup();
 
+    const [first, second] = await Promise.all([runBoot(), runBoot()]);
     await runBoot();
 
+    expect(first).toBe("recording");
+    expect(second).toBe("recording");
     expect(repository.resetStaleUploading).toHaveBeenCalledTimes(1);
-    expect(scheduler.ensureMaintenanceAlarm).toHaveBeenCalledTimes(1);
-    expect(badge.refresh).toHaveBeenCalledTimes(1);
     expect(drainer.drainAll).toHaveBeenCalledTimes(1);
+  });
+
+  test("still reconciles the alarm, prunes and refreshes the badge when the drain fails", async () => {
+    const { runBoot, scheduler, drainer, badge } = setup();
+    drainer.drainAll.mockRejectedValue(new Error("drain failed"));
+
+    await expect(runBoot()).rejects.toThrow("drain failed");
+
     expect(scheduler.sync).toHaveBeenCalledTimes(1);
     expect(scheduler.runMaintenance).toHaveBeenCalledTimes(1);
+    expect(badge.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  test("allows another boot after a failed one", async () => {
+    const { runBoot, runLegacyCleanup } = setup();
+    runLegacyCleanup.mockRejectedValueOnce(new Error("storage unavailable"));
+
+    await expect(runBoot()).rejects.toThrow("storage unavailable");
+    await expect(runBoot()).resolves.toBe("recording");
   });
 });

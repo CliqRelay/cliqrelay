@@ -3,26 +3,27 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   createOutboxScheduler,
   OUTBOX_DRAIN_ALARM_NAME,
-  OUTBOX_DRAIN_PERIOD_MINUTES,
   OUTBOX_MAINTENANCE_ALARM_NAME,
-  OUTBOX_MAINTENANCE_PERIOD_MINUTES,
 } from "./outbox-scheduler.service";
-import type { RecordingLifecycleStore } from "@/models";
+import type { RecordingLifecycleStore, RecordingStatus } from "@/models";
 import type { OutboxRepository } from "@/services/outbox/outbox.repository";
 
 const NOW = new Date("2026-11-24T10:00:00.000Z");
 
-const setup = ({
-  status = "stopped" as "idle" | "recording" | "paused" | "stopped",
-  outstanding = 0 as number,
-} = {}) => {
+type SetupOptions = {
+  status?: RecordingStatus;
+  outstanding?: number;
+  isSignedOut?: boolean;
+};
+
+const setup = ({ status = "stopped", outstanding = 0, isSignedOut = false }: SetupOptions = {}) => {
   const alarms = {
     create: vi.fn().mockResolvedValue(undefined),
     clear: vi.fn().mockResolvedValue(true),
   };
 
   const lifecycleStore = {
-    get: vi.fn().mockResolvedValue({ status, isSignedOut: false, sessionId: "session-1" }),
+    get: vi.fn().mockResolvedValue({ status, isSignedOut, sessionId: "session-1" }),
   } as unknown as RecordingLifecycleStore;
 
   const repository = {
@@ -46,7 +47,6 @@ const setup = ({
   return {
     scheduler,
     alarms,
-    lifecycleStore,
     repository,
     drainAll,
     countOutstanding,
@@ -60,80 +60,90 @@ describe("outbox scheduler", () => {
   });
 
   describe("start", () => {
-    test("creates the one-minute drain alarm and the daily maintenance alarm", async () => {
+    test("creates the drain and maintenance alarms", async () => {
       const { scheduler, alarms } = setup({ status: "recording" });
 
       await scheduler.start();
 
-      expect(alarms.create).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME, {
-        periodInMinutes: OUTBOX_DRAIN_PERIOD_MINUTES,
-      });
+      expect(alarms.create).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME, { periodInMinutes: 1 });
       expect(alarms.create).toHaveBeenCalledWith(OUTBOX_MAINTENANCE_ALARM_NAME, {
-        periodInMinutes: OUTBOX_MAINTENANCE_PERIOD_MINUTES,
+        periodInMinutes: 1440,
       });
     });
   });
 
   describe("sync", () => {
+    test.each(["recording", "paused"] as const)(
+      "keeps the drain alarm while %s with nothing outstanding",
+      async (status) => {
+        const { scheduler, alarms, countOutstanding } = setup({ status });
+
+        await scheduler.sync();
+
+        expect(alarms.create).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME, {
+          periodInMinutes: 1,
+        });
+        expect(alarms.clear).not.toHaveBeenCalled();
+        expect(countOutstanding).not.toHaveBeenCalled();
+      },
+    );
+
     test.each([
-      ["recording", 0],
-      ["paused", 0],
       ["stopped", 3],
       ["idle", 2],
-    ])("status %s with %s outstanding keeps the drain alarm", async (status, outstanding) => {
-      const { scheduler, alarms } = setup({
-        status: status as "idle" | "recording" | "paused" | "stopped",
-        outstanding: outstanding as number,
-      });
+    ] as const)(
+      "keeps the drain alarm while %s has %i outstanding",
+      async (status, outstanding) => {
+        const { scheduler, alarms } = setup({ status, outstanding });
 
-      await scheduler.sync();
+        await scheduler.sync();
 
-      expect(alarms.create).toHaveBeenCalledWith(
-        OUTBOX_DRAIN_ALARM_NAME,
-        expect.objectContaining({ periodInMinutes: OUTBOX_DRAIN_PERIOD_MINUTES }),
-      );
-      expect(alarms.clear).not.toHaveBeenCalled();
-    });
+        expect(alarms.create).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME, {
+          periodInMinutes: 1,
+        });
+        expect(alarms.clear).not.toHaveBeenCalled();
+      },
+    );
 
-    test.each([
-      ["stopped", 0],
-      ["idle", 0],
-    ])("status %s with %s outstanding clears the drain alarm", async (status, outstanding) => {
-      const { scheduler, alarms } = setup({
-        status: status as "idle" | "recording" | "paused" | "stopped",
-        outstanding: outstanding as number,
-      });
+    test.each(["stopped", "idle"] as const)(
+      "clears the drain alarm when %s has nothing outstanding",
+      async (status) => {
+        const { scheduler, alarms } = setup({ status });
 
-      await scheduler.sync();
+        await scheduler.sync();
 
-      expect(alarms.clear).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME);
-      expect(alarms.create).not.toHaveBeenCalled();
-    });
+        expect(alarms.clear).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME);
+        expect(alarms.create).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe("runMaintenance", () => {
-    test("prunes with the current time and refreshes the badge", async () => {
-      const { scheduler, repository, onMaintenance } = setup();
+    test.each([false, true])(
+      "prunes with the current time when signed out is %s",
+      async (isSignedOut) => {
+        const { scheduler, repository, onMaintenance } = setup({ isSignedOut });
 
-      await scheduler.runMaintenance();
+        await scheduler.runMaintenance();
 
-      expect(repository.prune).toHaveBeenCalledWith(NOW);
-      expect(onMaintenance).toHaveBeenCalledTimes(1);
-    });
+        expect(repository.prune).toHaveBeenCalledWith(NOW);
+        expect(onMaintenance).toHaveBeenCalledTimes(1);
+      },
+    );
   });
 
   describe("afterDrain", () => {
-    test("clears or keeps the alarm and runs retention for a finished session", async () => {
-      const { scheduler, alarms, repository } = setup({ status: "stopped", outstanding: 0 });
+    test("runs retention and clears the drain alarm for a stopped session with nothing left", async () => {
+      const { scheduler, alarms, repository } = setup({ status: "stopped" });
 
       await scheduler.afterDrain();
 
       expect(alarms.clear).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME);
-      expect(repository.prune).toHaveBeenCalledTimes(1);
+      expect(repository.prune).toHaveBeenCalledWith(NOW);
     });
 
     test("skips retention while a session is still recording", async () => {
-      const { scheduler, repository } = setup({ status: "recording", outstanding: 0 });
+      const { scheduler, repository } = setup({ status: "recording" });
 
       await scheduler.afterDrain();
 
@@ -143,11 +153,22 @@ describe("outbox scheduler", () => {
 
   describe("handleAlarm", () => {
     test("drains and re-syncs on the drain alarm", async () => {
-      const { scheduler, drainAll, alarms } = setup({ status: "stopped", outstanding: 0 });
+      const { scheduler, drainAll, alarms } = setup({ status: "stopped" });
 
       await scheduler.handleAlarm({ name: OUTBOX_DRAIN_ALARM_NAME });
 
       expect(drainAll).toHaveBeenCalledTimes(1);
+      expect(alarms.clear).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME);
+    });
+
+    test("re-syncs even when the drain fails", async () => {
+      const { scheduler, drainAll, alarms } = setup({ status: "stopped" });
+      drainAll.mockRejectedValue(new Error("drain failed"));
+
+      await expect(scheduler.handleAlarm({ name: OUTBOX_DRAIN_ALARM_NAME })).rejects.toThrow(
+        "drain failed",
+      );
+
       expect(alarms.clear).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME);
     });
 

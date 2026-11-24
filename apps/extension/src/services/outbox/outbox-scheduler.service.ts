@@ -1,12 +1,13 @@
 import type { OutboxRepository } from "./outbox.repository";
-import type { RecordingLifecycleStore } from "@/models";
+import type { RecordingLifecycleStore, RecordingStatus } from "@/models";
 
 export const OUTBOX_DRAIN_ALARM_NAME = "cliqrelay.outbox-drain";
 export const OUTBOX_MAINTENANCE_ALARM_NAME = "cliqrelay.outbox-maintenance";
-export const OUTBOX_DRAIN_PERIOD_MINUTES = 1;
-export const OUTBOX_MAINTENANCE_PERIOD_MINUTES = 24 * 60;
 
-export type OutboxAlarms = {
+const OUTBOX_DRAIN_PERIOD_MINUTES = 1;
+const OUTBOX_MAINTENANCE_PERIOD_MINUTES = 24 * 60;
+
+type OutboxAlarms = {
   create: (name: string, info: { periodInMinutes: number }) => Promise<void> | void;
   clear: (name: string) => Promise<unknown> | unknown;
 };
@@ -21,11 +22,6 @@ type OutboxSchedulerDeps = {
   now?: () => Date;
 };
 
-/**
- * Owns the wake-ups. A one-minute alarm keeps draining while the sidepanel is
- * closed and is cleared once a stopped session has nothing left to upload. The
- * daily alarm (also run on boot and after every drain) handles retention.
- */
 export const createOutboxScheduler = ({
   alarms,
   lifecycleStore,
@@ -35,29 +31,30 @@ export const createOutboxScheduler = ({
   onMaintenance,
   now = () => new Date(),
 }: OutboxSchedulerDeps) => {
-  const ensureDrainAlarm = async () => {
-    await alarms.create(OUTBOX_DRAIN_ALARM_NAME, {
-      periodInMinutes: OUTBOX_DRAIN_PERIOD_MINUTES,
-    });
-  };
+  const scheduleAlarm = (name: string, periodInMinutes: number) =>
+    alarms.create(name, { periodInMinutes });
 
-  const ensureMaintenanceAlarm = async () => {
-    await alarms.create(OUTBOX_MAINTENANCE_ALARM_NAME, {
-      periodInMinutes: OUTBOX_MAINTENANCE_PERIOD_MINUTES,
-    });
-  };
+  const ensureDrainAlarm = () =>
+    scheduleAlarm(OUTBOX_DRAIN_ALARM_NAME, OUTBOX_DRAIN_PERIOD_MINUTES);
 
-  const sync = async () => {
+  const ensureMaintenanceAlarm = () =>
+    scheduleAlarm(OUTBOX_MAINTENANCE_ALARM_NAME, OUTBOX_MAINTENANCE_PERIOD_MINUTES);
+
+  const sync = async (): Promise<RecordingStatus> => {
     const lifecycle = await lifecycleStore.get();
-    const isLive = lifecycle.status === "recording" || lifecycle.status === "paused";
-    const outstanding = await countOutstanding();
 
-    if (isLive || outstanding > 0) {
+    if (lifecycle.status === "recording" || lifecycle.status === "paused") {
       await ensureDrainAlarm();
-      return;
+      return lifecycle.status;
     }
 
-    await alarms.clear(OUTBOX_DRAIN_ALARM_NAME);
+    if ((await countOutstanding()) > 0) {
+      await ensureDrainAlarm();
+    } else {
+      await alarms.clear(OUTBOX_DRAIN_ALARM_NAME);
+    }
+
+    return lifecycle.status;
   };
 
   const runMaintenance = async () => {
@@ -71,20 +68,20 @@ export const createOutboxScheduler = ({
   };
 
   const afterDrain = async () => {
-    await sync();
+    const status = await sync();
 
-    // Retention after every live capture would rescan the outbox constantly;
-    // the stopped session is the point where the drain is actually finished.
-    const lifecycle = await lifecycleStore.get();
-    if (lifecycle.status === "stopped") {
+    if (status === "stopped") {
       await runMaintenance();
     }
   };
 
   const handleAlarm = async (alarm: { name: string }) => {
     if (alarm.name === OUTBOX_DRAIN_ALARM_NAME) {
-      await drainAll();
-      await sync();
+      try {
+        await drainAll();
+      } finally {
+        await sync();
+      }
       return;
     }
 

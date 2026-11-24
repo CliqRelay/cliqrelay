@@ -13,10 +13,6 @@ type OutboxBootDeps = {
   restoreRecording: () => Promise<RecordingStatus>;
 };
 
-/**
- * Worker boot: clear offscreen-era keys, recover uploads a killed worker left
- * mid-flight, restore the live session, then drain whatever the user still has.
- */
 export const createOutboxBoot = ({
   repository,
   scheduler,
@@ -25,19 +21,34 @@ export const createOutboxBoot = ({
   runLegacyCleanup,
   restoreRecording,
 }: OutboxBootDeps) => {
-  return async (): Promise<RecordingStatus> => {
+  let bootRun: Promise<RecordingStatus> | undefined;
+
+  const boot = async (): Promise<RecordingStatus> => {
     await runLegacyCleanup();
     await repository.resetStaleUploading();
     await scheduler.ensureMaintenanceAlarm();
 
     const status = await restoreRecording();
 
-    await badge.refresh();
-    await drainer.drainAll();
-    await scheduler.sync();
     await scheduler.runMaintenance();
 
+    try {
+      await drainer.drainAll();
+    } finally {
+      await scheduler.sync();
+      await badge.refresh();
+    }
+
     return status;
+  };
+
+  return (): Promise<RecordingStatus> => {
+    bootRun ??= boot().catch((error: unknown) => {
+      bootRun = undefined;
+      throw error;
+    });
+
+    return bootRun;
   };
 };
 

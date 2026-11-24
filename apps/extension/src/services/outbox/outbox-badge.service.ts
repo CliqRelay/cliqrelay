@@ -1,13 +1,13 @@
-export const OUTBOX_BADGE_COLOR = "#dc2626";
+const OUTBOX_BADGE_COLOR = "#dc2626";
 
-export const failedBadgeTitle = (count: number): string => {
+const failedBadgeTitle = (count: number): string => {
   if (count === 0) {
     return "";
   }
   return count === 1 ? "1 step failed to sync" : `${count} steps failed to sync`;
 };
 
-export type BadgeAction = {
+type BadgeAction = {
   setBadgeText: (details: { text: string }) => Promise<void> | void;
   setBadgeBackgroundColor: (details: { color: string }) => Promise<void> | void;
   setTitle: (details: { title: string }) => Promise<void> | void;
@@ -19,10 +19,6 @@ type OutboxBadgeDeps = {
   log?: (message: string, error: unknown) => void;
 };
 
-/**
- * Only failed steps reach the toolbar: pending work is normal and synced work
- * needs no attention. Refreshed on failure, retry, discard and boot.
- */
 export const createOutboxBadge = ({
   action,
   countFailed,
@@ -32,13 +28,13 @@ export const createOutboxBadge = ({
     try {
       const count = await countFailed();
 
-      await action.setBadgeText({ text: count > 0 ? String(count) : "" });
-
       if (count === 0) {
-        await action.setTitle({ title: failedBadgeTitle(0) });
+        await action.setBadgeText({ text: "" });
+        await action.setTitle({ title: "" });
         return;
       }
 
+      await action.setBadgeText({ text: String(count) });
       await action.setBadgeBackgroundColor({ color: OUTBOX_BADGE_COLOR });
       await action.setTitle({ title: failedBadgeTitle(count) });
     } catch (error) {
