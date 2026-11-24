@@ -77,7 +77,7 @@ const setup = ({
   const { store: lifecycleStore, read: readLifecycle } = createLifecycleStore(lifecycle);
 
   const recording = {
-    getSnapshot: vi.fn().mockReturnValue({ status: "idle", bufferedCount: 0 }),
+    getSnapshot: vi.fn().mockReturnValue({ status: "idle" }),
     start: vi.fn(),
     pause: vi.fn(),
     resume: vi.fn(),

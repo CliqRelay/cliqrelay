@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import type { OutboxLifecycle } from "./outbox";
-import type { BufferedCapture } from "@/models/capture";
 import type { BrowserStorage } from "@/models/storage";
 
 export const recordingStatusValues = ["idle", "recording", "paused", "stopped"] as const;
@@ -17,12 +16,6 @@ export type RecordingLifecycle = z.infer<typeof recordingLifecycleSchema>;
 
 export type RecordingSnapshot = {
   status: RecordingStatus;
-  bufferedCount: number;
-};
-
-export type RecordingFlushResult = {
-  snapshot: RecordingSnapshot;
-  flushedEvents: BufferedCapture[];
 };
 
 export type RecordingStateMachine = {
@@ -32,9 +25,6 @@ export type RecordingStateMachine = {
   pause: () => RecordingSnapshot;
   resume: () => RecordingSnapshot;
   stop: () => RecordingSnapshot;
-  flush: () => Promise<RecordingFlushResult>;
-  ingestCapture: (capture: BufferedCapture) => void;
-  setProcessBufferedCapture: (fn: (captures: BufferedCapture[]) => Promise<void>) => void;
 };
 
 export type OnRecordingStatusChange = (status: RecordingStatus) => void;

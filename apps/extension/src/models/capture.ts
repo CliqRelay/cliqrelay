@@ -51,12 +51,6 @@ export type CaptureBridgeMessage = z.infer<typeof captureBridgeMessageSchema>;
 export const validateCaptureBridgeMessage = (data: unknown) =>
   getValidationResult(data, captureBridgeMessageSchema);
 
-export const bufferedCaptureSchema = z.object({
-  tabId: z.number(),
-  message: captureBridgeMessageSchema,
-});
-export type BufferedCapture = z.infer<typeof bufferedCaptureSchema>;
-
 // Types
 
 export type CaptureSink = (message: CaptureBridgeMessage) => void | Promise<void>;

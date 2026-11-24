@@ -81,38 +81,3 @@ export const processScreenshot = async (
     bitmap.close();
   }
 };
-
-/**
- * Kept for the offscreen upload path until Agent I removes it. New capture
- * code uses `processScreenshot` so the bitmap is decoded exactly once.
- */
-export const compressToWebP = async (dataUrl: string, quality = WEBP_QUALITY): Promise<Blob> =>
-  (await processScreenshot(dataUrl, { quality })).screenshotBlob;
-
-/**
- * Kept for the offscreen upload path until Agent I removes it.
- */
-export const generateThumbnail = async (
-  dataUrl: string,
-  width = THUMBNAIL_WIDTH,
-  quality = THUMBNAIL_QUALITY,
-): Promise<string> =>
-  blobToBase64(
-    (await processScreenshot(dataUrl, { thumbnailWidth: width, thumbnailQuality: quality }))
-      .thumbnailBlob,
-  );
-
-/**
- * Kept for the offscreen upload path until Agent I removes it.
- */
-export const processScreenshotForUpload = async (
-  dataUrl: string,
-): Promise<{ webpBlob: Blob; thumbnailBase64: string; width: number; height: number }> => {
-  const { screenshotBlob, thumbnailBlob, width, height } = await processScreenshot(dataUrl);
-  return {
-    webpBlob: screenshotBlob,
-    thumbnailBase64: await blobToBase64(thumbnailBlob),
-    width,
-    height,
-  };
-};
