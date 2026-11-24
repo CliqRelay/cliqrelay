@@ -114,8 +114,8 @@ describe("outbox step state repository", () => {
     test("counts all failed steps or only one user's", async () => {
       const mine = await createSessionWithSteps("user-1", 1);
       const other = await createSessionWithSteps("user-2", 1);
-      await repository.markStepFailed(mine.steps[0]!.id, "boom", NOW);
-      await repository.markStepFailed(other.steps[0]!.id, "boom", NOW);
+      await repository.markStepFailed(mine.steps[0]!.id, "some error", NOW);
+      await repository.markStepFailed(other.steps[0]!.id, "some error", NOW);
 
       await expect(stepState.countFailedSteps()).resolves.toBe(2);
       await expect(stepState.countFailedSteps("user-1")).resolves.toBe(1);
@@ -180,7 +180,7 @@ describe("outbox step state repository", () => {
         blob: new Blob(["pending"]),
         createdAt: NOW,
       });
-      await repository.markStepFailed(failed.id, "boom", NOW);
+      await repository.markStepFailed(failed.id, "some error", NOW);
       await repository.markStepSynced(synced.id, { serverStepId: "server-3", now: NOW });
 
       await expect(stepState.discardUnsyncedSteps(session.id)).resolves.toBe(2);

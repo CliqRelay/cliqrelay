@@ -91,10 +91,10 @@ describe("useStepMediaReplace", () => {
     });
 
     await act(async () => {
-      first.reject(new Error("boom"));
+      first.reject(new Error("some error"));
     });
 
-    expect(toast.error).toHaveBeenCalledWith("Error", { description: "boom" });
+    expect(toast.error).toHaveBeenCalledWith("Error", { description: "some error" });
     expect(result.current.replacingStepIds).toEqual(["s2"]);
   });
 
