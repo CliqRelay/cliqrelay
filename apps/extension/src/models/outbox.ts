@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { CreateStepRequest, StepAction } from "@repo/api-client";
+
 import { recordingStatusSchema } from "./recording";
 
 const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
@@ -171,4 +173,42 @@ export type OutboxCleanupResult = {
   sessions: number;
   steps: number;
   blobs: number;
+};
+
+export type OutboxCreateStepInput = {
+  guideId: string;
+  clientStepId: string;
+  action: StepAction;
+  actionText?: string;
+  url: string;
+  targetElement?: CreateStepRequest["targetElement"];
+  insertAfterStepId?: string;
+};
+
+export type OutboxCreateGuideInput = {
+  title: string;
+  teamId: string;
+  clientGuideId: string;
+};
+
+export type OutboxReplaceUploadInput = {
+  stepId: string;
+  storagePath: string;
+  fileSize: number;
+  thumbnail?: string;
+  width?: number;
+  height?: number;
+};
+
+export type OutboxApi = {
+  createGuide: (input: OutboxCreateGuideInput) => Promise<{ id: string }>;
+  deleteGuide: (guideId: string) => Promise<void>;
+  createStep: (input: OutboxCreateStepInput) => Promise<{ id: string }>;
+  deleteStep: (serverStepId: string) => Promise<void>;
+  presignUpload: (input: {
+    stepId: string;
+    guideId: string;
+  }) => Promise<{ presignedUrl: string; storagePath: string }>;
+  uploadBlob: (presignedUrl: string, blob: Blob) => Promise<void>;
+  replaceUpload: (input: OutboxReplaceUploadInput) => Promise<{ url: string }>;
 };
