@@ -1,5 +1,9 @@
+import Dexie from "dexie";
+
 import type {
   AppendStepInput,
+  AppendStepWithBlobsInput,
+  CaptureBlobsInput,
   CreateSessionInput,
   DateInput,
   ListSyncableStepsScope,
@@ -113,6 +117,63 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
       return { ...existing, ...changes };
     });
 
+  const appendStepWithBlobs = (
+    input: AppendStepWithBlobsInput,
+    blobs: CaptureBlobsInput,
+  ): Promise<LocalStep> =>
+    db.transaction("rw", db.sessions, db.steps, db.blobs, async () => {
+      const now = input.now ?? new Date();
+      const screenshotBlobId = crypto.randomUUID();
+      const thumbnailBlobId = crypto.randomUUID();
+      const step = await allocateAndInsertStep({
+        ...input,
+        now,
+        screenshotBlobId,
+        thumbnailBlobId,
+      });
+      const createdAt = toIso(now);
+
+      await db.blobs.bulkAdd([
+        {
+          id: screenshotBlobId,
+          stepId: step.id,
+          kind: "screenshot",
+          blob: blobs.screenshot,
+          createdAt,
+        },
+        {
+          id: thumbnailBlobId,
+          stepId: step.id,
+          kind: "thumbnail",
+          blob: blobs.thumbnail,
+          createdAt,
+        },
+      ]);
+
+      return step;
+    });
+
+  const listTypingSteps = (sessionId: string): Promise<LocalStep[]> =>
+    db.steps
+      .where("[sessionId+typingSessionId]")
+      .between([sessionId, Dexie.minKey], [sessionId, Dexie.maxKey])
+      .sortBy("stepIndex");
+
+  const findTypingStep = (sessionId: string, typingSessionId: string) =>
+    db.steps.where("[sessionId+typingSessionId]").equals([sessionId, typingSessionId]).first();
+
+  const deleteTypingStep = (sessionId: string, typingSessionId: string): Promise<boolean> =>
+    db.transaction("rw", db.steps, db.blobs, async () => {
+      const step = await findTypingStep(sessionId, typingSessionId);
+
+      if (!step) {
+        return false;
+      }
+
+      await deleteStepRecords([step.id]);
+      return true;
+    });
+
   const createSession = async (input: CreateSessionInput): Promise<LocalSession> => {
     const id = input.id ?? crypto.randomUUID();
     const startedAt = toIso(input.startedAt ?? new Date());
@@ -141,6 +202,14 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
     return db.sessions.get(id);
   };
 
+  const setSessionGuideId = async (
+    sessionId: string,
+    guideId: string | null,
+  ): Promise<LocalSession | undefined> => {
+    await db.sessions.update(sessionId, { guideId });
+    return db.sessions.get(sessionId);
+  };
+
   const listSessions = () => db.sessions.orderBy("startedAt").reverse().toArray();
 
   const listSessionsByUserId = async (userId: string) => {
@@ -150,6 +219,12 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
 
   const listSteps = (sessionId: string) =>
     db.steps.where("sessionId").equals(sessionId).sortBy("stepIndex");
+
+  const getLastStep = (sessionId: string) =>
+    db.steps
+      .where("[sessionId+stepIndex]")
+      .between([sessionId, Dexie.minKey], [sessionId, Dexie.maxKey])
+      .last();
 
   const getCounts = async (sessionId: string): Promise<OutboxCounts> => {
     const counts = await Promise.all(
@@ -307,6 +382,23 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
     return { sessions: sessionIds.length, steps: steps.length, blobs };
   };
 
+  const deleteSessionData = (sessionId: string): Promise<OutboxCleanupResult> =>
+    db.transaction("rw", db.sessions, db.steps, db.blobs, async () => {
+      const session = await db.sessions.get(sessionId);
+
+      if (!session) {
+        return { sessions: 0, steps: 0, blobs: 0 };
+      }
+
+      const steps = await db.steps.where("sessionId").equals(sessionId).toArray();
+      const blobs = await deleteBlobsForSteps(steps.map((step) => step.id));
+
+      await db.steps.where("sessionId").equals(sessionId).delete();
+      await db.sessions.delete(sessionId);
+
+      return { sessions: 1, steps: steps.length, blobs };
+    });
+
   const markStepDeleted = (id: string, now: DateInput = new Date()): Promise<StepDeletionOutcome> =>
     db.transaction("rw", db.steps, db.blobs, async () => {
       const step = await db.steps.get(id);
@@ -386,13 +478,19 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
 
   return {
     appendStep,
+    appendStepWithBlobs,
     upsertTypingStep,
+    listTypingSteps,
+    findTypingStep,
+    deleteTypingStep,
     createSession,
     getSession,
     updateSession,
+    setSessionGuideId,
     listSessions,
     listSessionsByUserId,
     listSteps,
+    getLastStep,
     getCounts,
     listSyncableSteps,
     markStepUploading,
@@ -405,6 +503,7 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
     deleteBlob,
     markStepDeleted,
     removeStep,
+    deleteSessionData,
     prune,
     discardForUser,
   };

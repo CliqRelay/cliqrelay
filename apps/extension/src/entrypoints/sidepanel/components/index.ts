@@ -3,6 +3,8 @@ export { AnimatedRecordingButton } from "./AnimatedRecordingButton";
 export { CaptureSessionPanel } from "./CaptureSessionPanel";
 export { DeleteGuideDialog } from "./DeleteGuideDialog";
 export { DeleteStepDialog } from "./DeleteStepDialog";
+export { LocalSyncSection } from "./LocalSyncSection";
+export type { LocalSyncSectionProps } from "./LocalSyncSection";
 export { PersistedGuideView } from "./PersistedGuideView";
 export { RecentGuidesList } from "./RecentGuidesList";
 export { RecordingControls } from "./RecordingControls";

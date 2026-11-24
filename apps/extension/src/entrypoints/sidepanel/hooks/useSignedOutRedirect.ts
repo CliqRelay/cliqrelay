@@ -3,11 +3,9 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 
-import { useSidePanelStore } from "../stores/sidepanel-store";
 import { fetchAuthSession } from "./useAuthSession";
 
-export function useSignedOutRedirect() {
-  const isSignedOut = useSidePanelStore((s) => s.isSignedOut);
+export function useSignedOutRedirect(isSignedOut: boolean) {
   const router = useRouter();
   const queryClient = useQueryClient();
 

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, Check, Loader2, Pause, Play, Trash2 } from "lucide-react";
+import { AlertCircle, Check, Loader2, Pause, Play, RefreshCw, Trash2 } from "lucide-react";
 
 import { RecordingIndicator } from "./RecordingIndicator";
 import { StepList } from "./StepList";
@@ -13,11 +13,10 @@ import type { RecordingStatus, StepJobProgress, UploadQueueInfo } from "@/models
 
 type CaptureSessionPanelProps = {
   status: RecordingStatus;
-  jobProgress: StepJobProgress[];
-  bufferedCount: number;
+  steps: StepJobProgress[];
   uploadQueue: UploadQueueInfo;
   isDraining: boolean;
-  activeGuideId: string | null;
+  guideId: string | null;
   stepCount: number;
   isPending: boolean;
   error: string | null;
@@ -25,17 +24,17 @@ type CaptureSessionPanelProps = {
   onResume: () => Promise<void>;
   onStop: () => Promise<void>;
   onDeleteStep: (id: string, actionText?: string | null) => void;
-  onDismiss: (jobId: string) => void;
+  onDismiss: (stepId: string) => void;
+  onRetryFailed: () => void;
   onDeleteGuide: () => void;
 };
 
 export function CaptureSessionPanel({
   status,
-  jobProgress,
-  bufferedCount,
+  steps,
   uploadQueue,
   isDraining,
-  activeGuideId,
+  guideId,
   stepCount,
   isPending,
   error,
@@ -44,6 +43,7 @@ export function CaptureSessionPanel({
   onStop,
   onDeleteStep,
   onDismiss,
+  onRetryFailed,
   onDeleteGuide,
 }: CaptureSessionPanelProps) {
   const isPaused = status === "paused";
@@ -54,18 +54,12 @@ export function CaptureSessionPanel({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <SessionHeader
-        status={status}
-        isPaused={isPaused}
-        stepCount={stepCount}
-        activeGuideId={activeGuideId}
-      />
+      <SessionHeader status={status} isPaused={isPaused} stepCount={stepCount} guideId={guideId} />
 
       <div className="min-h-0 flex-1">
         <StepList
           mode="recording"
-          steps={jobProgress}
-          bufferedCount={bufferedCount}
+          steps={steps}
           onDeleteStep={onDeleteStep}
           onDismiss={onDismiss}
         />
@@ -90,6 +84,22 @@ export function CaptureSessionPanel({
                 <StatusStrip>
                   <UploadStatusBadges uploadQueue={uploadQueue} />
                 </StatusStrip>
+              </Collapsible>
+            )}
+
+            {uploadQueue.failed > 0 && (
+              <Collapsible key="retry">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-full gap-1.5 text-xs"
+                  onClick={onRetryFailed}
+                  disabled={isPending}
+                >
+                  <RefreshCw className="size-3.5" />
+                  Retry {uploadQueue.failed} failed step
+                  {uploadQueue.failed !== 1 ? "s" : ""}
+                </Button>
               </Collapsible>
             )}
 
@@ -180,12 +190,12 @@ function SessionHeader({
   status,
   isPaused,
   stepCount,
-  activeGuideId,
+  guideId,
 }: {
   status: RecordingStatus;
   isPaused: boolean;
   stepCount: number;
-  activeGuideId: string | null;
+  guideId: string | null;
 }) {
   return (
     <div
@@ -209,15 +219,15 @@ function SessionHeader({
             ? "Paused — actions on the page aren't captured."
             : "Capturing clicks and inputs on the active tab."}
         </p>
-        {activeGuideId && (
+        {guideId && (
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="shrink-0 font-mono text-[10px] text-muted-foreground/50">
-                {activeGuideId.slice(0, 8)}
+                {guideId.slice(0, 8)}
               </span>
             </TooltipTrigger>
             <TooltipContent side="top" className="font-mono text-[11px]">
-              {activeGuideId}
+              {guideId}
             </TooltipContent>
           </Tooltip>
         )}

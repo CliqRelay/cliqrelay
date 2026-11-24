@@ -1,9 +1,12 @@
 import { z } from "zod";
 
+import type { LocalSession, LocalStep, OutboxCounts, SyncStatus } from "./outbox";
 import { type RecordingStatus, recordingStatusSchema } from "./recording";
 import { type ExtensionSettings, extensionSettingsSchema } from "./settings";
 import { getValidationResult } from "./validation";
 
+// The background still owns the port until PR 6 removes it, so the name stays
+// exported for `entrypoints/background.ts`.
 export const SIDEPANEL_PORT_NAME = "cliqrelay-sidepanel" as const;
 
 export const sidePanelCommandType = "cliqrelay.sidepanel-command" as const;
@@ -18,6 +21,10 @@ export const sidePanelCommandTypes = [
   "update_settings",
   "retry_failed_uploads",
   "dismiss_job",
+  "retry_failed",
+  "discard_session",
+  "discard_user_data",
+  "dismiss_step",
 ] as const;
 
 export const sidePanelCommandTypeSchema = z.enum(sidePanelCommandTypes);
@@ -28,6 +35,8 @@ export const sidePanelCommandSchema = z.object({
   command: sidePanelCommandTypeSchema,
   payload: extensionSettingsSchema.partial().optional(),
   jobId: z.string().optional(),
+  stepId: z.string().optional(),
+  sessionId: z.string().optional(),
 });
 export type SidePanelCommand = z.infer<typeof sidePanelCommandSchema>;
 
@@ -68,12 +77,8 @@ export type StepJobProgress = z.infer<typeof stepJobProgressSchema>;
 
 export const sidePanelStateUpdateSchema = z.object({
   status: recordingStatusSchema,
-  bufferedCount: z.number(),
   isDraining: z.boolean().optional(),
   isSignedOut: z.boolean().optional(),
-  uploadQueue: uploadQueueInfoSchema.optional(),
-  activeGuideId: z.string().nullish(),
-  jobProgress: z.array(stepJobProgressSchema).optional(),
 });
 export type SidePanelStateUpdate = z.infer<typeof sidePanelStateUpdateSchema>;
 
@@ -88,28 +93,102 @@ export const sidePanelResponseSchema = z.discriminatedUnion("ok", [
 export type SidePanelResponse = z.infer<typeof sidePanelResponseSchema>;
 
 export type SidePanelState = {
-  status: RecordingStatus | undefined;
-  bufferedCount: number;
-  isDraining: boolean;
-  isSignedOut: boolean;
   settings: ExtensionSettings | undefined;
-  uploadQueue: UploadQueueInfo;
-  activeGuideId: string | null;
-  jobProgress: StepJobProgress[];
 };
 
 export type SidePanelActions = {
-  setStatus: (status: RecordingStatus) => void;
-  setBufferedCount: (count: number) => void;
-  setIsDraining: (isDraining: boolean) => void;
-  setIsSignedOut: (isSignedOut: boolean) => void;
   setSettings: (settings: ExtensionSettings) => void;
-  setUploadQueue: (queue: UploadQueueInfo) => void;
-  setActiveGuideId: (id: string | null) => void;
-  setJobProgress: (progress: StepJobProgress[]) => void;
-  updateJobProgress: (jobId: string, updates: Partial<StepJobProgress>) => void;
-  removeJobProgress: (jobId: string) => void;
-  clear: () => void;
+};
+
+export type StepPreviewUrls = {
+  screenshotUrl?: string;
+  thumbnail?: string;
+};
+
+export type LocalSyncSessionSummary = {
+  session: LocalSession;
+  counts: OutboxCounts;
+  failedSteps: LocalStep[];
+};
+
+export type LocalSyncOverview = {
+  counts: OutboxCounts;
+  sessions: LocalSyncSessionSummary[];
+  otherSessions: LocalSession[];
+};
+
+export const emptyOutboxCounts: OutboxCounts = {
+  pending: 0,
+  uploading: 0,
+  synced: 0,
+  failed: 0,
+  deleted: 0,
+};
+
+const phaseBySyncStatus: Record<SyncStatus, JobPhase> = {
+  pending: "persisting",
+  uploading: "uploading",
+  synced: "completed",
+  failed: "failed",
+  deleted: "failed",
+};
+
+export const toUploadQueueInfo = (counts: OutboxCounts): UploadQueueInfo => ({
+  pending: counts.pending,
+  inProgress: counts.uploading,
+  failed: counts.failed,
+  completed: counts.synced,
+});
+
+export const deriveIsDraining = (
+  status: RecordingStatus | undefined,
+  counts: OutboxCounts,
+): boolean => status === "stopped" && counts.pending + counts.uploading > 0;
+
+export const toStepJobProgress = (
+  step: LocalStep,
+  preview: StepPreviewUrls = {},
+): StepJobProgress | null => {
+  if (step.syncStatus === "deleted") {
+    return null;
+  }
+
+  const progress: StepJobProgress = {
+    jobId: step.id,
+    action: step.action,
+    url: step.url,
+    capturedAt: step.capturedAt,
+    phase: phaseBySyncStatus[step.syncStatus],
+  };
+
+  if (step.serverStepId !== undefined) {
+    progress.stepId = step.serverStepId;
+  }
+  if (step.guideId !== null) {
+    progress.guideId = step.guideId;
+  }
+  if (step.actionText !== undefined) {
+    progress.actionText = step.actionText;
+  }
+  if (step.retryCount > 0) {
+    progress.attempts = step.retryCount;
+  }
+  if (step.lastError !== undefined) {
+    progress.error = step.lastError;
+  }
+  if (step.targetElement !== undefined) {
+    progress.targetElement = step.targetElement;
+  }
+
+  const screenshotUrl = step.serverScreenshotUrl ?? preview.screenshotUrl;
+  if (screenshotUrl !== undefined) {
+    progress.screenshotUrl = screenshotUrl;
+  }
+  if (preview.thumbnail !== undefined) {
+    progress.thumbnail = preview.thumbnail;
+  }
+
+  return progress;
 };
 
 export const validateSidePanelCommand = (data: unknown) =>

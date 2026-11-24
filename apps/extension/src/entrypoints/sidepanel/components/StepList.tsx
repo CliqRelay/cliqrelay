@@ -17,7 +17,6 @@ import type { StepJobProgress } from "@/models";
 type RecordingModeProps = {
   mode: "recording";
   steps: StepJobProgress[];
-  bufferedCount: number;
   onDeleteStep?: (stepId: string, actionText?: string | null) => void;
   onDismiss?: (jobId: string) => void;
 };
@@ -44,12 +43,10 @@ export function StepList(props: Props) {
 
 function RecordingStepList({
   steps,
-  bufferedCount,
   onDeleteStep,
   onDismiss,
 }: {
   steps: StepJobProgress[];
-  bufferedCount: number;
   onDeleteStep?: (stepId: string, actionText?: string | null) => void;
   onDismiss?: (jobId: string) => void;
 }) {
@@ -61,7 +58,7 @@ function RecordingStepList({
     enabled: sorted.length > 0,
   });
 
-  if (sorted.length === 0 && bufferedCount === 0) {
+  if (sorted.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0 }}

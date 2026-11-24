@@ -3,7 +3,14 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { createOutboxRepository } from "./outbox.repository";
 import type { OutboxRepository } from "./outbox.repository";
-import type { AppendStepInput, CreateSessionInput } from "@/models";
+import type {
+  AppendNavigationStepInput,
+  AppendStepInput,
+  AppendStepWithBlobsInput,
+  CaptureBlobsInput,
+  CreateSessionInput,
+} from "@/models";
+import { outboxLifecycleSchema } from "@/models";
 import { createDatabase } from "@/services/db";
 import type { OutboxDatabase } from "@/services/db";
 
@@ -44,6 +51,24 @@ const appendStep = (
 
 const webpBlob = (seed = 1) =>
   new Blob([new Uint8Array([seed, seed + 1, seed + 2])], { type: "image/webp" });
+
+const appendStepWithBlobs = (
+  sessionId: string,
+  overrides: Partial<Omit<AppendStepWithBlobsInput, "sessionId">> = {},
+  blobs: CaptureBlobsInput = { screenshot: webpBlob(11), thumbnail: webpBlob(21) },
+) =>
+  repository.appendStepWithBlobs(
+    {
+      sessionId,
+      kind: "interaction",
+      action: "click",
+      url: "https://example.com/page",
+      capturedAt: NOW,
+      now: NOW,
+      ...overrides,
+    },
+    blobs,
+  );
 
 beforeEach(() => {
   databaseName = `cliqrelay-test-${Date.now()}-${databaseCounter++}`;
@@ -179,6 +204,172 @@ describe("appendStep", () => {
   });
 });
 
+describe("appendStepWithBlobs", () => {
+  test("should write the step and both blobs atomically", async () => {
+    const session = await createSession({ guideId: "guide-7" });
+    const screenshot = webpBlob(10);
+    const thumbnail = webpBlob(20);
+
+    const step = await appendStepWithBlobs(session.id, {}, { screenshot, thumbnail });
+
+    expect(step).toMatchObject({
+      sessionId: session.id,
+      guideId: "guide-7",
+      stepIndex: 0,
+      syncStatus: "pending",
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    expect(step.screenshotBlobId).toBeDefined();
+    expect(step.thumbnailBlobId).toBeDefined();
+    expect(step.screenshotBlobId).not.toBe(step.thumbnailBlobId);
+
+    const storedScreenshot = await repository.getBlobByStepAndKind(step.id, "screenshot");
+    expect(storedScreenshot).toMatchObject({
+      id: step.screenshotBlobId,
+      stepId: step.id,
+      kind: "screenshot",
+      createdAt: NOW,
+    });
+    expect(storedScreenshot?.blob.size).toBe(screenshot.size);
+    expect(storedScreenshot?.blob.type).toBe("image/webp");
+
+    const storedThumbnail = await repository.getBlobByStepAndKind(step.id, "thumbnail");
+    expect(storedThumbnail).toMatchObject({
+      id: step.thumbnailBlobId,
+      stepId: step.id,
+      kind: "thumbnail",
+      createdAt: NOW,
+    });
+    expect(storedThumbnail?.blob.size).toBe(thumbnail.size);
+
+    expect(await db.blobs.where("stepId").equals(step.id).count()).toBe(2);
+    expect((await repository.getSession(session.id))?.nextStepIndex).toBe(1);
+    expect((await repository.getSession(session.id))?.lastActivityAt).toBe(NOW);
+  });
+
+  test("should roll back the step, index and blobs when the blob insert fails", async () => {
+    const session = await createSession({ guideId: "guide-7" });
+    const unclonable = { capture: () => undefined } as unknown as Blob;
+
+    await expect(
+      appendStepWithBlobs(
+        session.id,
+        { action: "rollback" },
+        {
+          screenshot: unclonable,
+          thumbnail: webpBlob(21),
+        },
+      ),
+    ).rejects.toBeInstanceOf(Error);
+
+    expect(await db.steps.where("sessionId").equals(session.id).count()).toBe(0);
+    expect(await db.blobs.count()).toBe(0);
+
+    const stored = await repository.getSession(session.id);
+    expect(stored?.nextStepIndex).toBe(0);
+    expect(stored?.lastActivityAt).toBe(NOW);
+  });
+});
+
+describe("navigation steps", () => {
+  test("should store a navigation step from AppendNavigationStepInput", async () => {
+    const session = await createSession({ guideId: "guide-nav" });
+    const input: AppendNavigationStepInput = {
+      sessionId: session.id,
+      url: "https://example.com/start",
+      capturedAt: NOW,
+      now: NOW,
+    };
+
+    const step = await repository.appendStep({
+      ...input,
+      kind: "navigation",
+      action: "navigation",
+    });
+
+    expect(step).toMatchObject({
+      sessionId: session.id,
+      guideId: "guide-nav",
+      stepIndex: 0,
+      kind: "navigation",
+      action: "navigation",
+      url: "https://example.com/start",
+      capturedAt: NOW,
+    });
+  });
+});
+
+describe("getLastStep", () => {
+  test("should return the step with the highest index", async () => {
+    const session = await createSession();
+    expect(await repository.getLastStep(session.id)).toBeUndefined();
+
+    await appendStep(session.id, { action: "first" });
+    const last = await appendStep(session.id, { action: "last" });
+
+    expect((await repository.getLastStep(session.id))?.id).toBe(last.id);
+
+    const other = await createSession({ id: "other" });
+    expect(await repository.getLastStep(other.id)).toBeUndefined();
+    await appendStep(other.id, { action: "other" });
+    expect((await repository.getLastStep(other.id))?.action).toBe("other");
+  });
+
+  test("should ignore gaps left by deleted steps", async () => {
+    const session = await createSession();
+    const first = await appendStep(session.id, { action: "first" });
+    await appendStep(session.id, { action: "second" });
+    const third = await appendStep(session.id, { action: "third" });
+
+    await repository.removeStep(first.id);
+
+    expect((await repository.getLastStep(session.id))?.id).toBe(third.id);
+  });
+});
+
+describe("setSessionGuideId", () => {
+  test("should set, replace and clear the session guide id", async () => {
+    await createSession({ id: "session-1", guideId: null });
+
+    expect((await repository.setSessionGuideId("session-1", "guide-42"))?.guideId).toBe("guide-42");
+    expect((await repository.getSession("session-1"))?.guideId).toBe("guide-42");
+    expect((await repository.setSessionGuideId("session-1", null))?.guideId).toBeNull();
+    expect(await repository.setSessionGuideId("missing", "guide-42")).toBeUndefined();
+  });
+});
+
+describe("deleteSessionData", () => {
+  test("should delete the session with all of its steps and blobs", async () => {
+    const mine = await createSession({ id: "mine", userId: "user-1" });
+    const theirs = await createSession({ id: "theirs", userId: "user-2" });
+    const myBlobStep = await appendStepWithBlobs(mine.id);
+    const myPlainStep = await appendStep(mine.id);
+    const theirStep = await appendStepWithBlobs(theirs.id);
+
+    expect(await repository.deleteSessionData(mine.id)).toEqual({
+      sessions: 1,
+      steps: 2,
+      blobs: 2,
+    });
+
+    expect(await db.sessions.get(mine.id)).toBeUndefined();
+    expect(await db.steps.get(myBlobStep.id)).toBeUndefined();
+    expect(await db.steps.get(myPlainStep.id)).toBeUndefined();
+    expect(await db.blobs.where("stepId").equals(myBlobStep.id).count()).toBe(0);
+
+    expect(await db.sessions.get(theirs.id)).toBeDefined();
+    expect(await db.steps.where("sessionId").equals(theirs.id).count()).toBe(1);
+    expect(await db.blobs.where("stepId").equals(theirStep.id).count()).toBe(2);
+
+    expect(await repository.deleteSessionData(mine.id)).toEqual({
+      sessions: 0,
+      steps: 0,
+      blobs: 0,
+    });
+  });
+});
+
 describe("upsertTypingStep", () => {
   const upsert = (sessionId: string, typingSessionId: string, actionText: string) =>
     repository.upsertTypingStep({
@@ -218,6 +409,52 @@ describe("upsertTypingStep", () => {
     const steps = await repository.listSteps(session.id);
     expect(steps.map((step) => step.stepIndex)).toEqual([0, 1]);
     expect((await repository.getSession(session.id))?.nextStepIndex).toBe(2);
+  });
+});
+
+describe("typing step lookup and deletion", () => {
+  test("should list and find only the typing steps of a session", async () => {
+    const session = await createSession();
+    await appendStepWithBlobs(session.id, { action: "click" });
+    const first = await appendStepWithBlobs(session.id, {
+      action: "type",
+      actionText: "a",
+      typingSessionId: "typing-1",
+    });
+    const second = await appendStepWithBlobs(session.id, {
+      action: "type",
+      actionText: "ab",
+      typingSessionId: "typing-2",
+    });
+    await createSession({ id: "other" });
+
+    const typing = await repository.listTypingSteps(session.id);
+    expect(typing.map((step) => step.id)).toEqual([first.id, second.id]);
+    expect((await repository.findTypingStep(session.id, "typing-1"))?.id).toBe(first.id);
+    expect(await repository.findTypingStep(session.id, "typing-3")).toBeUndefined();
+    expect(await repository.findTypingStep("other", "typing-1")).toBeUndefined();
+    expect(await repository.listTypingSteps("other")).toEqual([]);
+  });
+
+  test("should hard delete the typing step and its blobs", async () => {
+    const session = await createSession();
+    const typing = await appendStepWithBlobs(session.id, {
+      action: "type",
+      typingSessionId: "typing-1",
+    });
+    const other = await appendStepWithBlobs(session.id, {
+      action: "type",
+      typingSessionId: "typing-2",
+    });
+
+    expect(await repository.deleteTypingStep(session.id, "typing-1")).toBe(true);
+
+    expect(await db.steps.get(typing.id)).toBeUndefined();
+    expect(await db.blobs.where("stepId").equals(typing.id).count()).toBe(0);
+    expect(await db.steps.get(other.id)).toBeDefined();
+    expect(await db.blobs.where("stepId").equals(other.id).count()).toBe(2);
+
+    expect(await repository.deleteTypingStep(session.id, "typing-1")).toBe(false);
   });
 });
 
@@ -562,5 +799,48 @@ describe("discardForUser", () => {
       steps: 0,
       blobs: 0,
     });
+  });
+});
+
+describe("outbox lifecycle schema", () => {
+  test("should round-trip a recording lifecycle with a pending start", () => {
+    const lifecycle = {
+      status: "recording" as const,
+      sessionId: "session-1",
+      isSignedOut: false,
+      pendingStart: { clientGuideId: "client-guide-1", startedAt: NOW },
+    };
+
+    expect(outboxLifecycleSchema.parse(lifecycle)).toEqual(lifecycle);
+  });
+
+  test("should round-trip a minimal signed-out lifecycle", () => {
+    const lifecycle = { status: "idle" as const, isSignedOut: true };
+
+    expect(outboxLifecycleSchema.parse(lifecycle)).toEqual(lifecycle);
+  });
+
+  test.each(["idle", "recording", "paused", "stopped"])("should accept the %s status", (status) => {
+    expect(outboxLifecycleSchema.safeParse({ status, isSignedOut: false }).success).toBe(true);
+  });
+
+  test("should reject a lifecycle without isSignedOut", () => {
+    expect(outboxLifecycleSchema.safeParse({ status: "idle" }).success).toBe(false);
+  });
+
+  test("should reject an unknown status", () => {
+    expect(outboxLifecycleSchema.safeParse({ status: "syncing", isSignedOut: false }).success).toBe(
+      false,
+    );
+  });
+
+  test("should reject a pending start without startedAt", () => {
+    const result = outboxLifecycleSchema.safeParse({
+      status: "recording",
+      isSignedOut: false,
+      pendingStart: { clientGuideId: "client-guide-1" },
+    });
+
+    expect(result.success).toBe(false);
   });
 });
