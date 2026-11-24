@@ -37,6 +37,8 @@
     "authula": "^0.9.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
+    "dexie": "^4.4.7",
+    "dexie-react-hooks": "^4.4.0",
     "es-toolkit": "^1.53.2",
     "framer-motion": "^14.14.0",
     "lucide-react": "^1.73.0",
