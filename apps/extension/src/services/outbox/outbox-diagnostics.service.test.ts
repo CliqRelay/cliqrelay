@@ -1,14 +1,29 @@
 import { describe, expect, test, vi } from "vitest";
 
 import { createOutboxDiagnostics } from "./outbox-diagnostics.service";
-import { emptyOutboxCounts, type OutboxCounts } from "@/models";
+import { emptyOutboxCounts, type LocalSession, type OutboxCounts } from "@/models";
+
+type DiagnosticsDeps = Parameters<typeof createOutboxDiagnostics>[0];
+type DrainerState = ReturnType<DiagnosticsDeps["drainer"]["getState"]>;
+
+const NOW = "2026-11-24T10:00:00.000Z";
 
 const counts = (overrides: Partial<OutboxCounts> = {}): OutboxCounts => ({
   ...emptyOutboxCounts,
   ...overrides,
 });
 
-const drainerState = {
+const session = (index: number): LocalSession => ({
+  id: `session-${index + 1}`,
+  userId: "user-1",
+  guideId: null,
+  clientGuideId: `client-guide-${index + 1}`,
+  startedAt: NOW,
+  lastActivityAt: NOW,
+  nextStepIndex: 0,
+});
+
+const drainerState: DrainerState = {
   isPaused: false,
   isRunning: true,
   queued: 1,
@@ -16,22 +31,37 @@ const drainerState = {
   lastError: null,
 };
 
-const setup = ({ sessionCounts = [] as OutboxCounts[], isDev = true } = {}) => {
-  const sessions = sessionCounts.map((_, index) => ({ id: `session-${index + 1}` }));
-  const repository = {
-    listSessions: vi.fn().mockResolvedValue(sessions),
-    getCounts: vi.fn(async (sessionId: string) => {
-      const index = Number(sessionId.replace("session-", "")) - 1;
-      return sessionCounts[index] ?? counts();
-    }),
-  };
-  const drainer = { getState: vi.fn(() => drainerState) };
-
-  const diagnostics = createOutboxDiagnostics({
-    repository: repository as never,
-    drainer: drainer as never,
-    isDev,
+const deferred = () => {
+  let resolve!: () => void;
+  const promise = new Promise<void>((resolvePromise) => {
+    resolve = resolvePromise;
   });
+  return { promise, resolve };
+};
+
+type SetupOptions = {
+  sessionCounts?: OutboxCounts[];
+  isDev?: boolean;
+};
+
+const setup = ({ sessionCounts = [], isDev = true }: SetupOptions = {}) => {
+  const sessions = sessionCounts.map((_, index) => session(index));
+
+  const listSessions = vi
+    .fn<DiagnosticsDeps["repository"]["listSessions"]>()
+    .mockResolvedValue(sessions);
+
+  const getCounts = vi.fn<DiagnosticsDeps["repository"]["getCounts"]>(async (sessionId) => {
+    const index = Number(sessionId.replace("session-", "")) - 1;
+    return sessionCounts[index] ?? counts();
+  });
+
+  const repository = { listSessions, getCounts } satisfies DiagnosticsDeps["repository"];
+
+  const getState = vi.fn<DiagnosticsDeps["drainer"]["getState"]>().mockReturnValue(drainerState);
+  const drainer = { getState } satisfies DiagnosticsDeps["drainer"];
+
+  const diagnostics = createOutboxDiagnostics({ repository, drainer, isDev });
 
   return { diagnostics, repository, drainer };
 };
@@ -59,6 +89,28 @@ describe("outbox diagnostics", () => {
       drainer: drainerState,
     });
     expect(repository.getCounts).toHaveBeenCalledTimes(2);
+  });
+
+  test("loads session counts in parallel", async () => {
+    const { diagnostics, repository } = setup({
+      sessionCounts: [counts(), counts()],
+    });
+    const gate = deferred();
+
+    repository.getCounts.mockImplementation(async () => {
+      await gate.promise;
+      return counts();
+    });
+
+    const pending = diagnostics.getState();
+    await vi.waitFor(() => expect(repository.getCounts).toHaveBeenCalledTimes(2));
+    gate.resolve();
+
+    await expect(pending).resolves.toEqual({
+      sessions: 2,
+      steps: counts(),
+      drainer: drainerState,
+    });
   });
 
   test("reports zero counts when the outbox is idle", async () => {

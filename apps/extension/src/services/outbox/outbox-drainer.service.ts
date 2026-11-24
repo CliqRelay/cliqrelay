@@ -5,7 +5,12 @@ import type { OutboxDeleter } from "./outbox-deleter.service";
 import type { OutboxPusher } from "./outbox-pusher.service";
 import { classifyOutboxError } from "./outbox-pusher.service";
 import type { OutboxRepository } from "./outbox.repository";
-import type { LocalSession, LocalStep, RecordingLifecycleStore } from "@/models";
+import type {
+  LocalSession,
+  LocalStep,
+  OutboxCleanupResult,
+  RecordingLifecycleStore,
+} from "@/models";
 
 const DRAIN_WAIT_MS = 200;
 const DRAIN_MAX_ATTEMPTS = 3;
@@ -13,12 +18,22 @@ const DRAIN_RETRY_BASE_WAIT_MS = 500;
 
 type QueueItem = { sessionId: string };
 
+type OutboxDrainerRepository = Pick<
+  OutboxRepository,
+  "listSyncableSteps" | "listSessionsByUserId" | "getCounts" | "markStepFailed"
+> & {
+  getSession: (id: string) => Promise<LocalSession | undefined>;
+  listSteps: (sessionId: string) => Promise<LocalStep[]>;
+  listSessions: () => Promise<LocalSession[]>;
+  deleteSessionData: (sessionId: string) => Promise<OutboxCleanupResult>;
+};
+
 type OutboxDrainerDeps = {
-  repository: OutboxRepository;
+  repository: OutboxDrainerRepository;
   pusher: OutboxPusher;
-  deleter: OutboxDeleter;
-  auth: OutboxAuth;
-  lifecycleStore: RecordingLifecycleStore;
+  deleter: Pick<OutboxDeleter, "pushDeletion" | "countPendingDeletions">;
+  auth: Pick<OutboxAuth, "getUserId" | "invalidate">;
+  lifecycleStore: Pick<RecordingLifecycleStore, "get" | "patch">;
   now?: () => Date;
   waitMs?: number;
   maxAttempts?: number;
@@ -263,7 +278,11 @@ export const createOutboxDrainer = ({
         }
 
         lastRunDidWork = false;
-        void onDrainCompleted?.();
+        Promise.resolve(onDrainCompleted?.()).catch((error) => {
+          log("[background] Drain completion handler failed", {
+            error: toError(error).message,
+          });
+        });
       },
     },
   );
@@ -335,12 +354,10 @@ export const createOutboxDrainer = ({
     }
 
     const sessions = await repository.listSessions();
-    let total = pendingDeletions;
-    for (const session of sessions) {
-      const counts = await repository.getCounts(session.id);
-      total += counts.pending + counts.uploading;
-    }
-    return total;
+    const counts = await Promise.all(sessions.map((session) => repository.getCounts(session.id)));
+    return (
+      pendingDeletions + counts.reduce((total, entry) => total + entry.pending + entry.uploading, 0)
+    );
   };
 
   const getState = () => {

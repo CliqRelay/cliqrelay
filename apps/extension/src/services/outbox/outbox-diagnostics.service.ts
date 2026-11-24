@@ -1,10 +1,12 @@
 import type { OutboxDrainer } from "./outbox-drainer.service";
 import type { OutboxRepository } from "./outbox.repository";
-import { emptyOutboxCounts, syncStatusValues } from "@/models";
+import { emptyOutboxCounts, syncStatusValues, type LocalSession } from "@/models";
 import { isDeveloperBuild } from "@/utils/diagnostics";
 
 type OutboxDiagnosticsDeps = {
-  repository: Pick<OutboxRepository, "listSessions" | "getCounts">;
+  repository: Pick<OutboxRepository, "getCounts"> & {
+    listSessions: () => Promise<LocalSession[]>;
+  };
   drainer: Pick<OutboxDrainer, "getState">;
   isDev?: boolean;
 };
@@ -20,14 +22,18 @@ export const createOutboxDiagnostics = ({
     }
 
     const sessions = await repository.listSessions();
-    const steps = { ...emptyOutboxCounts };
-
-    for (const session of sessions) {
-      const counts = await repository.getCounts(session.id);
-      for (const status of syncStatusValues) {
-        steps[status] += counts[status];
-      }
-    }
+    const sessionCounts = await Promise.all(
+      sessions.map((session) => repository.getCounts(session.id)),
+    );
+    const steps = sessionCounts.reduce(
+      (totals, counts) => {
+        for (const status of syncStatusValues) {
+          totals[status] += counts[status];
+        }
+        return totals;
+      },
+      { ...emptyOutboxCounts },
+    );
 
     return {
       sessions: sessions.length,

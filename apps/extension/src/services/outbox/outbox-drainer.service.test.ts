@@ -1,17 +1,22 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi, type Mock } from "vitest";
 
 import { ApiError } from "@repo/api-client";
 
+import { OutboxPermanentError } from "./outbox-api.service";
 import { createOutboxDrainer, findInsertAfterStepId } from "./outbox-drainer.service";
-import { OutboxPermanentError } from "./outbox-pusher.service";
 import {
   emptyOutboxCounts,
+  type ListSyncableStepsScope,
   type LocalSession,
   type LocalStep,
+  type OutboxCleanupResult,
   type OutboxCounts,
-  type RecordingLifecycleStore,
+  type OutboxLifecycle,
 } from "@/models";
-import type { OutboxRepository } from "@/services/outbox/outbox.repository";
+
+type DrainerDeps = Parameters<typeof createOutboxDrainer>[0];
+type PushStep = DrainerDeps["pusher"]["pushStep"];
+type PushDeletion = DrainerDeps["deleter"]["pushDeletion"];
 
 const NOW = "2026-11-24T10:00:00.000Z";
 
@@ -65,52 +70,76 @@ const deferred = () => {
   return { promise, resolve };
 };
 
+type SetupOptions = {
+  steps?: LocalStep[];
+  userId?: string | null;
+  activeSession?: LocalSession;
+  pushStep?: Mock<PushStep>;
+  pushDeletion?: Mock<PushDeletion>;
+  pendingDeletions?: number;
+  onDrainCompleted?: Mock<() => Promise<void>>;
+  log?: (message: string, details?: Record<string, unknown>) => void;
+};
+
 const setup = ({
-  steps = [step()] as LocalStep[],
-  userId = "user-1" as string | null,
+  steps = [step()],
+  userId = "user-1",
   activeSession = session(),
-  pushStep = vi.fn().mockResolvedValue(undefined),
-  pushDeletion = vi.fn().mockResolvedValue("removed"),
-  pendingDeletions = 0 as number,
-} = {}) => {
+  pushStep = vi.fn<PushStep>().mockResolvedValue(undefined),
+  pushDeletion = vi.fn<PushDeletion>().mockResolvedValue("removed"),
+  pendingDeletions = 0,
+  onDrainCompleted = vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+  log = vi.fn<(message: string, details?: Record<string, unknown>) => void>(),
+}: SetupOptions = {}) => {
   const sessions = [activeSession];
   const storedSteps = steps.map((entry) => ({ ...entry }));
 
   const sessionIdsForUser = (id: string) =>
     sessions.filter((entry) => entry.userId === id).map((entry) => entry.id);
 
-  const repository = {
-    getSession: vi.fn(async (id: string) => sessions.find((entry) => entry.id === id)),
-    listSteps: vi.fn(async (sessionId: string) =>
-      storedSteps
-        .filter((entry) => entry.sessionId === sessionId)
-        .sort((a, b) => a.stepIndex - b.stepIndex),
-    ),
-    listSyncableSteps: vi.fn(async (scope: { sessionId?: string; userId?: string }) => {
+  const getSession = vi.fn<DrainerDeps["repository"]["getSession"]>(async (id) =>
+    sessions.find((entry) => entry.id === id),
+  );
+
+  const listSteps = vi.fn<DrainerDeps["repository"]["listSteps"]>(async (sessionId) =>
+    storedSteps
+      .filter((entry) => entry.sessionId === sessionId)
+      .sort((a, b) => a.stepIndex - b.stepIndex),
+  );
+
+  const listSyncableSteps = vi.fn<DrainerDeps["repository"]["listSyncableSteps"]>(
+    async (scope: ListSyncableStepsScope) => {
       const sessionIds = scope.sessionId
         ? [scope.sessionId]
         : sessionIdsForUser(scope.userId ?? "");
       return storedSteps
         .filter((entry) => sessionIds.includes(entry.sessionId) && isSyncable(entry))
         .sort((a, b) => a.stepIndex - b.stepIndex);
-    }),
-    listSessions: vi.fn(async () => [...sessions]),
-    listSessionsByUserId: vi.fn(async (id: string) =>
-      sessions.filter((entry) => entry.userId === id),
-    ),
-    markStepFailed: vi.fn(async (id: string, message: string) => {
-      const target = storedSteps.find((entry) => entry.id === id);
-      if (!target) {
-        return;
-      }
-      target.syncStatus = "failed";
-      target.retryCount += 1;
-      target.lastError = message;
-    }),
-    getCounts: vi.fn(async (sessionId: string) =>
-      countStatuses(storedSteps.filter((entry) => entry.sessionId === sessionId)),
-    ),
-    deleteSessionData: vi.fn(async (sessionId: string) => {
+    },
+  );
+
+  const listSessions = vi.fn<DrainerDeps["repository"]["listSessions"]>(async () => [...sessions]);
+
+  const listSessionsByUserId = vi.fn<DrainerDeps["repository"]["listSessionsByUserId"]>(
+    async (id) => sessions.filter((entry) => entry.userId === id),
+  );
+
+  const markStepFailed = vi.fn<DrainerDeps["repository"]["markStepFailed"]>(async (id, message) => {
+    const target = storedSteps.find((entry) => entry.id === id);
+    if (!target) {
+      return;
+    }
+    target.syncStatus = "failed";
+    target.retryCount += 1;
+    target.lastError = message;
+  });
+
+  const getCounts = vi.fn<DrainerDeps["repository"]["getCounts"]>(async (sessionId) =>
+    countStatuses(storedSteps.filter((entry) => entry.sessionId === sessionId)),
+  );
+
+  const deleteSessionData = vi.fn<DrainerDeps["repository"]["deleteSessionData"]>(
+    async (sessionId): Promise<OutboxCleanupResult> => {
       const stepCount = storedSteps.filter((entry) => entry.sessionId === sessionId).length;
       for (let index = storedSteps.length - 1; index >= 0; index -= 1) {
         if (storedSteps[index]?.sessionId === sessionId) {
@@ -126,40 +155,53 @@ const setup = ({
         steps: stepCount,
         blobs: stepCount * 2,
       };
-    }),
-  } as unknown as OutboxRepository;
+    },
+  );
 
-  const pusher = {
-    ensureGuide: vi.fn().mockResolvedValue(activeSession.guideId ?? "guide-new"),
-    pushStep,
+  const repository = {
+    getSession,
+    listSteps,
+    listSyncableSteps,
+    listSessions,
+    listSessionsByUserId,
+    getCounts,
+    markStepFailed,
+    deleteSessionData,
+  } satisfies DrainerDeps["repository"];
+
+  const ensureGuide = vi
+    .fn<DrainerDeps["pusher"]["ensureGuide"]>()
+    .mockResolvedValue(activeSession.guideId ?? "guide-new");
+  const pusher = { ensureGuide, pushStep } satisfies DrainerDeps["pusher"];
+
+  const countPendingDeletions = vi
+    .fn<DrainerDeps["deleter"]["countPendingDeletions"]>()
+    .mockResolvedValue(pendingDeletions);
+  const deleter = { pushDeletion, countPendingDeletions } satisfies DrainerDeps["deleter"];
+
+  const getUserId = vi.fn<DrainerDeps["auth"]["getUserId"]>().mockResolvedValue(userId);
+  const invalidate = vi.fn<DrainerDeps["auth"]["invalidate"]>();
+  const auth = { getUserId, invalidate } satisfies DrainerDeps["auth"];
+
+  const lifecycle: OutboxLifecycle = {
+    status: "recording",
+    sessionId: activeSession.id,
+    isSignedOut: false,
   };
-
-  const deleter = {
-    deleteStep: vi.fn().mockResolvedValue("removed"),
-    pushDeletion,
-    deleteGuide: vi.fn().mockResolvedValue("deleted"),
-    countPendingDeletions: vi.fn().mockResolvedValue(pendingDeletions),
-  };
-
-  const auth = {
-    getUserId: vi.fn().mockResolvedValue(userId),
-    invalidate: vi.fn(),
-  };
-
+  const getLifecycle = vi.fn<DrainerDeps["lifecycleStore"]["get"]>().mockResolvedValue(lifecycle);
+  const patchLifecycle = vi
+    .fn<DrainerDeps["lifecycleStore"]["patch"]>()
+    .mockResolvedValue(lifecycle);
   const lifecycleStore = {
-    get: vi.fn().mockResolvedValue({
-      status: "recording",
-      sessionId: activeSession.id,
-      isSignedOut: false,
-    }),
-    set: vi.fn(),
-    patch: vi.fn(),
-  } as unknown as RecordingLifecycleStore;
+    get: getLifecycle,
+    patch: patchLifecycle,
+  } satisfies DrainerDeps["lifecycleStore"];
 
-  const onStepFailed = vi.fn().mockResolvedValue(undefined);
-  const onDrainCompleted = vi.fn().mockResolvedValue(undefined);
-  const onAuthLost = vi.fn().mockResolvedValue(undefined);
-  const onGuideGone = vi.fn().mockResolvedValue(undefined);
+  const onStepFailed = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+  const onAuthLost = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+  const onGuideGone = vi
+    .fn<(session: LocalSession) => Promise<void>>()
+    .mockResolvedValue(undefined);
 
   const drainer = createOutboxDrainer({
     repository,
@@ -173,7 +215,7 @@ const setup = ({
     onDrainCompleted,
     onAuthLost,
     onGuideGone,
-    log: () => {},
+    log,
   });
 
   return {
@@ -276,7 +318,7 @@ describe("outbox drainer", () => {
 
   describe("retries", () => {
     test("retries a failed step up to the capped attempt count and then leaves it failed", async () => {
-      const pushStep = vi.fn().mockRejectedValue(new Error("network down"));
+      const pushStep = vi.fn<PushStep>().mockRejectedValue(new Error("network down"));
       const { drainer, repository, onStepFailed } = setup({ pushStep });
 
       await drainer.drainAll();
@@ -290,7 +332,7 @@ describe("outbox drainer", () => {
 
     test("stops retrying after a successful retry", async () => {
       const pushStep = vi
-        .fn()
+        .fn<PushStep>()
         .mockRejectedValueOnce(new Error("transient"))
         .mockResolvedValue(undefined);
       const { drainer, repository, onDrainCompleted } = setup({ pushStep });
@@ -301,6 +343,23 @@ describe("outbox drainer", () => {
       expect(pushStep).toHaveBeenCalledTimes(2);
       expect(repository.markStepFailed).toHaveBeenCalledTimes(1);
       expect(onDrainCompleted).toHaveBeenCalled();
+    });
+
+    test("swallows a rejecting completion handler", async () => {
+      const onDrainCompleted = vi
+        .fn<() => Promise<void>>()
+        .mockRejectedValue(new Error("handler failed"));
+      const log = vi.fn<(message: string, details?: Record<string, unknown>) => void>();
+      const { drainer } = setup({ onDrainCompleted, log });
+
+      await drainer.drainAll();
+      await waitForIdle(drainer);
+
+      await vi.waitFor(() =>
+        expect(log).toHaveBeenCalledWith("[background] Drain completion handler failed", {
+          error: "handler failed",
+        }),
+      );
     });
   });
 
@@ -321,6 +380,38 @@ describe("outbox drainer", () => {
       expect(onAuthLost).toHaveBeenCalledTimes(1);
     });
 
+    test("propagates a transient auth error from drainAll without pausing", async () => {
+      const { drainer, auth, onAuthLost, lifecycleStore } = setup();
+      const error = new Error("network down");
+      auth.getUserId.mockRejectedValue(error);
+
+      await expect(drainer.drainAll()).rejects.toBe(error);
+
+      expect(onAuthLost).not.toHaveBeenCalled();
+      expect(drainer.getState().isPaused).toBe(false);
+      expect(auth.invalidate).not.toHaveBeenCalled();
+      expect(lifecycleStore.patch).not.toHaveBeenCalled();
+    });
+
+    test("retries a transient auth error in the queue without pausing or signing out", async () => {
+      const { drainer, auth, pusher, onAuthLost, lifecycleStore } = setup();
+      auth.getUserId.mockRejectedValue(new Error("network down"));
+
+      await drainer.kick();
+      await waitForIdle(drainer);
+
+      expect(auth.getUserId).toHaveBeenCalledTimes(3);
+      expect(onAuthLost).not.toHaveBeenCalled();
+      expect(drainer.getState().isPaused).toBe(false);
+      expect(lifecycleStore.patch).not.toHaveBeenCalled();
+
+      auth.getUserId.mockResolvedValue("user-1");
+      await drainer.kick();
+      await waitForIdle(drainer);
+
+      expect(pusher.pushStep).toHaveBeenCalledTimes(1);
+    });
+
     test("skips sessions owned by another user", async () => {
       const { drainer, pusher, auth } = setup({ userId: "user-2" });
 
@@ -333,7 +424,7 @@ describe("outbox drainer", () => {
     });
 
     test("pauses on a 401 from the API instead of retrying the step", async () => {
-      const pushStep = vi.fn().mockRejectedValue(createApiError(401));
+      const pushStep = vi.fn<PushStep>().mockRejectedValue(createApiError(401));
       const { drainer, onAuthLost, repository, onDrainCompleted } = setup({ pushStep });
 
       await drainer.drainAll();
@@ -365,7 +456,7 @@ describe("outbox drainer", () => {
     test.each([404, 409])(
       "discards the session on a %s and never recreates the guide",
       async (status) => {
-        const pushStep = vi.fn().mockRejectedValue(createApiError(status));
+        const pushStep = vi.fn<PushStep>().mockRejectedValue(createApiError(status));
         const { drainer, repository, pusher, onGuideGone, onStepFailed } = setup({ pushStep });
 
         await drainer.drainAll();
@@ -409,7 +500,7 @@ describe("outbox drainer", () => {
     test("does not enqueue the same session while it is in flight", async () => {
       const started = deferred();
       const release = deferred();
-      const pushStep = vi.fn(async () => {
+      const pushStep = vi.fn<PushStep>(async () => {
         started.resolve();
         await release.promise;
       });
@@ -455,6 +546,25 @@ describe("outbox drainer", () => {
       await expect(drainer.countOutstanding()).resolves.toBe(1);
       expect(repository.listSessions).toHaveBeenCalled();
     });
+
+    test("loads session counts in parallel when signed out", async () => {
+      const first = session({ id: "session-1" });
+      const second = session({ id: "session-2", clientGuideId: "client-guide-2" });
+      const { drainer, repository } = setup({ userId: null });
+      const gate = deferred();
+
+      repository.listSessions.mockResolvedValue([first, second]);
+      repository.getCounts.mockImplementation(async () => {
+        await gate.promise;
+        return emptyOutboxCounts;
+      });
+
+      const pending = drainer.countOutstanding();
+      await vi.waitFor(() => expect(repository.getCounts).toHaveBeenCalledTimes(2));
+      gate.resolve();
+
+      await expect(pending).resolves.toBe(0);
+    });
   });
 
   describe("deletions", () => {
@@ -483,7 +593,7 @@ describe("outbox drainer", () => {
         syncStatus: "deleted",
         serverStepId: "server-9",
       });
-      const pushDeletion = vi.fn().mockResolvedValue("retrying");
+      const pushDeletion = vi.fn<PushDeletion>().mockResolvedValue("retrying");
       const { drainer, onDrainCompleted } = setup({ steps: [deleted], pushDeletion });
 
       await drainer.drainAll();
@@ -506,7 +616,7 @@ describe("outbox drainer", () => {
         serverStepId: "server-9",
       });
       const pushDeletion = vi
-        .fn()
+        .fn<PushDeletion>()
         .mockRejectedValue(new OutboxPermanentError("auth", "Unauthorized"));
       const { drainer, onAuthLost, onDrainCompleted } = setup({ steps: [deleted], pushDeletion });
 
@@ -589,7 +699,7 @@ describe("outbox drainer", () => {
       await waitForIdle(drainer);
 
       expect(pusher.pushStep).toHaveBeenCalledTimes(2);
-      expect(vi.mocked(repository.markStepFailed).mock.calls[0]?.slice(0, 2)).toEqual([
+      expect(repository.markStepFailed.mock.calls[0]?.slice(0, 2)).toEqual([
         "step-1",
         "Step conflicts",
       ]);
