@@ -14,7 +14,7 @@ type OutboxAlarms = {
 
 type OutboxSchedulerDeps = {
   alarms: OutboxAlarms;
-  lifecycleStore: RecordingLifecycleStore;
+  lifecycleStore: Pick<RecordingLifecycleStore, "get">;
   repository: Pick<OutboxRepository, "prune">;
   drainAll: () => Promise<void>;
   countOutstanding: () => Promise<number>;
@@ -63,8 +63,7 @@ export const createOutboxScheduler = ({
   };
 
   const start = async () => {
-    await ensureDrainAlarm();
-    await ensureMaintenanceAlarm();
+    await Promise.all([ensureDrainAlarm(), ensureMaintenanceAlarm()]);
   };
 
   const afterDrain = async () => {

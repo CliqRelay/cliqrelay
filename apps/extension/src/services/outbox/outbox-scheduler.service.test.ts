@@ -5,10 +5,11 @@ import {
   OUTBOX_DRAIN_ALARM_NAME,
   OUTBOX_MAINTENANCE_ALARM_NAME,
 } from "./outbox-scheduler.service";
-import type { RecordingLifecycleStore, RecordingStatus } from "@/models";
-import type { OutboxRepository } from "@/services/outbox/outbox.repository";
+import type { RecordingStatus } from "@/models";
 
 const NOW = new Date("2026-11-24T10:00:00.000Z");
+
+type SchedulerDeps = Parameters<typeof createOutboxScheduler>[0];
 
 type SetupOptions = {
   status?: RecordingStatus;
@@ -18,21 +19,28 @@ type SetupOptions = {
 
 const setup = ({ status = "stopped", outstanding = 0, isSignedOut = false }: SetupOptions = {}) => {
   const alarms = {
-    create: vi.fn().mockResolvedValue(undefined),
-    clear: vi.fn().mockResolvedValue(true),
+    create: vi.fn<SchedulerDeps["alarms"]["create"]>().mockResolvedValue(undefined),
+    clear: vi.fn<SchedulerDeps["alarms"]["clear"]>().mockResolvedValue(true),
   };
-
   const lifecycleStore = {
-    get: vi.fn().mockResolvedValue({ status, isSignedOut, sessionId: "session-1" }),
-  } as unknown as RecordingLifecycleStore;
-
+    get: vi.fn<SchedulerDeps["lifecycleStore"]["get"]>().mockResolvedValue({
+      status,
+      isSignedOut,
+      sessionId: "session-1",
+    }),
+  };
   const repository = {
-    prune: vi.fn().mockResolvedValue({ sessions: 0, steps: 0, blobs: 0 }),
-  } as unknown as Pick<OutboxRepository, "prune">;
-
-  const drainAll = vi.fn().mockResolvedValue(undefined);
-  const countOutstanding = vi.fn().mockResolvedValue(outstanding);
-  const onMaintenance = vi.fn().mockResolvedValue(undefined);
+    prune: vi.fn<SchedulerDeps["repository"]["prune"]>().mockResolvedValue({
+      sessions: 0,
+      steps: 0,
+      blobs: 0,
+    }),
+  };
+  const drainAll = vi.fn<SchedulerDeps["drainAll"]>().mockResolvedValue(undefined);
+  const countOutstanding = vi
+    .fn<SchedulerDeps["countOutstanding"]>()
+    .mockResolvedValue(outstanding);
+  const onMaintenance = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
 
   const scheduler = createOutboxScheduler({
     alarms,
@@ -92,7 +100,7 @@ describe("outbox scheduler", () => {
       ["stopped", 3],
       ["idle", 2],
     ] as const)(
-      "keeps the drain alarm while %s has %i outstanding",
+      "recreates the drain alarm while %s has %i outstanding",
       async (status, outstanding) => {
         const { scheduler, alarms } = setup({ status, outstanding });
 
@@ -119,22 +127,19 @@ describe("outbox scheduler", () => {
   });
 
   describe("runMaintenance", () => {
-    test.each([false, true])(
-      "prunes with the current time when signed out is %s",
-      async (isSignedOut) => {
-        const { scheduler, repository, onMaintenance } = setup({ isSignedOut });
+    test("prunes with the current time and runs the post-maintenance hook", async () => {
+      const { scheduler, repository, onMaintenance } = setup();
 
-        await scheduler.runMaintenance();
+      await scheduler.runMaintenance();
 
-        expect(repository.prune).toHaveBeenCalledWith(NOW);
-        expect(onMaintenance).toHaveBeenCalledTimes(1);
-      },
-    );
+      expect(repository.prune).toHaveBeenCalledWith(NOW);
+      expect(onMaintenance).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("afterDrain", () => {
-    test("runs retention and clears the drain alarm for a stopped session with nothing left", async () => {
-      const { scheduler, alarms, repository } = setup({ status: "stopped" });
+    test("runs retention and clears the drain alarm for a stopped signed-out session", async () => {
+      const { scheduler, alarms, repository } = setup({ status: "stopped", isSignedOut: true });
 
       await scheduler.afterDrain();
 

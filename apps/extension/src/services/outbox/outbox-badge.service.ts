@@ -29,14 +29,15 @@ export const createOutboxBadge = ({
       const count = await countFailed();
 
       if (count === 0) {
-        await action.setBadgeText({ text: "" });
-        await action.setTitle({ title: "" });
+        await Promise.all([action.setBadgeText({ text: "" }), action.setTitle({ title: "" })]);
         return;
       }
 
-      await action.setBadgeText({ text: String(count) });
-      await action.setBadgeBackgroundColor({ color: OUTBOX_BADGE_COLOR });
-      await action.setTitle({ title: failedBadgeTitle(count) });
+      await Promise.all([
+        action.setBadgeText({ text: String(count) }),
+        action.setBadgeBackgroundColor({ color: OUTBOX_BADGE_COLOR }),
+        action.setTitle({ title: failedBadgeTitle(count) }),
+      ]);
     } catch (error) {
       log("[background] Failed to update the failed-sync badge:", error);
     }

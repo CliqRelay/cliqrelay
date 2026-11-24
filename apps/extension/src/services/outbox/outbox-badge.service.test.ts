@@ -2,14 +2,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { createOutboxBadge } from "./outbox-badge.service";
 
+type BadgeDeps = Parameters<typeof createOutboxBadge>[0];
+
 const setup = (failed: number) => {
   const action = {
-    setBadgeText: vi.fn().mockResolvedValue(undefined),
-    setBadgeBackgroundColor: vi.fn().mockResolvedValue(undefined),
-    setTitle: vi.fn().mockResolvedValue(undefined),
+    setBadgeText: vi.fn<BadgeDeps["action"]["setBadgeText"]>().mockResolvedValue(undefined),
+    setBadgeBackgroundColor: vi
+      .fn<BadgeDeps["action"]["setBadgeBackgroundColor"]>()
+      .mockResolvedValue(undefined),
+    setTitle: vi.fn<BadgeDeps["action"]["setTitle"]>().mockResolvedValue(undefined),
   };
-  const countFailed = vi.fn().mockResolvedValue(failed);
-  const log = vi.fn();
+  const countFailed = vi.fn<BadgeDeps["countFailed"]>().mockResolvedValue(failed);
+  const log = vi.fn<(message: string, error: unknown) => void>();
 
   const badge = createOutboxBadge({ action, countFailed, log });
 
