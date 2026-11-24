@@ -1,44 +1,7 @@
 import { api, type CreateStepRequest, type StepAction } from "@repo/api-client";
 
 import { withCsrf } from "@/lib/csrf";
-
-export type OutboxCreateStepInput = {
-  guideId: string;
-  clientStepId: string;
-  action: string;
-  actionText?: string;
-  url: string;
-  targetElement?: CreateStepRequest["targetElement"];
-  insertAfterStepId?: string;
-};
-
-export type OutboxCreateGuideInput = {
-  title: string;
-  teamId: string;
-  clientGuideId: string;
-};
-
-export type OutboxReplaceUploadInput = {
-  stepId: string;
-  storagePath: string;
-  fileSize: number;
-  thumbnail?: string;
-  width?: number;
-  height?: number;
-};
-
-export type OutboxApi = {
-  createGuide: (input: OutboxCreateGuideInput) => Promise<{ id: string }>;
-  deleteGuide: (guideId: string) => Promise<void>;
-  createStep: (input: OutboxCreateStepInput) => Promise<{ id: string }>;
-  deleteStep: (serverStepId: string) => Promise<void>;
-  presignUpload: (input: {
-    stepId: string;
-    guideId: string;
-  }) => Promise<{ presignedUrl: string; storagePath: string }>;
-  uploadBlob: (presignedUrl: string, blob: Blob) => Promise<void>;
-  replaceUpload: (input: OutboxReplaceUploadInput) => Promise<{ url: string }>;
-};
+import type { OutboxApi, OutboxCreateStepInput } from "@/models";
 
 const toCreateStepRequest = (input: OutboxCreateStepInput): CreateStepRequest => ({
   guideId: input.guideId,
