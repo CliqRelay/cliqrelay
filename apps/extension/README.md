@@ -4,39 +4,47 @@ Browser extension for capturing clicks, input, keypresses, navigation and more a
 
 ## Architecture
 
+Capture is local-first. The background service worker writes every step to a Dexie (IndexedDB) outbox before any network call, so the worker can be suspended mid-session without losing data.
+
 ```
 Browser Tab
 	↓  content script captures events
 Content Script
-	↓  browser.runtime.sendMessage
-Background Worker
-	↓  browser.tabs.sendMessage
-Messaging Bridge in CliqRelay tab
-	↓  window.postMessage
-CliqRelay
+	↓  browser.runtime.sendMessage(capture)
+Background Service Worker
+	├─ captureVisibleTab, compress to WebP
+	├─ write session/step/blob rows to Dexie
+	├─ drain the outbox to the API (alarms + worker wake-ups)
+	└─ mirror recording status in storage.session
+		▲
+Sidepanel
+	├─ Dexie liveQuery for sessions, steps and sync counts
+	├─ storage.session.onChanged for recording status
+	└─ browser.runtime.sendMessage(command)
 ```
 
-This table shows which components communicate with each other and how they do it:
+There is no offscreen document and no long-lived port. The sidepanel never writes Dexie: the background owns local captures. The outbox uses a 1-minute `alarms` drain while recording plus a daily retention alarm, and sync failures stay local until retried or pruned after 7 days.
+
+Manifest permissions: `cookies`, `storage`, `unlimitedStorage`, `activeTab`, `tabs`, `webNavigation`, `alarms`, plus `sidePanel` on Chrome and `webRequest` on Firefox.
 
 Legend:
 
 - **Web App**: The main CliqRelay application running in a browser tab.
 - **Content Script**: The script injected into web pages to capture events and interact with the page DOM. A.K.A "Browser Tab" in the diagram.
-- **Background Script (Service Worker MV3)**: The background process that manages state and facilitates communication between content scripts and the web app.
-- **Sidepanel / Popup**: The extension's UI components that can also send/receive messages to/from the background script and content scripts.
+- **Background Script (Service Worker MV3)**: The background process that owns recording state, the Dexie outbox and API sync.
+- **Sidepanel / Popup**: The extension's UI. It reads Dexie and `storage.session`, and sends commands to the background.
 
 #### Chrome Extension Manifest V3 Messaging Matrix
 
-| From (Sender)         | To (Receiver)                   | Method (Outgoing)                                                                 | Method (Incoming / Event Listener)                                                  | Context / Notes                                                                                             |
-| --------------------- | ------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Web App**           | Background Script               | `chrome.runtime.sendMessage(extId, msg)`                                          | `chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {})`   | Requires `externally_connectable` configured in `manifest.json`.                                            |
-| **Web App**           | Content Script                  | `window.postMessage(msg, "*")`                                                    | `window.addEventListener("message", (event) => {})`                                 | Shared DOM context. Highly recommended to verify `event.source` and `event.origin` for security.            |
-| **Content Script**    | Web App                         | `window.postMessage(msg, "*")` or `document.dispatchEvent(new CustomEvent(name))` | `window.addEventListener("message", ...)` or `document.addEventListener(name, ...)` | Allows the isolated Content Script to pass scraped DOM context back to your main app.                       |
-| **Content Script**    | Background, Sidepanel, or Popup | `chrome.runtime.sendMessage(msg)`                                                 | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Standard internal extension message pipeline. Broadcasts instantly to all active internal views.            |
-| **Background Script** | Content Script                  | `chrome.tabs.sendMessage(tabId, msg)`                                             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Requires an active, explicit `tabId` target to route the payload downward.                                  |
-| **Background Script** | Sidepanel / Popup               | `chrome.runtime.sendMessage(msg)`                                                 | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Internal messaging channel. If both are open, both catch the event unless scoped in your payload.           |
-| **Sidepanel / Popup** | Content Script                  | `chrome.tabs.sendMessage(tabId, msg)`                                             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Used to pass active control instructions (like "Start highlighting clicked elements") down to the page DOM. |
-| **Sidepanel / Popup** | Background Script               | `chrome.runtime.sendMessage(msg)`                                                 | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`           | Used to tell the background service worker to write data to long-term state or dispatch a network payload.  |
+| From (Sender)         | To (Receiver)     | Method (Outgoing)                                 | Method (Incoming / Event Listener)                                                | Context / Notes                                                                              |
+| --------------------- | ----------------- | ------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Web App**           | Background Script | `chrome.runtime.sendMessage(extId, msg)`          | `chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {})` | Requires `externally_connectable` configured in `manifest.json`.                             |
+| **Web App**           | Content Script    | `window.postMessage(msg, "*")`                    | `window.addEventListener("message", (event) => {})`                               | Shared DOM context. Verify `event.source` and `event.origin` for security.                   |
+| **Content Script**    | Web App           | `window.postMessage(msg, "*")`                    | `window.addEventListener("message", (event) => {})`                               | Passes bridge responses back to the CliqRelay tab.                                           |
+| **Content Script**    | Background Script | `chrome.runtime.sendMessage(capture)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | The worker acknowledges the capture immediately, then writes it to Dexie and syncs it later. |
+| **Background Script** | Content Script    | `chrome.tabs.sendMessage(tabId, msg)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | Highlight suppress/restore while taking a screenshot.                                        |
+| **Sidepanel / Popup** | Background Script | `chrome.runtime.sendMessage(command)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | Recording, retry, delete, discard and settings commands.                                     |
+| **Background Script** | Sidepanel / Popup | `storage.session.onChanged` and Dexie `liveQuery` | `browser.storage.session.onChanged.addListener(...)`, `useLiveQuery(...)`         | No port and no push messages: the sidepanel observes status and local data directly.         |
 
 ## Development
 
@@ -79,9 +87,9 @@ $ pnpm test:ui
 ## Usage
 
 1. Open CliqRelay in a tab.
-1. Open the extension popup.
-1. Click the capture button and it will inject the content script into all open tabs.
-1. Interact with the page via clicks and other events then see a live feed in the sidepanel or view your guide in CliqRelay.
+1. Open the extension side panel.
+1. Click Start recording.
+1. Interact with the page. Captured steps appear in the side panel and sync to CliqRelay.
 
 ## Notes
 

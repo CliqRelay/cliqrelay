@@ -121,9 +121,6 @@ const setup = ({
       .fn<SessionManagerDeps["repository"]["listSessions"]>()
       .mockResolvedValue([activeSession]),
     listSteps: vi.fn<SessionManagerDeps["repository"]["listSteps"]>().mockResolvedValue([]),
-    removeStep: vi
-      .fn<SessionManagerDeps["repository"]["removeStep"]>()
-      .mockResolvedValue(undefined),
     deleteSessionData: vi
       .fn<SessionManagerDeps["repository"]["deleteSessionData"]>()
       .mockResolvedValue({ sessions: 1, steps: 1, blobs: 1 }),
@@ -138,6 +135,10 @@ const setup = ({
     drainAll: vi.fn<SessionManagerDeps["drainer"]["drainAll"]>().mockResolvedValue(undefined),
     pause: vi.fn<SessionManagerDeps["drainer"]["pause"]>(),
   };
+  const deleter: SessionManagerDeps["deleter"] = {
+    deleteStep: vi.fn<SessionManagerDeps["deleter"]["deleteStep"]>().mockResolvedValue("removed"),
+    deleteGuide: vi.fn<SessionManagerDeps["deleter"]["deleteGuide"]>().mockResolvedValue("deleted"),
+  };
   const scheduler: SessionManagerDeps["scheduler"] = {
     start: vi.fn<SessionManagerDeps["scheduler"]["start"]>().mockResolvedValue(undefined),
     sync: vi.fn<SessionManagerDeps["scheduler"]["sync"]>().mockResolvedValue("stopped"),
@@ -149,6 +150,9 @@ const setup = ({
     retryFailedSteps: vi
       .fn<SessionManagerDeps["stepState"]["retryFailedSteps"]>()
       .mockResolvedValue(failedRetried),
+    discardUnsyncedSteps: vi
+      .fn<SessionManagerDeps["stepState"]["discardUnsyncedSteps"]>()
+      .mockResolvedValue(0),
   };
   const badge: SessionManagerDeps["badge"] = {
     refresh: vi.fn<SessionManagerDeps["badge"]["refresh"]>().mockResolvedValue(undefined),
@@ -163,6 +167,7 @@ const setup = ({
     getSettings,
     updateSettings,
     drainer,
+    deleter,
     scheduler,
     auth,
     stepState,
@@ -174,6 +179,7 @@ const setup = ({
     recording,
     repository,
     drainer,
+    deleter,
     scheduler,
     auth,
     stepState,
@@ -304,22 +310,136 @@ describe("session manager commands", () => {
   });
 
   describe("dismiss_step", () => {
-    test("removes the local step and refreshes the badge and alarm", async () => {
-      const { manager, repository, badge, scheduler } = setup();
+    test("removes the local step through the deleter and refreshes counts", async () => {
+      const { manager, deleter, badge, scheduler } = setup();
 
       await manager.handleSidePanelCommand(command({ command: "dismiss_step", stepId: "step-1" }));
 
-      expect(repository.removeStep).toHaveBeenCalledWith("step-1");
+      expect(deleter.deleteStep).toHaveBeenCalledWith("step-1");
       expect(badge.refresh).toHaveBeenCalled();
       expect(scheduler.sync).toHaveBeenCalled();
     });
 
     test("ignores a command without a step id", async () => {
-      const { manager, repository } = setup();
+      const { manager, deleter } = setup();
 
       await manager.handleSidePanelCommand(command({ command: "dismiss_step" }));
 
-      expect(repository.removeStep).not.toHaveBeenCalled();
+      expect(deleter.deleteStep).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("delete_step", () => {
+    test("deletes through the local-first deleter and refreshes counts", async () => {
+      const { manager, deleter, badge, scheduler } = setup();
+
+      await manager.handleSidePanelCommand(command({ command: "delete_step", stepId: "step-1" }));
+
+      expect(deleter.deleteStep).toHaveBeenCalledWith("step-1");
+      expect(badge.refresh).toHaveBeenCalled();
+      expect(scheduler.sync).toHaveBeenCalled();
+    });
+  });
+
+  describe("delete_guide", () => {
+    test("stops recording, discards unsynced captures, deletes the server guide and clears the session", async () => {
+      const {
+        manager,
+        recording,
+        deleter,
+        stepState,
+        repository,
+        badge,
+        scheduler,
+        readLifecycle,
+      } = setup({
+        lifecycle: { status: "recording", sessionId: "session-1", isSignedOut: false },
+      });
+
+      await manager.handleSidePanelCommand(
+        command({ command: "delete_guide", guideId: "guide-1" }),
+      );
+
+      expect(recording.stop).toHaveBeenCalled();
+      expect(stepState.discardUnsyncedSteps).toHaveBeenCalledWith("session-1");
+      expect(deleter.deleteGuide).toHaveBeenCalledWith("guide-1");
+      expect(repository.deleteSessionData).toHaveBeenCalledWith("session-1");
+      expect(readLifecycle()).toMatchObject({
+        status: "idle",
+        sessionId: undefined,
+        pendingStart: undefined,
+      });
+      expect(badge.refresh).toHaveBeenCalled();
+      expect(scheduler.sync).toHaveBeenCalled();
+    });
+
+    test("deletes the guide of the local session when no id is sent", async () => {
+      const { manager, deleter } = setup();
+
+      await manager.handleSidePanelCommand(command({ command: "delete_guide" }));
+
+      expect(deleter.deleteGuide).toHaveBeenCalledWith("guide-1");
+    });
+
+    test("ignores a guide that is not the local session's guide", async () => {
+      const { manager, deleter, recording } = setup();
+
+      await manager.handleSidePanelCommand(
+        command({ command: "delete_guide", guideId: "some-persisted-guide" }),
+      );
+
+      expect(deleter.deleteGuide).not.toHaveBeenCalled();
+      expect(recording.stop).not.toHaveBeenCalled();
+    });
+
+    test("does nothing when there is no local session", async () => {
+      const { manager, deleter, recording } = setup({
+        lifecycle: { status: "idle", isSignedOut: false },
+      });
+
+      await manager.handleSidePanelCommand(
+        command({ command: "delete_guide", guideId: "guide-1" }),
+      );
+
+      expect(deleter.deleteGuide).not.toHaveBeenCalled();
+      expect(recording.stop).not.toHaveBeenCalled();
+    });
+
+    test("clears a session that has no guide without calling the API", async () => {
+      const { manager, deleter, repository, readLifecycle } = setup({
+        activeSession: session({ guideId: null }),
+        lifecycle: { status: "recording", sessionId: "session-1", isSignedOut: false },
+      });
+
+      await manager.handleSidePanelCommand(command({ command: "delete_guide" }));
+
+      expect(deleter.deleteGuide).not.toHaveBeenCalled();
+      expect(repository.deleteSessionData).toHaveBeenCalledWith("session-1");
+      expect(readLifecycle()).toMatchObject({ status: "idle", sessionId: undefined });
+    });
+
+    test("keeps the stopped session when the server delete fails, then clears it on retry", async () => {
+      const { manager, deleter, repository, readLifecycle, badge } = setup({
+        lifecycle: { status: "recording", sessionId: "session-1", isSignedOut: false },
+      });
+      vi.mocked(deleter.deleteGuide).mockRejectedValueOnce(new Error("network down"));
+
+      await expect(
+        manager.handleSidePanelCommand(command({ command: "delete_guide", guideId: "guide-1" })),
+      ).rejects.toThrow("network down");
+
+      expect(repository.deleteSessionData).not.toHaveBeenCalled();
+      expect(readLifecycle()).toMatchObject({ status: "stopped", sessionId: "session-1" });
+      expect(badge.refresh).not.toHaveBeenCalled();
+
+      await manager.handleSidePanelCommand(
+        command({ command: "delete_guide", guideId: "guide-1" }),
+      );
+
+      expect(deleter.deleteGuide).toHaveBeenCalledTimes(2);
+      expect(repository.deleteSessionData).toHaveBeenCalledWith("session-1");
+      expect(readLifecycle()).toMatchObject({ status: "idle", sessionId: undefined });
+      expect(badge.refresh).toHaveBeenCalled();
     });
   });
 

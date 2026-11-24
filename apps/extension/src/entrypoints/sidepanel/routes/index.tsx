@@ -41,7 +41,7 @@ function Home() {
 
   const commands = useSidePanelCommands();
   const session = useLiveSession(lifecycle.sessionId);
-  const { steps, progress } = useSessionSteps(lifecycle.sessionId);
+  const { progress } = useSessionSteps(lifecycle.sessionId);
   const counts = useSyncCounts(lifecycle.sessionId);
 
   const queryClient = useQueryClient();
@@ -62,19 +62,12 @@ function Home() {
   const uploadQueue = toUploadQueueInfo(counts);
   const isDraining = deriveIsDraining(status, counts);
   const isActive = status === "recording" || status === "paused";
-  const stepCount = steps.length;
+  const stepCount = progress.length;
 
   const invalidateGuides = () =>
     queryClient.invalidateQueries({
       queryKey: api.guides.getGetAllGuidesQueryKey(),
     });
-
-  const deleteGuideMutation = api.guides.useDeleteGuide({
-    request: { credentials: "include" },
-  });
-  const deleteStepMutation = api.steps.useDeleteStep({
-    request: { credentials: "include" },
-  });
 
   const [deletingStep, setDeletingStep] = useState<{
     id: string;
@@ -104,14 +97,9 @@ function Home() {
 
   const handleDeleteConfirm = async () => {
     if (!deletingStep) return;
+
     try {
-      await deleteStepMutation.mutateAsync({ id: deletingStep.id });
-      const local = steps.find(
-        (step) => step.serverStepId === deletingStep.id || step.id === deletingStep.id,
-      );
-      if (local) {
-        void commands.dismissStep(local.id);
-      }
+      await commands.deleteStep(deletingStep.id);
     } catch (err) {
       console.error("[sidepanel] Failed to delete step:", err);
     } finally {
@@ -129,19 +117,14 @@ function Home() {
   };
 
   const handleDeleteGuideConfirm = async () => {
-    if (isPending) return;
-    setError(null);
-    setIsPending(true);
     try {
-      await commands.stopRecording();
-      if (guideId) {
-        await deleteGuideMutation.mutateAsync({ id: guideId });
-      }
-      await invalidateGuides();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      await withPending(async () => {
+        if (guideId) {
+          await commands.deleteGuide(guideId);
+        }
+        await invalidateGuides();
+      });
     } finally {
-      setIsPending(false);
       setDeleteGuideDialogOpen(false);
     }
   };

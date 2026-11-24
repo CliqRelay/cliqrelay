@@ -35,6 +35,8 @@ describe("sidePanelCommands", () => {
 
   test("sends local-sync commands with their targets", async () => {
     await sidePanelCommands.dismissStep("step-1");
+    await sidePanelCommands.deleteStep("step-2");
+    await sidePanelCommands.deleteGuide("guide-1");
     await sidePanelCommands.retryFailed("session-1");
     await sidePanelCommands.retryFailed();
     await sidePanelCommands.discardSession("session-1");
@@ -42,6 +44,8 @@ describe("sidePanelCommands", () => {
 
     expect(mocks.sendMessage.mock.calls.map(([message]) => message)).toEqual([
       { type: sidePanelCommandType, command: "dismiss_step", stepId: "step-1" },
+      { type: sidePanelCommandType, command: "delete_step", stepId: "step-2" },
+      { type: sidePanelCommandType, command: "delete_guide", guideId: "guide-1" },
       { type: sidePanelCommandType, command: "retry_failed", sessionId: "session-1" },
       { type: sidePanelCommandType, command: "retry_failed" },
       { type: sidePanelCommandType, command: "discard_session", sessionId: "session-1" },
