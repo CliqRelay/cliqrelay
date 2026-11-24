@@ -41,7 +41,7 @@ function Home() {
 
   const commands = useSidePanelCommands();
   const session = useLiveSession(lifecycle.sessionId);
-  const { steps, progress } = useSessionSteps(lifecycle.sessionId);
+  const { progress } = useSessionSteps(lifecycle.sessionId);
   const counts = useSyncCounts(lifecycle.sessionId);
 
   const queryClient = useQueryClient();
@@ -68,10 +68,6 @@ function Home() {
     queryClient.invalidateQueries({
       queryKey: api.guides.getGetAllGuidesQueryKey(),
     });
-
-  const deleteStepMutation = api.steps.useDeleteStep({
-    request: { credentials: "include" },
-  });
 
   const [deletingStep, setDeletingStep] = useState<{
     id: string;
@@ -101,16 +97,9 @@ function Home() {
 
   const handleDeleteConfirm = async () => {
     if (!deletingStep) return;
-    const local = steps.find(
-      (step) => step.id === deletingStep.id || step.serverStepId === deletingStep.id,
-    );
 
     try {
-      if (local) {
-        await commands.deleteStep(local.id);
-      } else {
-        await deleteStepMutation.mutateAsync({ id: deletingStep.id });
-      }
+      await commands.deleteStep(deletingStep.id);
     } catch (err) {
       console.error("[sidepanel] Failed to delete step:", err);
     } finally {
@@ -128,18 +117,14 @@ function Home() {
   };
 
   const handleDeleteGuideConfirm = async () => {
-    if (isPending) return;
-    setError(null);
-    setIsPending(true);
     try {
-      if (guideId) {
-        await commands.deleteGuide(guideId);
-      }
-      await invalidateGuides();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      await withPending(async () => {
+        if (guideId) {
+          await commands.deleteGuide(guideId);
+        }
+        await invalidateGuides();
+      });
     } finally {
-      setIsPending(false);
       setDeleteGuideDialogOpen(false);
     }
   };

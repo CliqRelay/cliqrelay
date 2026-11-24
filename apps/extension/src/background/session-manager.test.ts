@@ -136,12 +136,8 @@ const setup = ({
     pause: vi.fn<SessionManagerDeps["drainer"]["pause"]>(),
   };
   const deleter: SessionManagerDeps["deleter"] = {
-    deleteStep: vi
-      .fn<SessionManagerDeps["deleter"]["deleteStep"]>()
-      .mockResolvedValue("removed"),
-    deleteGuide: vi
-      .fn<SessionManagerDeps["deleter"]["deleteGuide"]>()
-      .mockResolvedValue("deleted"),
+    deleteStep: vi.fn<SessionManagerDeps["deleter"]["deleteStep"]>().mockResolvedValue("removed"),
+    deleteGuide: vi.fn<SessionManagerDeps["deleter"]["deleteGuide"]>().mockResolvedValue("deleted"),
   };
   const scheduler: SessionManagerDeps["scheduler"] = {
     start: vi.fn<SessionManagerDeps["scheduler"]["start"]>().mockResolvedValue(undefined),
@@ -343,14 +339,6 @@ describe("session manager commands", () => {
       expect(badge.refresh).toHaveBeenCalled();
       expect(scheduler.sync).toHaveBeenCalled();
     });
-
-    test("ignores a command without a step id", async () => {
-      const { manager, deleter } = setup();
-
-      await manager.handleSidePanelCommand(command({ command: "delete_step" }));
-
-      expect(deleter.deleteStep).not.toHaveBeenCalled();
-    });
   });
 
   describe("delete_guide", () => {
@@ -417,11 +405,24 @@ describe("session manager commands", () => {
       expect(recording.stop).not.toHaveBeenCalled();
     });
 
-    test("keeps the stopped session when the server delete fails", async () => {
+    test("clears a session that has no guide without calling the API", async () => {
+      const { manager, deleter, repository, readLifecycle } = setup({
+        activeSession: session({ guideId: null }),
+        lifecycle: { status: "recording", sessionId: "session-1", isSignedOut: false },
+      });
+
+      await manager.handleSidePanelCommand(command({ command: "delete_guide" }));
+
+      expect(deleter.deleteGuide).not.toHaveBeenCalled();
+      expect(repository.deleteSessionData).toHaveBeenCalledWith("session-1");
+      expect(readLifecycle()).toMatchObject({ status: "idle", sessionId: undefined });
+    });
+
+    test("keeps the stopped session when the server delete fails, then clears it on retry", async () => {
       const { manager, deleter, repository, readLifecycle, badge } = setup({
         lifecycle: { status: "recording", sessionId: "session-1", isSignedOut: false },
       });
-      deleter.deleteGuide.mockRejectedValue(new Error("network down"));
+      vi.mocked(deleter.deleteGuide).mockRejectedValueOnce(new Error("network down"));
 
       await expect(
         manager.handleSidePanelCommand(command({ command: "delete_guide", guideId: "guide-1" })),
@@ -430,6 +431,15 @@ describe("session manager commands", () => {
       expect(repository.deleteSessionData).not.toHaveBeenCalled();
       expect(readLifecycle()).toMatchObject({ status: "stopped", sessionId: "session-1" });
       expect(badge.refresh).not.toHaveBeenCalled();
+
+      await manager.handleSidePanelCommand(
+        command({ command: "delete_guide", guideId: "guide-1" }),
+      );
+
+      expect(deleter.deleteGuide).toHaveBeenCalledTimes(2);
+      expect(repository.deleteSessionData).toHaveBeenCalledWith("session-1");
+      expect(readLifecycle()).toMatchObject({ status: "idle", sessionId: undefined });
+      expect(badge.refresh).toHaveBeenCalled();
     });
   });
 

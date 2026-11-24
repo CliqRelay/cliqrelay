@@ -36,15 +36,15 @@ Legend:
 
 #### Chrome Extension Manifest V3 Messaging Matrix
 
-| From (Sender)         | To (Receiver)     | Method (Outgoing)                                 | Method (Incoming / Event Listener)                                                | Context / Notes                                                                                      |
-| --------------------- | ----------------- | ------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Web App**           | Background Script | `chrome.runtime.sendMessage(extId, msg)`          | `chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {})` | Requires `externally_connectable` configured in `manifest.json`.                                     |
-| **Web App**           | Content Script    | `window.postMessage(msg, "*")`                    | `window.addEventListener("message", (event) => {})`                               | Shared DOM context. Verify `event.source` and `event.origin` for security.                           |
-| **Content Script**    | Web App           | `window.postMessage(msg, "*")`                    | `window.addEventListener("message", (event) => {})`                               | Passes bridge responses back to the CliqRelay tab.                                                   |
-| **Content Script**    | Background Script | `chrome.runtime.sendMessage(capture)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | The capture pipeline. The worker replies after the step is written to Dexie, not after the API sync. |
-| **Background Script** | Content Script    | `chrome.tabs.sendMessage(tabId, msg)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | Viewport lookup and highlight suppress/restore while taking a screenshot.                            |
-| **Sidepanel / Popup** | Background Script | `chrome.runtime.sendMessage(command)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | Start/pause/stop, retry, discard and settings commands.                                              |
-| **Background Script** | Sidepanel / Popup | `storage.session.onChanged` and Dexie `liveQuery` | `browser.storage.session.onChanged.addListener(...)`, `useLiveQuery(...)`         | No port and no push messages: the sidepanel observes status and local data directly.                 |
+| From (Sender)         | To (Receiver)     | Method (Outgoing)                                 | Method (Incoming / Event Listener)                                                | Context / Notes                                                                              |
+| --------------------- | ----------------- | ------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Web App**           | Background Script | `chrome.runtime.sendMessage(extId, msg)`          | `chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {})` | Requires `externally_connectable` configured in `manifest.json`.                             |
+| **Web App**           | Content Script    | `window.postMessage(msg, "*")`                    | `window.addEventListener("message", (event) => {})`                               | Shared DOM context. Verify `event.source` and `event.origin` for security.                   |
+| **Content Script**    | Web App           | `window.postMessage(msg, "*")`                    | `window.addEventListener("message", (event) => {})`                               | Passes bridge responses back to the CliqRelay tab.                                           |
+| **Content Script**    | Background Script | `chrome.runtime.sendMessage(capture)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | The worker acknowledges the capture immediately, then writes it to Dexie and syncs it later. |
+| **Background Script** | Content Script    | `chrome.tabs.sendMessage(tabId, msg)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | Highlight suppress/restore while taking a screenshot.                                        |
+| **Sidepanel / Popup** | Background Script | `chrome.runtime.sendMessage(command)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | Recording, retry, delete, discard and settings commands.                                     |
+| **Background Script** | Sidepanel / Popup | `storage.session.onChanged` and Dexie `liveQuery` | `browser.storage.session.onChanged.addListener(...)`, `useLiveQuery(...)`         | No port and no push messages: the sidepanel observes status and local data directly.         |
 
 ## Development
 
@@ -87,9 +87,9 @@ $ pnpm test:ui
 ## Usage
 
 1. Open CliqRelay in a tab.
-1. Open the extension popup.
-1. Click the capture button and it will inject the content script into all open tabs.
-1. Interact with the page via clicks and other events then see a live feed in the sidepanel or view your guide in CliqRelay.
+1. Open the extension side panel.
+1. Click Start recording.
+1. Interact with the page. Captured steps appear in the side panel and sync to CliqRelay.
 
 ## Notes
 
