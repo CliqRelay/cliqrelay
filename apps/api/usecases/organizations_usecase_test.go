@@ -76,7 +76,7 @@ func TestOrganizationsUseCase_GetMyMembership(t *testing.T) {
 			name:  "hides lookup failures as not found",
 			actor: actor,
 			setup: func(api *tests.MockOrgMembershipAPI) {
-				api.On("GetMemberByUserID", mock.Anything, actor, "org-1", "user-1").Return(nil, errors.New("boom")).Once()
+				api.On("GetMemberByUserID", mock.Anything, actor, "org-1", "user-1").Return(nil, errors.New("some error")).Once()
 			},
 			wantErr: constants.ErrOrganizationMemberNotFound,
 		},

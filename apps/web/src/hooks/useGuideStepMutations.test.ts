@@ -156,7 +156,7 @@ describe("useGuideStepMutations", () => {
       const previous = twoPages();
 
       capturedOptions.reorderSteps.onError?.(
-        new Error("boom"),
+        new Error("some error"),
         {},
         {
           previousSteps: previous,
