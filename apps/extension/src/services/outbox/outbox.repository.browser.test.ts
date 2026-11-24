@@ -492,7 +492,7 @@ describe("counts and syncable steps", () => {
     const fourth = await appendStep(session.id, { action: "synced" });
 
     await repository.markStepUploading(second.id, NOW);
-    await repository.markStepFailed(third.id, "boom", NOW);
+    await repository.markStepFailed(third.id, "some error", NOW);
     await repository.markStepSynced(fourth.id, { now: NOW });
 
     const syncable = await repository.listSyncableSteps({ sessionId: session.id });
