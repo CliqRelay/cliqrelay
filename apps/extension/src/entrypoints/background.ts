@@ -5,7 +5,7 @@ import { COOKIE_CONSTANTS } from "@repo/data-commons";
 import { createBootGate } from "@/background/boot-gate.service";
 import { createCaptureHandler } from "@/background/capture-handler";
 import { handleOnMessageExternalEvents } from "@/background/external-messages-handler";
-import { runLegacyCleanupOnBoot } from "@/background/legacy-cleanup-boot.service";
+import { createOutboxAlarmListener } from "@/background/outbox-alarm.service";
 import { createOutboxBoot } from "@/background/outbox-boot.service";
 import { restoreRecordingSession } from "@/background/recording-boot.service";
 import { createSessionManager } from "@/background/session-manager";
@@ -16,6 +16,7 @@ import { getActiveTeamId } from "@/lib/active-team";
 import { isSessionCookieCleared } from "@/lib/auth-session";
 import type { RecordingStatus } from "@/models";
 import { createNavigationListener } from "@/services/background";
+import { runLegacyCleanup } from "@/services/legacy-cleanup.service";
 import { db, outboxRepository } from "@/services/outbox";
 import { createOutboxApi } from "@/services/outbox/outbox-api.service";
 import { createOutboxAuth } from "@/services/outbox/outbox-auth.service";
@@ -35,15 +36,7 @@ import {
 import { screenshotService } from "@/services/screenshot";
 import { getSettings, updateSettings } from "@/services/settings";
 import { isDeveloperBuild } from "@/utils/diagnostics";
-import { isSidePanelCommand } from "@/utils/message";
-
-type BrowserAlarms = {
-  create: (name: string, info: { periodInMinutes: number }) => Promise<void> | void;
-  clear: (name: string) => Promise<unknown> | unknown;
-  onAlarm: { addListener: (listener: (alarm: { name: string }) => void) => void };
-};
-
-const alarms = (browser as unknown as { alarms?: BrowserAlarms }).alarms;
+import { isMessageOfType, isSidePanelCommand } from "@/utils/message";
 
 export default defineBackground(() => {
   const recordingLifecycleStore = createRecordingLifecycleStore(browser.storage.session);
@@ -82,11 +75,14 @@ export default defineBackground(() => {
     onStepFailed: () => badge.refresh(),
     onAuthLost: () => sessionManager.handleSessionExpired(),
     onGuideGone: (session) => sessionManager.handleGuideGone(session.id),
-    onDrainCompleted: () => scheduler.afterDrain(),
+    onDrainCompleted: () =>
+      scheduler.afterDrain().catch((error: unknown) => {
+        console.warn("[background] Outbox post-drain maintenance failed:", error);
+      }),
   });
 
   const scheduler = createOutboxScheduler({
-    alarms: alarms ?? { create: async () => {}, clear: async () => false },
+    alarms: browser.alarms,
     lifecycleStore: recordingLifecycleStore,
     repository: outboxRepository,
     drainAll: () => drainer.drainAll(),
@@ -128,11 +124,7 @@ export default defineBackground(() => {
   sessionManager.setClearPendingActivations(clearPendingActivations);
 
   browser.runtime.onMessage.addListener(async (message: unknown, sender, sendResponse) => {
-    if (
-      typeof message === "object" &&
-      message !== null &&
-      (message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_CSRF_TOKEN
-    ) {
+    if (isMessageOfType(message, RUNTIME_MESSAGE_TYPES.GET_CSRF_TOKEN)) {
       try {
         const cookie = await browser.cookies.get({
           url: env.VITE_API_URL,
@@ -144,11 +136,7 @@ export default defineBackground(() => {
       }
     }
 
-    if (
-      typeof message === "object" &&
-      message !== null &&
-      (message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_ACTIVE_TEAM_ID
-    ) {
+    if (isMessageOfType(message, RUNTIME_MESSAGE_TYPES.GET_ACTIVE_TEAM_ID)) {
       try {
         const cookie = await browser.cookies.get({
           url: env.VITE_WEB_URL,
@@ -160,12 +148,7 @@ export default defineBackground(() => {
       }
     }
 
-    if (
-      isDeveloperBuild &&
-      typeof message === "object" &&
-      message !== null &&
-      (message as Record<string, unknown>).type === RUNTIME_MESSAGE_TYPES.GET_OUTBOX_STATE
-    ) {
+    if (isDeveloperBuild && isMessageOfType(message, RUNTIME_MESSAGE_TYPES.GET_OUTBOX_STATE)) {
       return bootGate.run(() => diagnostics.getState());
     }
 
@@ -188,14 +171,10 @@ export default defineBackground(() => {
     if (!isSessionCookieCleared(change)) {
       return;
     }
-    void bootGate.run(() => sessionManager.handleSessionExpired());
-  });
-
-  alarms?.onAlarm.addListener((alarm) => {
     void bootGate
-      .run(() => scheduler.handleAlarm(alarm))
+      .run(() => sessionManager.handleSessionExpired())
       .catch((error: unknown) => {
-        console.warn("[background] Outbox alarm failed:", error);
+        console.warn("[background] Failed to pause the outbox after sign-out:", error);
       });
   });
 
@@ -220,7 +199,7 @@ export default defineBackground(() => {
     scheduler,
     drainer,
     badge,
-    runLegacyCleanup: runLegacyCleanupOnBoot,
+    runLegacyCleanup,
     restoreRecording: () =>
       restoreRecordingSession({
         lifecycleStore: recordingLifecycleStore,
@@ -231,4 +210,11 @@ export default defineBackground(() => {
   });
   const hydration = runBoot();
   const bootGate = createBootGate(hydration);
+
+  browser.alarms.onAlarm.addListener(
+    createOutboxAlarmListener({
+      gate: bootGate,
+      handleAlarm: (alarm) => scheduler.handleAlarm(alarm),
+    }),
+  );
 });

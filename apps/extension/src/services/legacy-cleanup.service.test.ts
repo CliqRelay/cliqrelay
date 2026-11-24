@@ -13,7 +13,11 @@ import { browser } from "wxt/browser";
 
 import { createLegacyCleanup, runLegacyCleanup } from "./legacy-cleanup.service";
 
-const createStorage = () => ({ remove: vi.fn().mockResolvedValue(undefined) });
+type Storage = NonNullable<Parameters<typeof createLegacyCleanup>[0]>;
+
+const createStorage = (): Storage => ({
+  remove: vi.fn<Storage["remove"]>().mockResolvedValue(undefined),
+});
 
 describe("legacy cleanup", () => {
   afterEach(() => {
@@ -42,11 +46,16 @@ describe("legacy cleanup", () => {
     expect(session.remove).toHaveBeenCalledTimes(2);
   });
 
-  test("treats already-missing keys as success", async () => {
+  test("treats already-missing keys as success without removing anything twice", async () => {
     const local = createStorage();
     const session = createStorage();
 
     await expect(createLegacyCleanup(local, session)()).resolves.toBeUndefined();
+
+    expect(local.remove).toHaveBeenCalledTimes(1);
+    expect(local.remove).toHaveBeenCalledWith("activeGuideId");
+    expect(session.remove).toHaveBeenCalledTimes(1);
+    expect(session.remove).toHaveBeenCalledWith("offscreen_session");
   });
 
   test.each([
@@ -61,8 +70,12 @@ describe("legacy cleanup", () => {
   });
 
   test("swallows storage failures", async () => {
-    const local = { remove: vi.fn().mockRejectedValue(new Error("storage removed")) };
-    const session = { remove: vi.fn().mockRejectedValue(new Error("storage removed")) };
+    const local: Storage = {
+      remove: vi.fn<Storage["remove"]>().mockRejectedValue(new Error("storage removed")),
+    };
+    const session: Storage = {
+      remove: vi.fn<Storage["remove"]>().mockRejectedValue(new Error("storage removed")),
+    };
 
     await expect(createLegacyCleanup(local, session)()).resolves.toBeUndefined();
   });

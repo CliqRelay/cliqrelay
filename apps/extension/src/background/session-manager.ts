@@ -20,10 +20,23 @@ import type { OutboxRepository } from "@/services/outbox/outbox.repository";
 import { createRecordingSessionService } from "@/services/recording/recording-session.service";
 import type { GetSettings, UpdateSettings } from "@/services/settings";
 
+type SessionManagerRepository = Pick<
+  OutboxRepository,
+  | "createSession"
+  | "getSession"
+  | "updateSession"
+  | "setSessionGuideId"
+  | "listSessions"
+  | "listSteps"
+  | "removeStep"
+  | "deleteSessionData"
+  | "discardForUser"
+>;
+
 type SessionManagerDeps = {
   recording: RecordingStateMachine;
   lifecycleStore: RecordingLifecycleStore;
-  repository: OutboxRepository;
+  repository: SessionManagerRepository;
   getSettings: GetSettings;
   updateSettings: UpdateSettings;
   drainer: Pick<OutboxDrainer, "kick" | "kickSession" | "drainAll" | "pause">;
@@ -101,6 +114,7 @@ export const createSessionManager = ({
     }
 
     drainer.pause();
+    await scheduler.sync();
     await badge.refresh();
   };
 
@@ -114,6 +128,7 @@ export const createSessionManager = ({
     if (sessionId) {
       await stepState.retryFailedSteps({ sessionId });
       await badge.refresh();
+      await scheduler.sync();
       drainer.kickSession(sessionId);
       return;
     }
@@ -125,6 +140,7 @@ export const createSessionManager = ({
 
     await stepState.retryFailedSteps({ userId });
     await badge.refresh();
+    await scheduler.sync();
     await drainer.drainAll();
   };
 

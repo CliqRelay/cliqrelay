@@ -7,9 +7,9 @@ import type {
   LocalSession,
   OutboxLifecycle,
   RecordingLifecycleStore,
-  RecordingStateMachine,
   SidePanelCommand,
 } from "@/models";
+import type { GetSettings, UpdateSettings } from "@/services/settings";
 
 const NOW = new Date().toISOString();
 
@@ -40,6 +40,8 @@ vi.mock("@/lib/authula-client", () => ({ authulaClient: authulaMock }));
 vi.mock("@/lib/active-team", () => ({ getActiveTeamId: async () => "team-1" }));
 vi.mock("@/lib/csrf", () => ({ withCsrf: async () => ({}) }));
 
+type SessionManagerDeps = Parameters<typeof createSessionManager>[0];
+
 const session = (overrides: Partial<LocalSession> = {}): LocalSession => ({
   id: "session-1",
   userId: "user-1",
@@ -68,57 +70,96 @@ const createLifecycleStore = (initial: OutboxLifecycle) => {
   return { store, read: () => value };
 };
 
+type SetupOptions = {
+  lifecycle?: OutboxLifecycle;
+  activeSession?: LocalSession;
+  userId?: string | null;
+  failedRetried?: number;
+};
+
 const setup = ({
-  lifecycle = { status: "stopped", sessionId: "session-1", isSignedOut: false } as OutboxLifecycle,
+  lifecycle = { status: "stopped", sessionId: "session-1", isSignedOut: false },
   activeSession = session(),
-  userId = "user-1" as string | null,
+  userId = "user-1",
   failedRetried = 2,
-} = {}) => {
+}: SetupOptions = {}) => {
   const { store: lifecycleStore, read: readLifecycle } = createLifecycleStore(lifecycle);
 
-  const recording = {
-    getSnapshot: vi.fn().mockReturnValue({ status: "idle" }),
-    start: vi.fn(),
-    pause: vi.fn(),
-    resume: vi.fn(),
-    stop: vi.fn(),
-    restore: vi.fn(),
-  } as unknown as RecordingStateMachine;
-
-  const repository = {
-    getSession: vi.fn().mockResolvedValue(activeSession),
-    createSession: vi.fn(async (input: { userId: string; guideId: string }) =>
-      session({ userId: input.userId, guideId: input.guideId }),
-    ),
-    updateSession: vi.fn().mockResolvedValue(activeSession),
-    setSessionGuideId: vi.fn().mockResolvedValue(activeSession),
-    listSessions: vi.fn().mockResolvedValue([activeSession]),
-    listSteps: vi.fn().mockResolvedValue([]),
-    removeStep: vi.fn().mockResolvedValue(undefined),
-    deleteSessionData: vi.fn().mockResolvedValue({ sessions: 1, steps: 1, blobs: 1 }),
-    discardForUser: vi.fn().mockResolvedValue({ sessions: 1, steps: 1, blobs: 1 }),
+  const recording: SessionManagerDeps["recording"] = {
+    getSnapshot: vi
+      .fn<SessionManagerDeps["recording"]["getSnapshot"]>()
+      .mockReturnValue({ status: "idle" }),
+    start: vi
+      .fn<SessionManagerDeps["recording"]["start"]>()
+      .mockReturnValue({ status: "recording" }),
+    pause: vi.fn<SessionManagerDeps["recording"]["pause"]>().mockReturnValue({ status: "paused" }),
+    resume: vi
+      .fn<SessionManagerDeps["recording"]["resume"]>()
+      .mockReturnValue({ status: "recording" }),
+    stop: vi.fn<SessionManagerDeps["recording"]["stop"]>().mockReturnValue({ status: "stopped" }),
+    restore: vi
+      .fn<SessionManagerDeps["recording"]["restore"]>()
+      .mockImplementation((status) => ({ status })),
   };
 
-  const drainer = {
-    kick: vi.fn().mockResolvedValue(undefined),
-    kickSession: vi.fn(),
-    drainAll: vi.fn().mockResolvedValue(undefined),
-    pause: vi.fn(),
+  const repository: SessionManagerDeps["repository"] = {
+    getSession: vi
+      .fn<SessionManagerDeps["repository"]["getSession"]>()
+      .mockResolvedValue(activeSession),
+    createSession: vi
+      .fn<SessionManagerDeps["repository"]["createSession"]>()
+      .mockImplementation(async (input) =>
+        session({ userId: input.userId, guideId: input.guideId }),
+      ),
+    updateSession: vi
+      .fn<SessionManagerDeps["repository"]["updateSession"]>()
+      .mockResolvedValue(activeSession),
+    setSessionGuideId: vi
+      .fn<SessionManagerDeps["repository"]["setSessionGuideId"]>()
+      .mockResolvedValue(activeSession),
+    listSessions: vi
+      .fn<SessionManagerDeps["repository"]["listSessions"]>()
+      .mockResolvedValue([activeSession]),
+    listSteps: vi.fn<SessionManagerDeps["repository"]["listSteps"]>().mockResolvedValue([]),
+    removeStep: vi
+      .fn<SessionManagerDeps["repository"]["removeStep"]>()
+      .mockResolvedValue(undefined),
+    deleteSessionData: vi
+      .fn<SessionManagerDeps["repository"]["deleteSessionData"]>()
+      .mockResolvedValue({ sessions: 1, steps: 1, blobs: 1 }),
+    discardForUser: vi
+      .fn<SessionManagerDeps["repository"]["discardForUser"]>()
+      .mockResolvedValue({ sessions: 1, steps: 1, blobs: 1 }),
   };
-  const scheduler = {
-    start: vi.fn().mockResolvedValue(undefined),
-    sync: vi.fn().mockResolvedValue(undefined),
+
+  const drainer: SessionManagerDeps["drainer"] = {
+    kick: vi.fn<SessionManagerDeps["drainer"]["kick"]>().mockResolvedValue(undefined),
+    kickSession: vi.fn<SessionManagerDeps["drainer"]["kickSession"]>(),
+    drainAll: vi.fn<SessionManagerDeps["drainer"]["drainAll"]>().mockResolvedValue(undefined),
+    pause: vi.fn<SessionManagerDeps["drainer"]["pause"]>(),
   };
-  const auth = { getUserId: vi.fn().mockResolvedValue(userId) };
-  const stepState = { retryFailedSteps: vi.fn().mockResolvedValue(failedRetried) };
-  const badge = { refresh: vi.fn().mockResolvedValue(undefined) };
-  const getSettings = vi.fn().mockResolvedValue(settings);
-  const updateSettings = vi.fn().mockResolvedValue(updatedSettings);
+  const scheduler: SessionManagerDeps["scheduler"] = {
+    start: vi.fn<SessionManagerDeps["scheduler"]["start"]>().mockResolvedValue(undefined),
+    sync: vi.fn<SessionManagerDeps["scheduler"]["sync"]>().mockResolvedValue("stopped"),
+  };
+  const auth: SessionManagerDeps["auth"] = {
+    getUserId: vi.fn<SessionManagerDeps["auth"]["getUserId"]>().mockResolvedValue(userId),
+  };
+  const stepState: SessionManagerDeps["stepState"] = {
+    retryFailedSteps: vi
+      .fn<SessionManagerDeps["stepState"]["retryFailedSteps"]>()
+      .mockResolvedValue(failedRetried),
+  };
+  const badge: SessionManagerDeps["badge"] = {
+    refresh: vi.fn<SessionManagerDeps["badge"]["refresh"]>().mockResolvedValue(undefined),
+  };
+  const getSettings = vi.fn<GetSettings>().mockResolvedValue(settings);
+  const updateSettings = vi.fn<UpdateSettings>().mockResolvedValue(updatedSettings);
 
   const manager = createSessionManager({
     recording,
     lifecycleStore,
-    repository: repository as never,
+    repository,
     getSettings,
     updateSettings,
     drainer,
@@ -240,18 +281,25 @@ describe("session manager commands", () => {
     });
 
     test("persists an update and returns the merged settings", async () => {
-      const { manager, updateSettings } = setup();
+      const { manager, getSettings, updateSettings } = setup();
+      getSettings.mockResolvedValueOnce(settings).mockResolvedValueOnce(updatedSettings);
 
-      await manager.handleSidePanelCommand(
-        command({
-          command: "update_settings",
-          payload: { capturePreferences: { captureClicks: false, captureInput: true } },
-        }),
-      );
+      await expect(
+        manager.handleSidePanelCommand(command({ command: "get_settings" })),
+      ).resolves.toEqual(settings);
+      await expect(
+        manager.handleSidePanelCommand(
+          command({
+            command: "update_settings",
+            payload: { capturePreferences: { captureClicks: false, captureInput: true } },
+          }),
+        ),
+      ).resolves.toEqual(updatedSettings);
 
       expect(updateSettings).toHaveBeenCalledWith({
         capturePreferences: { captureClicks: false, captureInput: true },
       });
+      expect(getSettings).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -277,7 +325,7 @@ describe("session manager commands", () => {
 
   describe("retry_failed", () => {
     test("retries one session and kicks it", async () => {
-      const { manager, stepState, drainer, badge } = setup();
+      const { manager, stepState, drainer, badge, scheduler } = setup();
 
       await manager.handleSidePanelCommand(
         command({ command: "retry_failed", sessionId: "session-1" }),
@@ -286,16 +334,18 @@ describe("session manager commands", () => {
       expect(stepState.retryFailedSteps).toHaveBeenCalledWith({ sessionId: "session-1" });
       expect(drainer.kickSession).toHaveBeenCalledWith("session-1");
       expect(badge.refresh).toHaveBeenCalled();
+      expect(scheduler.sync).toHaveBeenCalled();
     });
 
     test("retries every failed step of the current user and drains", async () => {
-      const { manager, stepState, drainer, auth } = setup();
+      const { manager, stepState, drainer, auth, scheduler } = setup();
 
       await manager.handleSidePanelCommand(command({ command: "retry_failed" }));
 
       expect(auth.getUserId).toHaveBeenCalled();
       expect(stepState.retryFailedSteps).toHaveBeenCalledWith({ userId: "user-1" });
       expect(drainer.drainAll).toHaveBeenCalled();
+      expect(scheduler.sync).toHaveBeenCalled();
     });
 
     test("does nothing when signed out", async () => {
@@ -359,7 +409,7 @@ describe("session manager commands", () => {
 
   describe("auth expiry", () => {
     test("stops recording, keeps local data and pauses the drainer once", async () => {
-      const { manager, recording, drainer, badge, readLifecycle, repository } = setup({
+      const { manager, recording, drainer, badge, scheduler, readLifecycle, repository } = setup({
         lifecycle: { status: "recording", sessionId: "session-1", isSignedOut: false },
       });
 
@@ -369,6 +419,7 @@ describe("session manager commands", () => {
       expect(recording.stop).toHaveBeenCalledTimes(1);
       expect(drainer.pause).toHaveBeenCalledTimes(1);
       expect(badge.refresh).toHaveBeenCalledTimes(1);
+      expect(scheduler.sync).toHaveBeenCalledTimes(1);
       expect(repository.deleteSessionData).not.toHaveBeenCalled();
       expect(repository.discardForUser).not.toHaveBeenCalled();
       expect(readLifecycle()).toMatchObject({ status: "stopped", isSignedOut: true });
@@ -384,6 +435,21 @@ describe("session manager commands", () => {
       expect(recording.stop).not.toHaveBeenCalled();
       expect(drainer.pause).toHaveBeenCalled();
       expect(readLifecycle()).toMatchObject({ status: "stopped", isSignedOut: true });
+    });
+
+    test("resumes draining when recording starts again after a sign-out", async () => {
+      const { manager, drainer, readLifecycle } = setup({
+        lifecycle: { status: "stopped", sessionId: "session-1", isSignedOut: false },
+      });
+
+      await manager.handleSessionExpired();
+      expect(readLifecycle().isSignedOut).toBe(true);
+      expect(drainer.pause).toHaveBeenCalled();
+
+      await manager.handleSidePanelCommand(command({ command: "start_recording" }));
+
+      expect(readLifecycle()).toMatchObject({ status: "recording", isSignedOut: false });
+      expect(drainer.drainAll).toHaveBeenCalled();
     });
   });
 
