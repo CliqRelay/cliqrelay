@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 type Props = {
-  activeGuideId: string;
+  guideId: string;
   onBack?: () => void;
 };
 
-export function PersistedGuideView({ activeGuideId, onBack }: Props) {
+export function PersistedGuideView({ guideId, onBack }: Props) {
   const {
     steps,
     total,
@@ -23,10 +23,10 @@ export function PersistedGuideView({ activeGuideId, onBack }: Props) {
     isFetchingNextPage,
     fetchNextPage,
     deleteStep,
-  } = useGuideSteps(activeGuideId);
+  } = useGuideSteps(guideId);
 
-  const { data: guideData } = api.guides.useGetGuideById(activeGuideId, {
-    query: { enabled: !!activeGuideId },
+  const { data: guideData } = api.guides.useGetGuideById(guideId, {
+    query: { enabled: !!guideId },
     request: { credentials: "include" },
   });
 
