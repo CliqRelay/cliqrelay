@@ -11,6 +11,7 @@ type OutboxBootDeps = {
   badge: Pick<OutboxBadge, "refresh">;
   runLegacyCleanup: () => Promise<void>;
   restoreRecording: () => Promise<RecordingStatus>;
+  log?: (message: string, error: unknown) => void;
 };
 
 export const createOutboxBoot = ({
@@ -20,6 +21,7 @@ export const createOutboxBoot = ({
   badge,
   runLegacyCleanup,
   restoreRecording,
+  log = (message, error) => console.warn(message, error),
 }: OutboxBootDeps) => {
   let bootRun: Promise<RecordingStatus> | undefined;
 
@@ -35,7 +37,11 @@ export const createOutboxBoot = ({
     try {
       await drainer.drainAll();
     } finally {
-      await scheduler.sync();
+      try {
+        await scheduler.sync();
+      } catch (error) {
+        log("[background] Failed to reconcile the outbox alarm after boot:", error);
+      }
       await badge.refresh();
     }
 

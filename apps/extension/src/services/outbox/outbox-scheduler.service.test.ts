@@ -41,6 +41,7 @@ const setup = ({ status = "stopped", outstanding = 0, isSignedOut = false }: Set
     .fn<SchedulerDeps["countOutstanding"]>()
     .mockResolvedValue(outstanding);
   const onMaintenance = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
+  const log = vi.fn<NonNullable<SchedulerDeps["log"]>>();
 
   const scheduler = createOutboxScheduler({
     alarms,
@@ -50,6 +51,7 @@ const setup = ({ status = "stopped", outstanding = 0, isSignedOut = false }: Set
     countOutstanding,
     onMaintenance,
     now: () => NOW,
+    log,
   });
 
   return {
@@ -59,6 +61,7 @@ const setup = ({ status = "stopped", outstanding = 0, isSignedOut = false }: Set
     drainAll,
     countOutstanding,
     onMaintenance,
+    log,
   };
 };
 
@@ -124,6 +127,25 @@ describe("outbox scheduler", () => {
         expect(alarms.create).not.toHaveBeenCalled();
       },
     );
+
+    test.each(["stopped", "idle"] as const)(
+      "keeps the drain alarm when the %s backlog check fails",
+      async (status) => {
+        const { scheduler, alarms, countOutstanding, log } = setup({ status });
+        countOutstanding.mockRejectedValue(new Error("network down"));
+
+        await expect(scheduler.sync()).resolves.toBe(status);
+
+        expect(alarms.create).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME, {
+          periodInMinutes: 1,
+        });
+        expect(alarms.clear).not.toHaveBeenCalled();
+        expect(log).toHaveBeenCalledWith(
+          "[background] Failed to read the outbox backlog; keeping the drain alarm",
+          { error: "network down" },
+        );
+      },
+    );
   });
 
   describe("runMaintenance", () => {
@@ -154,6 +176,20 @@ describe("outbox scheduler", () => {
 
       expect(repository.prune).not.toHaveBeenCalled();
     });
+
+    test("runs retention and keeps the alarm when the backlog check fails", async () => {
+      const { scheduler, alarms, countOutstanding, repository, onMaintenance } = setup({
+        status: "stopped",
+      });
+      countOutstanding.mockRejectedValue(new Error("network down"));
+
+      await scheduler.afterDrain();
+
+      expect(alarms.create).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME, { periodInMinutes: 1 });
+      expect(alarms.clear).not.toHaveBeenCalled();
+      expect(repository.prune).toHaveBeenCalledWith(NOW);
+      expect(onMaintenance).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("handleAlarm", () => {
@@ -175,6 +211,22 @@ describe("outbox scheduler", () => {
       );
 
       expect(alarms.clear).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME);
+    });
+
+    test("keeps the drain alarm when the post-drain backlog check fails", async () => {
+      const { scheduler, alarms, countOutstanding, log } = setup({ status: "stopped" });
+      countOutstanding.mockRejectedValue(new Error("network down"));
+
+      await expect(
+        scheduler.handleAlarm({ name: OUTBOX_DRAIN_ALARM_NAME }),
+      ).resolves.toBeUndefined();
+
+      expect(alarms.create).toHaveBeenCalledWith(OUTBOX_DRAIN_ALARM_NAME, { periodInMinutes: 1 });
+      expect(alarms.clear).not.toHaveBeenCalled();
+      expect(log).toHaveBeenCalledWith(
+        "[background] Failed to read the outbox backlog; keeping the drain alarm",
+        { error: "network down" },
+      );
     });
 
     test("prunes on the maintenance alarm", async () => {

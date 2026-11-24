@@ -41,6 +41,8 @@ export const outboxLifecycleSchema = z.object({
 });
 export type OutboxLifecycle = z.infer<typeof outboxLifecycleSchema>;
 
+export type OutboxAlarm = { name: string };
+
 export const localSessionSchema = z.object({
   id: z.string().min(1),
   userId: z.string().min(1),

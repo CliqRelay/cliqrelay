@@ -1,5 +1,5 @@
 import type { OutboxRepository } from "./outbox.repository";
-import type { RecordingLifecycleStore, RecordingStatus } from "@/models";
+import type { OutboxAlarm, RecordingLifecycleStore, RecordingStatus } from "@/models";
 
 export const OUTBOX_DRAIN_ALARM_NAME = "cliqrelay.outbox-drain";
 export const OUTBOX_MAINTENANCE_ALARM_NAME = "cliqrelay.outbox-maintenance";
@@ -20,6 +20,7 @@ type OutboxSchedulerDeps = {
   countOutstanding: () => Promise<number>;
   onMaintenance?: () => void | Promise<void>;
   now?: () => Date;
+  log?: (message: string, details: Record<string, unknown>) => void;
 };
 
 export const createOutboxScheduler = ({
@@ -30,6 +31,7 @@ export const createOutboxScheduler = ({
   countOutstanding,
   onMaintenance,
   now = () => new Date(),
+  log = (message, details) => console.warn(message, details),
 }: OutboxSchedulerDeps) => {
   const scheduleAlarm = (name: string, periodInMinutes: number) =>
     alarms.create(name, { periodInMinutes });
@@ -48,10 +50,17 @@ export const createOutboxScheduler = ({
       return lifecycle.status;
     }
 
-    if ((await countOutstanding()) > 0) {
+    try {
+      if ((await countOutstanding()) > 0) {
+        await ensureDrainAlarm();
+      } else {
+        await alarms.clear(OUTBOX_DRAIN_ALARM_NAME);
+      }
+    } catch (error) {
+      log("[background] Failed to read the outbox backlog; keeping the drain alarm", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       await ensureDrainAlarm();
-    } else {
-      await alarms.clear(OUTBOX_DRAIN_ALARM_NAME);
     }
 
     return lifecycle.status;
@@ -74,7 +83,7 @@ export const createOutboxScheduler = ({
     }
   };
 
-  const handleAlarm = async (alarm: { name: string }) => {
+  const handleAlarm = async (alarm: OutboxAlarm) => {
     if (alarm.name === OUTBOX_DRAIN_ALARM_NAME) {
       try {
         await drainAll();
