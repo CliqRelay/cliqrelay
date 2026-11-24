@@ -8,7 +8,10 @@ export type GuideDeleteOutcome = "deleted" | "missing";
 
 type OutboxDeleterDeps = {
   repository: Pick<OutboxRepository, "removeStep">;
-  stepState: Pick<OutboxStepStateRepository, "getStep" | "markStepDeleted">;
+  stepState: Pick<
+    OutboxStepStateRepository,
+    "getStep" | "markStepDeleted" | "countPendingDeletions"
+  >;
   api: Pick<OutboxApi, "deleteStep" | "deleteGuide">;
   now?: () => Date;
   log?: (message: string, error: unknown) => void;
@@ -83,7 +86,12 @@ export const createOutboxDeleter = ({
     }
   };
 
-  return { deleteStep, pushDeletion, deleteGuide };
+  return {
+    deleteStep,
+    pushDeletion,
+    deleteGuide,
+    countPendingDeletions: (userId?: string) => stepState.countPendingDeletions(userId),
+  };
 };
 
 export type OutboxDeleter = ReturnType<typeof createOutboxDeleter>;

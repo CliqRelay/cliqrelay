@@ -35,6 +35,7 @@ const setup = ({ activeStep = step() }: { activeStep?: LocalStep | null } = {}) 
   const stepState = {
     getStep: vi.fn().mockResolvedValue(activeStep ?? undefined),
     markStepDeleted: vi.fn().mockResolvedValue(undefined),
+    countPendingDeletions: vi.fn().mockResolvedValue(0),
   };
 
   const api = {
@@ -184,6 +185,16 @@ describe("outbox deleter", () => {
       vi.mocked(api.deleteGuide).mockRejectedValue(createApiError(500));
 
       await expect(deleter.deleteGuide("guide-1")).rejects.toThrow("boom");
+    });
+  });
+
+  describe("countPendingDeletions", () => {
+    test("delegates to the step-state repository with the user scope", async () => {
+      const { deleter, stepState } = setup();
+      stepState.countPendingDeletions.mockResolvedValue(2);
+
+      await expect(deleter.countPendingDeletions("user-1")).resolves.toBe(2);
+      expect(stepState.countPendingDeletions).toHaveBeenCalledWith("user-1");
     });
   });
 });
