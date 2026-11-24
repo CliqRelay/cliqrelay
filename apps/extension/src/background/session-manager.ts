@@ -1,7 +1,6 @@
 import { api } from "@repo/api-client";
 import { createGuideTitle } from "@repo/data-commons";
 
-import { restoreStepProgress } from "./session-progress.service";
 import { getActiveTeamId } from "@/lib/active-team";
 import { isUnauthorizedError } from "@/lib/api-error";
 import { authulaClient } from "@/lib/authula-client";
@@ -11,26 +10,41 @@ import type {
   RecordingLifecycleStore,
   RecordingStateMachine,
   SidePanelCommand,
-  SidePanelStateUpdate,
-  StepJobProgress,
 } from "@/models";
+import type { OutboxAuth } from "@/services/outbox/outbox-auth.service";
+import type { OutboxBadge } from "@/services/outbox/outbox-badge.service";
+import type { OutboxDrainer } from "@/services/outbox/outbox-drainer.service";
+import type { OutboxScheduler } from "@/services/outbox/outbox-scheduler.service";
+import type { OutboxStepStateRepository } from "@/services/outbox/outbox-step-state.repository";
 import type { OutboxRepository } from "@/services/outbox/outbox.repository";
 import { createRecordingSessionService } from "@/services/recording/recording-session.service";
 import type { GetSettings, UpdateSettings } from "@/services/settings";
-import { createCommandHandler, createStateUpdateBuilder } from "@/services/sidepanel";
-import type { PortManager } from "@/services/sidepanel/port-manager.service";
 
-export const createSessionManager = (
-  recording: RecordingStateMachine,
-  lifecycleStore: RecordingLifecycleStore,
-  repository: OutboxRepository,
-  getSettings: GetSettings,
-  updateSettings: UpdateSettings,
-) => {
-  const jobProgressMap = new Map<string, StepJobProgress>();
-  let isDraining = false;
-  let isSignedOut = false;
-  let currentPortManager: PortManager | null = null;
+type SessionManagerDeps = {
+  recording: RecordingStateMachine;
+  lifecycleStore: RecordingLifecycleStore;
+  repository: OutboxRepository;
+  getSettings: GetSettings;
+  updateSettings: UpdateSettings;
+  drainer: Pick<OutboxDrainer, "kick" | "kickSession" | "drainAll" | "pause">;
+  scheduler: Pick<OutboxScheduler, "start" | "sync">;
+  auth: Pick<OutboxAuth, "getUserId">;
+  stepState: Pick<OutboxStepStateRepository, "retryFailedSteps">;
+  badge: Pick<OutboxBadge, "refresh">;
+};
+
+export const createSessionManager = ({
+  recording,
+  lifecycleStore,
+  repository,
+  getSettings,
+  updateSettings,
+  drainer,
+  scheduler,
+  auth,
+  stepState,
+  badge,
+}: SessionManagerDeps) => {
   let clearDedupe: (() => void) | undefined;
   let clearPendingActivations: (() => void) | undefined;
 
@@ -63,118 +77,95 @@ export const createSessionManager = (
     clearPendingActivations = fn;
   };
 
-  const setPortManager = (pm: PortManager) => {
-    currentPortManager = pm;
-  };
-
-  const clearProgressMap = () => {
-    jobProgressMap.clear();
-  };
-
-  const getUploadQueueSnapshot = () => {
-    const entries = Array.from(jobProgressMap.values());
-    let pending = 0;
-    let inProgress = 0;
-    let completed = 0;
-    let failed = 0;
-
-    for (const entry of entries) {
-      switch (entry.phase) {
-        case "persisting":
-        case "upload_init":
-          pending++;
-          break;
-        case "uploading":
-        case "completing":
-          inProgress++;
-          break;
-        case "completed":
-          completed++;
-          break;
-        case "failed":
-          failed++;
-          break;
-      }
-    }
-
-    return { pending, inProgress, completed, failed, total: entries.length };
-  };
-
-  const getActiveGuideId = async (): Promise<string | undefined> => {
+  const stopIfLive = async (sessionId: string): Promise<void> => {
     const lifecycle = await lifecycleStore.get();
-    if (!lifecycle.sessionId) {
-      return undefined;
-    }
-    const session = await repository.getSession(lifecycle.sessionId);
-    return session?.guideId ?? undefined;
-  };
-
-  const stateUpdateBuilder = createStateUpdateBuilder(
-    () => recording.getSnapshot(),
-    getUploadQueueSnapshot,
-    getActiveGuideId,
-    () => Array.from(jobProgressMap.values()),
-    () => isDraining,
-    () => isSignedOut,
-  );
-
-  const broadcastUpdate = async () => {
-    if (!currentPortManager) return;
-    const stateUpdate = await stateUpdateBuilder();
-    currentPortManager.broadcast({ type: "state_update", state: stateUpdate });
-  };
-
-  const restoreProgress = async (): Promise<void> => {
-    const restored = await restoreStepProgress({
-      getActiveGuideId,
-      listSteps: async (guideId) => {
-        const response = await api.steps.getAllStepsByGuideId(
-          { guide_id: guideId, limit: 200 },
-          await withCsrf(),
-        );
-        return response.steps;
-      },
-    });
-
-    for (const progress of restored) {
-      jobProgressMap.set(progress.jobId, progress);
-    }
-
-    if (restored.length > 0) {
-      await broadcastUpdate();
-    }
-  };
-
-  const handleSessionExpired = async () => {
-    if (isSignedOut) {
+    if (lifecycle.sessionId !== sessionId) {
       return;
     }
-    isSignedOut = true;
-    isDraining = false;
 
     recording.stop();
-    await recordingSession.expire();
-    clearProgressMap();
-    await broadcastUpdate();
+    await lifecycleStore.patch({ status: "stopped", sessionId: undefined });
   };
 
-  const commandHandler = createCommandHandler(
-    stateUpdateBuilder,
-    recording,
-    { getActiveGuideId, setActiveGuideId: async () => {} },
-    clearProgressMap,
-    getSettings,
-    updateSettings,
-  );
+  const handleSessionExpired = async (): Promise<void> => {
+    const lifecycle = await lifecycleStore.get();
+    if (lifecycle.isSignedOut) {
+      return;
+    }
+
+    if (lifecycle.status === "recording" || lifecycle.status === "paused") {
+      recording.stop();
+      await recordingSession.expire();
+    } else {
+      await lifecycleStore.patch({ isSignedOut: true });
+    }
+
+    drainer.pause();
+    await badge.refresh();
+  };
+
+  /** A guide deleted on the server cannot be recreated; its local data is gone. */
+  const handleGuideGone = async (sessionId: string): Promise<void> => {
+    await stopIfLive(sessionId);
+    await badge.refresh();
+    await scheduler.sync();
+  };
+
+  const handleRetryFailed = async (sessionId?: string): Promise<void> => {
+    if (sessionId) {
+      await stepState.retryFailedSteps({ sessionId });
+      await badge.refresh();
+      drainer.kickSession(sessionId);
+      return;
+    }
+
+    const userId = await auth.getUserId();
+    if (!userId) {
+      return;
+    }
+
+    await stepState.retryFailedSteps({ userId });
+    await badge.refresh();
+    await drainer.drainAll();
+  };
+
+  const handleDiscardSession = async (sessionId?: string): Promise<void> => {
+    if (!sessionId) {
+      return;
+    }
+
+    await repository.deleteSessionData(sessionId);
+    await stopIfLive(sessionId);
+    await badge.refresh();
+    await scheduler.sync();
+  };
+
+  const handleDiscardUserData = async (): Promise<void> => {
+    const userId = await auth.getUserId();
+    if (!userId) {
+      return;
+    }
+
+    const lifecycle = await lifecycleStore.get();
+    const liveSession = lifecycle.sessionId
+      ? await repository.getSession(lifecycle.sessionId)
+      : undefined;
+
+    await repository.discardForUser(userId);
+
+    if (liveSession?.userId === userId) {
+      await stopIfLive(liveSession.id);
+    }
+
+    await badge.refresh();
+    await scheduler.sync();
+  };
 
   const handleSidePanelCommand = async (
     message: SidePanelCommand,
-  ): Promise<SidePanelStateUpdate | ExtensionSettings | undefined> => {
+  ): Promise<ExtensionSettings | undefined> => {
     switch (message.command) {
       case "start_recording": {
-        isDraining = false;
-        isSignedOut = false;
-        clearProgressMap();
         clearDedupe?.();
         clearPendingActivations?.();
 
@@ -182,60 +173,74 @@ export const createSessionManager = (
           await recordingSession.start();
         } catch (error) {
           if (isUnauthorizedError(error)) {
-            isSignedOut = true;
+            await lifecycleStore.patch({ isSignedOut: true });
+            drainer.pause();
           }
-          await broadcastUpdate();
           throw error;
         }
 
         recording.start();
-        await broadcastUpdate();
-        return stateUpdateBuilder();
+        await scheduler.start();
+        await drainer.drainAll();
+        return undefined;
       }
       case "pause_recording": {
         recording.pause();
         await recordingSession.pause();
-        await broadcastUpdate();
-        return stateUpdateBuilder();
+        return undefined;
       }
       case "resume_recording": {
         await recordingSession.resume();
         recording.resume();
-        await broadcastUpdate();
-        return stateUpdateBuilder();
+        return undefined;
       }
       case "stop_recording": {
         recording.stop();
-        isDraining = false;
         await recordingSession.stop();
-        await broadcastUpdate();
-        return stateUpdateBuilder();
+        await drainer.kick();
+        await scheduler.sync();
+        return undefined;
       }
-      case "get_status": {
-        isSignedOut = (await lifecycleStore.get()).isSignedOut;
-        return stateUpdateBuilder();
+      case "get_settings": {
+        return getSettings();
       }
-      case "dismiss_job": {
-        if (message.jobId) {
-          jobProgressMap.delete(message.jobId);
+      case "update_settings": {
+        if (message.payload) {
+          await updateSettings(message.payload);
         }
-        await broadcastUpdate();
-        return stateUpdateBuilder();
+        return getSettings();
+      }
+      case "dismiss_step": {
+        if (message.stepId) {
+          await repository.removeStep(message.stepId);
+          await badge.refresh();
+          await scheduler.sync();
+        }
+        return undefined;
+      }
+      case "retry_failed": {
+        await handleRetryFailed(message.sessionId);
+        return undefined;
+      }
+      case "discard_session": {
+        await handleDiscardSession(message.sessionId);
+        return undefined;
+      }
+      case "discard_user_data": {
+        await handleDiscardUserData();
+        return undefined;
       }
       default:
-        return commandHandler.handleCommand(message);
+        return undefined;
     }
   };
 
   return {
-    stateUpdateBuilder,
-    setPortManager,
     setClearDedupe,
     setClearPendingActivations,
     handleSessionExpired,
+    handleGuideGone,
     handleSidePanelCommand,
-    restoreProgress,
-    broadcastUpdate,
   };
 };
 
