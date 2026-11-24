@@ -154,7 +154,16 @@ describe("outbox pusher", () => {
       const error = await pusher.ensureGuide(withoutGuide()).catch((err) => err);
 
       expect(error).toBeInstanceOf(OutboxPermanentError);
-      expect(classifyOutboxError(error)).toBe("guide-gone");
+      expect(classifyOutboxError(error)).toBe("guide-required");
+      expect(api.createGuide).not.toHaveBeenCalled();
+    });
+
+    test("requires a guide when no pending start exists", async () => {
+      const { pusher, api } = setup({ activeSession: withoutGuide() });
+
+      const error = await pusher.ensureGuide(withoutGuide()).catch((err) => err);
+
+      expect(classifyOutboxError(error)).toBe("guide-required");
       expect(api.createGuide).not.toHaveBeenCalled();
     });
 
@@ -209,6 +218,20 @@ describe("outbox pusher", () => {
       expect(vi.mocked(repository.markStepUploading).mock.invocationCallOrder[0]).toBeLessThan(
         vi.mocked(api.createStep).mock.invocationCallOrder[0] ?? 0,
       );
+    });
+
+    test.each([
+      [409, "step-conflict"],
+      [500, null],
+    ] as const)("classifies a %s from step creation as %s", async (status, expected) => {
+      const { pusher, api, repository, stepState } = setup();
+      vi.mocked(api.createStep).mockRejectedValue(createApiError(status));
+
+      const error = await pusher.pushStep({ step: step(), guideId: "guide-1" }).catch((err) => err);
+
+      expect(classifyOutboxError(error)).toBe(expected);
+      expect(stepState.setServerStepId).not.toHaveBeenCalled();
+      expect(repository.markStepSynced).not.toHaveBeenCalled();
     });
 
     test("uploads the screenshot and replaces the local blob with the server URL", async () => {
@@ -312,9 +335,12 @@ describe("outbox pusher", () => {
       expect(classifyOutboxError(createApiError(status))).toBe(expected);
     });
 
-    test.each(["auth", "guide-gone"] as const)("classifies a permanent %s error", (kind) => {
-      expect(classifyOutboxError(new OutboxPermanentError(kind, "boom"))).toBe(kind);
-    });
+    test.each(["auth", "guide-gone", "step-conflict", "guide-required"] as const)(
+      "classifies a permanent %s error",
+      (kind) => {
+        expect(classifyOutboxError(new OutboxPermanentError(kind, "boom"))).toBe(kind);
+      },
+    );
 
     test("classifies plain errors as retryable", () => {
       expect(classifyOutboxError(new Error("offline"))).toBeNull();

@@ -6,7 +6,7 @@ import type { LocalSession, LocalStep, OutboxApi, RecordingLifecycleStore } from
 import { RECORDING_PENDING_START_TTL_MS } from "@/utils/constants";
 import { blobToBase64 } from "@/utils/image";
 
-export type OutboxFailureKind = "auth" | "guide-gone";
+export type OutboxFailureKind = "auth" | "guide-gone" | "step-conflict" | "guide-required";
 
 const AUTH_STATUSES = [401, 403];
 const GUIDE_GONE_STATUSES = [404, 409];
@@ -104,7 +104,7 @@ export const createOutboxPusher = ({
     }
 
     if (!(await hasFreshPendingStart())) {
-      throw new OutboxPermanentError("guide-gone", "Local session has no guide to upload to");
+      throw new OutboxPermanentError("guide-required", "Local session has no guide to upload to");
     }
 
     const guide = await api.createGuide({
@@ -157,17 +157,28 @@ export const createOutboxPusher = ({
 
     let serverStepId = step.serverStepId;
     if (!serverStepId) {
-      const created = await api.createStep({
-        guideId,
-        clientStepId: step.id,
-        action: step.action,
-        url: step.url,
-        ...(step.actionText !== undefined ? { actionText: step.actionText } : {}),
-        ...(step.targetElement !== undefined ? { targetElement: step.targetElement } : {}),
-        ...(insertAfterStepId !== undefined ? { insertAfterStepId } : {}),
-      });
+      try {
+        const created = await api.createStep({
+          guideId,
+          clientStepId: step.id,
+          action: step.action,
+          url: step.url,
+          ...(step.actionText !== undefined ? { actionText: step.actionText } : {}),
+          ...(step.targetElement !== undefined ? { targetElement: step.targetElement } : {}),
+          ...(insertAfterStepId !== undefined ? { insertAfterStepId } : {}),
+        });
 
-      serverStepId = created.id;
+        serverStepId = created.id;
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 409) {
+          throw new OutboxPermanentError(
+            "step-conflict",
+            `Step ${step.id} conflicts with its server copy`,
+          );
+        }
+        throw error;
+      }
+
       await stepState.setServerStepId(step.id, serverStepId, now());
     }
 
