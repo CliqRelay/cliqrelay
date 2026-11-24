@@ -2,14 +2,19 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { ApiError } from "@repo/api-client";
 
-import {
-  classifyOutboxError,
-  createOutboxPusher,
-  OutboxPermanentError,
-} from "./outbox-pusher.service";
+import { OutboxPermanentError } from "./outbox-api.service";
+import { classifyOutboxError, createOutboxPusher } from "./outbox-pusher.service";
 import type { OutboxStepStateRepository } from "./outbox-step-state.repository";
 import type { OutboxRepository } from "./outbox.repository";
-import type { LocalSession, LocalStep, OutboxApi, RecordingLifecycleStore } from "@/models";
+import type {
+  LocalBlob,
+  LocalSession,
+  LocalStep,
+  OutboxApi,
+  OutboxFailureKind,
+  OutboxLifecycle,
+  RecordingLifecycleStore,
+} from "@/models";
 import { RECORDING_PENDING_START_TTL_MS } from "@/utils/constants";
 
 const NOW = new Date("2026-11-24T10:00:00.000Z");
@@ -52,8 +57,13 @@ type SetupOptions = {
 };
 
 const setup = ({ activeSession = session(), pendingStart }: SetupOptions = {}) => {
-  const repository = {
-    getBlob: vi.fn(async (id: string) => ({
+  const repository: Pick<
+    OutboxRepository,
+    "markStepUploading" | "markStepSynced" | "setSessionGuideId"
+  > & {
+    getBlob: (id: string) => Promise<LocalBlob | undefined>;
+  } = {
+    getBlob: vi.fn(async (id: string): Promise<LocalBlob> => ({
       id,
       stepId: "step-1",
       kind: id === "blob-screenshot" ? "screenshot" : "thumbnail",
@@ -63,12 +73,12 @@ const setup = ({ activeSession = session(), pendingStart }: SetupOptions = {}) =
     markStepUploading: vi.fn().mockResolvedValue(undefined),
     markStepSynced: vi.fn().mockResolvedValue(undefined),
     setSessionGuideId: vi.fn().mockResolvedValue(activeSession),
-  } as unknown as OutboxRepository;
+  };
 
-  const stepState = {
+  const stepState: Pick<OutboxStepStateRepository, "setServerStepId" | "setServerScreenshotUrl"> = {
     setServerStepId: vi.fn().mockResolvedValue(undefined),
     setServerScreenshotUrl: vi.fn().mockResolvedValue(undefined),
-  } as unknown as OutboxStepStateRepository;
+  };
 
   const api: OutboxApi = {
     createGuide: vi.fn().mockResolvedValue({ id: "guide-created" }),
@@ -82,14 +92,14 @@ const setup = ({ activeSession = session(), pendingStart }: SetupOptions = {}) =
     replaceUpload: vi.fn().mockResolvedValue({ url: "https://cdn.test/one.webp" }),
   };
 
-  const lifecycleStore = {
-    get: vi.fn().mockResolvedValue({
+  const lifecycleStore: Pick<RecordingLifecycleStore, "get"> = {
+    get: vi.fn(async (): Promise<OutboxLifecycle> => ({
       status: "recording",
       sessionId: activeSession.id,
       isSignedOut: false,
       ...(pendingStart ? { pendingStart } : {}),
-    }),
-  } as unknown as RecordingLifecycleStore;
+    })),
+  };
 
   const pusher = createOutboxPusher({
     repository,
@@ -220,18 +230,36 @@ describe("outbox pusher", () => {
       );
     });
 
-    test.each([
+    const stepCreationCases: Array<[number, OutboxFailureKind | null]> = [
       [409, "step-conflict"],
       [500, null],
-    ] as const)("classifies a %s from step creation as %s", async (status, expected) => {
-      const { pusher, api, repository, stepState } = setup();
-      vi.mocked(api.createStep).mockRejectedValue(createApiError(status));
+    ];
+
+    test.each(stepCreationCases)(
+      "classifies a %s from step creation as %s",
+      async (status, expected) => {
+        const { pusher, api, repository, stepState } = setup();
+        vi.mocked(api.createStep).mockRejectedValue(createApiError(status));
+
+        const error = await pusher
+          .pushStep({ step: step(), guideId: "guide-1" })
+          .catch((err) => err);
+
+        expect(classifyOutboxError(error)).toBe(expected);
+        expect(stepState.setServerStepId).not.toHaveBeenCalled();
+        expect(repository.markStepSynced).not.toHaveBeenCalled();
+      },
+    );
+
+    test("classifies an invalid stored action rejected by the API adapter", async () => {
+      const { pusher, api } = setup();
+      vi.mocked(api.createStep).mockRejectedValue(
+        new OutboxPermanentError("step-conflict", "invalid stored action"),
+      );
 
       const error = await pusher.pushStep({ step: step(), guideId: "guide-1" }).catch((err) => err);
 
-      expect(classifyOutboxError(error)).toBe(expected);
-      expect(stepState.setServerStepId).not.toHaveBeenCalled();
-      expect(repository.markStepSynced).not.toHaveBeenCalled();
+      expect(classifyOutboxError(error)).toBe("step-conflict");
     });
 
     test("uploads the screenshot and replaces the local blob with the server URL", async () => {
@@ -335,12 +363,16 @@ describe("outbox pusher", () => {
       expect(classifyOutboxError(createApiError(status))).toBe(expected);
     });
 
-    test.each(["auth", "guide-gone", "step-conflict", "guide-required"] as const)(
-      "classifies a permanent %s error",
-      (kind) => {
-        expect(classifyOutboxError(new OutboxPermanentError(kind, "boom"))).toBe(kind);
-      },
-    );
+    const permanentKinds: OutboxFailureKind[] = [
+      "auth",
+      "guide-gone",
+      "step-conflict",
+      "guide-required",
+    ];
+
+    test.each(permanentKinds)("classifies a permanent %s error", (kind) => {
+      expect(classifyOutboxError(new OutboxPermanentError(kind, "boom"))).toBe(kind);
+    });
 
     test("classifies plain errors as retryable", () => {
       expect(classifyOutboxError(new Error("offline"))).toBeNull();

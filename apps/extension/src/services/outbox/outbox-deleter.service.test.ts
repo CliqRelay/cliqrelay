@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiError } from "@repo/api-client";
 
 import { createOutboxDeleter } from "./outbox-deleter.service";
+import type { OutboxStepStateRepository } from "./outbox-step-state.repository";
 import type { OutboxRepository } from "./outbox.repository";
 import type { LocalStep, OutboxApi } from "@/models";
 
@@ -28,20 +29,25 @@ const step = (overrides: Partial<LocalStep> = {}): LocalStep => ({
 const createApiError = (status: number) => new ApiError("boom", status, {}, new Headers());
 
 const setup = ({ activeStep = step() }: { activeStep?: LocalStep | null } = {}) => {
-  const repository = {
+  const repository: Pick<OutboxRepository, "removeStep"> = {
     removeStep: vi.fn().mockResolvedValue(undefined),
-  } as unknown as Pick<OutboxRepository, "removeStep">;
-
-  const stepState = {
-    getStep: vi.fn().mockResolvedValue(activeStep ?? undefined),
-    markStepDeleted: vi.fn().mockResolvedValue(undefined),
-    countPendingDeletions: vi.fn().mockResolvedValue(0),
   };
 
-  const api = {
+  const countPendingDeletions = vi.fn().mockResolvedValue(0);
+
+  const stepState: Pick<
+    OutboxStepStateRepository,
+    "getStep" | "markStepDeleted" | "countPendingDeletions"
+  > = {
+    getStep: vi.fn().mockResolvedValue(activeStep ?? undefined),
+    markStepDeleted: vi.fn().mockResolvedValue(undefined),
+    countPendingDeletions,
+  };
+
+  const api: Pick<OutboxApi, "deleteStep" | "deleteGuide"> = {
     deleteStep: vi.fn().mockResolvedValue(undefined),
     deleteGuide: vi.fn().mockResolvedValue(undefined),
-  } as unknown as Pick<OutboxApi, "deleteStep" | "deleteGuide">;
+  };
 
   const log = vi.fn();
 
@@ -53,7 +59,7 @@ const setup = ({ activeStep = step() }: { activeStep?: LocalStep | null } = {}) 
     log,
   });
 
-  return { deleter, repository, stepState, api, log };
+  return { deleter, repository, stepState, api, log, countPendingDeletions };
 };
 
 describe("outbox deleter", () => {
@@ -190,11 +196,11 @@ describe("outbox deleter", () => {
 
   describe("countPendingDeletions", () => {
     test("delegates to the step-state repository with the user scope", async () => {
-      const { deleter, stepState } = setup();
-      stepState.countPendingDeletions.mockResolvedValue(2);
+      const { deleter, countPendingDeletions } = setup();
+      countPendingDeletions.mockResolvedValue(2);
 
       await expect(deleter.countPendingDeletions("user-1")).resolves.toBe(2);
-      expect(stepState.countPendingDeletions).toHaveBeenCalledWith("user-1");
+      expect(countPendingDeletions).toHaveBeenCalledWith("user-1");
     });
   });
 });

@@ -1,25 +1,22 @@
 import { ApiError } from "@repo/api-client";
 
+import { OutboxPermanentError } from "./outbox-api.service";
 import type { OutboxStepStateRepository } from "./outbox-step-state.repository";
 import type { OutboxRepository } from "./outbox.repository";
-import type { LocalSession, LocalStep, OutboxApi, RecordingLifecycleStore } from "@/models";
+import type {
+  LocalBlob,
+  LocalSession,
+  LocalStep,
+  OutboxApi,
+  OutboxFailureKind,
+  PushStepInput,
+  RecordingLifecycleStore,
+} from "@/models";
 import { RECORDING_PENDING_START_TTL_MS } from "@/utils/constants";
 import { blobToBase64 } from "@/utils/image";
 
-export type OutboxFailureKind = "auth" | "guide-gone" | "step-conflict" | "guide-required";
-
 const AUTH_STATUSES = [401, 403];
 const GUIDE_GONE_STATUSES = [404, 409];
-
-export class OutboxPermanentError extends Error {
-  readonly kind: OutboxFailureKind;
-
-  constructor(kind: OutboxFailureKind, message: string) {
-    super(message);
-    this.name = "OutboxPermanentError";
-    this.kind = kind;
-  }
-}
 
 export const classifyOutboxError = (error: unknown): OutboxFailureKind | null => {
   if (error instanceof OutboxPermanentError) {
@@ -60,20 +57,19 @@ const measureBlob = async (blob: Blob): Promise<{ width: number; height: number 
 };
 
 type OutboxPusherDeps = {
-  repository: OutboxRepository;
-  stepState: OutboxStepStateRepository;
-  lifecycleStore: RecordingLifecycleStore;
+  repository: Pick<
+    OutboxRepository,
+    "markStepUploading" | "markStepSynced" | "setSessionGuideId"
+  > & {
+    getBlob: (id: string) => Promise<LocalBlob | undefined>;
+  };
+  stepState: Pick<OutboxStepStateRepository, "setServerStepId" | "setServerScreenshotUrl">;
+  lifecycleStore: Pick<RecordingLifecycleStore, "get">;
   api: OutboxApi;
   getActiveTeamId: () => Promise<string | undefined>;
   thumbnailToBase64?: (blob: Blob) => Promise<string>;
   measureImage?: (blob: Blob) => Promise<{ width: number; height: number } | undefined>;
   now?: () => Date;
-};
-
-export type PushStepInput = {
-  step: LocalStep;
-  guideId: string;
-  insertAfterStepId?: string;
 };
 
 export const createOutboxPusher = ({
@@ -121,27 +117,30 @@ export const createOutboxPusher = ({
     serverStepId: string,
     guideId: string,
   ): Promise<string | undefined> => {
-    const screenshot = step.screenshotBlobId
-      ? await repository.getBlob(step.screenshotBlobId)
-      : undefined;
+    const [screenshot, thumbnail, presign] = await Promise.all([
+      step.screenshotBlobId ? repository.getBlob(step.screenshotBlobId) : undefined,
+      step.thumbnailBlobId ? repository.getBlob(step.thumbnailBlobId) : undefined,
+      step.screenshotBlobId
+        ? api.presignUpload({ stepId: serverStepId, guideId })
+        : Promise.resolve(undefined),
+    ]);
 
-    if (!screenshot) {
+    if (!screenshot || !presign) {
       return undefined;
     }
 
-    const thumbnail = step.thumbnailBlobId
-      ? await repository.getBlob(step.thumbnailBlobId)
-      : undefined;
-
-    const presign = await api.presignUpload({ stepId: serverStepId, guideId });
     await api.uploadBlob(presign.presignedUrl, screenshot.blob);
 
-    const dimensions = await measureImage(screenshot.blob);
+    const [dimensions, thumbnailBase64] = await Promise.all([
+      measureImage(screenshot.blob),
+      thumbnail ? thumbnailToBase64(thumbnail.blob) : undefined,
+    ]);
+
     const replace = await api.replaceUpload({
       stepId: serverStepId,
       storagePath: presign.storagePath,
       fileSize: screenshot.blob.size,
-      ...(thumbnail ? { thumbnail: await thumbnailToBase64(thumbnail.blob) } : {}),
+      ...(thumbnailBase64 !== undefined ? { thumbnail: thumbnailBase64 } : {}),
       ...dimensions,
     });
 

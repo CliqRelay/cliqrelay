@@ -1,10 +1,7 @@
 import { classifyOutboxError } from "./outbox-pusher.service";
 import type { OutboxStepStateRepository } from "./outbox-step-state.repository";
 import type { OutboxRepository } from "./outbox.repository";
-import type { LocalStep, OutboxApi } from "@/models";
-
-export type StepDeleteOutcome = "removed" | "retrying" | "missing";
-export type GuideDeleteOutcome = "deleted" | "missing";
+import type { GuideDeleteOutcome, LocalStep, OutboxApi, StepDeleteOutcome } from "@/models";
 
 type OutboxDeleterDeps = {
   repository: Pick<OutboxRepository, "removeStep">;
