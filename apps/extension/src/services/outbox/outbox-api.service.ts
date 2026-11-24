@@ -1,9 +1,12 @@
 import { api, type CreateStepRequest } from "@repo/api-client";
 
 import { withCsrf } from "@/lib/csrf";
-import { captureActionSchema, type OutboxApi, type OutboxCreateStepInput } from "@/models";
-
-export type OutboxFailureKind = "step-conflict";
+import {
+  captureActionSchema,
+  type OutboxApi,
+  type OutboxCreateStepInput,
+  type OutboxFailureKind,
+} from "@/models";
 
 export class OutboxPermanentError extends Error {
   readonly kind: OutboxFailureKind;

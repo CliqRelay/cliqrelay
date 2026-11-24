@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { CreateStepRequest, StepAction } from "@repo/api-client";
+import type { CreateStepRequest } from "@repo/api-client";
 
 import { recordingStatusSchema } from "./recording";
 
@@ -184,7 +184,7 @@ export type OutboxCleanupResult = {
 export type OutboxCreateStepInput = {
   guideId: string;
   clientStepId: string;
-  action: StepAction;
+  action: string;
   actionText?: string;
   url: string;
   targetElement?: CreateStepRequest["targetElement"];
@@ -217,4 +217,10 @@ export type OutboxApi = {
   }) => Promise<{ presignedUrl: string; storagePath: string }>;
   uploadBlob: (presignedUrl: string, blob: Blob) => Promise<void>;
   replaceUpload: (input: OutboxReplaceUploadInput) => Promise<{ url: string }>;
+};
+
+export type PushStepInput = {
+  step: LocalStep;
+  guideId: string;
+  insertAfterStepId?: string;
 };
