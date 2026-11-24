@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { createOutboxStepStateRepository } from "./outbox-step-state.repository";
 import { createOutboxRepository } from "./outbox.repository";
 import type { OutboxRepository } from "./outbox.repository";
+import type { LocalStep } from "@/models";
 import { createDatabase } from "@/services/db";
 import type { OutboxDatabase } from "@/services/db";
 
@@ -13,15 +14,15 @@ let db: OutboxDatabase;
 let repository: OutboxRepository;
 let stepState: ReturnType<typeof createOutboxStepStateRepository>;
 
-const createSessionWithSteps = async (userId: string, failedSteps: number) => {
+const createSessionWithSteps = async (userId: string, stepCount: number) => {
   const session = await repository.createSession({
     userId,
     guideId: `guide-${userId}`,
     startedAt: NOW,
   });
 
-  const steps = [];
-  for (let index = 0; index < failedSteps; index++) {
+  const steps: LocalStep[] = [];
+  for (let index = 0; index < stepCount; index++) {
     steps.push(
       await repository.appendStep({
         sessionId: session.id,

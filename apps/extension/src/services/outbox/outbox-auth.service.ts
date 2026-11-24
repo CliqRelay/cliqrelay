@@ -10,12 +10,6 @@ type OutboxAuthDeps = {
   cacheTtlMs?: number;
 };
 
-/**
- * Resolves who is signed in for the outbox. The API is the only authority: a
- * client-supplied user id is never trusted. A resolved id is cached so drains
- * do not hammer `getMe`; signed-out results are not cached so a fresh sign-in
- * is picked up by the next alarm or boot.
- */
 export const createOutboxAuth = ({
   getMe = () => authulaClient.core.getMe(),
   now = Date.now,

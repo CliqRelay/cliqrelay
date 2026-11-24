@@ -4,7 +4,12 @@ import { createOutboxAuth } from "./outbox-auth.service";
 
 const NOW = 1_000_000;
 
-const setup = ({ userId = "user-1" as string | null, ttlMs = 1000 } = {}) => {
+type SetupOptions = {
+  userId?: string | null;
+  ttlMs?: number;
+};
+
+const setup = ({ userId = "user-1", ttlMs = 1000 }: SetupOptions = {}) => {
   const getMe = vi.fn(async () => {
     if (!userId) {
       throw new Error("Unauthorized");

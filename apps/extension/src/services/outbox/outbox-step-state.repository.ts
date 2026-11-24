@@ -20,12 +20,6 @@ const resolveSessionIds = async (
 
 const unsyncedStatuses: SyncStatus[] = ["pending", "uploading", "failed"];
 
-/**
- * Step bookkeeping the drainer needs but the outbox repository does not expose:
- * persisting the server id the moment it exists (so a killed worker resumes
- * without a second create), resetting manual retries, and the local-first
- * deletion states.
- */
 export const createOutboxStepStateRepository = (db: OutboxDatabase) => {
   const getStep = (stepId: string) => db.steps.get(stepId);
 

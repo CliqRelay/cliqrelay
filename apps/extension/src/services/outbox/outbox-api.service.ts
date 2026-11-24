@@ -1,4 +1,4 @@
-import { api, type CreateStepRequest } from "@repo/api-client";
+import { api, type CreateStepRequest, type StepAction } from "@repo/api-client";
 
 import { withCsrf } from "@/lib/csrf";
 
@@ -44,13 +44,11 @@ const toCreateStepRequest = (input: OutboxCreateStepInput): CreateStepRequest =>
   guideId: input.guideId,
   clientStepId: input.clientStepId,
   type: "interaction",
-  action: input.action as CreateStepRequest["action"],
+  action: input.action as StepAction,
   url: input.url,
   ...(input.actionText !== undefined ? { actionText: input.actionText } : {}),
   ...(input.insertAfterStepId !== undefined ? { insertAfterStepId: input.insertAfterStepId } : {}),
-  ...(input.targetElement !== undefined
-    ? { targetElement: input.targetElement as CreateStepRequest["targetElement"] }
-    : {}),
+  ...(input.targetElement !== undefined ? { targetElement: input.targetElement } : {}),
 });
 
 export const createOutboxApi = (): OutboxApi => ({
