@@ -1,7 +1,6 @@
 export * from "./capture";
 export * from "./elements";
 export * from "./highlight";
-export * from "./offscreen";
 export * from "./outbox";
 export * from "./recording";
 export * from "./screenshot";

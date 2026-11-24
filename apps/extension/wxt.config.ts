@@ -53,19 +53,10 @@ export default defineConfig({
     const permissions: string[] = ["cookies", "storage", "activeTab", "tabs", "webNavigation"];
 
     if (isChrome) {
-      permissions.push("offscreen", "sidePanel");
+      permissions.push("sidePanel");
     } else if (isFirefox) {
       permissions.push("webRequest");
     }
-
-    const webAccessibleResources = isChrome
-      ? [
-          {
-            resources: ["offscreen.html"],
-            matches: ["<all_urls>"],
-          },
-        ]
-      : [];
 
     // 🔒 Dynamic Content Security Policy Resolution Strategy
     // Firefox blocks localhost in MV3 builds unless it's explicitly running as a temporary live add-on.
@@ -88,15 +79,12 @@ export default defineConfig({
         // ⚠️ Notice: "sandbox" property is completely omitted here.
         // It's manually attached below ONLY if the compilation target is Chromium/Chrome.
       },
-      ...(webAccessibleResources.length > 0 && {
-        web_accessible_resources: webAccessibleResources,
-      }),
     };
 
     if (isChrome) {
       return {
         ...baseConfig,
-        // `sidePanel` requires Chrome 114; `storage.session` and offscreen are older.
+        // `sidePanel` requires Chrome 114; `storage.session` is older.
         minimum_chrome_version: "114",
         content_security_policy: {
           ...baseConfig.content_security_policy,

@@ -1,8 +1,4 @@
 export const SCREENSHOT_THROTTLE_MS = 500;
-export const MAX_RECENT_CAPTURES = 10;
-export const UPLOAD_CONCURRENCY = 3;
-export const UPLOAD_MAX_SIZE = 50;
-export const UPLOAD_MAX_ATTEMPTS = 3;
 export const WEBP_QUALITY = 0.8;
 export const THUMBNAIL_QUALITY = 0.5;
 export const THUMBNAIL_WIDTH = 20;
