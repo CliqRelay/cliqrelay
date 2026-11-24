@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -21,37 +23,103 @@ func TestMediaAssetsService_Delete_PublishesEvent(t *testing.T) {
 
 	asset := &models.MediaAsset{ID: uuid.New(), StepID: uuid.New(), StoragePath: "uploads/old.webp"}
 
-	t.Run("publishes media-asset.deleted for the removed row", func(t *testing.T) {
-		t.Parallel()
-		mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-		mockMediaAssetsRepo.On("GetByID", mock.Anything, asset.ID.String()).Return(asset, nil).Once()
-		mockMediaAssetsRepo.On("Delete", mock.Anything, asset.ID.String()).Return(asset, nil).Once()
-		redisClient, mr := tests.NewTestRedis(t)
-		svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, new(tests.MockStepsRepository), new(tests.MockGuidesRepository), redisClient, nil, (*interfaces.MediaAssetHooks)(nil))
+	type expectedEvent struct {
+		eventType string
+		payload   events.MediaAssetDeletePayload
+	}
 
-		_, err := svc.Delete(context.Background(), asset.ID.String())
+	cases := []struct {
+		name          string
+		mediaAssetID  string
+		setup         func(*tests.MockMediaAssetsRepository)
+		newRedis      func(*testing.T) (*redis.Client, *miniredis.Miniredis)
+		wantDeletedID uuid.UUID
+		wantEvents    []expectedEvent
+		wantStreams   []string
+	}{
+		{
+			name:         "publishes media-asset.deleted for the removed row",
+			mediaAssetID: asset.ID.String(),
+			setup: func(repo *tests.MockMediaAssetsRepository) {
+				repo.On("GetByID", mock.Anything, asset.ID.String()).Return(asset, nil).Once()
+				repo.On("Delete", mock.Anything, asset.ID.String()).Return(asset, nil).Once()
+			},
+			newRedis: tests.NewTestRedis,
+			wantEvents: []expectedEvent{
+				{
+					eventType: events.EventTypeMediaAssetDeleted,
+					payload: events.MediaAssetDeletePayload{
+						StepID:      asset.StepID.String(),
+						StoragePath: asset.StoragePath,
+					},
+				},
+			},
+			wantStreams: []string{events.TopicMediaAssets},
+		},
+		{
+			name:         "publish failure does not fail the delete",
+			mediaAssetID: asset.ID.String(),
+			setup: func(repo *tests.MockMediaAssetsRepository) {
+				repo.On("GetByID", mock.Anything, asset.ID.String()).Return(asset, nil).Once()
+				repo.On("Delete", mock.Anything, asset.ID.String()).Return(asset, nil).Once()
+			},
+			newRedis: func(t *testing.T) (*redis.Client, *miniredis.Miniredis) {
+				return tests.NewUnreachableRedis(t), nil
+			},
+			wantDeletedID: asset.ID,
+		},
+	}
 
-		require.NoError(t, err)
-		entries, err := redisClient.XRange(context.Background(), events.TopicMediaAssets, "-", "+").Result()
-		require.NoError(t, err)
-		require.Len(t, entries, 1)
-		assert.Equal(t, events.EventTypeMediaAssetDeleted, entries[0].Values["event_type"])
-		assert.Contains(t, entries[0].Values["payload"], asset.StoragePath)
-		assert.True(t, mr.Exists(events.TopicMediaAssets))
-		mockMediaAssetsRepo.AssertExpectations(t)
-	})
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("publish failure does not fail the delete", func(t *testing.T) {
-		t.Parallel()
-		mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
-		mockMediaAssetsRepo.On("GetByID", mock.Anything, asset.ID.String()).Return(asset, nil).Once()
-		mockMediaAssetsRepo.On("Delete", mock.Anything, asset.ID.String()).Return(asset, nil).Once()
-		svc := mediaassetsservice.NewMediaAssetsService(mockMediaAssetsRepo, new(tests.MockStepsRepository), new(tests.MockGuidesRepository), tests.NewUnreachableRedis(t), nil, (*interfaces.MediaAssetHooks)(nil))
+			mockMediaAssetsRepo := new(tests.MockMediaAssetsRepository)
+			tt.setup(mockMediaAssetsRepo)
 
-		deleted, err := svc.Delete(context.Background(), asset.ID.String())
+			redisClient, mr := tt.newRedis(t)
+			svc := mediaassetsservice.NewMediaAssetsService(
+				mockMediaAssetsRepo,
+				new(tests.MockStepsRepository),
+				new(tests.MockGuidesRepository),
+				redisClient,
+				nil,
+				(*interfaces.MediaAssetHooks)(nil),
+			)
 
-		require.NoError(t, err)
-		assert.Equal(t, asset.ID, deleted.ID)
-		mockMediaAssetsRepo.AssertExpectations(t)
-	})
+			deleted, err := svc.Delete(context.Background(), tt.mediaAssetID)
+
+			require.NoError(t, err)
+
+			if tt.wantDeletedID != uuid.Nil {
+				require.NotNil(t, deleted)
+				assert.Equal(t, tt.wantDeletedID, deleted.ID)
+			}
+
+			if len(tt.wantEvents) > 0 {
+				entries, err := redisClient.XRange(context.Background(), events.TopicMediaAssets, "-", "+").Result()
+				require.NoError(t, err)
+				require.Len(t, entries, len(tt.wantEvents))
+
+				for i, want := range tt.wantEvents {
+					assert.Equal(t, want.eventType, entries[i].Values["event_type"])
+
+					raw, ok := entries[i].Values["payload"].(string)
+					require.True(t, ok)
+					event, err := events.ReadEvent([]byte(raw))
+					require.NoError(t, err)
+					var got events.MediaAssetDeletePayload
+					require.NoError(t, event.UnmarshalPayload(&got))
+					assert.Equal(t, want.payload, got)
+				}
+			}
+
+			for _, stream := range tt.wantStreams {
+				require.NotNil(t, mr)
+				assert.True(t, mr.Exists(stream))
+			}
+
+			mockMediaAssetsRepo.AssertExpectations(t)
+		})
+	}
 }

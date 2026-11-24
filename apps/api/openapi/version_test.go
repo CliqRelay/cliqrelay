@@ -12,73 +12,98 @@ import (
 )
 
 func TestOpenAPIVersion(t *testing.T) {
-	t.Run("defaults to 3.0.3", func(t *testing.T) {
-		svc, err := openapi.NewOpenAPIService("Test", "1.0.0", "", "http://localhost:8080")
-		require.NoError(t, err)
+	t.Parallel()
 
-		spec, err := svc.SpecJSON()
-		require.NoError(t, err)
+	type HealthResponse struct {
+		Status string `json:"status"`
+	}
+	type operationCase struct {
+		method  string
+		path    string
+		options []openapi.OperationOption
+	}
 
-		var result map[string]any
-		err = json.Unmarshal(spec, &result)
-		require.NoError(t, err)
-		assert.Equal(t, "3.0.3", result["openapi"])
-	})
+	cases := []struct {
+		name               string
+		options            []openapi.ServiceOption
+		operation          *operationCase
+		wantOpenAPIVersion string
+		wantPaths          []string
+		wantSchemas        []string
+	}{
+		{
+			name:               "defaults to 3.0.3",
+			wantOpenAPIVersion: "3.0.3",
+		},
+		{
+			name:    "explicit 3.0.3",
+			options: []openapi.ServiceOption{openapi.WithOpenAPIVersion("3.0.3")},
+			operation: &operationCase{
+				method: http.MethodGet,
+				path:   "/api/v1/test",
+				options: []openapi.OperationOption{
+					openapi.WithResponseStatus(http.StatusOK, &struct {
+						Message string `json:"message"`
+					}{}),
+				},
+			},
+			wantOpenAPIVersion: "3.0.3",
+			wantPaths:          []string{"/api/v1/test"},
+		},
+		{
+			name: "3.1.0 spec version and basic operation",
+			options: []openapi.ServiceOption{
+				openapi.WithOpenAPIVersion("3.1.0"),
+				openapi.WithShortSchemaNames(),
+			},
+			operation: &operationCase{
+				method: http.MethodGet,
+				path:   "/api/v1/health",
+				options: []openapi.OperationOption{
+					openapi.WithSummary("Health"),
+					openapi.WithResponseStatus(http.StatusOK, &HealthResponse{}),
+				},
+			},
+			wantOpenAPIVersion: "3.1.0",
+			wantPaths:          []string{"/api/v1/health"},
+			wantSchemas:        []string{"HealthResponse"},
+		},
+	}
 
-	t.Run("explicit 3.0.3", func(t *testing.T) {
-		svc, err := openapi.NewOpenAPIService("Test", "1.0.0", "", "http://localhost:8080",
-			openapi.WithOpenAPIVersion("3.0.3"))
-		require.NoError(t, err)
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-		err = svc.AddOperation(
-			http.MethodGet,
-			"/api/v1/test",
-			openapi.WithResponseStatus(http.StatusOK, &struct {
-				Message string `json:"message"`
-			}{}),
-		)
-		require.NoError(t, err)
+			svc, err := openapi.NewOpenAPIService("Test", "1.0.0", "", "http://localhost:8080", tt.options...)
+			require.NoError(t, err)
 
-		spec, err := svc.SpecJSON()
-		require.NoError(t, err)
+			if tt.operation != nil {
+				err = svc.AddOperation(tt.operation.method, tt.operation.path, tt.operation.options...)
+				require.NoError(t, err)
+			}
 
-		var result map[string]any
-		err = json.Unmarshal(spec, &result)
-		require.NoError(t, err)
-		assert.Equal(t, "3.0.3", result["openapi"])
-		assert.Contains(t, result["paths"].(map[string]any), "/api/v1/test")
-	})
+			spec, err := svc.SpecJSON()
+			require.NoError(t, err)
 
-	t.Run("3.1.0 spec version and basic operation", func(t *testing.T) {
-		svc, err := openapi.NewOpenAPIService("Test", "1.0.0", "", "http://localhost:8080",
-			openapi.WithOpenAPIVersion("3.1.0"),
-			openapi.WithShortSchemaNames())
-		require.NoError(t, err)
+			var result map[string]any
+			err = json.Unmarshal(spec, &result)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantOpenAPIVersion, result["openapi"])
 
-		type HealthResponse struct {
-			Status string `json:"status"`
-		}
+			if len(tt.wantPaths) > 0 {
+				paths, ok := result["paths"].(map[string]any)
+				require.True(t, ok)
+				for _, path := range tt.wantPaths {
+					assert.Contains(t, paths, path)
+				}
+			}
 
-		err = svc.AddOperation(
-			http.MethodGet,
-			"/api/v1/health",
-			openapi.WithSummary("Health"),
-			openapi.WithResponseStatus(http.StatusOK, &HealthResponse{}),
-		)
-		require.NoError(t, err)
-
-		spec, err := svc.SpecJSON()
-		require.NoError(t, err)
-
-		var result map[string]any
-		err = json.Unmarshal(spec, &result)
-		require.NoError(t, err)
-		assert.Equal(t, "3.1.0", result["openapi"])
-
-		paths := result["paths"].(map[string]any)
-		assert.Contains(t, paths, "/api/v1/health")
-
-		schemas := result["components"].(map[string]any)["schemas"].(map[string]any)
-		assert.Contains(t, schemas, "HealthResponse", "short names should work with 3.1")
-	})
+			if len(tt.wantSchemas) > 0 {
+				schemas := result["components"].(map[string]any)["schemas"].(map[string]any)
+				for _, schema := range tt.wantSchemas {
+					assert.Contains(t, schemas, schema)
+				}
+			}
+		})
+	}
 }

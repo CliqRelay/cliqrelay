@@ -13,66 +13,116 @@ import (
 )
 
 func TestNewOpenAPISpecHandler(t *testing.T) {
-	t.Run("serves valid JSON spec", func(t *testing.T) {
-		svc, err := openapi.NewOpenAPIService("Test API", "1.0.0", "", "http://localhost:8080")
-		require.NoError(t, err)
+	t.Parallel()
 
-		err = svc.AddOperation(
-			http.MethodGet,
-			"/api/v1/health",
-			openapi.WithResponseStatus(http.StatusOK, &struct {
-				Status string `json:"status"`
-			}{}),
-		)
-		require.NoError(t, err)
+	healthResponse := &struct {
+		Status string `json:"status"`
+	}{}
 
-		handler := openapi.NewOpenAPISpecHandler(svc)
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/openapi.json", nil)
-		rec := httptest.NewRecorder()
-		handler(rec, req)
+	cases := []struct {
+		name               string
+		addOperation       bool
+		wantStatus         int
+		wantContentType    string
+		wantOpenAPIVersion string
+		wantPaths          bool
+	}{
+		{
+			name:               "serves valid JSON spec",
+			addOperation:       true,
+			wantStatus:         http.StatusOK,
+			wantContentType:    "application/json",
+			wantOpenAPIVersion: "3.0.3",
+			wantPaths:          true,
+		},
+		{
+			name:       "serves an empty spec",
+			wantStatus: http.StatusOK,
+		},
+	}
 
-		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-		var result map[string]any
-		err = json.Unmarshal(rec.Body.Bytes(), &result)
-		require.NoError(t, err)
-		assert.Equal(t, "3.0.3", result["openapi"])
-		assert.Contains(t, result, "paths")
-	})
+			svc, err := openapi.NewOpenAPIService("Test API", "1.0.0", "", "http://localhost:8080")
+			require.NoError(t, err)
 
-	t.Run("returns 500 on empty service", func(t *testing.T) {
-		svc, err := openapi.NewOpenAPIService("Test API", "1.0.0", "", "http://localhost:8080")
-		require.NoError(t, err)
+			if tt.addOperation {
+				err = svc.AddOperation(
+					http.MethodGet,
+					"/api/v1/health",
+					openapi.WithResponseStatus(http.StatusOK, healthResponse),
+				)
+				require.NoError(t, err)
+			}
 
-		handler := openapi.NewOpenAPISpecHandler(svc)
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/openapi.json", nil)
-		rec := httptest.NewRecorder()
-		handler(rec, req)
+			handler := openapi.NewOpenAPISpecHandler(svc)
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/openapi.json", nil)
+			rec := httptest.NewRecorder()
+			handler(rec, req)
 
-		assert.Equal(t, http.StatusOK, rec.Code, "empty spec should still be valid JSON")
-	})
+			assert.Equal(t, tt.wantStatus, rec.Code)
+
+			if tt.wantContentType != "" {
+				assert.Equal(t, tt.wantContentType, rec.Header().Get("Content-Type"))
+			}
+
+			if tt.wantOpenAPIVersion != "" {
+				var result map[string]any
+				err = json.Unmarshal(rec.Body.Bytes(), &result)
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantOpenAPIVersion, result["openapi"])
+
+				if tt.wantPaths {
+					assert.Contains(t, result, "paths")
+				}
+			}
+		})
+	}
 }
 
 func TestNewOpenAPISpecYAMLHandler(t *testing.T) {
-	svc, err := openapi.NewOpenAPIService("Test API", "1.0.0", "", "http://localhost:8080")
-	require.NoError(t, err)
+	t.Parallel()
 
-	err = svc.AddOperation(
-		http.MethodGet,
-		"/api/v1/health",
-		openapi.WithResponseStatus(http.StatusOK, &struct {
-			Status string `json:"status"`
-		}{}),
-	)
-	require.NoError(t, err)
+	cases := []struct {
+		name             string
+		wantStatus       int
+		wantContentType  string
+		wantBodyContains string
+	}{
+		{
+			name:             "serves YAML spec",
+			wantStatus:       http.StatusOK,
+			wantContentType:  "text/vnd.yaml",
+			wantBodyContains: "openapi: ",
+		},
+	}
 
-	handler := openapi.NewOpenAPISpecYAMLHandler(svc)
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/openapi.yaml", nil)
-	rec := httptest.NewRecorder()
-	handler(rec, req)
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "text/vnd.yaml", rec.Header().Get("Content-Type"))
-	assert.Contains(t, rec.Body.String(), "openapi: ")
+			svc, err := openapi.NewOpenAPIService("Test API", "1.0.0", "", "http://localhost:8080")
+			require.NoError(t, err)
+
+			err = svc.AddOperation(
+				http.MethodGet,
+				"/api/v1/health",
+				openapi.WithResponseStatus(http.StatusOK, &struct {
+					Status string `json:"status"`
+				}{}),
+			)
+			require.NoError(t, err)
+
+			handler := openapi.NewOpenAPISpecYAMLHandler(svc)
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/openapi.yaml", nil)
+			rec := httptest.NewRecorder()
+			handler(rec, req)
+
+			assert.Equal(t, tt.wantStatus, rec.Code)
+			assert.Equal(t, tt.wantContentType, rec.Header().Get("Content-Type"))
+			assert.Contains(t, rec.Body.String(), tt.wantBodyContains)
+		})
+	}
 }
