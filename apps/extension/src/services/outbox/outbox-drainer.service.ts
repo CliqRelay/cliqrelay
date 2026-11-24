@@ -5,11 +5,11 @@ import type { OutboxDeleter } from "./outbox-deleter.service";
 import type { OutboxPusher } from "./outbox-pusher.service";
 import { classifyOutboxError } from "./outbox-pusher.service";
 import type { OutboxRepository } from "./outbox.repository";
-import type { LocalSession, LocalStep, RecordingLifecycleStore, SyncStatus } from "@/models";
+import type { LocalSession, LocalStep, RecordingLifecycleStore } from "@/models";
 
-export const DRAIN_WAIT_MS = 200;
-export const DRAIN_MAX_ATTEMPTS = 3;
-export const DRAIN_RETRY_BASE_WAIT_MS = 500;
+const DRAIN_WAIT_MS = 200;
+const DRAIN_MAX_ATTEMPTS = 3;
+const DRAIN_RETRY_BASE_WAIT_MS = 500;
 
 type QueueItem = { sessionId: string };
 
@@ -33,13 +33,9 @@ type OutboxDrainerDeps = {
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new Error(String(error));
 
-const syncableStatuses: SyncStatus[] = ["pending", "uploading", "failed"];
+const isSyncableStep = (step: LocalStep): boolean =>
+  step.syncStatus !== "synced" && step.syncStatus !== "deleted";
 
-/**
- * The anchor for a retried step: the highest earlier step that already exists
- * on the server. Using `stepIndex` rather than position tolerates gaps left by
- * deleted typing steps.
- */
 export const findInsertAfterStepId = (
   steps: readonly LocalStep[],
   stepIndex: number,
@@ -58,11 +54,17 @@ export const findInsertAfterStepId = (
   return anchor?.serverStepId;
 };
 
-/**
- * Serialises uploads through one queue. A queue item is a session, not a step:
- * a session is drained in `stepIndex` order and a failed step is retried by the
- * queue's own backoff without ever blocking later steps.
- */
+const hasLaterServerStep = (steps: readonly LocalStep[], step: LocalStep): boolean =>
+  steps.some(
+    (other) =>
+      other.stepIndex > step.stepIndex &&
+      other.serverStepId !== undefined &&
+      other.syncStatus !== "deleted",
+  );
+
+const insertAfterStepIdFor = (steps: readonly LocalStep[], step: LocalStep): string | undefined =>
+  hasLaterServerStep(steps, step) ? findInsertAfterStepId(steps, step.stepIndex) : undefined;
+
 export const createOutboxDrainer = ({
   repository,
   pusher,
@@ -86,6 +88,7 @@ export const createOutboxDrainer = ({
 
   const pause = () => {
     isPaused = true;
+    lastRunDidWork = false;
     queue.stop();
   };
 
@@ -131,10 +134,8 @@ export const createOutboxDrainer = ({
       return;
     }
 
-    // Every step is needed for the anchor lookup; only the unsynced ones are
-    // pushed. Synced predecessors supply `insertAfterStepId`.
     const allSteps = await repository.listSteps(sessionId);
-    const steps = allSteps.filter((step) => syncableStatuses.includes(step.syncStatus));
+    const steps = allSteps.filter(isSyncableStep);
     const deletions = allSteps.filter(
       (step) => step.syncStatus === "deleted" && step.serverStepId !== undefined,
     );
@@ -174,7 +175,7 @@ export const createOutboxDrainer = ({
           await pusher.pushStep({
             step,
             guideId,
-            insertAfterStepId: findInsertAfterStepId(allSteps, step.stepIndex),
+            insertAfterStepId: insertAfterStepIdFor(allSteps, step),
           });
         } catch (error) {
           const kind = classifyOutboxError(error);
@@ -194,8 +195,6 @@ export const createOutboxDrainer = ({
       }
     }
 
-    // Server deletes do not need a guide and are retried on every drain until
-    // the API confirms (or reports the step gone).
     for (const step of deletions) {
       if (isPaused) {
         return;
@@ -216,8 +215,6 @@ export const createOutboxDrainer = ({
       }
     }
 
-    // Throwing hands the whole session back to the queue's backoff so the
-    // failed steps are retried without blocking the ones that succeeded.
     if (transientFailure) {
       throw transientFailure;
     }
@@ -225,8 +222,11 @@ export const createOutboxDrainer = ({
 
   const queue = new AsyncQueuer<QueueItem>(
     async (item) => {
-      queuedSessionIds.delete(item.sessionId);
-      await drainSession(item.sessionId);
+      try {
+        await drainSession(item.sessionId);
+      } finally {
+        queuedSessionIds.delete(item.sessionId);
+      }
     },
     {
       concurrency: 1,
@@ -243,8 +243,12 @@ export const createOutboxDrainer = ({
         lastError = toError(error).message;
       },
       onSettled: () => {
+        if (isPaused || !lastRunDidWork) {
+          return;
+        }
+
         const state = queue.store.state;
-        if (state.items.length > 0 || state.activeItems.length > 0 || !lastRunDidWork) {
+        if (state.items.length > 0 || state.activeItems.length > 0) {
           return;
         }
 
@@ -269,12 +273,10 @@ export const createOutboxDrainer = ({
     }
 
     isPaused = false;
-    auth.invalidate();
     await lifecycleStore.patch({ isSignedOut: false });
     queue.start();
   };
 
-  /** Cheap kick from the capture path: the lifecycle already knows the session. */
   const kick = async () => {
     if (isPaused) {
       return;
@@ -290,25 +292,20 @@ export const createOutboxDrainer = ({
     enqueue(sessionId);
   };
 
-  /** Boot, alarm and re-auth entry point: every session owned by the user. */
   const drainAll = async () => {
-    if (isPaused) {
-      const userId = await auth.getUserId();
-      if (!userId) {
-        await handleAuthLost(new Error("Not signed in"));
-        return;
-      }
-      await resume();
-    }
-
     const userId = await auth.getUserId();
+
     if (!userId) {
-      await handleAuthLost(new Error("Not signed in"));
+      if (!isPaused) {
+        await handleAuthLost(new Error("Not signed in"));
+      }
       return;
     }
 
-    // Every session is queued, not just those with uploads: a session can hold
-    // only pending server deletes.
+    if (isPaused) {
+      await resume();
+    }
+
     const sessions = await repository.listSessionsByUserId(userId);
     for (const session of sessions) {
       enqueue(session.id);

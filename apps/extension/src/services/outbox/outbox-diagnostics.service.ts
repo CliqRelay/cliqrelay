@@ -1,33 +1,30 @@
 import type { OutboxDrainer } from "./outbox-drainer.service";
 import type { OutboxRepository } from "./outbox.repository";
-import { emptyOutboxCounts, type OutboxCounts } from "@/models";
-
-export type OutboxDiagnosticState = {
-  sessions: number;
-  steps: OutboxCounts;
-  drainer: {
-    isPaused: boolean;
-    isRunning: boolean;
-    queued: number;
-    active: number;
-    lastError: string | null;
-  };
-};
+import { emptyOutboxCounts, syncStatusValues } from "@/models";
+import { isDeveloperBuild } from "@/utils/diagnostics";
 
 type OutboxDiagnosticsDeps = {
   repository: Pick<OutboxRepository, "listSessions" | "getCounts">;
   drainer: Pick<OutboxDrainer, "getState">;
+  isDev?: boolean;
 };
 
-/** Dev-only snapshot behind the `get_outbox_state` runtime message. */
-export const createOutboxDiagnostics = ({ repository, drainer }: OutboxDiagnosticsDeps) => {
-  const getState = async (): Promise<OutboxDiagnosticState> => {
+export const createOutboxDiagnostics = ({
+  repository,
+  drainer,
+  isDev = isDeveloperBuild,
+}: OutboxDiagnosticsDeps) => {
+  const getState = async () => {
+    if (!isDev) {
+      return null;
+    }
+
     const sessions = await repository.listSessions();
     const steps = { ...emptyOutboxCounts };
 
     for (const session of sessions) {
       const counts = await repository.getCounts(session.id);
-      for (const status of Object.keys(steps) as (keyof OutboxCounts)[]) {
+      for (const status of syncStatusValues) {
         steps[status] += counts[status];
       }
     }
