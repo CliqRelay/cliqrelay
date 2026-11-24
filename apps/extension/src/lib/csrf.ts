@@ -29,7 +29,7 @@ export const getCsrfToken = async (): Promise<string | undefined> => {
       return cookie.value;
     }
   } catch {
-    // browser.cookies not available in this context (e.g. offscreen document)
+    // browser.cookies is unavailable in this context.
   }
   return getCsrfTokenFromBackground();
 };

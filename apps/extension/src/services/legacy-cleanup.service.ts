@@ -1,7 +1,6 @@
 import { browser } from "wxt/browser";
 
-import { STORAGE_KEY_ACTIVE_GUIDE } from "@/utils/constants";
-
+const LEGACY_ACTIVE_GUIDE_KEY = "activeGuideId";
 const LEGACY_OFFSCREEN_SESSION_KEY = "offscreen_session";
 
 type RemovableStorage = {
@@ -24,7 +23,7 @@ export const createLegacyCleanup =
   (local: RemovableStorage | undefined, session: RemovableStorage | undefined) =>
   async (): Promise<void> => {
     await Promise.all([
-      removeKey(local, STORAGE_KEY_ACTIVE_GUIDE),
+      removeKey(local, LEGACY_ACTIVE_GUIDE_KEY),
       removeKey(session, LEGACY_OFFSCREEN_SESSION_KEY),
     ]);
   };
