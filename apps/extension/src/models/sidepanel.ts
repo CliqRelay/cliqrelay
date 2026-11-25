@@ -56,7 +56,6 @@ export type JobPhase = z.infer<typeof jobPhaseSchema>;
 
 export const stepJobProgressSchema = z.object({
   jobId: z.string(),
-  stepId: z.string().optional(),
   guideId: z.string().optional(),
   action: z.string(),
   actionText: z.string().optional(),
@@ -140,9 +139,6 @@ export const toStepJobProgress = (
     phase: phaseBySyncStatus[step.syncStatus],
   };
 
-  if (step.serverStepId !== undefined) {
-    progress.stepId = step.serverStepId;
-  }
   if (step.guideId !== null) {
     progress.guideId = step.guideId;
   }

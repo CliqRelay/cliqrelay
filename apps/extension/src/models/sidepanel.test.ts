@@ -78,7 +78,6 @@ describe("sidepanel model mapping", () => {
       ),
     ).toMatchObject({
       phase: "completed",
-      stepId: "server-step-1",
       screenshotUrl: "https://cdn.example.com/step-1.webp",
     });
   });
