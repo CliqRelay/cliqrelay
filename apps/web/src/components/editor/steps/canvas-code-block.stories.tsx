@@ -4,6 +4,11 @@ import { expect, fn, userEvent, within } from "storybook/test";
 
 import { CanvasCodeBlock } from "./canvas-code-block";
 
+const longCode = Array.from(
+  { length: 40 },
+  (_, index) => `const value${index + 1} = compute(${index + 1});`,
+).join("\n");
+
 const meta = {
   title: "Editor/Steps/CanvasCodeBlock",
   component: CanvasCodeBlock,
@@ -72,5 +77,58 @@ export const EmptyCodeShowsPlaceholder: Story = {
   args: { code: "" },
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByText("No code yet")).toBeInTheDocument();
+  },
+};
+
+export const LongCodeIsCollapsedByDefault: Story = {
+  args: { code: longCode },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const toggle = canvas.getByRole("button", { name: "Expand" });
+    const codeArea = canvasElement.querySelector("[data-collapsed]");
+
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await expect(codeArea).toHaveAttribute("data-collapsed", "true");
+    await expect(codeArea?.contains(toggle)).toBe(true);
+    await expect(toggle.parentElement).toHaveClass("absolute");
+  },
+};
+
+export const ExpandingRevealsAllCode: Story = {
+  args: { code: longCode },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Expand" }));
+
+    await expect(canvas.getByRole("button", { name: "Collapse" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(canvasElement.querySelector("[data-collapsed]")).toHaveAttribute(
+      "data-collapsed",
+      "false",
+    );
+    const pre = canvasElement.querySelector("pre.th-code");
+
+    await expect(pre).not.toBeNull();
+    await expect(getComputedStyle(pre!).paddingBottom).toBe("56px");
+  },
+};
+
+export const ShortCodeHasNoToggle: Story = {
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).queryByRole("button", { name: /expand/i }),
+    ).not.toBeInTheDocument();
+  },
+};
+
+export const ToggleDoesNotSelectBlock: Story = {
+  args: { code: longCode },
+  play: async ({ canvasElement, args }) => {
+    await userEvent.click(within(canvasElement).getByRole("button", { name: "Expand" }));
+
+    await expect(args.onClick).not.toHaveBeenCalled();
   },
 };
