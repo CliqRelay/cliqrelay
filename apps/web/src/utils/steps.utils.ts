@@ -6,7 +6,11 @@ export function stepSupportsMedia(step: Pick<Step, "type" | "canvasContent">): b
   if (step.type !== "canvas") {
     return true;
   }
-  return step.canvasContent != null && step.canvasContent.type !== "header";
+  return (
+    step.canvasContent != null &&
+    step.canvasContent.type !== "header" &&
+    step.canvasContent.type !== "code"
+  );
 }
 
 export type StepsInfiniteData = InfiniteData<GetAllStepsResponse, string | undefined>;

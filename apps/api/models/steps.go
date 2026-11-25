@@ -53,6 +53,7 @@ const (
 	StepCanvasTypeAlert   StepCanvasType = "alert"
 	StepCanvasTypeTip     StepCanvasType = "tip"
 	StepCanvasTypeHeader  StepCanvasType = "header"
+	StepCanvasTypeCode    StepCanvasType = "code"
 )
 
 func (StepCanvasType) PrepareJSONSchema(schema *jsonschema.Schema) error {
@@ -62,6 +63,7 @@ func (StepCanvasType) PrepareJSONSchema(schema *jsonschema.Schema) error {
 		string(StepCanvasTypeAlert),
 		string(StepCanvasTypeTip),
 		string(StepCanvasTypeHeader),
+		string(StepCanvasTypeCode),
 	}
 	schema.WithDescription("The type of the canvas element")
 	return nil
@@ -71,13 +73,18 @@ func (s *Step) SupportsMedia() bool {
 	if s.Type != StepTypeCanvas {
 		return true
 	}
-	return s.CanvasContent != nil && s.CanvasContent.Type != StepCanvasTypeHeader
+	return s.CanvasContent != nil &&
+		s.CanvasContent.Type != StepCanvasTypeHeader &&
+		s.CanvasContent.Type != StepCanvasTypeCode
 }
 
 type StepCanvasContent struct {
-	Type        StepCanvasType `json:"type" validate:"required,oneof=callout alert tip header" required:"true" nullable:"false"`
+	Type        StepCanvasType `json:"type" validate:"required,oneof=callout alert tip header code" required:"true" nullable:"false"`
 	HeadingText *string        `json:"heading_text,omitempty"`
 	BodyText    *string        `json:"body_text,omitempty"`
+	Language    *string        `json:"language,omitempty"`
+	Code        *string        `json:"code,omitempty"`
+	Caption     *string        `json:"caption,omitempty"`
 }
 
 type Step struct {

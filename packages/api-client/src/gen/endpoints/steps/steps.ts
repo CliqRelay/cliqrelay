@@ -44,6 +44,35 @@ import { customFetch } from "../../../mutators/custom-fetch";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
@@ -150,6 +179,10 @@ export type GetAllStepsByGuideIdInfiniteQueryResult = NonNullable<
 >;
 export type GetAllStepsByGuideIdInfiniteQueryError = unknown;
 
+/**
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
+ * @summary Get all steps by guide ID
+ */
 export function useGetAllStepsByGuideIdInfinite<
   TData = InfiniteData<
     Awaited<ReturnType<typeof getAllStepsByGuideId>>,
@@ -181,6 +214,10 @@ export function useGetAllStepsByGuideIdInfinite<
   },
   queryClient?: QueryClient,
 ): DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
+ * @summary Get all steps by guide ID
+ */
 export function useGetAllStepsByGuideIdInfinite<
   TData = InfiniteData<
     Awaited<ReturnType<typeof getAllStepsByGuideId>>,
@@ -212,6 +249,10 @@ export function useGetAllStepsByGuideIdInfinite<
   },
   queryClient?: QueryClient,
 ): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
+ * @summary Get all steps by guide ID
+ */
 export function useGetAllStepsByGuideIdInfinite<
   TData = InfiniteData<
     Awaited<ReturnType<typeof getAllStepsByGuideId>>,
@@ -235,9 +276,9 @@ export function useGetAllStepsByGuideIdInfinite<
   queryClient?: QueryClient,
 ): UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
  * @summary Get all steps by guide ID
  */
-
 export function useGetAllStepsByGuideIdInfinite<
   TData = InfiniteData<
     Awaited<ReturnType<typeof getAllStepsByGuideId>>,
@@ -301,6 +342,10 @@ export type GetAllStepsByGuideIdQueryResult = NonNullable<
 >;
 export type GetAllStepsByGuideIdQueryError = unknown;
 
+/**
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
+ * @summary Get all steps by guide ID
+ */
 export function useGetAllStepsByGuideId<
   TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
   TError = unknown,
@@ -322,6 +367,10 @@ export function useGetAllStepsByGuideId<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
+ * @summary Get all steps by guide ID
+ */
 export function useGetAllStepsByGuideId<
   TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
   TError = unknown,
@@ -343,6 +392,10 @@ export function useGetAllStepsByGuideId<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
+ * @summary Get all steps by guide ID
+ */
 export function useGetAllStepsByGuideId<
   TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
   TError = unknown,
@@ -357,9 +410,9 @@ export function useGetAllStepsByGuideId<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieves a page of steps for a guide ordered by sort_order. Pass the previous page's next_cursor to continue.
  * @summary Get all steps by guide ID
  */
-
 export function useGetAllStepsByGuideId<
   TData = Awaited<ReturnType<typeof getAllStepsByGuideId>>,
   TError = unknown,
@@ -394,29 +447,10 @@ export const createStep = async (
   createStepRequest?: CreateStepRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<CreateStepResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<CreateStepResponse>(getCreateStepUrl(), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(createStepRequest),
   });
 };
@@ -462,6 +496,7 @@ export type CreateStepMutationError = unknown;
 export type CreateStepMutationVariables = { data?: CreateStepRequest };
 
 /**
+ * Creates a new step within a guide
  * @summary Create step
  */
 export const useCreateStep = <TError = unknown, TContext = unknown>(
@@ -495,29 +530,10 @@ export const reorderSteps = async (
   reorderStepsRequest?: ReorderStepsRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<ReorderStepsResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<ReorderStepsResponse>(getReorderStepsUrl(), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(reorderStepsRequest),
   });
 };
@@ -563,6 +579,7 @@ export type ReorderStepsMutationError = unknown;
 export type ReorderStepsMutationVariables = { data?: ReorderStepsRequest };
 
 /**
+ * Reorders steps within a guide
  * @summary Reorder steps
  */
 export const useReorderSteps = <TError = unknown, TContext = unknown>(
@@ -636,6 +653,10 @@ export const getGetStepByIdQueryOptions = <
 export type GetStepByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getStepById>>>;
 export type GetStepByIdQueryError = unknown;
 
+/**
+ * Retrieves a single step by its ID
+ * @summary Get step by ID
+ */
 export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, TError = unknown>(
   id: string,
   options: {
@@ -652,6 +673,10 @@ export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, 
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a single step by its ID
+ * @summary Get step by ID
+ */
 export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, TError = unknown>(
   id: string,
   options?: {
@@ -668,6 +693,10 @@ export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, 
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a single step by its ID
+ * @summary Get step by ID
+ */
 export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, TError = unknown>(
   id: string,
   options?: {
@@ -677,9 +706,9 @@ export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, 
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieves a single step by its ID
  * @summary Get step by ID
  */
-
 export function useGetStepById<TData = Awaited<ReturnType<typeof getStepById>>, TError = unknown>(
   id: string,
   options?: {
@@ -756,6 +785,7 @@ export type DeleteStepMutationError = unknown;
 export type DeleteStepMutationVariables = { id: string };
 
 /**
+ * Hard-deletes a step
  * @summary Delete step
  */
 export const useDeleteStep = <TError = unknown, TContext = unknown>(
@@ -790,29 +820,10 @@ export const updateStep = async (
   updateStepRequest?: UpdateStepRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<UpdateStepResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<UpdateStepResponse>(getUpdateStepUrl(id), {
     ...options,
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(updateStepRequest),
   });
 };
@@ -858,6 +869,7 @@ export type UpdateStepMutationError = unknown;
 export type UpdateStepMutationVariables = { id: string; data?: UpdateStepRequest };
 
 /**
+ * Updates an existing step
  * @summary Update step
  */
 export const useUpdateStep = <TError = unknown, TContext = unknown>(
@@ -892,29 +904,10 @@ export const duplicateStep = async (
   duplicateStepRequest?: DuplicateStepRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<DuplicateStepResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<DuplicateStepResponse>(getDuplicateStepUrl(id), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(duplicateStepRequest),
   });
 };
@@ -960,6 +953,7 @@ export type DuplicateStepMutationError = unknown;
 export type DuplicateStepMutationVariables = { id: string; data?: DuplicateStepRequest };
 
 /**
+ * Duplicates a step including its media assets
  * @summary Duplicate step
  */
 export const useDuplicateStep = <TError = unknown, TContext = unknown>(

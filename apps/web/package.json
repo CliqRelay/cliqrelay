@@ -57,6 +57,7 @@
     "@repo/extensions-sdk": "workspace:*",
     "@storybook/react-vite": "^10.6.7",
     "@t3-oss/env-core": "^0.13.11",
+    "@tanstack/highlight": "^1.2.12",
     "@tanstack/react-devtools": "^0.10.14",
     "@tanstack/react-form": "^1.33.5",
     "@tanstack/react-query": "^5.107.1",

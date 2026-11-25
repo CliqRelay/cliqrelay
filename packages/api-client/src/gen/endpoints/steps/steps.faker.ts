@@ -41,7 +41,19 @@ export const getGetAllStepsByGuideIdResponseMock = (
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
+        caption: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        code: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
         headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        language: faker.helpers.arrayElement([
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
@@ -115,7 +127,19 @@ export const getCreateStepResponseMock = (
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
+        caption: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        code: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
         headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        language: faker.helpers.arrayElement([
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
@@ -188,7 +212,19 @@ export const getReorderStepsResponseMock = (
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
+        caption: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        code: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
         headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        language: faker.helpers.arrayElement([
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
@@ -263,7 +299,19 @@ export const getGetStepByIdResponseMock = (
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
           ]),
+          caption: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          code: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
           headingText: faker.helpers.arrayElement([
+            faker.string.alpha({ length: { min: 10, max: 20 } }),
+            null,
+          ]),
+          language: faker.helpers.arrayElement([
             faker.string.alpha({ length: { min: 10, max: 20 } }),
             null,
           ]),
@@ -347,7 +395,19 @@ export const getUpdateStepResponseMock = (
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
+        caption: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        code: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
         headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        language: faker.helpers.arrayElement([
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
@@ -420,7 +480,19 @@ export const getDuplicateStepResponseMock = (
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),
+        caption: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        code: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
         headingText: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        language: faker.helpers.arrayElement([
           faker.string.alpha({ length: { min: 10, max: 20 } }),
           null,
         ]),

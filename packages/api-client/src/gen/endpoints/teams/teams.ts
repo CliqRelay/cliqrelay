@@ -84,6 +84,10 @@ export const getGetTeamsQueryOptions = <
 export type GetTeamsQueryResult = NonNullable<Awaited<ReturnType<typeof getTeams>>>;
 export type GetTeamsQueryError = unknown;
 
+/**
+ * Returns all teams the user belongs to.
+ * @summary Get all teams for a user.
+ */
 export function useGetTeams<TData = Awaited<ReturnType<typeof getTeams>>, TError = unknown>(
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTeams>>, TError, TData>> &
@@ -99,6 +103,10 @@ export function useGetTeams<TData = Awaited<ReturnType<typeof getTeams>>, TError
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns all teams the user belongs to.
+ * @summary Get all teams for a user.
+ */
 export function useGetTeams<TData = Awaited<ReturnType<typeof getTeams>>, TError = unknown>(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTeams>>, TError, TData>> &
@@ -114,6 +122,10 @@ export function useGetTeams<TData = Awaited<ReturnType<typeof getTeams>>, TError
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns all teams the user belongs to.
+ * @summary Get all teams for a user.
+ */
 export function useGetTeams<TData = Awaited<ReturnType<typeof getTeams>>, TError = unknown>(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTeams>>, TError, TData>>;
@@ -122,9 +134,9 @@ export function useGetTeams<TData = Awaited<ReturnType<typeof getTeams>>, TError
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Returns all teams the user belongs to.
  * @summary Get all teams for a user.
  */
-
 export function useGetTeams<TData = Awaited<ReturnType<typeof getTeams>>, TError = unknown>(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getTeams>>, TError, TData>>;

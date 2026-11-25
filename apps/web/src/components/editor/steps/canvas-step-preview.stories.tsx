@@ -47,6 +47,23 @@ export const Header: Story = {
   },
 };
 
+export const CodeBlock: Story = {
+  args: {
+    step: makeCanvasStep({
+      type: "code",
+      language: "typescript",
+      code: "const answer = 42;",
+      caption: "example.ts",
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByRole("alert")).not.toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Copy code" })).toBeInTheDocument();
+    await expect(canvas.getByText("TypeScript")).toBeInTheDocument();
+  },
+};
+
 export const WithScreenshotInsideShell: Story = {
   args: { step: makeCanvasStep({}, { mediaAssets: [makeMediaAsset()] }) },
   play: async ({ canvasElement }) => {

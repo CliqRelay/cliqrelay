@@ -16,4 +16,5 @@ export const StepCanvasType = {
   alert: "alert",
   tip: "tip",
   header: "header",
+  code: "code",
 } as const;

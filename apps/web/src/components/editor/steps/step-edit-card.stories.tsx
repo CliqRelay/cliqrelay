@@ -137,6 +137,51 @@ export const CanvasHeaderKeepsCard: Story = {
   },
 };
 
+export const CodeBlockPreview: Story = {
+  args: {
+    step: makeCanvasStep({
+      type: "code",
+      language: "go",
+      code: 'fmt.Println("hello")',
+      caption: "main.go",
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvasElement.querySelector("[data-slot='card']")).not.toBeInTheDocument();
+    await expect(canvas.queryByRole("alert")).not.toBeInTheDocument();
+    await expect(canvas.getByText("Go")).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Copy code" })).toBeInTheDocument();
+  },
+};
+
+export const CodeBlockSelectedShowsForm: Story = {
+  args: {
+    step: makeCanvasStep({
+      type: "code",
+      language: "go",
+      code: 'fmt.Println("hello")',
+      caption: "main.go",
+    }),
+    selectedStepId: "step-1",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByRole("alert")).not.toBeInTheDocument();
+    await expect(canvas.getByRole("combobox", { name: "Type" })).toHaveTextContent("Code Block");
+    await expect(canvas.getByRole("textbox", { name: "Code" })).toHaveValue('fmt.Println("hello")');
+  },
+};
+
+export const AddCodeBlockFromDock: Story = {
+  play: async ({ canvasElement, args }) => {
+    await userEvent.click(within(canvasElement).getByRole("button", { name: /Add Step/ }));
+    await userEvent.click(await screen.findByRole("button", { name: /Code Block/ }));
+
+    await expect(args.actions?.onAddStepBeforeWithType).toHaveBeenCalledWith("step-1", "code");
+  },
+};
+
 export const AddStepBeforeDock: Story = {
   play: async ({ canvasElement }) => {
     await expect(

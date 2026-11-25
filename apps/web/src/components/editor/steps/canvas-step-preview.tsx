@@ -3,10 +3,12 @@ import ReactMarkdown from "react-markdown";
 
 import type { Step } from "@repo/api-client";
 
+import { CanvasCodeBlock } from "./canvas-code-block";
 import { CanvasStepShell, canvasForegroundClassName } from "./canvas-step-shell";
 import { StepMedia } from "./step-media";
 import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { DEFAULT_CODE_LANGUAGE } from "@/models";
 
 type Props = {
   step: Step;
@@ -28,6 +30,19 @@ export function CanvasStepPreview({
   const canvasContent = step.canvasContent;
   if (!canvasContent) {
     return null;
+  }
+
+  if (canvasContent.type === "code") {
+    return (
+      <CanvasCodeBlock
+        code={canvasContent.code ?? ""}
+        language={canvasContent.language ?? DEFAULT_CODE_LANGUAGE}
+        caption={canvasContent.caption}
+        toolbar={toolbar}
+        className={className}
+        onClick={onClick}
+      />
+    );
   }
 
   if (canvasContent.type === "header") {

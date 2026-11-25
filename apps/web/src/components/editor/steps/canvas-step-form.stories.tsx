@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
+import { expect, fireEvent, fn, screen, userEvent, waitFor, within } from "storybook/test";
 
 import type { Step } from "@repo/api-client";
 
@@ -50,10 +50,68 @@ export const ChangeType: Story = {
     await expect(args.onUpdate).toHaveBeenCalledWith("step-1", {
       canvasContent: {
         type: "callout",
-        headingText: "Keep this in mind",
-        bodyText: "Some **markdown** body text.",
+        headingText: "",
+        bodyText: "",
       },
     });
+  },
+};
+
+export const ChangeTypeToCodeBlock: Story = {
+  play: async ({ canvasElement, args }) => {
+    await userEvent.click(within(canvasElement).getByRole("combobox"));
+    await userEvent.click(await screen.findByRole("option", { name: "Code Block" }));
+    await expect(args.onUpdate).toHaveBeenCalledWith("step-1", {
+      canvasContent: {
+        type: "code",
+        language: "plaintext",
+        code: "",
+        caption: "",
+      },
+    });
+  },
+};
+
+export const CodeFieldsRenderStoredValues: Story = {
+  args: {
+    step: makeCanvasStep({
+      type: "code",
+      language: "yaml",
+      code: "services:\n  web:\n    image: nginx",
+      caption: "docker-compose.prod.yml",
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("combobox", { name: "Language" })).toHaveTextContent("YAML");
+    await expect(canvas.getByPlaceholderText("docker-compose.prod.yml")).toHaveValue(
+      "docker-compose.prod.yml",
+    );
+    await expect(canvas.getByRole("textbox", { name: "Code" })).toHaveValue(
+      "services:\n  web:\n    image: nginx",
+    );
+  },
+};
+
+export const CodeTabInsertsTwoSpaces: Story = {
+  args: {
+    step: makeCanvasStep({ type: "code", code: "const" }),
+  },
+  play: async ({ canvasElement, args }) => {
+    const code = within(canvasElement).getByRole("textbox", {
+      name: "Code",
+    }) as HTMLTextAreaElement;
+    code.focus();
+    code.setSelectionRange(5, 5);
+    fireEvent.keyDown(code, { key: "Tab" });
+
+    await waitFor(() => expect(code).toHaveValue("const  "));
+    await waitFor(() => expect(code).toHaveFocus());
+    await waitFor(() =>
+      expect(args.onUpdate).toHaveBeenLastCalledWith("step-1", {
+        canvasContent: expect.objectContaining({ code: "const  " }),
+      }),
+    );
   },
 };
 

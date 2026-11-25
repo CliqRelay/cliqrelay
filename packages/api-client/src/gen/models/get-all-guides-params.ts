@@ -15,8 +15,6 @@ export type GetAllGuidesParams = {
   page?: number;
   limit?: number;
   sort_by?: null | GuideSortField;
-  /**
-   * @nullable
-   */
+  /** @nullable */
   sort_dir?: string | null;
 };

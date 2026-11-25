@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -48,6 +49,26 @@ func TestGeneratePDFWithTypst(t *testing.T) {
 			ActionText: new("Click the button"),
 			MediaAssets: []*models.MediaAsset{
 				{StoragePath: "uploads/shot.png", MimeType: new("image/png")},
+			},
+		}
+	}
+
+	codeStep := func() *models.Step {
+		lines := make([]string, 0, 61)
+		lines = append(lines, strings.Repeat("const value = ", 14)+"42;")
+		for range 60 {
+			lines = append(lines, `fmt.Println("a deliberately long-ish line of code")`)
+		}
+
+		return &models.Step{
+			ID:        uuid.New(),
+			Type:      models.StepTypeCanvas,
+			SortOrder: "a",
+			CanvasContent: &models.StepCanvasContent{
+				Type:     models.StepCanvasTypeCode,
+				Language: new("go"),
+				Code:     new(strings.Join(lines, "\n")),
+				Caption:  new("main.go"),
 			},
 		}
 	}
@@ -119,6 +140,10 @@ func TestGeneratePDFWithTypst(t *testing.T) {
 					Once()
 			},
 			expectCall: true,
+		},
+		{
+			name:  "code block with long lines and many lines",
+			steps: []*models.Step{codeStep()},
 		},
 		{
 			name:  "step with media downloads the image",

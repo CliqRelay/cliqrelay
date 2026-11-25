@@ -69,6 +69,18 @@ describe("getStepTitle", () => {
     expect(getStepTitle(makeCanvasStep({ headingText: "" }), 3)).toBe("Tip");
   });
 
+  test("uses the code caption", () => {
+    expect(
+      getStepTitle(makeCanvasStep({ type: "code", headingText: "", caption: "  main.go  " }), 3),
+    ).toBe("main.go");
+  });
+
+  test("falls back to Code when the code caption is missing", () => {
+    expect(getStepTitle(makeCanvasStep({ type: "code", headingText: "", caption: "" }), 3)).toBe(
+      "Code",
+    );
+  });
+
   test("falls back to Canvas when there is no canvas content", () => {
     expect(getStepTitle(makeCanvasStep({}, { canvasContent: undefined }), 3)).toBe("Canvas");
   });

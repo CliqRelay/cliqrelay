@@ -11,6 +11,12 @@ export type StepCanvasContent = {
   /** @nullable */
   bodyText?: string | null;
   /** @nullable */
+  caption?: string | null;
+  /** @nullable */
+  code?: string | null;
+  /** @nullable */
   headingText?: string | null;
+  /** @nullable */
+  language?: string | null;
   type: StepCanvasType;
 };

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin '@tailwindcss/typography';
@@ -73,59 +73,59 @@
   --radius: 0.75rem;
   --radius-card: 20px;
 
-  --background: #EEF1F6;
-  --surface-1: #FFFFFF;
-  --surface-2: #F8FAFC;
-  --surface-hover: #F1F5F9;
-  --elevated: #FFFFFF;
+  --background: #eef1f6;
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --elevated: #ffffff;
 
-  --foreground: #0F172A;
+  --foreground: #0f172a;
   --muted-foreground: #475569;
-  --card: #FFFFFF;
-  --card-foreground: #0F172A;
-  --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
 
   --primary: #00a6f4;
-  --primary-foreground: #FFFFFF;
+  --primary-foreground: #ffffff;
 
-  --secondary: #F8FAFC;
-  --secondary-foreground: #0F172A;
-  --muted: #F1F5F9;
-  --accent: #F1F5F9;
-  --accent-foreground: #0F172A;
+  --secondary: #f8fafc;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
 
-  --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
-  --success: #16A34A;
-  --warning: #D97706;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --warning: #d97706;
 
   --border: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.12);
   --input: rgba(15, 23, 42, 0.08);
-  --ring: #03A0EC;
+  --ring: #03a0ec;
 
-  --chart-1: #234DF0;
-  --chart-2: #03A0EC;
-  --chart-3: #7C3AED;
-  --chart-4: #0891B2;
-  --chart-5: #16A34A;
+  --chart-1: #234df0;
+  --chart-2: #03a0ec;
+  --chart-3: #7c3aed;
+  --chart-4: #0891b2;
+  --chart-5: #16a34a;
 
-  --purple: #8B5CF6;
-  --purple-foreground: #FFFFFF;
-  --yellow: #F4B942;
-  --yellow-foreground: #0F172A;
-  --pink: #EC6AFF;
-  --pink-foreground: #FFFFFF;
+  --purple: #8b5cf6;
+  --purple-foreground: #ffffff;
+  --yellow: #f4b942;
+  --yellow-foreground: #0f172a;
+  --pink: #ec6aff;
+  --pink-foreground: #ffffff;
 
-  --sidebar: #F5F7FA;
+  --sidebar: #f5f7fa;
   --sidebar-foreground: #475569;
-  --sidebar-primary: #234DF0;
-  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-primary: #234df0;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgba(3, 160, 236, 0.08);
-  --sidebar-accent-foreground: #0F172A;
+  --sidebar-accent-foreground: #0f172a;
   --sidebar-border: rgba(15, 23, 42, 0.08);
-  --sidebar-ring: #03A0EC;
+  --sidebar-ring: #03a0ec;
 
   --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-elevated: 0 10px 28px rgba(15, 23, 42, 0.06);
@@ -133,7 +133,7 @@
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
 
   --scrollbar-thumb: rgba(15, 23, 42, 0.12);
-  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.20);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.2);
 
   --icon-subtle: rgba(15, 23, 42, 0.03);
   --icon-dots: rgba(15, 23, 42, 0.08);
@@ -141,11 +141,11 @@
 }
 
 .dark {
-  --background: #0A1324;
+  --background: #0a1324;
   --surface-1: #081122;
-  --surface-2: #0B162A;
-  --surface-hover: #0E1B30;
-  --elevated: #0E1B30;
+  --surface-2: #0b162a;
+  --surface-hover: #0e1b30;
+  --elevated: #0e1b30;
 
   --foreground: oklch(0.97 0.01 240);
   --muted-foreground: oklch(0.62 0.015 240);
@@ -154,7 +154,7 @@
   --popover: var(--elevated);
   --popover-foreground: var(--foreground);
 
-  --primary: oklch(0.62 0.20 252);
+  --primary: oklch(0.62 0.2 252);
   --primary-foreground: oklch(0.98 0.005 240);
 
   --secondary: var(--surface-2);
@@ -186,7 +186,7 @@
   --pink: #ec6aff;
   --pink-foreground: oklch(0.15 0.02 320);
 
-  --sidebar: #0A1324;
+  --sidebar: #0a1324;
   --sidebar-foreground: oklch(0.8 0.02 250);
   --sidebar-primary: oklch(0.64 0.21 268);
   --sidebar-primary-foreground: oklch(0.98 0.005 240);
@@ -290,5 +290,13 @@
 }
 
 .dashboard-page__wrapper {
-  @apply w-full max-w-7xl mx-auto p-8;
+  @apply mx-auto w-full max-w-7xl p-8;
+}
+
+.th-comment {
+  font-style: italic;
+}
+
+.th-keyword {
+  font-weight: 600;
 }

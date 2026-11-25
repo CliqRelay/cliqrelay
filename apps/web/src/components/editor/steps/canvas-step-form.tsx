@@ -1,11 +1,6 @@
-import { useEffect } from "react";
+import type { Step, StepCanvasType } from "@repo/api-client";
 
-import { useForm } from "@tanstack/react-form";
-
-import { z } from "zod";
-
-import type { Step } from "@repo/api-client";
-
+import { CanvasCodeFields } from "./canvas-code-fields";
 import { StepMedia } from "./step-media";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,20 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useDebouncedSave } from "@/hooks/useDebouncedSave";
-
-const canvasFormSchema = z.object({
-  headingText: z.string(),
-  bodyText: z.string(),
-});
-
-type CanvasFormValues = z.infer<typeof canvasFormSchema>;
+import { useCanvasStepForm } from "@/hooks/useCanvasStepForm";
 
 const CANVAS_TYPE_OPTIONS = [
   { value: "tip", label: "Tip" },
   { value: "callout", label: "Callout" },
   { value: "alert", label: "Alert" },
   { value: "header", label: "Header" },
+  { value: "code", label: "Code Block" },
 ] as const;
 
 type CanvasStepFormProps = {
@@ -45,27 +34,11 @@ export function CanvasStepForm({
   onReplaceMedia,
   isReplacing,
 }: CanvasStepFormProps) {
-  const form = useForm({
-    defaultValues: {
-      headingText: step.canvasContent?.headingText ?? "",
-      bodyText: step.canvasContent?.bodyText ?? "",
-    },
-    validators: { onChange: canvasFormSchema },
-  });
+  const { form, canvasType, saveCanvasContent, handleTypeChange, handleCodeTab } =
+    useCanvasStepForm({ step, onUpdate });
 
-  useEffect(() => {
-    if (form.state.isDirty) return;
-    const newDefaults: CanvasFormValues = {
-      headingText: step.canvasContent?.headingText ?? "",
-      bodyText: step.canvasContent?.bodyText ?? "",
-    };
-    form.reset(newDefaults);
-  }, [form, step.canvasContent?.headingText, step.canvasContent?.bodyText]);
-
-  const debouncedSave = useDebouncedSave(step.id, onUpdate ?? (() => {}));
-
-  const canvasType = step.canvasContent?.type ?? "tip";
   const isHeader = canvasType === "header";
+  const isCode = canvasType === "code";
 
   return (
     <>
@@ -73,17 +46,9 @@ export function CanvasStepForm({
         <label className="mb-1 block text-xs font-medium text-muted-foreground">Type</label>
         <Select
           value={canvasType}
-          onValueChange={(value) => {
-            onUpdate?.(step.id, {
-              canvasContent: {
-                type: value,
-                headingText: step.canvasContent?.headingText ?? "",
-                bodyText: step.canvasContent?.bodyText ?? "",
-              },
-            });
-          }}
+          onValueChange={(value) => handleTypeChange(value as StepCanvasType)}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger aria-label="Type" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -96,59 +61,57 @@ export function CanvasStepForm({
         </Select>
       </div>
 
-      <div className="mb-4">
-        <label className="mb-1 block text-xs font-medium text-muted-foreground">Heading</label>
-        <form.Field name="headingText">
-          {(field) => (
-            <Input
-              value={field.state.value}
-              onChange={(e) => {
-                field.handleChange(e.target.value);
-                debouncedSave("canvasContent", {
-                  type: canvasType,
-                  headingText: e.target.value,
-                  bodyText: form.getFieldValue("bodyText"),
-                });
-              }}
-              onBlur={field.handleBlur}
-              onClick={(e) => e.stopPropagation()}
-              placeholder={isHeader ? "Section heading" : "Alert heading text"}
-            />
-          )}
-        </form.Field>
-      </div>
-
-      {!isHeader && (
+      {isCode ? (
+        <CanvasCodeFields form={form} onSave={saveCanvasContent} onTab={handleCodeTab} />
+      ) : (
         <>
           <div className="mb-4">
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Body</label>
-            <form.Field name="bodyText">
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">Heading</label>
+            <form.Field name="headingText">
               {(field) => (
-                <Textarea
+                <Input
                   value={field.state.value}
                   onChange={(e) => {
                     field.handleChange(e.target.value);
-                    debouncedSave("canvasContent", {
-                      type: canvasType,
-                      headingText: form.getFieldValue("headingText"),
-                      bodyText: e.target.value,
-                    });
+                    saveCanvasContent({ headingText: e.target.value });
                   }}
                   onBlur={field.handleBlur}
                   onClick={(e) => e.stopPropagation()}
-                  placeholder="Markdown body text"
-                  rows={3}
+                  placeholder={isHeader ? "Section heading" : "Alert heading text"}
                 />
               )}
             </form.Field>
           </div>
 
-          <StepMedia
-            step={step}
-            className="mb-0"
-            onReplaceMedia={onReplaceMedia}
-            isReplacing={isReplacing}
-          />
+          {!isHeader && (
+            <>
+              <div className="mb-4">
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Body</label>
+                <form.Field name="bodyText">
+                  {(field) => (
+                    <Textarea
+                      value={field.state.value}
+                      onChange={(e) => {
+                        field.handleChange(e.target.value);
+                        saveCanvasContent({ bodyText: e.target.value });
+                      }}
+                      onBlur={field.handleBlur}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="Markdown body text"
+                      rows={3}
+                    />
+                  )}
+                </form.Field>
+              </div>
+
+              <StepMedia
+                step={step}
+                className="mb-0"
+                onReplaceMedia={onReplaceMedia}
+                isReplacing={isReplacing}
+              />
+            </>
+          )}
         </>
       )}
     </>

@@ -2443,7 +2443,25 @@
               "string"
             ]
           },
+          "caption": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "heading_text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "language": {
             "type": [
               "null",
               "string"
@@ -2464,7 +2482,8 @@
           "callout",
           "alert",
           "tip",
-          "header"
+          "header",
+          "code"
         ],
         "type": "string"
       },

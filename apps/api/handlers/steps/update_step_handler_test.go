@@ -113,6 +113,58 @@ func TestUpdateStepHandler(t *testing.T) {
 			responseKey:    "step.type",
 		},
 		{
+			name:   "updates code canvas content",
+			stepID: uuid.New().String(),
+			payload: types.UpdateStepRequest{
+				Type: new(models.StepType(models.StepTypeCanvas)),
+				CanvasContent: &models.StepCanvasContent{
+					Type:     models.StepCanvasTypeCode,
+					Language: new("bash"),
+					Code:     new("pnpm install"),
+					Caption:  new("install.sh"),
+				},
+			},
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				guideID := uuid.New()
+				mockStepsRepo.On("GetByID", mock.Anything, mock.Anything).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   guideID,
+						SortOrder: "a0",
+						Type:      models.StepTypeCanvas,
+						CanvasContent: &models.StepCanvasContent{
+							Type: models.StepCanvasTypeTip,
+						},
+					}, nil).
+					Twice()
+				mockGuidesRepo.On("GetByID", mock.Anything, guideID.String()).
+					Return(&models.Guide{
+						ID:        guideID,
+						CreatorID: new("test-user-123"),
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Once()
+				mockStepsRepo.On("Update", mock.Anything, mock.Anything).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   uuid.New(),
+						SortOrder: "a0",
+						Type:      models.StepTypeCanvas,
+						CanvasContent: &models.StepCanvasContent{
+							Type:     models.StepCanvasTypeCode,
+							Language: new("bash"),
+							Code:     new("pnpm install"),
+							Caption:  new("install.sh"),
+						},
+					}, nil).
+					Once()
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   "canvas",
+			responseKey:    "step.type",
+		},
+		{
 			name:           "invalid JSON body",
 			stepID:         uuid.New().String(),
 			rawBody:        []byte("{invalid json}"),

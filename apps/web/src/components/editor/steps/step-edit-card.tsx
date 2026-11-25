@@ -61,7 +61,10 @@ export function StepEditCard({ step, stepNumber, selectedStepId, actions, isRepl
 
   const isSelected = selectedStepId === step.id;
   const isCanvasStep = step.type === "canvas";
-  const isAlertLikeCanvasStep = isCanvasStep && step.canvasContent?.type !== "header";
+  const canvasType = step.canvasContent?.type;
+  const isAlertLikeCanvasStep =
+    isCanvasStep && (canvasType === "tip" || canvasType === "callout" || canvasType === "alert");
+  const isCodeCanvasStep = isCanvasStep && canvasType === "code";
   const toggleSelect = () => onSelect?.(isSelected ? null : step.id);
 
   const actionsMenu = (trigger: ReactNode) => (
@@ -118,6 +121,33 @@ export function StepEditCard({ step, stepNumber, selectedStepId, actions, isRepl
       toolbar={canvasToolbar}
       onReplaceMedia={canReplaceMedia ? handleOpenFilePicker : undefined}
       isReplacing={isReplacing}
+      className={cn("flex-1 cursor-pointer", isDragging && "opacity-20")}
+      onClick={toggleSelect}
+    />
+  );
+
+  const codeStep = isSelected ? (
+    <div
+      className={cn(
+        "relative flex-1 overflow-hidden rounded-lg border border-primary bg-card ring-2 ring-primary/30",
+        isDragging && "opacity-20",
+      )}
+      onClick={toggleSelect}
+    >
+      {canvasToolbar}
+      <div className="p-4 pr-20" onClick={(e) => e.stopPropagation()}>
+        <CanvasStepForm
+          step={step}
+          onUpdate={onUpdate}
+          onReplaceMedia={canReplaceMedia ? handleOpenFilePicker : undefined}
+          isReplacing={isReplacing}
+        />
+      </div>
+    </div>
+  ) : (
+    <CanvasStepPreview
+      step={step}
+      toolbar={canvasToolbar}
       className={cn("flex-1 cursor-pointer", isDragging && "opacity-20")}
       onClick={toggleSelect}
     />
@@ -222,7 +252,7 @@ export function StepEditCard({ step, stepNumber, selectedStepId, actions, isRepl
           <GripVerticalIcon className="h-4 w-4 text-muted-foreground" />
         </div>
 
-        {isAlertLikeCanvasStep ? canvasStep : cardStep}
+        {isAlertLikeCanvasStep ? canvasStep : isCodeCanvasStep ? codeStep : cardStep}
         {filePicker}
       </div>
     </>

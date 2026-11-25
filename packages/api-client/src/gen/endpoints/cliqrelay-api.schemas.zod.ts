@@ -161,7 +161,7 @@ export type StepAction = zod.input<typeof StepAction>;
 export type StepActionOutput = zod.output<typeof StepAction>;
 
 export const StepCanvasType = zod
-  .enum(["callout", "alert", "tip", "header"])
+  .enum(["callout", "alert", "tip", "header", "code"])
   .describe("The type of the canvas element");
 
 export type StepCanvasType = zod.input<typeof StepCanvasType>;
@@ -169,7 +169,10 @@ export type StepCanvasTypeOutput = zod.output<typeof StepCanvasType>;
 
 export const StepCanvasContent = zod.object({
   bodyText: zod.string().nullish(),
+  caption: zod.string().nullish(),
+  code: zod.string().nullish(),
   headingText: zod.string().nullish(),
+  language: zod.string().nullish(),
   type: StepCanvasType,
 });
 
