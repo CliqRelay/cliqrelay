@@ -1368,6 +1368,13 @@
               "string"
             ]
           },
+          "metadata": {
+            "additionalProperties": {},
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "team_id": {
             "$ref": "#/components/schemas/UUID"
           },
@@ -2573,6 +2580,13 @@
             "type": [
               "null",
               "string"
+            ]
+          },
+          "metadata": {
+            "additionalProperties": {},
+            "type": [
+              "object",
+              "null"
             ]
           },
           "title": {

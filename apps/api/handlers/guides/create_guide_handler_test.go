@@ -34,12 +34,15 @@ func TestCreateGuideHandler(t *testing.T) {
 				TeamID:      uuid.New(),
 				Title:       "Test Guide",
 				Description: new("A description"),
+				Metadata:    map[string]any{"source": "extension"},
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
-				mockRepo.On("Create", mock.Anything, mock.Anything).
+				mockRepo.On("Create", mock.Anything, mock.MatchedBy(func(dto *types.CreateGuideDTO) bool {
+					return assert.ObjectsAreEqual(map[string]any{"source": "extension"}, dto.Metadata)
+				})).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: new("test-user-123"),

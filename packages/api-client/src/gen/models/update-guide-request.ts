@@ -5,11 +5,14 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateGuideRequestMetadata } from "./update-guide-request-metadata";
 import type { Visibility } from "./visibility";
 
 export type UpdateGuideRequest = {
   /** @nullable */
   description?: string | null;
+  /** @nullable */
+  metadata?: UpdateGuideRequestMetadata;
   /** @nullable */
   title?: string | null;
   visibility?: null | Visibility;

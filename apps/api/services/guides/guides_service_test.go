@@ -644,12 +644,15 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 			req: &types.CreateGuideRequest{
 				Title:       "Test Guide",
 				Description: new("A test description"),
+				Metadata:    map[string]any{"source": "extension"},
 			},
 			setup: func(mockRepo *tests.MockGuidesRepository) {
 				mockRepo.On("LockOrganizationForUpdate", mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
-				mockRepo.On("Create", mock.Anything, mock.Anything).
+				mockRepo.On("Create", mock.Anything, mock.MatchedBy(func(dto *types.CreateGuideDTO) bool {
+					return assert.ObjectsAreEqual(map[string]any{"source": "extension"}, dto.Metadata)
+				})).
 					Return(&models.Guide{
 						ID:        uuid.New(),
 						CreatorID: new(uuid.New().String()),
@@ -701,6 +704,48 @@ func TestGuidesService_CreateGuide(t *testing.T) {
 			mockRepo.AssertExpectations(t)
 		})
 	}
+}
+
+func TestGuidesService_UpdateGuide(t *testing.T) {
+	t.Parallel()
+
+	guideID := uuid.New()
+	teamID := uuid.New()
+	metadata := map[string]any{"source": "extension"}
+
+	repo := new(tests.MockGuidesRepository)
+	repo.On("GetByID", mock.Anything, guideID.String()).
+		Return(&models.Guide{
+			ID:        guideID,
+			TeamID:    teamID,
+			CreatorID: new("test-user-123"),
+			Title:     "Original Title",
+			Status:    models.StatusDraft,
+		}, nil).
+		Once()
+	repo.On("Update", mock.Anything, mock.MatchedBy(func(dto *types.UpdateGuideDTO) bool {
+		return dto.ID == guideID && assert.ObjectsAreEqual(metadata, dto.Metadata)
+	})).
+		Return(&models.Guide{
+			ID:        guideID,
+			TeamID:    teamID,
+			CreatorID: new("test-user-123"),
+			Title:     "Original Title",
+			Status:    models.StatusDraft,
+			Metadata:  metadata,
+		}, nil).
+		Once()
+
+	svc := guidesservice.NewGuidesService(repo, nil, nil, testRedisClient(), (*interfaces.GuideHooks)(nil))
+
+	updated, err := svc.Update(context.Background(), &authulamodels.Actor{ID: "test-user-123"}, guideID.String(), &types.UpdateGuideRequest{
+		Metadata: metadata,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+	assert.Equal(t, metadata, updated.Metadata)
+	repo.AssertExpectations(t)
 }
 
 func TestGuidesService_GetAll(t *testing.T) {

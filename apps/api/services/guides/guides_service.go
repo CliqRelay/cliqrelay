@@ -116,6 +116,7 @@ func (s *GuidesService) Create(ctx context.Context, actor *authulamodels.Actor, 
 			Title:         req.Title,
 			Description:   req.Description,
 			ClientGuideID: req.ClientGuideID,
+			Metadata:      req.Metadata,
 		})
 		return err
 	})
@@ -171,7 +172,8 @@ func (s *GuidesService) resolveClientGuide(ctx context.Context, actor *authulamo
 func sameGuideCreatePayload(guide *models.Guide, teamID uuid.UUID, req *types.CreateGuideRequest) bool {
 	return guide.TeamID == teamID &&
 		guide.Title == req.Title &&
-		reflect.DeepEqual(guide.Description, req.Description)
+		reflect.DeepEqual(guide.Description, req.Description) &&
+		reflect.DeepEqual(guide.Metadata, req.Metadata)
 }
 
 func (s *GuidesService) CreateDemoGuide(ctx context.Context, actor *authulamodels.Actor, teamID string) (string, error) {
@@ -375,6 +377,7 @@ func (s *GuidesService) Update(ctx context.Context, actor *authulamodels.Actor, 
 		Title:       req.Title,
 		Description: req.Description,
 		Visibility:  req.Visibility,
+		Metadata:    req.Metadata,
 	})
 	if err != nil {
 		return nil, err

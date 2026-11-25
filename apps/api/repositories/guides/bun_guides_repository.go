@@ -59,6 +59,7 @@ func (r *BunGuidesRepository) Create(ctx context.Context, dto *types.CreateGuide
 		Status:        models.StatusDraft,
 		Visibility:    models.VisibilityPrivate,
 		ClientGuideID: dto.ClientGuideID,
+		Metadata:      dto.Metadata,
 	}
 
 	_, err := r.db.NewInsert().
@@ -277,6 +278,9 @@ func (r *BunGuidesRepository) Update(ctx context.Context, data *types.UpdateGuid
 	}
 	if data.Visibility != nil {
 		set("visibility", *data.Visibility)
+	}
+	if data.Metadata != nil {
+		set("metadata", data.Metadata)
 	}
 
 	if !hasChanges {
