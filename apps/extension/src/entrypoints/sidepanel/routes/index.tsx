@@ -12,7 +12,6 @@ import {
   PersistedGuideView,
   RecentGuidesList,
   RecordingControls,
-  StepList,
 } from "../components";
 import { useActiveTeamId } from "../hooks/useActiveTeamId";
 import { fetchAuthSession } from "../hooks/useAuthSession";
@@ -62,6 +61,7 @@ function Home() {
   const uploadQueue = toUploadQueueInfo(counts);
   const isDraining = deriveIsDraining(status, counts);
   const isActive = status === "recording" || status === "paused";
+  const hasStoppedSteps = status === "stopped" && progress.length > 0;
   const stepCount = progress.length;
 
   const invalidateGuides = () =>
@@ -141,6 +141,11 @@ function Home() {
     });
   const handlePause = () => withPending(commands.pauseRecording);
   const handleResume = () => withPending(commands.resumeRecording);
+  const handleCancel = () =>
+    withPending(async () => {
+      setViewingGuideId(null);
+      await commands.cancelRecording();
+    });
   const handleRetryFailed = () => {
     void commands.retryFailed(lifecycle.sessionId);
   };
@@ -149,7 +154,7 @@ function Home() {
     return <PersistedGuideView guideId={viewingGuideId} onBack={() => setViewingGuideId(null)} />;
   }
 
-  if (isActive || isDraining) {
+  if (isActive || isDraining || hasStoppedSteps) {
     return (
       <>
         <CaptureSessionPanel
@@ -164,6 +169,7 @@ function Home() {
           onPause={handlePause}
           onResume={handleResume}
           onStop={handleStop}
+          onCancel={handleCancel}
           onDeleteStep={handleDeleteRequest}
           onDismiss={handleDismiss}
           onRetryFailed={handleRetryFailed}
@@ -197,23 +203,9 @@ function Home() {
           onStop={handleStop}
           isPending={isPending}
           error={error}
-          uploadQueue={uploadQueue}
         />
       </div>
       {progress.length === 0 && <RecentGuidesList onSelectGuide={setViewingGuideId} />}
-      {progress.length > 0 && (
-        <>
-          <span className="shrink-0 text-[11px] font-semibold text-muted-foreground/60">Steps</span>
-          <div className="min-h-0 flex-1">
-            <StepList
-              mode="recording"
-              steps={progress}
-              onDeleteStep={handleDeleteRequest}
-              onDismiss={handleDismiss}
-            />
-          </div>
-        </>
-      )}
       {guideId && (
         <button
           type="button"

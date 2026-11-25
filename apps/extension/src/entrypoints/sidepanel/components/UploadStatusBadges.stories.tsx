@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { expect, within } from "storybook/test";
 
-import { failedCounts, pendingCounts } from "../__stories__/fixtures";
+import { failedCounts, pendingCounts, syncedCounts } from "../__stories__/fixtures";
 import { UploadStatusBadges } from "./UploadStatusBadges";
 import { toUploadQueueInfo } from "@/models";
 
@@ -21,9 +21,9 @@ export const QueuedAndUploading: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Uploads")).toBeVisible();
-    await expect(canvas.getByText("3")).toBeVisible();
-    await expect(canvas.getByText("1")).toBeVisible();
-    await expect(canvas.getByText("12")).toBeVisible();
+    await expect(canvas.getByLabelText("12 uploaded")).toBeVisible();
+    await expect(canvas.getByLabelText("4 unsynced")).toBeVisible();
+    await expect(canvas.queryByLabelText(/failed/)).toBeNull();
   },
 };
 
@@ -33,8 +33,20 @@ export const WithFailures: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText("2")).toBeVisible();
-    await expect(canvas.getByText("10")).toBeVisible();
+    await expect(canvas.getByLabelText("10 uploaded")).toBeVisible();
+    await expect(canvas.getByLabelText("0 unsynced")).toBeVisible();
+    await expect(canvas.getByLabelText("2 failed")).toBeVisible();
+  },
+};
+
+export const AllSynced: Story = {
+  args: {
+    uploadQueue: toUploadQueueInfo(syncedCounts),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByLabelText("6 uploaded")).toBeVisible();
+    await expect(canvas.getByLabelText("0 unsynced")).toBeVisible();
   },
 };
 

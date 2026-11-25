@@ -34,6 +34,14 @@ export const failedCounts: OutboxCounts = {
   deleted: 0,
 };
 
+export const syncedCounts: OutboxCounts = {
+  pending: 0,
+  uploading: 0,
+  synced: 6,
+  failed: 0,
+  deleted: 0,
+};
+
 export const emptyCounts: OutboxCounts = {
   pending: 0,
   uploading: 0,
