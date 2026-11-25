@@ -5,6 +5,7 @@ import { ApiError } from "@repo/api-client";
 import { createSessionManager } from "./session-manager";
 import type {
   LocalSession,
+  LocalStep,
   OutboxLifecycle,
   RecordingLifecycleStore,
   SidePanelCommand,
@@ -50,6 +51,22 @@ const session = (overrides: Partial<LocalSession> = {}): LocalSession => ({
   startedAt: NOW,
   lastActivityAt: NOW,
   nextStepIndex: 2,
+  ...overrides,
+});
+
+const step = (overrides: Partial<LocalStep> = {}): LocalStep => ({
+  id: "step-1",
+  sessionId: "session-1",
+  guideId: "guide-1",
+  stepIndex: 0,
+  kind: "interaction",
+  action: "click",
+  url: "https://example.com",
+  capturedAt: NOW,
+  syncStatus: "pending",
+  retryCount: 0,
+  createdAt: NOW,
+  updatedAt: NOW,
   ...overrides,
 });
 
@@ -124,6 +141,9 @@ const setup = ({
     deleteSessionData: vi
       .fn<SessionManagerDeps["repository"]["deleteSessionData"]>()
       .mockResolvedValue({ sessions: 1, steps: 1, blobs: 1 }),
+    flushSessionIfSettled: vi
+      .fn<SessionManagerDeps["repository"]["flushSessionIfSettled"]>()
+      .mockResolvedValue({ sessions: 1, steps: 0, blobs: 0 }),
     discardForUser: vi
       .fn<SessionManagerDeps["repository"]["discardForUser"]>()
       .mockResolvedValue({ sessions: 1, steps: 1, blobs: 1 }),
@@ -256,6 +276,7 @@ describe("session manager commands", () => {
       expect(repository.updateSession).toHaveBeenCalledWith("session-1", {
         stoppedAt: expect.any(String),
       });
+      expect(repository.flushSessionIfSettled).toHaveBeenCalledWith("session-1");
       expect(drainer.kick).toHaveBeenCalled();
       expect(scheduler.sync).toHaveBeenCalled();
       expect(readLifecycle().status).toBe("stopped");
@@ -440,6 +461,57 @@ describe("session manager commands", () => {
       expect(repository.deleteSessionData).toHaveBeenCalledWith("session-1");
       expect(readLifecycle()).toMatchObject({ status: "idle", sessionId: undefined });
       expect(badge.refresh).toHaveBeenCalled();
+    });
+  });
+
+  describe("cancel_recording", () => {
+    test("stops an empty recording, deletes the local session and clears the lifecycle", async () => {
+      const { manager, recording, repository, badge, scheduler, readLifecycle } = setup({
+        lifecycle: { status: "recording", sessionId: "session-1", isSignedOut: false },
+      });
+
+      await manager.handleSidePanelCommand(command({ command: "cancel_recording" }));
+
+      expect(recording.stop).toHaveBeenCalled();
+      expect(repository.updateSession).toHaveBeenCalledWith("session-1", {
+        stoppedAt: expect.any(String),
+      });
+      expect(apiMock.guides.deleteGuide).toHaveBeenCalledWith("guide-1", {});
+      expect(repository.deleteSessionData).toHaveBeenCalledWith("session-1");
+      expect(readLifecycle()).toMatchObject({
+        status: "idle",
+        sessionId: undefined,
+        pendingStart: undefined,
+      });
+      expect(badge.refresh).toHaveBeenCalled();
+      expect(scheduler.sync).toHaveBeenCalled();
+    });
+
+    test("keeps a recording that already captured steps", async () => {
+      const { manager, recording, repository, deleter, readLifecycle } = setup({
+        lifecycle: { status: "recording", sessionId: "session-1", isSignedOut: false },
+      });
+      vi.mocked(repository.listSteps).mockResolvedValue([step()]);
+
+      await manager.handleSidePanelCommand(command({ command: "cancel_recording" }));
+
+      expect(recording.stop).not.toHaveBeenCalled();
+      expect(deleter.deleteGuide).not.toHaveBeenCalled();
+      expect(repository.deleteSessionData).not.toHaveBeenCalled();
+      expect(readLifecycle()).toMatchObject({ status: "recording", sessionId: "session-1" });
+    });
+
+    test("does nothing when no recording is live", async () => {
+      const { manager, recording, repository, readLifecycle } = setup({
+        lifecycle: { status: "stopped", sessionId: "session-1", isSignedOut: false },
+      });
+
+      await manager.handleSidePanelCommand(command({ command: "cancel_recording" }));
+
+      expect(recording.stop).not.toHaveBeenCalled();
+      expect(repository.listSteps).not.toHaveBeenCalled();
+      expect(repository.deleteSessionData).not.toHaveBeenCalled();
+      expect(readLifecycle()).toMatchObject({ status: "stopped", sessionId: "session-1" });
     });
   });
 

@@ -8,7 +8,6 @@ const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
 const HOURS_PER_DAY = 24;
 
 export const outboxRetention = {
-  syncedSessionMs: HOURS_PER_DAY * MILLISECONDS_PER_HOUR,
   failedStepMs: 7 * HOURS_PER_DAY * MILLISECONDS_PER_HOUR,
   unsyncedDataMs: 7 * HOURS_PER_DAY * MILLISECONDS_PER_HOUR,
 } as const;

@@ -370,6 +370,94 @@ describe("deleteSessionData", () => {
   });
 });
 
+describe("flushSessionIfSettled", () => {
+  test("should remove the session, steps and blobs when every step is synced", async () => {
+    const session = await createSession({ id: "session-1" });
+    const step = await appendStepWithBlobs(session.id);
+    await repository.markStepSynced(step.id, { serverStepId: "server-1", now: NOW });
+
+    expect(await repository.flushSessionIfSettled(session.id)).toEqual({
+      sessions: 1,
+      steps: 1,
+      blobs: 1,
+    });
+
+    expect(await db.sessions.get(session.id)).toBeUndefined();
+    expect(await db.steps.where("sessionId").equals(session.id).count()).toBe(0);
+    expect(await db.blobs.where("stepId").equals(step.id).count()).toBe(0);
+  });
+
+  test("should flush a deleted tombstone that has no server step", async () => {
+    const session = await createSession();
+    const step = await appendStep(session.id);
+    await repository.markStepSynced(step.id, { now: NOW });
+    await repository.markStepDeleted(step.id, NOW);
+
+    expect(await repository.flushSessionIfSettled(session.id)).toEqual({
+      sessions: 1,
+      steps: 1,
+      blobs: 0,
+    });
+
+    expect(await db.sessions.get(session.id)).toBeUndefined();
+    expect(await db.steps.get(step.id)).toBeUndefined();
+  });
+
+  test("should keep a session with a pending step", async () => {
+    const session = await createSession();
+    const synced = await appendStep(session.id);
+    const pending = await appendStepWithBlobs(session.id);
+    await repository.markStepSynced(synced.id, { serverStepId: "server-1", now: NOW });
+
+    expect(await repository.flushSessionIfSettled(session.id)).toBeNull();
+
+    expect(await db.sessions.get(session.id)).toBeDefined();
+    expect(await db.steps.get(pending.id)).toBeDefined();
+    expect(await db.blobs.where("stepId").equals(pending.id).count()).toBe(2);
+  });
+
+  test("should keep a session with a failed step", async () => {
+    const session = await createSession();
+    const step = await appendStep(session.id);
+    await repository.markStepFailed(step.id, "network", NOW);
+
+    expect(await repository.flushSessionIfSettled(session.id)).toBeNull();
+
+    expect(await db.sessions.get(session.id)).toBeDefined();
+    expect((await db.steps.get(step.id))?.syncStatus).toBe("failed");
+  });
+
+  test("should keep a session whose deleted tombstone still has a server step", async () => {
+    const session = await createSession();
+    const step = await appendStep(session.id);
+    await repository.markStepSynced(step.id, { serverStepId: "server-1", now: NOW });
+    await repository.markStepDeleted(step.id, NOW);
+
+    expect(await repository.flushSessionIfSettled(session.id)).toBeNull();
+
+    expect(await db.sessions.get(session.id)).toBeDefined();
+    expect(await db.steps.get(step.id)).toMatchObject({
+      syncStatus: "deleted",
+      serverStepId: "server-1",
+    });
+  });
+
+  test("should flush a session without steps", async () => {
+    const session = await createSession();
+
+    expect(await repository.flushSessionIfSettled(session.id)).toEqual({
+      sessions: 1,
+      steps: 0,
+      blobs: 0,
+    });
+    expect(await db.sessions.get(session.id)).toBeUndefined();
+  });
+
+  test("should return null for an unknown session", async () => {
+    expect(await repository.flushSessionIfSettled("missing")).toBeNull();
+  });
+});
+
 describe("upsertTypingStep", () => {
   const upsert = (sessionId: string, typingSessionId: string, actionText: string) =>
     repository.upsertTypingStep({
@@ -728,17 +816,17 @@ describe("prune", () => {
 
     const result = await repository.prune(NOW);
 
-    expect(result).toEqual({ sessions: 2, steps: 3, blobs: 3 });
+    expect(result).toEqual({ sessions: 3, steps: 4, blobs: 3 });
     expect((await repository.listSessions()).map((session) => session.id).sort()).toEqual([
       "active-pending",
-      "recent-synced",
       "with-failed",
     ]);
     expect(await db.steps.where("sessionId").equals(stoppedSynced.id).count()).toBe(0);
+    expect(await db.steps.where("sessionId").equals(recentSynced.id).count()).toBe(0);
     expect(await db.steps.where("sessionId").equals(inactiveUnsynced.id).count()).toBe(0);
     expect(await db.steps.get(failedStep.id)).toBeUndefined();
     expect(await db.blobs.where("stepId").equals(failedStep.id).count()).toBe(0);
-    expect(await db.steps.get(recentStep.id)).toBeDefined();
+    expect(await db.steps.get(recentStep.id)).toBeUndefined();
     expect(await db.steps.get(keptSyncedStep.id)).toBeDefined();
     expect(await db.steps.where("sessionId").equals(activePending.id).count()).toBe(1);
   });
