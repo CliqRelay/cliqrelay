@@ -9,7 +9,7 @@ import {
   GuideArchiveExportError,
   createGuideArchiveExport,
 } from "@/services/guide-archive/export.service";
-import { createGuideArchiveWorkerClient } from "@/services/guide-archive/guide-archive.worker.client";
+import { createGuideArchiveWorkerClient } from "@/services/guide-archive/guide-archive.worker-bridge";
 
 type ExportStatus = "idle" | "working" | "error" | "done";
 

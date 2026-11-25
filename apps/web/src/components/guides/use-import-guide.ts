@@ -12,7 +12,7 @@ import {
   type GuideArchiveImportProgress,
   type GuideArchiveImportResult,
 } from "@/models";
-import { createGuideArchiveWorkerClient } from "@/services/guide-archive/guide-archive.worker.client";
+import { createGuideArchiveWorkerClient } from "@/services/guide-archive/guide-archive.worker-bridge";
 import {
   GuideArchiveImportError,
   createGuideArchiveImport,
