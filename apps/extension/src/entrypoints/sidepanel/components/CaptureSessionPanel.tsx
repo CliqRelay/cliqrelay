@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, Check, Loader2, Pause, Play, RefreshCw, Trash2 } from "lucide-react";
+import { AlertCircle, Check, Loader2, Pause, Play, RefreshCw, Trash2, X } from "lucide-react";
 
 import { RecordingIndicator } from "./RecordingIndicator";
 import { StepList } from "./StepList";
@@ -23,6 +23,7 @@ type CaptureSessionPanelProps = {
   onPause: () => Promise<void>;
   onResume: () => Promise<void>;
   onStop: () => Promise<void>;
+  onCancel: () => Promise<void>;
   onDeleteStep: (id: string, actionText?: string | null) => void;
   onDismiss: (stepId: string) => void;
   onRetryFailed: () => void;
@@ -41,16 +42,15 @@ export function CaptureSessionPanel({
   onPause,
   onResume,
   onStop,
+  onCancel,
   onDeleteStep,
   onDismiss,
   onRetryFailed,
   onDeleteGuide,
 }: CaptureSessionPanelProps) {
   const isPaused = status === "paused";
+  const isStopped = status === "stopped";
   const handlePauseResume = isPaused ? onResume : onPause;
-
-  const hasUploads =
-    uploadQueue.pending + uploadQueue.inProgress + uploadQueue.failed + uploadQueue.completed > 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -79,7 +79,7 @@ export function CaptureSessionPanel({
               </Collapsible>
             )}
 
-            {hasUploads && !isDraining && (
+            {stepCount > 0 && !isDraining && (
               <Collapsible key="uploads">
                 <StatusStrip>
                   <UploadStatusBadges uploadQueue={uploadQueue} />
@@ -114,34 +114,50 @@ export function CaptureSessionPanel({
           </AnimatePresence>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <CircleAction
-              label={isPaused ? "Resume capture" : "Pause capture"}
-              disabled={isPending}
-              onClick={handlePauseResume}
-            >
-              {isPaused ? <Play /> : <Pause />}
-            </CircleAction>
+            {!isStopped && (
+              <>
+                <CircleAction
+                  label={isPaused ? "Resume capture" : "Pause capture"}
+                  disabled={isPending}
+                  onClick={handlePauseResume}
+                >
+                  {isPaused ? <Play /> : <Pause />}
+                </CircleAction>
 
-            <span className="mx-0.5 h-5 w-px shrink-0 bg-border" />
+                <span className="mx-0.5 h-5 w-px shrink-0 bg-border" />
+              </>
+            )}
 
-            <CircleAction
-              label="Delete guide"
-              tone="destructive"
-              disabled={isPending}
-              onClick={onDeleteGuide}
-            >
-              <Trash2 />
-            </CircleAction>
+            {stepCount === 0 ? (
+              <CircleAction label="Cancel recording" disabled={isPending} onClick={onCancel}>
+                <X />
+              </CircleAction>
+            ) : (
+              <CircleAction
+                label="Delete guide"
+                tone="destructive"
+                disabled={isPending}
+                onClick={onDeleteGuide}
+              >
+                <Trash2 />
+              </CircleAction>
+            )}
           </div>
 
-          <Button
-            className="h-11 w-full gap-2 rounded-xl text-sm font-semibold shadow-sm shadow-primary/25"
-            onClick={onStop}
-            disabled={isPending}
-          >
-            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-            Complete capture
-          </Button>
+          {!isStopped && (
+            <Button
+              className="h-11 w-full gap-2 rounded-xl text-sm font-semibold shadow-sm shadow-primary/25"
+              onClick={onStop}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Check className="size-4" />
+              )}
+              Complete capture
+            </Button>
+          )}
         </div>
       </div>
     </div>
