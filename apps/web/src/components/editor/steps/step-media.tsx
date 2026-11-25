@@ -137,7 +137,7 @@ export function StepMedia({ step, onUpdate, onReplaceMedia, isReplacing, classNa
         )}
         {canToggleIndicator && (
           <StepMediaToolbarButton
-            label={hasIndicator ? "Hide indicator" : "Show indicator"}
+            label={hasIndicator ? "Remove indicator" : "Create indicator"}
             disabled={!hasIndicator && indicatorViewport == null && !loaded}
             onClick={handleToggleIndicator}
             icon={hasIndicator ? <CircleOffIcon /> : <CircleDotIcon />}

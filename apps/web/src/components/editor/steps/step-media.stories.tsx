@@ -167,7 +167,7 @@ export const IndicatorCanBeHidden: Story = {
     onUpdate: fn(),
   },
   play: async ({ canvasElement, args }) => {
-    await userEvent.click(within(canvasElement).getByRole("button", { name: "Hide indicator" }));
+    await userEvent.click(within(canvasElement).getByRole("button", { name: "Remove indicator" }));
 
     await expect(args.onUpdate).toHaveBeenCalledWith("step-1", {
       targetElement: { viewportWidth: 2000, viewportHeight: 1000 },
@@ -185,9 +185,11 @@ export const IndicatorCanBeShown: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.queryByRole("button", { name: "Hide indicator" })).not.toBeInTheDocument();
+    await expect(
+      canvas.queryByRole("button", { name: "Remove indicator" }),
+    ).not.toBeInTheDocument();
 
-    await userEvent.click(canvas.getByRole("button", { name: "Show indicator" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Create indicator" }));
 
     await expect(args.onUpdate).toHaveBeenCalledWith("step-1", {
       targetElement: {
@@ -207,7 +209,7 @@ export const HiddenIndicatorRendersNoCircle: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole("button", { name: "Show indicator" })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Create indicator" })).toBeInTheDocument();
     await expect(
       canvasElement.querySelector("[data-slot='step-indicator']"),
     ).not.toBeInTheDocument();
