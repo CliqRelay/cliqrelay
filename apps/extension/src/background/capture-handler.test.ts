@@ -62,7 +62,7 @@ describe("capture handler", () => {
       handleCapture(typingMessage, { tab: { id: TAB_ID } } as never);
 
       await vi.waitFor(() => expect(writer.writeTyping).toHaveBeenCalled());
-      expect(writer.writeTyping).toHaveBeenCalledWith(typingMessage);
+      expect(writer.writeTyping).toHaveBeenCalledWith(typingMessage, TAB_ID);
       expect(writer.writeCapture).not.toHaveBeenCalled();
     });
 

@@ -96,7 +96,7 @@ describe("outbox writer", () => {
   });
 
   describe("writeCapture", () => {
-    test("writes the initial navigation and the capture as local Dexie rows", async () => {
+    test("writes the initial navigation and the capture with the same screenshot blobs", async () => {
       const { writer, repository, screenshotService, processScreenshot } = setup();
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       const message = createMessage({
@@ -107,7 +107,13 @@ describe("outbox writer", () => {
 
       expect(fetchSpy).not.toHaveBeenCalled();
       expect(repository.getSession).toHaveBeenCalledWith(session.id);
-      expect(repository.appendStep).toHaveBeenCalledWith({
+      expect(screenshotService.captureWithThrottle).toHaveBeenCalledWith(TAB_ID, undefined);
+      expect(processScreenshot).toHaveBeenCalledWith("data:image/png;base64,abc123");
+      expect(repository.appendStep).not.toHaveBeenCalled();
+
+      const calls = vi.mocked(repository.appendStepWithBlobs).mock.calls;
+      expect(calls).toHaveLength(2);
+      expect(calls[0]?.[0]).toEqual({
         sessionId: session.id,
         guideId: session.guideId,
         kind: "navigation",
@@ -116,9 +122,7 @@ describe("outbox writer", () => {
         url: "https://angular.dev",
         capturedAt: NOW,
       });
-      expect(screenshotService.captureWithThrottle).toHaveBeenCalledWith(TAB_ID);
-      expect(processScreenshot).toHaveBeenCalledWith("data:image/png;base64,abc123");
-      expect(repository.appendStepWithBlobs).toHaveBeenCalledWith(
+      expect(calls[1]?.[0]).toEqual(
         expect.objectContaining({
           sessionId: session.id,
           guideId: session.guideId,
@@ -129,11 +133,8 @@ describe("outbox writer", () => {
           capturedAt: NOW,
           targetElement: { tagName: "BUTTON", innerText: "Sign in" },
         }),
-        {
-          screenshot: expect.any(Blob),
-          thumbnail: expect.any(Blob),
-        },
       );
+      expect(calls[0]?.[1]).toBe(calls[1]?.[1]);
 
       fetchSpy.mockRestore();
     });
@@ -157,12 +158,21 @@ describe("outbox writer", () => {
       expect(screenshotService.captureWithThrottle).not.toHaveBeenCalled();
     });
 
-    test("does not write a capture when the screenshot fails", async () => {
+    test("writes a screenshot-less navigation step when the screenshot fails", async () => {
       const { writer, repository, screenshotService } = setup();
       screenshotService.captureWithThrottle.mockResolvedValue(null);
 
       await writer.writeCapture(createMessage({}), TAB_ID);
 
+      expect(repository.appendStep).toHaveBeenCalledWith({
+        sessionId: session.id,
+        guideId: session.guideId,
+        kind: "navigation",
+        action: "navigation",
+        actionText: 'Navigate to "https://angular.dev"',
+        url: "https://angular.dev",
+        capturedAt: NOW,
+      });
       expect(repository.appendStepWithBlobs).not.toHaveBeenCalled();
     });
   });
@@ -177,9 +187,49 @@ describe("outbox writer", () => {
         typingSessionId: "typing-1",
       });
 
-      await writer.writeTyping(message);
+      await writer.writeTyping(message, TAB_ID);
 
       expect(screenshotService.captureWithThrottle).not.toHaveBeenCalled();
+      expect(repository.upsertTypingStep).toHaveBeenCalledWith({
+        sessionId: session.id,
+        guideId: session.guideId,
+        kind: "interaction",
+        action: "input",
+        actionText: 'Type "helo"',
+        url: "https://angular.dev",
+        capturedAt: NOW,
+        typingSessionId: "typing-1",
+      });
+    });
+
+    test("writes the initial navigation with a screenshot before the typing step", async () => {
+      const { writer, repository, screenshotService, processScreenshot } = setup();
+      vi.mocked(repository.getLastStep).mockResolvedValue(undefined);
+      const message = createMessage({
+        action: "input",
+        typedText: "helo",
+        typingSessionId: "typing-1",
+      });
+
+      await writer.writeTyping(message, TAB_ID);
+
+      expect(screenshotService.captureWithThrottle).toHaveBeenCalledWith(TAB_ID, undefined);
+      expect(processScreenshot).toHaveBeenCalledWith("data:image/png;base64,abc123");
+      expect(repository.appendStepWithBlobs).toHaveBeenCalledWith(
+        {
+          sessionId: session.id,
+          guideId: session.guideId,
+          kind: "navigation",
+          action: "navigation",
+          actionText: 'Navigate to "https://angular.dev"',
+          url: "https://angular.dev",
+          capturedAt: NOW,
+        },
+        {
+          screenshot: expect.any(Blob),
+          thumbnail: expect.any(Blob),
+        },
+      );
       expect(repository.upsertTypingStep).toHaveBeenCalledWith({
         sessionId: session.id,
         guideId: session.guideId,
@@ -200,7 +250,7 @@ describe("outbox writer", () => {
         typingSessionId: "typing-1",
       });
 
-      await writer.writeTyping(message);
+      await writer.writeTyping(message, TAB_ID);
 
       expect(repository.deleteTypingStep).toHaveBeenCalledWith(session.id, "typing-1");
       expect(repository.upsertTypingStep).not.toHaveBeenCalled();
@@ -210,7 +260,7 @@ describe("outbox writer", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       const { writer, repository } = setup();
 
-      await writer.writeTyping(createMessage({ action: "input", typedText: "hello" }));
+      await writer.writeTyping(createMessage({ action: "input", typedText: "hello" }), TAB_ID);
 
       expect(repository.upsertTypingStep).not.toHaveBeenCalled();
       expect(warn).toHaveBeenCalledWith(

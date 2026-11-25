@@ -31,7 +31,9 @@ export const createCaptureHandler = ({ writer, recording, onStateChanged }: Capt
     }
 
     const isTyping = message.payload.action === "input" && message.payload.typedText != null;
-    const write = isTyping ? writer.writeTyping(message) : writer.writeCapture(message, tabId);
+    const write = isTyping
+      ? writer.writeTyping(message, tabId)
+      : writer.writeCapture(message, tabId);
 
     void write
       .catch((error) => {
