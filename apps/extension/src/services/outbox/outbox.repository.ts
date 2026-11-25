@@ -30,6 +30,10 @@ const toIso = (value: DateInput): string =>
 
 const isTerminal = (status: LocalStep["syncStatus"]) => status === "synced" || status === "deleted";
 
+const isSettledStep = (step: LocalStep) =>
+  step.syncStatus === "synced" ||
+  (step.syncStatus === "deleted" && step.serverStepId === undefined);
+
 export const createOutboxRepository = (db: OutboxDatabase) => {
   const allocateAndInsertStep = async (input: AppendStepInput): Promise<LocalStep> => {
     const session = await db.sessions.get(input.sessionId);
@@ -399,6 +403,23 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
       return { sessions: 1, steps: steps.length, blobs };
     });
 
+  const flushSessionIfSettled = (sessionId: string): Promise<OutboxCleanupResult | null> =>
+    db.transaction("rw", db.sessions, db.steps, db.blobs, async () => {
+      const session = await db.sessions.get(sessionId);
+
+      if (!session) {
+        return null;
+      }
+
+      const steps = await db.steps.where("sessionId").equals(sessionId).toArray();
+
+      if (!steps.every(isSettledStep)) {
+        return null;
+      }
+
+      return deleteSessionRecords([sessionId]);
+    });
+
   const markStepDeleted = (id: string, now: DateInput = new Date()): Promise<StepDeletionOutcome> =>
     db.transaction("rw", db.steps, db.blobs, async () => {
       const step = await db.steps.get(id);
@@ -437,7 +458,6 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
     await db.transaction("rw", db.sessions, db.steps, db.blobs, async () => {
       const failedBefore = new Date(nowMs - outboxRetention.failedStepMs).toISOString();
       const unsyncedBefore = new Date(nowMs - outboxRetention.unsyncedDataMs).toISOString();
-      const syncedSessionBefore = new Date(nowMs - outboxRetention.syncedSessionMs).toISOString();
 
       const failedSteps = await db.steps.where("syncStatus").equals("failed").toArray();
       const expiredFailedStepIds = failedSteps
@@ -452,15 +472,12 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
 
       for (const session of sessions) {
         const steps = await db.steps.where("sessionId").equals(session.id).toArray();
-        const stoppedSynced =
-          session.stoppedAt !== undefined &&
-          session.stoppedAt < syncedSessionBefore &&
-          steps.every((step) => isTerminal(step.syncStatus));
+        const stoppedSettled = session.stoppedAt !== undefined && steps.every(isSettledStep);
         const inactiveUnsynced =
           session.lastActivityAt < unsyncedBefore &&
           (steps.length === 0 || steps.some((step) => !isTerminal(step.syncStatus)));
 
-        if (stoppedSynced || inactiveUnsynced) {
+        if (stoppedSettled || inactiveUnsynced) {
           add(await deleteSessionRecords([session.id]));
         }
       }
@@ -504,6 +521,7 @@ export const createOutboxRepository = (db: OutboxDatabase) => {
     markStepDeleted,
     removeStep,
     deleteSessionData,
+    flushSessionIfSettled,
     prune,
     discardForUser,
   };

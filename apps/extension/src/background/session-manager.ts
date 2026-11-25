@@ -30,6 +30,7 @@ type SessionManagerRepository = Pick<
   | "listSessions"
   | "listSteps"
   | "deleteSessionData"
+  | "flushSessionIfSettled"
   | "discardForUser"
 >;
 
@@ -156,6 +157,13 @@ export const createSessionManager = ({
     await scheduler.sync();
   };
 
+  const clearSession = async (sessionId: string): Promise<void> => {
+    await repository.deleteSessionData(sessionId);
+    await lifecycleStore.patch({ status: "idle", sessionId: undefined, pendingStart: undefined });
+    await badge.refresh();
+    await scheduler.sync();
+  };
+
   const handleDeleteGuide = async (guideId?: string): Promise<void> => {
     const lifecycle = await lifecycleStore.get();
     const session = lifecycle.sessionId
@@ -178,10 +186,35 @@ export const createSessionManager = ({
       await deleter.deleteGuide(session.guideId);
     }
 
-    await repository.deleteSessionData(session.id);
-    await lifecycleStore.patch({ status: "idle", sessionId: undefined });
-    await badge.refresh();
-    await scheduler.sync();
+    await clearSession(session.id);
+  };
+
+  const handleCancelRecording = async (): Promise<void> => {
+    const lifecycle = await lifecycleStore.get();
+
+    if (lifecycle.status !== "recording" && lifecycle.status !== "paused") {
+      return;
+    }
+
+    if (!lifecycle.sessionId) {
+      return;
+    }
+
+    const session = await repository.getSession(lifecycle.sessionId);
+
+    if (!session) {
+      return;
+    }
+
+    const steps = await repository.listSteps(session.id);
+
+    if (steps.length > 0) {
+      return;
+    }
+
+    recording.stop();
+    await recordingSession.stop();
+    await clearSession(session.id);
   };
 
   const handleDiscardSession = async (sessionId?: string): Promise<void> => {
@@ -252,8 +285,16 @@ export const createSessionManager = ({
       case "stop_recording": {
         recording.stop();
         await recordingSession.stop();
+        const lifecycle = await lifecycleStore.get();
+        if (lifecycle.sessionId) {
+          await repository.flushSessionIfSettled(lifecycle.sessionId);
+        }
         await drainer.kick();
         await scheduler.sync();
+        return undefined;
+      }
+      case "cancel_recording": {
+        await handleCancelRecording();
         return undefined;
       }
       case "get_settings": {
