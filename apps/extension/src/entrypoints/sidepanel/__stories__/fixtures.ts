@@ -87,7 +87,6 @@ export const failedStep: StepJobProgress = {
 
 export const syncedStep: StepJobProgress = {
   jobId: "step-synced",
-  stepId: "server-step-1",
   guideId: "guide-1",
   action: "click",
   actionText: 'Click "Create guide"',

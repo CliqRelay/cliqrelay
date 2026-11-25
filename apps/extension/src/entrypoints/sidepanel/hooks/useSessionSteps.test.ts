@@ -104,7 +104,6 @@ describe("useSessionSteps", () => {
       targetElement: { clickX: 10, clickY: 20 },
     });
     expect(result.current.progress[0]?.thumbnail).toBeDefined();
-    expect(result.current.progress[0]?.stepId).toBeUndefined();
   });
 
   test("keeps server screenshot URLs for synced steps", () => {
@@ -119,7 +118,6 @@ describe("useSessionSteps", () => {
 
     expect(result.current.progress[0]).toMatchObject({
       jobId: "step-1",
-      stepId: "server-step-1",
       phase: "completed",
       screenshotUrl: "https://cdn.example.com/step-1.webp",
     });
