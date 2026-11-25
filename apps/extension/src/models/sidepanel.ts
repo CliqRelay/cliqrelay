@@ -12,6 +12,7 @@ export const sidePanelCommandTypes = [
   "pause_recording",
   "resume_recording",
   "stop_recording",
+  "cancel_recording",
   "get_settings",
   "update_settings",
   "retry_failed",
