@@ -32,6 +32,7 @@ export const sidePanelCommands = {
   pauseRecording: () => sendCommand({ type: sidePanelCommandType, command: "pause_recording" }),
   resumeRecording: () => sendCommand({ type: sidePanelCommandType, command: "resume_recording" }),
   stopRecording: () => sendCommand({ type: sidePanelCommandType, command: "stop_recording" }),
+  cancelRecording: () => sendCommand({ type: sidePanelCommandType, command: "cancel_recording" }),
   dismissStep: (stepId: string) =>
     sendCommand({
       type: sidePanelCommandType,

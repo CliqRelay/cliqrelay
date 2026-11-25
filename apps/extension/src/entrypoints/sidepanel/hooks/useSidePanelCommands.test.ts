@@ -24,12 +24,14 @@ describe("sidePanelCommands", () => {
     await sidePanelCommands.pauseRecording();
     await sidePanelCommands.resumeRecording();
     await sidePanelCommands.stopRecording();
+    await sidePanelCommands.cancelRecording();
 
     expect(mocks.sendMessage.mock.calls.map(([message]) => message)).toEqual([
       { type: sidePanelCommandType, command: "start_recording" },
       { type: sidePanelCommandType, command: "pause_recording" },
       { type: sidePanelCommandType, command: "resume_recording" },
       { type: sidePanelCommandType, command: "stop_recording" },
+      { type: sidePanelCommandType, command: "cancel_recording" },
     ]);
   });
 
