@@ -107,6 +107,7 @@ export function CanvasStepForm({
               <StepMedia
                 step={step}
                 className="mb-0"
+                onUpdate={onUpdate}
                 onReplaceMedia={onReplaceMedia}
                 isReplacing={isReplacing}
               />

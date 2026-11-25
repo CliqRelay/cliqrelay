@@ -224,7 +224,22 @@ func TestMapToTargetElement(t *testing.T) {
 		{name: "nil", m: nil, want: nil},
 		{name: "empty map yields zero struct", m: map[string]any{}, want: &typstInputTargetElement{}},
 		{
-			name: "float64 values are truncated to int",
+			name: "camelCase values are read",
+			m: map[string]any{
+				"clickX":         float64(10.9),
+				"clickY":         float64(20.1),
+				"viewportWidth":  float64(1280),
+				"viewportHeight": float64(720),
+			},
+			want: &typstInputTargetElement{
+				ClickX:         new(10),
+				ClickY:         new(20),
+				ViewportWidth:  new(1280),
+				ViewportHeight: new(720),
+			},
+		},
+		{
+			name: "snake_case values are read as a fallback",
 			m: map[string]any{
 				"click_x":         float64(10.9),
 				"click_y":         float64(20.1),
@@ -239,10 +254,29 @@ func TestMapToTargetElement(t *testing.T) {
 			},
 		},
 		{
+			name: "camelCase wins when both key styles exist",
+			m: map[string]any{
+				"clickX":          11,
+				"click_x":         99,
+				"clickY":          22,
+				"click_y":         88,
+				"viewportWidth":   1280,
+				"viewport_width":  640,
+				"viewportHeight":  720,
+				"viewport_height": 360,
+			},
+			want: &typstInputTargetElement{
+				ClickX:         new(11),
+				ClickY:         new(22),
+				ViewportWidth:  new(1280),
+				ViewportHeight: new(720),
+			},
+		},
+		{
 			name: "int values are supported",
 			m: map[string]any{
-				"click_x": 5,
-				"click_y": 6,
+				"clickX": 5,
+				"clickY": 6,
 			},
 			want: &typstInputTargetElement{
 				ClickX: new(5),
@@ -251,18 +285,26 @@ func TestMapToTargetElement(t *testing.T) {
 		},
 		{
 			name: "missing keys stay nil",
-			m:    map[string]any{"click_x": 1},
+			m:    map[string]any{"clickX": 1},
 			want: &typstInputTargetElement{ClickX: new(1)},
 		},
 		{
 			name: "wrong types are ignored",
 			m: map[string]any{
-				"click_x":         "nope",
-				"click_y":         true,
-				"viewport_width":  nil,
-				"viewport_height": []int{1},
+				"clickX":         "nope",
+				"clickY":         true,
+				"viewportWidth":  nil,
+				"viewportHeight": []int{1},
 			},
 			want: &typstInputTargetElement{},
+		},
+		{
+			name: "invalid camelCase falls back to snake_case",
+			m: map[string]any{
+				"clickX":  "nope",
+				"click_x": 7,
+			},
+			want: &typstInputTargetElement{ClickX: new(7)},
 		},
 	}
 

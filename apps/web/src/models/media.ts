@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-export const MEDIA_REPLACE_MIME_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-] as const;
+export const MEDIA_REPLACE_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
 export const MEDIA_REPLACE_ACCEPT = MEDIA_REPLACE_MIME_TYPES.join(",");
 export const MEDIA_REPLACE_MAX_BYTES = 5 * 1024 * 1024;
 
@@ -53,4 +49,16 @@ export type MediaLayoutTarget = {
 export type MediaLayoutAsset = {
   width?: number | null;
   height?: number | null;
+};
+
+export type IndicatorTargetElement = Record<string, unknown>;
+
+export type IndicatorPosition = {
+  x: number;
+  y: number;
+};
+
+export type IndicatorViewport = {
+  width: number;
+  height: number;
 };

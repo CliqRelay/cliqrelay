@@ -363,37 +363,28 @@ func mapToTargetElement(m map[string]any) *typstInputTargetElement {
 		return nil
 	}
 
-	t := &typstInputTargetElement{}
+	return &typstInputTargetElement{
+		ClickX:         intFromKeys(m, "clickX", "click_x"),
+		ClickY:         intFromKeys(m, "clickY", "click_y"),
+		ViewportWidth:  intFromKeys(m, "viewportWidth", "viewport_width"),
+		ViewportHeight: intFromKeys(m, "viewportHeight", "viewport_height"),
+	}
+}
 
-	if v, ok := m["click_x"]; ok {
+func intFromKeys(m map[string]any, keys ...string) *int {
+	for _, key := range keys {
+		v, ok := m[key]
+		if !ok {
+			continue
+		}
+
 		if f, ok := toFloat64(v); ok {
 			iv := int(f)
-			t.ClickX = &iv
+			return &iv
 		}
 	}
 
-	if v, ok := m["click_y"]; ok {
-		if f, ok := toFloat64(v); ok {
-			iv := int(f)
-			t.ClickY = &iv
-		}
-	}
-
-	if v, ok := m["viewport_width"]; ok {
-		if f, ok := toFloat64(v); ok {
-			iv := int(f)
-			t.ViewportWidth = &iv
-		}
-	}
-
-	if v, ok := m["viewport_height"]; ok {
-		if f, ok := toFloat64(v); ok {
-			iv := int(f)
-			t.ViewportHeight = &iv
-		}
-	}
-
-	return t
+	return nil
 }
 
 func toFloat64(v any) (float64, bool) {

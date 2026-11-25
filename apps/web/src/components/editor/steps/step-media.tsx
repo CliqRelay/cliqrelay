@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 
-import { CameraIcon, ImageIcon, ImageUpIcon, Loader2Icon, UploadIcon } from "lucide-react";
+import {
+  CameraIcon,
+  CircleDotIcon,
+  CircleOffIcon,
+  ImageIcon,
+  ImageUpIcon,
+  Loader2Icon,
+  UploadIcon,
+} from "lucide-react";
 
 import type { Step } from "@repo/api-client";
 import { ExtensionSlot, extensionRegistry } from "@repo/extensions-sdk";
@@ -10,31 +18,75 @@ import { StepOverlay } from "./step-overlay";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExtensionSlotKeys } from "@/constants/extension-slots";
+import { useIndicatorDrag } from "@/hooks/useIndicatorDrag";
 import { cn } from "@/lib/utils";
-import type { MediaLayoutTarget } from "@/models";
-import { resolveMediaLayout } from "@/utils/media.utils";
+import {
+  type IndicatorPosition,
+  type IndicatorTargetElement,
+  type MediaLayoutTarget,
+} from "@/models";
+import {
+  readIndicatorPosition,
+  resolveIndicatorViewport,
+  resolveMediaLayout,
+  withIndicatorPosition,
+  withoutIndicator,
+} from "@/utils/media.utils";
 
 type Props = {
   step: Step;
+  onUpdate?: (stepId: string, updates: Record<string, unknown>) => void;
   onReplaceMedia?: () => void;
   isReplacing?: boolean;
   className?: string;
 };
 
-export function StepMedia({ step, onReplaceMedia, isReplacing, className }: Props) {
+const INDICATOR_CENTER: IndicatorPosition = { x: 0.5, y: 0.5 };
+
+export function StepMedia({ step, onUpdate, onReplaceMedia, isReplacing, className }: Props) {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [showOverlay, setShowOverlay] = useState<boolean>(false);
 
   const media = step.mediaAssets?.[0];
+  const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const targetElement = step.targetElement as IndicatorTargetElement | null | undefined;
+  const indicatorPosition = readIndicatorPosition(targetElement);
+  const indicatorViewport = resolveIndicatorViewport(targetElement, media);
   const { aspectRatio: containerAspectRatio, overlay } = resolveMediaLayout(
     step.targetElement as MediaLayoutTarget | undefined,
     media,
   );
   const hasAspectRatio = containerAspectRatio != null;
   const hasOverlay = overlay != null;
+  const supportsIndicator = step.type !== "canvas";
 
-  const imgRef = useRef<HTMLImageElement>(null);
+  const canDragIndicator = supportsIndicator && onUpdate != null && indicatorViewport != null;
+
+  const handleIndicatorCommit = (position: IndicatorPosition) => {
+    if (!onUpdate || !indicatorViewport) return;
+
+    onUpdate(step.id, {
+      targetElement: withIndicatorPosition(targetElement, position, indicatorViewport),
+    });
+  };
+
+  const {
+    circleRef,
+    position: renderedIndicatorPosition,
+    isDragging,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerCancel,
+  } = useIndicatorDrag({
+    position: indicatorPosition ?? INDICATOR_CENTER,
+    containerRef,
+    enabled: canDragIndicator,
+    onCommit: handleIndicatorCommit,
+  });
+
   const mediaAltText =
     media?.altText ?? step.actionText ?? step.canvasContent?.headingText ?? "Step screenshot";
 
@@ -50,11 +102,30 @@ export function StepMedia({ step, onReplaceMedia, isReplacing, className }: Prop
     setShowOverlay(true);
   };
 
+  const canToggleIndicator = media != null && onUpdate != null && supportsIndicator;
+  const hasIndicator = indicatorPosition != null;
+
+  const handleToggleIndicator = () => {
+    if (!onUpdate) return;
+
+    if (hasIndicator) {
+      onUpdate(step.id, { targetElement: withoutIndicator(targetElement) });
+      return;
+    }
+
+    const viewport = resolveIndicatorViewport(targetElement, media, imgRef.current);
+    if (!viewport) return;
+
+    onUpdate(step.id, {
+      targetElement: withIndicatorPosition(targetElement, INDICATOR_CENTER, viewport),
+    });
+  };
+
   const slotName = ExtensionSlotKeys.STEP_MEDIA_TOOLBAR;
   const hasSlot = extensionRegistry.getSlot(slotName) != null;
 
   const mediaToolbar =
-    onReplaceMedia || hasSlot ? (
+    onReplaceMedia || hasSlot || canToggleIndicator ? (
       <StepMediaToolbar visible={isReplacing}>
         {onReplaceMedia && (
           <StepMediaToolbarButton
@@ -62,6 +133,14 @@ export function StepMedia({ step, onReplaceMedia, isReplacing, className }: Prop
             disabled={isReplacing}
             onClick={onReplaceMedia}
             icon={isReplacing ? <Loader2Icon className="animate-spin" /> : <ImageUpIcon />}
+          />
+        )}
+        {canToggleIndicator && (
+          <StepMediaToolbarButton
+            label={hasIndicator ? "Remove indicator" : "Create indicator"}
+            disabled={!hasIndicator && indicatorViewport == null && !loaded}
+            onClick={handleToggleIndicator}
+            icon={hasIndicator ? <CircleOffIcon /> : <CircleDotIcon />}
           />
         )}
         <ExtensionSlot name={slotName} props={{ step }} />
@@ -76,6 +155,8 @@ export function StepMedia({ step, onReplaceMedia, isReplacing, className }: Prop
       if (hasAspectRatio) {
         return (
           <div
+            ref={containerRef}
+            data-slot="step-media"
             className={cn(
               "group relative mb-4 overflow-hidden rounded-sm border bg-muted/20 shadow-xs",
               className,
@@ -118,17 +199,18 @@ export function StepMedia({ step, onReplaceMedia, isReplacing, className }: Prop
                     setError(true);
                   }}
                 />
-                {hasOverlay && (
-                  <div
-                    className="pointer-events-none absolute"
-                    style={{
-                      left: overlay.left,
-                      top: overlay.top,
-                      display: showOverlay ? undefined : "none",
-                    }}
-                  >
-                    <StepOverlay />
-                  </div>
+                {hasOverlay && indicatorPosition && showOverlay && (
+                  <StepOverlay
+                    left={`${renderedIndicatorPosition.x * 100}%`}
+                    top={`${renderedIndicatorPosition.y * 100}%`}
+                    interactive={canDragIndicator}
+                    isDragging={isDragging}
+                    circleRef={circleRef}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerCancel}
+                  />
                 )}
               </>
             )}
