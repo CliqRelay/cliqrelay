@@ -36,6 +36,35 @@ import { customFetch } from "../../../mutators/custom-fetch";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
@@ -120,6 +149,10 @@ export type GetAllMediaAssetsByStepIdQueryResult = NonNullable<
 >;
 export type GetAllMediaAssetsByStepIdQueryError = unknown;
 
+/**
+ * Retrieves all media assets for a given step
+ * @summary Get all media assets by step ID
+ */
 export function useGetAllMediaAssetsByStepId<
   TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
   TError = unknown,
@@ -141,6 +174,10 @@ export function useGetAllMediaAssetsByStepId<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves all media assets for a given step
+ * @summary Get all media assets by step ID
+ */
 export function useGetAllMediaAssetsByStepId<
   TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
   TError = unknown,
@@ -162,6 +199,10 @@ export function useGetAllMediaAssetsByStepId<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves all media assets for a given step
+ * @summary Get all media assets by step ID
+ */
 export function useGetAllMediaAssetsByStepId<
   TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
   TError = unknown,
@@ -176,9 +217,9 @@ export function useGetAllMediaAssetsByStepId<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieves all media assets for a given step
  * @summary Get all media assets by step ID
  */
-
 export function useGetAllMediaAssetsByStepId<
   TData = Awaited<ReturnType<typeof getAllMediaAssetsByStepId>>,
   TError = unknown,
@@ -213,29 +254,10 @@ export const createMediaAsset = async (
   createMediaAssetRequest?: CreateMediaAssetRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<CreateMediaAssetResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<CreateMediaAssetResponse>(getCreateMediaAssetUrl(), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(createMediaAssetRequest),
   });
 };
@@ -283,6 +305,7 @@ export type CreateMediaAssetMutationError = unknown;
 export type CreateMediaAssetMutationVariables = { data?: CreateMediaAssetRequest };
 
 /**
+ * Creates a new media asset associated with a step
  * @summary Create media asset
  */
 export const useCreateMediaAsset = <TError = unknown, TContext = unknown>(
@@ -358,6 +381,10 @@ export type GetMediaAssetByIdQueryResult = NonNullable<
 >;
 export type GetMediaAssetByIdQueryError = unknown;
 
+/**
+ * Retrieves a single media asset by its ID
+ * @summary Get media asset by ID
+ */
 export function useGetMediaAssetById<
   TData = Awaited<ReturnType<typeof getMediaAssetById>>,
   TError = unknown,
@@ -377,6 +404,10 @@ export function useGetMediaAssetById<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a single media asset by its ID
+ * @summary Get media asset by ID
+ */
 export function useGetMediaAssetById<
   TData = Awaited<ReturnType<typeof getMediaAssetById>>,
   TError = unknown,
@@ -396,6 +427,10 @@ export function useGetMediaAssetById<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a single media asset by its ID
+ * @summary Get media asset by ID
+ */
 export function useGetMediaAssetById<
   TData = Awaited<ReturnType<typeof getMediaAssetById>>,
   TError = unknown,
@@ -408,9 +443,9 @@ export function useGetMediaAssetById<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieves a single media asset by its ID
  * @summary Get media asset by ID
  */
-
 export function useGetMediaAssetById<
   TData = Awaited<ReturnType<typeof getMediaAssetById>>,
   TError = unknown,
@@ -492,6 +527,7 @@ export type DeleteMediaAssetMutationError = unknown;
 export type DeleteMediaAssetMutationVariables = { id: string };
 
 /**
+ * Hard-deletes a media asset
  * @summary Delete media asset
  */
 export const useDeleteMediaAsset = <TError = unknown, TContext = unknown>(
@@ -526,29 +562,10 @@ export const updateMediaAsset = async (
   updateMediaAssetRequest?: UpdateMediaAssetRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<UpdateMediaAssetResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<UpdateMediaAssetResponse>(getUpdateMediaAssetUrl(id), {
     ...options,
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(updateMediaAssetRequest),
   });
 };
@@ -596,6 +613,7 @@ export type UpdateMediaAssetMutationError = unknown;
 export type UpdateMediaAssetMutationVariables = { id: string; data?: UpdateMediaAssetRequest };
 
 /**
+ * Updates an existing media asset's metadata
  * @summary Update media asset
  */
 export const useUpdateMediaAsset = <TError = unknown, TContext = unknown>(

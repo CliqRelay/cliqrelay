@@ -57,6 +57,35 @@ import { customFetch } from "../../../mutators/custom-fetch";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+const getHeaders = (
+  ...sources: (RequestInit["headers"] | Record<string, string | undefined>)[]
+) => {
+  const seen = new Set<string>();
+  const layers: [string, string | readonly string[]][][] = [];
+  for (const source of sources.reverse()) {
+    if (!source) continue;
+    const entries =
+      source instanceof Headers
+        ? source.entries()
+        : Symbol.iterator in source
+          ? Array.from(
+              source as Iterable<Iterable<string>>,
+              (entry) => Array.from(entry) as [string, string],
+            )
+          : Object.entries<string | readonly string[] | undefined>(source);
+    const layer: [string, string | readonly string[]][] = [];
+    for (const [name, value] of entries) {
+      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, value]);
+    }
+    for (const [name] of layer) seen.add(name.toLowerCase());
+    layers.push(layer);
+  }
+  return Object.fromEntries(layers.reverse().flat()) as Extract<
+    RequestInit["headers"],
+    Record<string, unknown>
+  >;
+};
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
@@ -124,6 +153,10 @@ export const getGetExportStatusQueryOptions = <
 export type GetExportStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getExportStatus>>>;
 export type GetExportStatusQueryError = unknown;
 
+/**
+ * Polls the status of a guide export
+ * @summary Get export status
+ */
 export function useGetExportStatus<
   TData = Awaited<ReturnType<typeof getExportStatus>>,
   TError = unknown,
@@ -143,6 +176,10 @@ export function useGetExportStatus<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Polls the status of a guide export
+ * @summary Get export status
+ */
 export function useGetExportStatus<
   TData = Awaited<ReturnType<typeof getExportStatus>>,
   TError = unknown,
@@ -162,6 +199,10 @@ export function useGetExportStatus<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Polls the status of a guide export
+ * @summary Get export status
+ */
 export function useGetExportStatus<
   TData = Awaited<ReturnType<typeof getExportStatus>>,
   TError = unknown,
@@ -174,9 +215,9 @@ export function useGetExportStatus<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Polls the status of a guide export
  * @summary Get export status
  */
-
 export function useGetExportStatus<
   TData = Awaited<ReturnType<typeof getExportStatus>>,
   TError = unknown,
@@ -258,6 +299,10 @@ export const getGetAllGuidesQueryOptions = <
 export type GetAllGuidesQueryResult = NonNullable<Awaited<ReturnType<typeof getAllGuides>>>;
 export type GetAllGuidesQueryError = unknown;
 
+/**
+ * Get all guides for a user
+ * @summary Get all guides
+ */
 export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>, TError = unknown>(
   params: undefined | GetAllGuidesParams,
   options: {
@@ -274,6 +319,10 @@ export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Get all guides for a user
+ * @summary Get all guides
+ */
 export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>, TError = unknown>(
   params?: GetAllGuidesParams,
   options?: {
@@ -290,6 +339,10 @@ export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Get all guides for a user
+ * @summary Get all guides
+ */
 export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>, TError = unknown>(
   params?: GetAllGuidesParams,
   options?: {
@@ -299,9 +352,9 @@ export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Get all guides for a user
  * @summary Get all guides
  */
-
 export function useGetAllGuides<TData = Awaited<ReturnType<typeof getAllGuides>>, TError = unknown>(
   params?: GetAllGuidesParams,
   options?: {
@@ -331,29 +384,10 @@ export const createGuide = async (
   createGuideRequest?: CreateGuideRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<CreateGuideResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<CreateGuideResponse>(getCreateGuideUrl(), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(createGuideRequest),
   });
 };
@@ -399,6 +433,7 @@ export type CreateGuideMutationError = unknown;
 export type CreateGuideMutationVariables = { data?: CreateGuideRequest };
 
 /**
+ * Creates a new guide
  * @summary Create guide
  */
 export const useCreateGuide = <TError = unknown, TContext = unknown>(
@@ -445,29 +480,10 @@ export const bulkGuidesAction = async (
   params?: BulkGuidesActionParams,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<BulkGuidesResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<BulkGuidesResponse>(getBulkGuidesActionUrl(params), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(bulkGuidesRequest),
   });
 };
@@ -518,6 +534,7 @@ export type BulkGuidesActionMutationVariables = {
 };
 
 /**
+ * Performs a bulk action (delete, restore, permanently-delete) on multiple guides
  * @summary Bulk action on guides
  */
 export const useBulkGuidesAction = <TError = unknown, TContext = unknown>(
@@ -603,6 +620,10 @@ export const getGetGuidesCountQueryOptions = <
 export type GetGuidesCountQueryResult = NonNullable<Awaited<ReturnType<typeof getGuidesCount>>>;
 export type GetGuidesCountQueryError = unknown;
 
+/**
+ * Returns the total count of non-deleted guides for the authenticated user, scoped to a team or an organization
+ * @summary Get guides count
+ */
 export function useGetGuidesCount<
   TData = Awaited<ReturnType<typeof getGuidesCount>>,
   TError = unknown,
@@ -622,6 +643,10 @@ export function useGetGuidesCount<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns the total count of non-deleted guides for the authenticated user, scoped to a team or an organization
+ * @summary Get guides count
+ */
 export function useGetGuidesCount<
   TData = Awaited<ReturnType<typeof getGuidesCount>>,
   TError = unknown,
@@ -641,6 +666,10 @@ export function useGetGuidesCount<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns the total count of non-deleted guides for the authenticated user, scoped to a team or an organization
+ * @summary Get guides count
+ */
 export function useGetGuidesCount<
   TData = Awaited<ReturnType<typeof getGuidesCount>>,
   TError = unknown,
@@ -653,9 +682,9 @@ export function useGetGuidesCount<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Returns the total count of non-deleted guides for the authenticated user, scoped to a team or an organization
  * @summary Get guides count
  */
-
 export function useGetGuidesCount<
   TData = Awaited<ReturnType<typeof getGuidesCount>>,
   TError = unknown,
@@ -688,29 +717,10 @@ export const createDemoGuide = async (
   createDemoGuideRequest?: CreateDemoGuideRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<CreateDemoGuideResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<CreateDemoGuideResponse>(getCreateDemoGuideUrl(), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(createDemoGuideRequest),
   });
 };
@@ -758,6 +768,7 @@ export type CreateDemoGuideMutationError = unknown;
 export type CreateDemoGuideMutationVariables = { data?: CreateDemoGuideRequest };
 
 /**
+ * Creates a demo guide with predefined steps
  * @summary Create demo guide
  */
 export const useCreateDemoGuide = <TError = unknown, TContext = unknown>(
@@ -843,6 +854,10 @@ export const getGetStarredGuidesQueryOptions = <
 export type GetStarredGuidesQueryResult = NonNullable<Awaited<ReturnType<typeof getStarredGuides>>>;
 export type GetStarredGuidesQueryError = unknown;
 
+/**
+ * Get all guides starred by the current user
+ * @summary Get starred guides
+ */
 export function useGetStarredGuides<
   TData = Awaited<ReturnType<typeof getStarredGuides>>,
   TError = unknown,
@@ -862,6 +877,10 @@ export function useGetStarredGuides<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Get all guides starred by the current user
+ * @summary Get starred guides
+ */
 export function useGetStarredGuides<
   TData = Awaited<ReturnType<typeof getStarredGuides>>,
   TError = unknown,
@@ -881,6 +900,10 @@ export function useGetStarredGuides<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Get all guides starred by the current user
+ * @summary Get starred guides
+ */
 export function useGetStarredGuides<
   TData = Awaited<ReturnType<typeof getStarredGuides>>,
   TError = unknown,
@@ -893,9 +916,9 @@ export function useGetStarredGuides<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Get all guides starred by the current user
  * @summary Get starred guides
  */
-
 export function useGetStarredGuides<
   TData = Awaited<ReturnType<typeof getStarredGuides>>,
   TError = unknown,
@@ -968,6 +991,10 @@ export const getGetGuideByIdQueryOptions = <
 export type GetGuideByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getGuideById>>>;
 export type GetGuideByIdQueryError = unknown;
 
+/**
+ * Retrieves a single guide by its ID
+ * @summary Get guide by ID
+ */
 export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>, TError = unknown>(
   id: string,
   options: {
@@ -984,6 +1011,10 @@ export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a single guide by its ID
+ * @summary Get guide by ID
+ */
 export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>, TError = unknown>(
   id: string,
   options?: {
@@ -1000,6 +1031,10 @@ export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Retrieves a single guide by its ID
+ * @summary Get guide by ID
+ */
 export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>, TError = unknown>(
   id: string,
   options?: {
@@ -1009,9 +1044,9 @@ export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Retrieves a single guide by its ID
  * @summary Get guide by ID
  */
-
 export function useGetGuideById<TData = Awaited<ReturnType<typeof getGuideById>>, TError = unknown>(
   id: string,
   options?: {
@@ -1088,6 +1123,7 @@ export type DeleteGuideMutationError = unknown;
 export type DeleteGuideMutationVariables = { id: string };
 
 /**
+ * Soft-deletes a guide
  * @summary Delete guide
  */
 export const useDeleteGuide = <TError = unknown, TContext = unknown>(
@@ -1122,29 +1158,10 @@ export const updateGuide = async (
   updateGuideRequest?: UpdateGuideRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<UpdateGuideResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<UpdateGuideResponse>(getUpdateGuideUrl(id), {
     ...options,
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(updateGuideRequest),
   });
 };
@@ -1190,6 +1207,7 @@ export type UpdateGuideMutationError = unknown;
 export type UpdateGuideMutationVariables = { id: string; data?: UpdateGuideRequest };
 
 /**
+ * Updates an existing guide
  * @summary Update guide
  */
 export const useUpdateGuide = <TError = unknown, TContext = unknown>(
@@ -1270,6 +1288,7 @@ export type ArchiveGuideMutationError = unknown;
 export type ArchiveGuideMutationVariables = { id: string };
 
 /**
+ * Archives a guide
  * @summary Archive guide
  */
 export const useArchiveGuide = <TError = unknown, TContext = unknown>(
@@ -1304,29 +1323,10 @@ export const exportGuide = async (
   exportGuideRequest?: ExportGuideRequest,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<ExportGuideResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(
-          h as Iterable<Iterable<string>>,
-          (entry) => Array.from(entry) as [string, string],
-        ),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
   return customFetch<ExportGuideResponse>(getExportGuideUrl(id), {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
+    headers: getHeaders({ "Content-Type": "application/json" }, options?.headers),
     body: JSON.stringify(exportGuideRequest),
   });
 };
@@ -1372,6 +1372,7 @@ export type ExportGuideMutationError = unknown;
 export type ExportGuideMutationVariables = { id: string; data?: ExportGuideRequest };
 
 /**
+ * Triggers an async export of a guide (e.g. PDF)
  * @summary Export guide
  */
 export const useExportGuide = <TError = unknown, TContext = unknown>(
@@ -1457,6 +1458,7 @@ export type PermanentlyDeleteGuideMutationError = unknown;
 export type PermanentlyDeleteGuideMutationVariables = { id: string };
 
 /**
+ * Permanently deletes a soft-deleted guide
  * @summary Permanently delete guide
  */
 export const usePermanentlyDeleteGuide = <TError = unknown, TContext = unknown>(
@@ -1537,6 +1539,7 @@ export type PublishGuideMutationError = unknown;
 export type PublishGuideMutationVariables = { id: string };
 
 /**
+ * Publishes a guide
  * @summary Publish guide
  */
 export const usePublishGuide = <TError = unknown, TContext = unknown>(
@@ -1622,6 +1625,7 @@ export type RecalculateGuideDurationMutationError = unknown;
 export type RecalculateGuideDurationMutationVariables = { id: string };
 
 /**
+ * Recalculates the synthetic duration for a guide based on its steps
  * @summary Recalculate guide duration
  */
 export const useRecalculateGuideDuration = <TError = unknown, TContext = unknown>(
@@ -1702,6 +1706,7 @@ export type RestoreGuideMutationError = unknown;
 export type RestoreGuideMutationVariables = { id: string };
 
 /**
+ * Restores a previously deleted guide
  * @summary Restore guide
  */
 export const useRestoreGuide = <TError = unknown, TContext = unknown>(
@@ -1782,6 +1787,7 @@ export type StarGuideMutationError = unknown;
 export type StarGuideMutationVariables = { id: string };
 
 /**
+ * Stars a guide for the current user
  * @summary Star guide
  */
 export const useStarGuide = <TError = unknown, TContext = unknown>(
@@ -1862,6 +1868,7 @@ export type UnstarGuideMutationError = unknown;
 export type UnstarGuideMutationVariables = { id: string };
 
 /**
+ * Unstars a guide for the current user
  * @summary Unstar guide
  */
 export const useUnstarGuide = <TError = unknown, TContext = unknown>(
@@ -1942,6 +1949,7 @@ export type UnarchiveGuideMutationError = unknown;
 export type UnarchiveGuideMutationVariables = { id: string };
 
 /**
+ * Unarchives a guide and returns it to draft status
  * @summary Unarchive guide
  */
 export const useUnarchiveGuide = <TError = unknown, TContext = unknown>(
@@ -2022,6 +2030,7 @@ export type UnpublishGuideMutationError = unknown;
 export type UnpublishGuideMutationVariables = { id: string };
 
 /**
+ * Unpublishes a guide and returns it to draft status
  * @summary Unpublish guide
  */
 export const useUnpublishGuide = <TError = unknown, TContext = unknown>(

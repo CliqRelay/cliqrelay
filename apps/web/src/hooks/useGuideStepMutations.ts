@@ -5,7 +5,7 @@ import { api, type CreateStepRequest, type UpdateStepRequest } from "@repo/api-c
 import { stepsQueryKey } from "@/constants/steps";
 import { toast } from "@/lib/toast";
 import type { StepTypeOption } from "@/models";
-import { STEP_TYPE_CONFIG } from "@/models";
+import { DEFAULT_CODE_LANGUAGE, STEP_TYPE_CONFIG } from "@/models";
 import { getCsrfTokenHeader } from "@/utils/http.utils";
 import { reorderStepsInPages, type StepsInfiniteData } from "@/utils/steps.utils";
 
@@ -138,15 +138,24 @@ export function useGuideStepMutations(guideId: string) {
     const data: CreateStepRequest = {
       guideId,
       type: config.type,
-      ...(config.canvasType
+      ...(config.canvasType === "code"
         ? {
             canvasContent: {
-              type: config.canvasType,
-              headingText: "",
-              bodyText: "",
+              type: "code" as const,
+              language: DEFAULT_CODE_LANGUAGE,
+              code: "",
+              caption: "",
             },
           }
-        : {}),
+        : config.canvasType
+          ? {
+              canvasContent: {
+                type: config.canvasType,
+                headingText: "",
+                bodyText: "",
+              },
+            }
+          : {}),
       ...(insertBeforeStepId ? { insertBeforeStepId } : {}),
     };
     await createStep.mutateAsync(

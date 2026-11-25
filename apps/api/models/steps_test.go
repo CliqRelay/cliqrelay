@@ -22,6 +22,7 @@ func TestStep_SupportsMedia(t *testing.T) {
 		{name: "tip canvas", step: Step{Type: StepTypeCanvas, CanvasContent: &StepCanvasContent{Type: StepCanvasTypeTip}}, want: true},
 		{name: "alert canvas", step: Step{Type: StepTypeCanvas, CanvasContent: &StepCanvasContent{Type: StepCanvasTypeAlert}}, want: true},
 		{name: "header canvas", step: Step{Type: StepTypeCanvas, CanvasContent: &StepCanvasContent{Type: StepCanvasTypeHeader}}, want: false},
+		{name: "code canvas", step: Step{Type: StepTypeCanvas, CanvasContent: &StepCanvasContent{Type: StepCanvasTypeCode}}, want: false},
 		{name: "canvas without content", step: Step{Type: StepTypeCanvas}, want: false},
 	}
 

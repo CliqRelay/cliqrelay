@@ -1,4 +1,16 @@
+import { z } from "zod";
+
 import type { Step, StepCanvasType } from "@repo/api-client";
+
+export const canvasFormSchema = z.object({
+  headingText: z.string(),
+  bodyText: z.string(),
+  language: z.string(),
+  code: z.string(),
+  caption: z.string(),
+});
+
+export type CanvasFormValues = z.infer<typeof canvasFormSchema>;
 
 export type StepTypeOption = "step" | StepCanvasType;
 
@@ -13,6 +25,7 @@ export const STEP_TYPE_CONFIG: Record<StepTypeOption, StepTypeConfig> = {
   tip: { type: "canvas", canvasType: "tip" },
   callout: { type: "canvas", canvasType: "callout" },
   alert: { type: "canvas", canvasType: "alert" },
+  code: { type: "canvas", canvasType: "code" },
 };
 
 function capitalize(value: string): string {
@@ -26,6 +39,10 @@ export function getStepTitle(step: Step, stepNumber: number): string {
       return headingText;
     }
     const canvasType = step.canvasContent?.type;
+    if (canvasType === "code") {
+      const caption = step.canvasContent?.caption?.trim();
+      return caption || "Code";
+    }
     return canvasType ? capitalize(canvasType) : "Canvas";
   }
 

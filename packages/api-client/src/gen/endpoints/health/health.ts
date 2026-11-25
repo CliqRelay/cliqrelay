@@ -84,6 +84,10 @@ export const getGetHealthQueryOptions = <
 export type GetHealthQueryResult = NonNullable<Awaited<ReturnType<typeof getHealth>>>;
 export type GetHealthQueryError = unknown;
 
+/**
+ * Returns the health status of the API
+ * @summary Health check
+ */
 export function useGetHealth<TData = Awaited<ReturnType<typeof getHealth>>, TError = unknown>(
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>> &
@@ -99,6 +103,10 @@ export function useGetHealth<TData = Awaited<ReturnType<typeof getHealth>>, TErr
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns the health status of the API
+ * @summary Health check
+ */
 export function useGetHealth<TData = Awaited<ReturnType<typeof getHealth>>, TError = unknown>(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>> &
@@ -114,6 +122,10 @@ export function useGetHealth<TData = Awaited<ReturnType<typeof getHealth>>, TErr
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns the health status of the API
+ * @summary Health check
+ */
 export function useGetHealth<TData = Awaited<ReturnType<typeof getHealth>>, TError = unknown>(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>>;
@@ -122,9 +134,9 @@ export function useGetHealth<TData = Awaited<ReturnType<typeof getHealth>>, TErr
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Returns the health status of the API
  * @summary Health check
  */
-
 export function useGetHealth<TData = Awaited<ReturnType<typeof getHealth>>, TError = unknown>(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHealth>>, TError, TData>>;

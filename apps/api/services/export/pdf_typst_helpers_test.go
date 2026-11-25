@@ -107,6 +107,9 @@ func TestCanvasContentToTypst(t *testing.T) {
 
 	heading := "Heads up"
 	body := "Some body copy"
+	language := "typescript"
+	code := "const answer = 42;"
+	caption := "example.ts"
 
 	tests := []struct {
 		name string
@@ -127,6 +130,21 @@ func TestCanvasContentToTypst(t *testing.T) {
 				BodyText:    &body,
 			},
 		},
+		{
+			name: "all code fields set",
+			cc: &models.StepCanvasContent{
+				Type:     models.StepCanvasTypeCode,
+				Language: &language,
+				Code:     &code,
+				Caption:  &caption,
+			},
+			want: &typstInputCanvasContent{
+				Type:     string(models.StepCanvasTypeCode),
+				Language: &language,
+				Code:     &code,
+				Caption:  &caption,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -135,6 +153,59 @@ func TestCanvasContentToTypst(t *testing.T) {
 
 			// Act
 			got := canvasContentToTypst(tt.cc)
+
+			// Assert
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestWrapCodeLines(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		code    string
+		maxCols int
+		want    string
+	}{
+		{name: "empty", code: "", maxCols: 10, want: ""},
+		{name: "short line is unchanged", code: "short", maxCols: 10, want: "short"},
+		{name: "line at the limit is unchanged", code: "0123456789", maxCols: 10, want: "0123456789"},
+		{name: "original line breaks are preserved", code: "one\ntwo", maxCols: 10, want: "one\ntwo"},
+		{name: "crlf is normalised", code: "one\r\ntwo", maxCols: 10, want: "one\ntwo"},
+		{
+			name:    "breaks at the last space before the limit",
+			code:    "hello world foo",
+			maxCols: 10,
+			want:    "hello \nworld foo",
+		},
+		{
+			name:    "hard breaks a word with no space",
+			code:    "abcdefghijkl",
+			maxCols: 10,
+			want:    "abcdefghij\nkl",
+		},
+		{
+			name:    "multibyte runes count as one column",
+			code:    "éééééééééééé",
+			maxCols: 10,
+			want:    "éééééééééé\néé",
+		},
+		{
+			name:    "blank lines are preserved",
+			code:    "a\n\nb",
+			maxCols: 10,
+			want:    "a\n\nb",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Act
+			got := wrapCodeLines(tt.code, tt.maxCols)
 
 			// Assert
 			assert.Equal(t, tt.want, got)

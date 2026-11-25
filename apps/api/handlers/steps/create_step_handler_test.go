@@ -102,6 +102,46 @@ func TestCreateStepHandler(t *testing.T) {
 			responseKey:    "step.type",
 		},
 		{
+			name: "success with code canvas content",
+			payload: types.CreateStepRequest{
+				GuideID: uuid.New(),
+				Type:    models.StepTypeCanvas,
+				CanvasContent: &models.StepCanvasContent{
+					Type:     models.StepCanvasTypeCode,
+					Language: new("typescript"),
+					Code:     new("const answer = 42;"),
+					Caption:  new("example.ts"),
+				},
+			},
+			setup: func(mockStepsRepo *tests.MockStepsRepository, mockGuidesRepo *tests.MockGuidesRepository) {
+				mockGuidesRepo.On("GetByID", mock.Anything, mock.Anything).
+					Return(&models.Guide{
+						ID:        uuid.New(),
+						CreatorID: new("test-user-123"),
+						Title:     "Test Guide",
+						Status:    models.StatusDraft,
+					}, nil).
+					Twice()
+				mockStepsRepo.On("Create", mock.Anything, mock.Anything).
+					Return(&models.Step{
+						ID:        uuid.New(),
+						GuideID:   uuid.New(),
+						SortOrder: "a0",
+						Type:      models.StepTypeCanvas,
+						CanvasContent: &models.StepCanvasContent{
+							Type:     models.StepCanvasTypeCode,
+							Language: new("typescript"),
+							Code:     new("const answer = 42;"),
+							Caption:  new("example.ts"),
+						},
+					}, nil).
+					Once()
+			},
+			expectedStatus: http.StatusCreated,
+			expectedBody:   "canvas",
+			responseKey:    "step.type",
+		},
+		{
 			name: "success with insert_before_step_id",
 			payload: types.CreateStepRequest{
 				GuideID:            uuid.New(),

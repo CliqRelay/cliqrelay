@@ -93,6 +93,10 @@ export type GetMyOrgMembershipQueryResult = NonNullable<
 >;
 export type GetMyOrgMembershipQueryError = unknown;
 
+/**
+ * Returns the caller's own membership row, including their role. Responds with 404 when the caller is not a member or the organization does not exist.
+ * @summary Get the signed-in user's organization membership.
+ */
 export function useGetMyOrgMembership<
   TData = Awaited<ReturnType<typeof getMyOrgMembership>>,
   TError = unknown,
@@ -112,6 +116,10 @@ export function useGetMyOrgMembership<
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns the caller's own membership row, including their role. Responds with 404 when the caller is not a member or the organization does not exist.
+ * @summary Get the signed-in user's organization membership.
+ */
 export function useGetMyOrgMembership<
   TData = Awaited<ReturnType<typeof getMyOrgMembership>>,
   TError = unknown,
@@ -133,6 +141,10 @@ export function useGetMyOrgMembership<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * Returns the caller's own membership row, including their role. Responds with 404 when the caller is not a member or the organization does not exist.
+ * @summary Get the signed-in user's organization membership.
+ */
 export function useGetMyOrgMembership<
   TData = Awaited<ReturnType<typeof getMyOrgMembership>>,
   TError = unknown,
@@ -145,9 +157,9 @@ export function useGetMyOrgMembership<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
+ * Returns the caller's own membership row, including their role. Responds with 404 when the caller is not a member or the organization does not exist.
  * @summary Get the signed-in user's organization membership.
  */
-
 export function useGetMyOrgMembership<
   TData = Awaited<ReturnType<typeof getMyOrgMembership>>,
   TError = unknown,

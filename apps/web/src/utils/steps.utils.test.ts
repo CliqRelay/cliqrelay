@@ -98,11 +98,24 @@ describe("reorderStepsInPages", () => {
 describe("stepSupportsMedia", () => {
   test.each([
     { name: "interaction step", step: { type: "interaction" }, expected: true },
-    { name: "callout", step: { type: "canvas", canvasContent: { type: "callout" } }, expected: true },
+    {
+      name: "callout",
+      step: { type: "canvas", canvasContent: { type: "callout" } },
+      expected: true,
+    },
     { name: "tip", step: { type: "canvas", canvasContent: { type: "tip" } }, expected: true },
     { name: "alert", step: { type: "canvas", canvasContent: { type: "alert" } }, expected: true },
-    { name: "header", step: { type: "canvas", canvasContent: { type: "header" } }, expected: false },
-    { name: "canvas without content", step: { type: "canvas", canvasContent: null }, expected: false },
+    {
+      name: "header",
+      step: { type: "canvas", canvasContent: { type: "header" } },
+      expected: false,
+    },
+    { name: "code", step: { type: "canvas", canvasContent: { type: "code" } }, expected: false },
+    {
+      name: "canvas without content",
+      step: { type: "canvas", canvasContent: null },
+      expected: false,
+    },
   ] as const)("$name", ({ step, expected }) => {
     expect(stepSupportsMedia(step)).toBe(expected);
   });

@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/CliqRelay/cliqrelay/assets"
 	"github.com/CliqRelay/cliqrelay/interfaces"
@@ -23,6 +24,7 @@ const (
 	typstDataFile   = "data.json"
 	typstLogoFile   = "logo.png"
 	typstOrgLogoPfx = "org-logo."
+	codeLineMaxCols = 96
 )
 
 // PDFRenderOptions customises the rendered PDF. A nil value keeps the
@@ -54,6 +56,9 @@ type typstInputCanvasContent struct {
 	Type        string  `json:"type"`
 	HeadingText *string `json:"heading_text"`
 	BodyText    *string `json:"body_text"`
+	Language    *string `json:"language"`
+	Code        *string `json:"code"`
+	Caption     *string `json:"caption"`
 }
 
 type typstInputMedia struct {
@@ -299,11 +304,58 @@ func canvasContentToTypst(cc *models.StepCanvasContent) *typstInputCanvasContent
 		return nil
 	}
 
-	return &typstInputCanvasContent{
+	content := &typstInputCanvasContent{
 		Type:        string(cc.Type),
 		HeadingText: cc.HeadingText,
 		BodyText:    cc.BodyText,
+		Language:    cc.Language,
+		Caption:     cc.Caption,
 	}
+
+	if cc.Code != nil {
+		wrapped := wrapCodeLines(*cc.Code, codeLineMaxCols)
+		content.Code = &wrapped
+	}
+
+	return content
+}
+
+func wrapCodeLines(code string, maxCols int) string {
+	if maxCols <= 0 {
+		return code
+	}
+
+	lines := strings.Split(strings.ReplaceAll(code, "\r\n", "\n"), "\n")
+	wrapped := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		wrapped = append(wrapped, wrapCodeLine(line, maxCols)...)
+	}
+
+	return strings.Join(wrapped, "\n")
+}
+
+func wrapCodeLine(line string, maxCols int) []string {
+	runes := []rune(line)
+	if len(runes) <= maxCols {
+		return []string{line}
+	}
+
+	var segments []string
+	for len(runes) > maxCols {
+		breakAt := maxCols
+		for i := maxCols - 1; i >= 0; i-- {
+			if runes[i] == ' ' {
+				breakAt = i + 1
+				break
+			}
+		}
+
+		segments = append(segments, string(runes[:breakAt]))
+		runes = runes[breakAt:]
+	}
+
+	return append(segments, string(runes))
 }
 
 func mapToTargetElement(m map[string]any) *typstInputTargetElement {

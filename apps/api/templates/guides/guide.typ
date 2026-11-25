@@ -24,6 +24,9 @@
 #let alert-bg = rgb("#FEF2F2")
 #let alert-border = rgb("#EF4444")
 #let alert-fg = rgb("#B91C1C")
+#let code-bg = rgb("#F8FAFC")
+#let code-header-bg = rgb("#F1F5F9")
+#let code-border = rgb("#E2E8F0")
 
 // -------- Theme (optional, injected by branded exports) --------
 #let accent-color = if "accent_color" in theme { rgb(theme.accent_color) } else { foreground }
@@ -134,6 +137,42 @@
   ]
 }
 
+#let canvas-code(caption, language, code) = {
+  let lang = if language != none and language != "" { language } else { "plaintext" }
+  block(
+    width: 100%,
+    breakable: true,
+    fill: code-bg,
+    stroke: 1pt + code-border,
+    radius: 4pt,
+    inset: 0pt,
+  )[
+    #block(
+      width: 100%,
+      sticky: true,
+      fill: code-header-bg,
+      stroke: (bottom: 1pt + code-border),
+      inset: (x: 10pt, y: 6pt),
+      above: 0pt,
+      below: 0pt,
+    )[
+      #grid(
+        columns: (1fr, auto),
+        gutter: 8pt,
+        align(left, text(size: 9pt, weight: "bold", fill: foreground,
+          if caption != none { caption } else { "" },
+        )),
+        align(right, text(size: 8pt, weight: "bold", fill: muted-fg, upper(lang))),
+      )
+    ]
+    #block(width: 100%, inset: 8pt, above: 0pt, below: 0pt)[
+      #show raw.where(block: true): set block(above: 0pt, below: 0pt)
+      #set text(font: "DejaVu Sans Mono", size: 7pt)
+      #raw(code, block: true, lang: lang)
+    ]
+  ]
+}
+
 #let step-card(n, step) = {
   block(stroke: 1pt + border-color, radius: 8pt, inset: 12pt, breakable: false)[
     #grid(columns: (auto, 1fr), gutter: 8pt,
@@ -179,6 +218,12 @@
       if cc.type == "header" {
         canvas-header(
           if cc.heading_text != none { cc.heading_text } else { "" },
+        )
+      } else if cc.type == "code" {
+        canvas-code(
+          cc.caption,
+          cc.language,
+          if cc.code != none { cc.code } else { "" },
         )
       } else {
         canvas-alert(cc.type, cc.heading_text, cc.body_text, step.media)
