@@ -32,7 +32,8 @@ func TestUpdateGuideHandler(t *testing.T) {
 			name:    "success",
 			guideID: uuid.New().String(),
 			payload: types.UpdateGuideRequest{
-				Title: new("Updated Title"),
+				Title:    new("Updated Title"),
+				Metadata: map[string]any{"source": "extension"},
 			},
 			expectedStatus: http.StatusOK,
 			expectedBody:   "Updated Title",
@@ -84,7 +85,9 @@ func TestUpdateGuideHandler(t *testing.T) {
 						Status:    models.StatusDraft,
 					}, nil).
 					Twice()
-				mockRepo.On("Update", mock.Anything, mock.Anything).
+				mockRepo.On("Update", mock.Anything, mock.MatchedBy(func(dto *types.UpdateGuideDTO) bool {
+					return assert.ObjectsAreEqual(map[string]any{"source": "extension"}, dto.Metadata)
+				})).
 					Return(&models.Guide{
 						ID:        uuid.MustParse(guideID),
 						CreatorID: new("test-user-123"),

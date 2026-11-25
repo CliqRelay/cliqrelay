@@ -131,6 +131,8 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 		title           string
 		description     *string
 		wantDescription *string
+		metadata        map[string]any
+		wantMetadata    map[string]any
 	}{
 		{
 			name:            "creates guide with full details",
@@ -145,6 +147,13 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 			title:           "No Description Guide",
 			description:     nil,
 			wantDescription: nil,
+		},
+		{
+			name:         "creates guide with metadata",
+			userID:       uuid.New().String(),
+			title:        "Metadata Guide",
+			metadata:     map[string]any{"source": "extension", "browser": "chrome"},
+			wantMetadata: map[string]any{"source": "extension", "browser": "chrome"},
 		},
 	}
 
@@ -167,6 +176,7 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 				CreatorID:   new(tt.userID),
 				Title:       tt.title,
 				Description: tt.description,
+				Metadata:    tt.metadata,
 			})
 
 			require.NoError(t, err)
@@ -180,6 +190,7 @@ func TestBunGuidesRepository_Create(t *testing.T) {
 			assert.NotZero(t, guide.UpdatedAt)
 			assert.Nil(t, guide.DeletedAt)
 			assert.Equal(t, tt.wantDescription, guide.Description)
+			assert.Equal(t, tt.wantMetadata, guide.Metadata)
 		})
 	}
 }
@@ -533,6 +544,68 @@ func TestBunGuidesRepository_Update(t *testing.T) {
 			check: func(t *testing.T, guide *models.Guide) {
 				require.NotNil(t, guide.Description)
 				assert.Equal(t, "Updated Description", *guide.Description)
+			},
+		},
+		{
+			name: "updates guide metadata",
+			setup: func(db bun.IDB) *models.Guide {
+				return seedGuide(t, db, "", "Title")
+			},
+			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
+				return &types.UpdateGuideDTO{
+					ID:       guide.ID,
+					TeamID:   guide.TeamID,
+					Metadata: map[string]any{"source": "extension"},
+				}
+			},
+			check: func(t *testing.T, guide *models.Guide) {
+				assert.Equal(t, map[string]any{"source": "extension"}, guide.Metadata)
+			},
+		},
+		{
+			name: "clears guide metadata with an empty map",
+			setup: func(db bun.IDB) *models.Guide {
+				guide := seedGuide(t, db, "", "Title")
+				_, err := db.NewUpdate().
+					Model((*models.Guide)(nil)).
+					Set("metadata = ?", map[string]any{"source": "extension"}).
+					Where("id = ?", guide.ID).
+					Exec(context.Background())
+				require.NoError(t, err)
+				return guide
+			},
+			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
+				return &types.UpdateGuideDTO{
+					ID:       guide.ID,
+					TeamID:   guide.TeamID,
+					Metadata: map[string]any{},
+				}
+			},
+			check: func(t *testing.T, guide *models.Guide) {
+				assert.Empty(t, guide.Metadata)
+			},
+		},
+		{
+			name: "leaves metadata unchanged when not provided",
+			setup: func(db bun.IDB) *models.Guide {
+				guide := seedGuide(t, db, "", "Title")
+				_, err := db.NewUpdate().
+					Model((*models.Guide)(nil)).
+					Set("metadata = ?", map[string]any{"source": "extension"}).
+					Where("id = ?", guide.ID).
+					Exec(context.Background())
+				require.NoError(t, err)
+				return guide
+			},
+			dto: func(guide *models.Guide) *types.UpdateGuideDTO {
+				return &types.UpdateGuideDTO{
+					ID:     guide.ID,
+					TeamID: guide.TeamID,
+					Title:  new("Updated Title"),
+				}
+			},
+			check: func(t *testing.T, guide *models.Guide) {
+				assert.Equal(t, map[string]any{"source": "extension"}, guide.Metadata)
 			},
 		},
 		{

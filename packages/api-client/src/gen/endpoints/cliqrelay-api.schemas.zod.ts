@@ -100,6 +100,7 @@ export type CreateDemoGuideResponseOutput = zod.output<typeof CreateDemoGuideRes
 export const CreateGuideRequest = zod.object({
   clientGuideId: zod.string().nullish(),
   description: zod.string().nullish(),
+  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
   teamId: Uuid,
   title: zod.string(),
 });
@@ -552,6 +553,7 @@ export type UnstarGuideResponseOutput = zod.output<typeof UnstarGuideResponse>;
 
 export const UpdateGuideRequest = zod.object({
   description: zod.string().nullish(),
+  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
   title: zod.string().nullish(),
   visibility: zod.union([zod.null(), Visibility]).optional(),
 });

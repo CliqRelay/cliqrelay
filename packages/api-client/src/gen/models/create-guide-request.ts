@@ -5,6 +5,7 @@
  * CliqRelay API - step-by-step visual documentation platform
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateGuideRequestMetadata } from "./create-guide-request-metadata";
 import type { Uuid } from "./uuid";
 
 export type CreateGuideRequest = {
@@ -12,6 +13,8 @@ export type CreateGuideRequest = {
   clientGuideId?: string | null;
   /** @nullable */
   description?: string | null;
+  /** @nullable */
+  metadata?: CreateGuideRequestMetadata;
   teamId: Uuid;
   title: string;
 };

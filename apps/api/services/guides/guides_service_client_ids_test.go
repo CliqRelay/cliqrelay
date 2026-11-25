@@ -29,6 +29,7 @@ func TestGuidesService_CreateWithClientGuideID(t *testing.T) {
 	clientGuideID := uuid.New().String()
 	title := "Recorded Guide"
 	description := "Captured from the extension"
+	metadata := map[string]any{"source": "extension"}
 
 	request := func() *types.CreateGuideRequest {
 		return &types.CreateGuideRequest{
@@ -36,6 +37,7 @@ func TestGuidesService_CreateWithClientGuideID(t *testing.T) {
 			Title:         title,
 			Description:   new(description),
 			ClientGuideID: new(clientGuideID),
+			Metadata:      metadata,
 		}
 	}
 
@@ -48,6 +50,7 @@ func TestGuidesService_CreateWithClientGuideID(t *testing.T) {
 			Description:   new(description),
 			ClientGuideID: new(clientGuideID),
 			Status:        models.StatusDraft,
+			Metadata:      metadata,
 		}
 	}
 
@@ -73,6 +76,17 @@ func TestGuidesService_CreateWithClientGuideID(t *testing.T) {
 			setup: func(repo *tests.MockGuidesRepository) {
 				existing := matchingGuide()
 				existing.Title = "Different title"
+				repo.On("GetByClientID", mock.Anything, clientGuideID).
+					Return(existing, nil).
+					Once()
+			},
+			wantErrIs: constants.ErrClientIDConflict,
+		},
+		{
+			name: "conflicts when the metadata changed",
+			setup: func(repo *tests.MockGuidesRepository) {
+				existing := matchingGuide()
+				existing.Metadata = map[string]any{"source": "web"}
 				repo.On("GetByClientID", mock.Anything, clientGuideID).
 					Return(existing, nil).
 					Once()

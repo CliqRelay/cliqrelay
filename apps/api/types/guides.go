@@ -103,10 +103,11 @@ type GuideFilter struct {
 }
 
 type CreateGuideRequest struct {
-	TeamID        uuid.UUID `json:"team_id" validate:"required,uuid" required:"true"`
-	Title         string    `json:"title" validate:"required,lte=255" required:"true"`
-	Description   *string   `json:"description,omitempty" nullable:"true"`
-	ClientGuideID *string   `json:"client_guide_id,omitempty" validate:"omitempty,uuid"`
+	TeamID        uuid.UUID      `json:"team_id" validate:"required,uuid" required:"true"`
+	Title         string         `json:"title" validate:"required,lte=255" required:"true"`
+	Description   *string        `json:"description,omitempty" nullable:"true"`
+	ClientGuideID *string        `json:"client_guide_id,omitempty" validate:"omitempty,uuid"`
+	Metadata      map[string]any `json:"metadata,omitempty" nullable:"true"`
 }
 
 func (r *CreateGuideRequest) Validate() error {
@@ -117,11 +118,12 @@ func (r *CreateGuideRequest) Validate() error {
 }
 
 type CreateGuideDTO struct {
-	TeamID        uuid.UUID `json:"team_id" validate:"required"`
-	CreatorID     *string   `json:"-"`
-	Title         string    `json:"title" required:"true" validate:"required,lte=255"`
-	Description   *string   `json:"description,omitempty"`
-	ClientGuideID *string   `json:"-" validate:"omitempty,uuid"`
+	TeamID        uuid.UUID      `json:"team_id" validate:"required"`
+	CreatorID     *string        `json:"-"`
+	Title         string         `json:"title" required:"true" validate:"required,lte=255"`
+	Description   *string        `json:"description,omitempty"`
+	ClientGuideID *string        `json:"-" validate:"omitempty,uuid"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
 }
 
 func (r *CreateGuideDTO) Validate() error {
@@ -160,6 +162,7 @@ type UpdateGuideRequest struct {
 	Title       *string            `json:"title,omitempty" validate:"omitempty,gt=0,lte=255" nullable:"true"`
 	Description *string            `json:"description,omitempty" validate:"omitempty,gt=0" nullable:"true"`
 	Visibility  *models.Visibility `json:"visibility,omitempty" validate:"omitempty,oneof=private team public" nullable:"true"`
+	Metadata    map[string]any     `json:"metadata,omitempty" nullable:"true"`
 }
 
 func (r *UpdateGuideRequest) Validate() error {
@@ -176,6 +179,7 @@ type UpdateGuideDTO struct {
 	Title       *string            `json:"title,omitempty" validate:"omitempty,lte=255" nullable:"true"`
 	Description *string            `json:"description,omitempty" nullable:"true"`
 	Visibility  *models.Visibility `json:"visibility,omitempty" nullable:"true"`
+	Metadata    map[string]any     `json:"metadata,omitempty" nullable:"true"`
 }
 
 func (r *UpdateGuideDTO) Validate() error {
