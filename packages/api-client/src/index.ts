@@ -3,6 +3,7 @@ import * as teams from "./gen/endpoints/teams/teams";
 import * as organizations from "./gen/endpoints/organizations/organizations";
 import * as guides from "./gen/endpoints/guides/guides";
 import * as steps from "./gen/endpoints/steps/steps";
+import * as mediaAssets from "./gen/endpoints/media-assets/media-assets";
 import * as uploads from "./gen/endpoints/uploads/uploads";
 export * from "./gen/models";
 export * from "./gen/endpoints/health/health.faker";
@@ -19,5 +20,6 @@ export const api = {
   organizations,
   guides,
   steps,
+  mediaAssets,
   uploads,
 };

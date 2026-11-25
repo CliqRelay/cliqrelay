@@ -742,6 +742,9 @@ importers:
 
   packages/data-commons:
     dependencies:
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       ms:
         specifier: ^2.1.3
         version: 2.1.3

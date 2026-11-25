@@ -43,12 +43,18 @@ import { useOrgStore, useUserStore } from "@/stores";
 import { invalidateGuideQueries } from "@/utils/guides-cache.utils";
 
 type Props = {
-  guide: Pick<Guide, "id" | "title" | "status" | "creatorId" | "visibility">;
+  guide: Guide;
   isUpgradeAvailable?: boolean;
   onUpgrade?: () => Promise<void>;
+  replacingStepIds?: string[];
 };
 
-export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: Props) {
+export function GuideActionsDropdown({
+  guide,
+  isUpgradeAvailable,
+  onUpgrade,
+  replacingStepIds,
+}: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { copyGuideLink } = useCopyGuideLink();
@@ -143,7 +149,7 @@ export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: P
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="ghost">
+          <Button size="sm" variant="ghost" aria-label="Guide actions">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -188,7 +194,10 @@ export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: P
             <Link className="mr-2 h-4 w-4" />
             Copy Link
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setExportDialogOpen(true)}>
+          <DropdownMenuItem
+            disabled={replacingStepIds && replacingStepIds.length > 0}
+            onSelect={() => setExportDialogOpen(true)}
+          >
             <Download className="mr-2 h-4 w-4" />
             Export
           </DropdownMenuItem>
@@ -259,10 +268,10 @@ export function GuideActionsDropdown({ guide, isUpgradeAvailable, onUpgrade }: P
       />
 
       <ExportDialog
-        guideId={guide.id}
-        guideTitle={guide.title}
+        guide={guide}
         open={exportDialogOpen}
         onOpenChange={setExportDialogOpen}
+        replacingStepIds={replacingStepIds}
       />
 
       <MoveToTeamSlot

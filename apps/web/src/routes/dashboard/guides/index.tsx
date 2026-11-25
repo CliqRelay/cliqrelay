@@ -3,15 +3,21 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
+import { Upload } from "lucide-react";
+
 import { api, type Visibility } from "@repo/api-client";
+import { AppUserRole } from "@repo/data-commons";
 
 import { CreateGuideDialog } from "@/components/guides/create-guide-dialog";
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
 import { GuideFilterGroup } from "@/components/guides/guide-filter-group";
 import { GuidePageHeader } from "@/components/guides/guide-page-header";
 import { GuidesList } from "@/components/guides/guides-list";
+import { ImportGuideDialog } from "@/components/guides/import-guide-dialog";
 import { useGuideActions } from "@/components/guides/use-guide-actions";
 import { useToggleStar } from "@/components/guides/use-toggle-star";
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Button } from "@/components/ui/button";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { updateGuideVisibility } from "@/server-fns/guides";
 import { useGuidesStore, useTeamStore } from "@/stores";
@@ -86,6 +92,7 @@ function Guides() {
   const setFilter = useGuidesStore((s) => s.setFilter);
 
   const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false);
+  const [importDialogOpen, setImportDialogOpen] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pendingGuideId, setPendingGuideId] = useState<string | null>(null);
 
@@ -159,7 +166,16 @@ function Guides() {
 
   return (
     <div className="dashboard-page__wrapper">
-      <GuidePageHeader />
+      <GuidePageHeader
+        actions={
+          <RoleGuard minRole={AppUserRole.EDITOR}>
+            <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="size-4" />
+              Import backup
+            </Button>
+          </RoleGuard>
+        }
+      />
 
       <div className="flex gap-6">
         <div className="flex flex-1 flex-col justify-between">
@@ -194,6 +210,14 @@ function Guides() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreated={(guideId) => navigate({ to: "/dashboard/guides/$guideId", params: { guideId } })}
+      />
+
+      <ImportGuideDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onOpenGuide={(guideId) =>
+          navigate({ to: "/dashboard/guides/$guideId", params: { guideId } })
+        }
       />
 
       <ConfirmActionDialog
