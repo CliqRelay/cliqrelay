@@ -71,7 +71,12 @@ export function StepItemForm({ step, onUpdate, onReplaceMedia, isReplacing }: St
         </form.Field>
       </div>
 
-      <StepMedia step={step} onReplaceMedia={onReplaceMedia} isReplacing={isReplacing} />
+      <StepMedia
+        step={step}
+        onUpdate={onUpdate}
+        onReplaceMedia={onReplaceMedia}
+        isReplacing={isReplacing}
+      />
 
       <div>
         <label className="mb-2 block text-xs font-medium text-muted-foreground">Notes</label>
