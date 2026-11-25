@@ -1,5 +1,8 @@
 import type {
+  AppendStepInput,
+  CaptureBlobsInput,
   CaptureBridgeMessage,
+  CaptureScreenshotOptions,
   LocalSession,
   LocalStep,
   ProcessedScreenshot,
@@ -58,24 +61,50 @@ export const createOutboxWriter = ({
     return (await repository.getSession(lifecycle.sessionId)) ?? null;
   };
 
+  const captureBlobsFor = async (
+    tabId: number,
+    options?: CaptureScreenshotOptions,
+  ): Promise<CaptureBlobsInput | undefined> => {
+    const dataUrl = await screenshotService.captureWithThrottle(tabId, options);
+    if (!dataUrl) {
+      return undefined;
+    }
+
+    const { screenshotBlob, thumbnailBlob } = await processScreenshot(dataUrl);
+    return { screenshot: screenshotBlob, thumbnail: thumbnailBlob };
+  };
+
+  const navigationStepInput = (
+    session: LocalSession,
+    url: string,
+    capturedAt: string,
+  ): AppendStepInput => ({
+    sessionId: session.id,
+    guideId: session.guideId,
+    kind: "navigation",
+    action: "navigation",
+    actionText: navigationActionText(url),
+    url,
+    capturedAt,
+  });
+
   const ensureInitialNavigation = async (
     session: LocalSession,
     url: string,
     capturedAt: string,
+    blobs?: CaptureBlobsInput,
   ): Promise<void> => {
     if (await repository.getLastStep(session.id)) {
       return;
     }
 
-    await repository.appendStep({
-      sessionId: session.id,
-      guideId: session.guideId,
-      kind: "navigation",
-      action: "navigation",
-      actionText: navigationActionText(url),
-      url,
-      capturedAt,
-    });
+    const input = navigationStepInput(session, url, capturedAt);
+    if (blobs) {
+      await repository.appendStepWithBlobs(input, blobs);
+      return;
+    }
+
+    await repository.appendStep(input);
   };
 
   const writeCapture = (message: CaptureBridgeMessage, tabId: number): Promise<LocalStep | null> =>
@@ -86,14 +115,11 @@ export const createOutboxWriter = ({
       }
 
       const payload = message.payload;
-      await ensureInitialNavigation(session, payload.url, payload.capturedAt);
-
-      const dataUrl = await screenshotService.captureWithThrottle(tabId);
-      if (!dataUrl) {
+      const blobs = await captureBlobsFor(tabId);
+      await ensureInitialNavigation(session, payload.url, payload.capturedAt, blobs);
+      if (!blobs) {
         return null;
       }
-
-      const blobs = await processScreenshot(dataUrl);
 
       return repository.appendStepWithBlobs(
         {
@@ -114,14 +140,11 @@ export const createOutboxWriter = ({
             : {}),
           ...(payload.typingSessionId ? { typingSessionId: payload.typingSessionId } : {}),
         },
-        {
-          screenshot: blobs.screenshotBlob,
-          thumbnail: blobs.thumbnailBlob,
-        },
+        blobs,
       );
     });
 
-  const writeTyping = (message: CaptureBridgeMessage): Promise<LocalStep | null> =>
+  const writeTyping = (message: CaptureBridgeMessage, tabId: number): Promise<LocalStep | null> =>
     enqueue(async () => {
       const session = await getRecordingSession();
       if (!session) {
@@ -140,7 +163,9 @@ export const createOutboxWriter = ({
         return null;
       }
 
-      await ensureInitialNavigation(session, payload.url, payload.capturedAt);
+      const isFirstStep = (await repository.getLastStep(session.id)) === undefined;
+      const blobs = isFirstStep ? await captureBlobsFor(tabId) : undefined;
+      await ensureInitialNavigation(session, payload.url, payload.capturedAt, blobs);
 
       return repository.upsertTypingStep({
         sessionId: session.id,
@@ -170,32 +195,17 @@ export const createOutboxWriter = ({
         return null;
       }
 
-      const stepInput = {
-        sessionId: session.id,
-        guideId: session.guideId,
-        kind: "navigation" as const,
-        action: "navigation",
-        actionText: navigationActionText(url),
-        url,
-        capturedAt,
-      };
-
+      const input = navigationStepInput(session, url, capturedAt);
       if (tabId === undefined) {
-        return repository.appendStep(stepInput);
+        return repository.appendStep(input);
       }
 
-      const dataUrl = await screenshotService.captureWithThrottle(tabId, {
-        hideHighlightFirst: true,
-      });
-      if (!dataUrl) {
-        return repository.appendStep(stepInput);
+      const blobs = await captureBlobsFor(tabId, { hideHighlightFirst: true });
+      if (!blobs) {
+        return repository.appendStep(input);
       }
 
-      const blobs = await processScreenshot(dataUrl);
-      return repository.appendStepWithBlobs(stepInput, {
-        screenshot: blobs.screenshotBlob,
-        thumbnail: blobs.thumbnailBlob,
-      });
+      return repository.appendStepWithBlobs(input, blobs);
     });
 
   return { writeCapture, writeTyping, writeNavigation };
