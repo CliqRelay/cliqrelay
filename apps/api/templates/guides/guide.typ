@@ -149,9 +149,12 @@
   )[
     #block(
       width: 100%,
+      sticky: true,
       fill: code-header-bg,
       stroke: (bottom: 1pt + code-border),
       inset: (x: 10pt, y: 6pt),
+      above: 0pt,
+      below: 0pt,
     )[
       #grid(
         columns: (1fr, auto),
@@ -162,17 +165,10 @@
         align(right, text(size: 8pt, weight: "bold", fill: muted-fg, upper(lang))),
       )
     ]
-    #block(width: 100%, inset: 8pt)[
+    #block(width: 100%, inset: 8pt, above: 0pt, below: 0pt)[
       #show raw.where(block: true): set block(above: 0pt, below: 0pt)
-      #show raw: set text(font: "DejaVu Sans Mono", size: 7pt)
       #set text(font: "DejaVu Sans Mono", size: 7pt)
-      #for code-line in code.split("\n") {
-        if code-line == "" {
-          v(0.55em)
-        } else {
-          raw(code-line, block: true, lang: lang)
-        }
-      }
+      #raw(code, block: true, lang: lang)
     ]
   ]
 }

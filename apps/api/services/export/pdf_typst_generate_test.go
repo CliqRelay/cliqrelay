@@ -3,9 +3,11 @@ package export
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -31,6 +33,8 @@ func requireTypst(t *testing.T) {
 		t.Skip("typst not installed; skipping PDF generation test")
 	}
 }
+
+var pdfPagePattern = regexp.MustCompile(`/Type\s*/Page[^s]`)
 
 func TestGeneratePDFWithTypst(t *testing.T) {
 	t.Parallel()
@@ -181,6 +185,31 @@ func TestGeneratePDFWithTypst(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGeneratePDFWithTypst_LongCodeBlockSpansPages(t *testing.T) {
+	requireTypst(t)
+
+	lines := make([]string, 0, 150)
+	for i := range 150 {
+		lines = append(lines, fmt.Sprintf(`fmt.Println("line %d")`, i))
+	}
+
+	step := &models.Step{
+		ID:   uuid.New(),
+		Type: models.StepTypeCanvas,
+		CanvasContent: &models.StepCanvasContent{
+			Type:     models.StepCanvasTypeCode,
+			Language: new("go"),
+			Code:     new(strings.Join(lines, "\n")),
+			Caption:  new("main.go"),
+		},
+	}
+
+	pdf, err := GeneratePDFWithTypst(context.Background(), testGuide(), []*models.Step{step}, new(tests.MockStorageService), "bucket", nil)
+
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, len(pdfPagePattern.FindAll(pdf, -1)), 3, "long code block should continue across pages")
 }
 
 func TestGeneratePDFWithTypst_CleansUpTempDir(t *testing.T) {
