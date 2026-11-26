@@ -25,8 +25,6 @@ Sidepanel
 
 There is no offscreen document and no long-lived port. The sidepanel never writes Dexie: the background owns local captures. The outbox uses a 1-minute `alarms` drain while recording plus a daily retention alarm, and sync failures stay local until retried or pruned after 7 days.
 
-Manifest permissions: `cookies`, `storage`, `unlimitedStorage`, `activeTab`, `tabs`, `webNavigation`, `alarms`, plus `sidePanel` on Chrome and `webRequest` on Firefox.
-
 Legend:
 
 - **Web App**: The main CliqRelay application running in a browser tab.
@@ -45,6 +43,19 @@ Legend:
 | **Background Script** | Content Script    | `chrome.tabs.sendMessage(tabId, msg)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | Highlight suppress/restore while taking a screenshot.                                        |
 | **Sidepanel / Popup** | Background Script | `chrome.runtime.sendMessage(command)`             | `chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {})`         | Recording, retry, delete, discard and settings commands.                                     |
 | **Background Script** | Sidepanel / Popup | `storage.session.onChanged` and Dexie `liveQuery` | `browser.storage.session.onChanged.addListener(...)`, `useLiveQuery(...)`         | No port and no push messages: the sidepanel observes status and local data directly.         |
+
+## Permissions
+
+- `cookies` — read CliqRelay CSRF/active-team cookies and detect sign-out via `cookies.onChanged`.
+- `storage` — settings and recording status in `storage.local`, recording lifecycle in `storage.session`.
+- `unlimitedStorage` — lifts quota and eviction limits for the Dexie/IndexedDB outbox, which keeps full WebP screenshots until upload and for up to 7 days.
+- `activeTab` — temporary access to the active tab for screenshot capture and content-script messaging.
+- `tabs` — query/read tabs, message content scripts, call `captureVisibleTab`, and open the sign-in tab.
+- `webNavigation` — record navigation steps on `onCompleted` and discard stale ones on `onErrorOccurred`.
+- `alarms` — wake the MV3 worker every minute to drain the outbox and daily to prune expired data. Required because service workers die when idle.
+- `sidePanel` (Chrome) — open the side panel from the toolbar action and external messages.
+- `webRequest` (Firefox) — Firefox manifest compatibility; no current code path uses it.
+- `<all_urls>` host permission — inject the content script on any page and allow visible-tab captures.
 
 ## Development
 
