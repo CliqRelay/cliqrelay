@@ -90,11 +90,14 @@ export function StepItemForm({ step, onUpdate, onReplaceMedia, isReplacing }: St
               }}
               onBlur={field.handleBlur}
               onClick={(e) => e.stopPropagation()}
-              placeholder="Internal notes about this step"
+              placeholder="Add more detail about this step"
               rows={2}
             />
           )}
         </form.Field>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Notes are visible to anyone who can view this guide.
+        </p>
       </div>
     </>
   );

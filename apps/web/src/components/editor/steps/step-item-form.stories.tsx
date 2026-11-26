@@ -35,9 +35,12 @@ export const Interaction: Story = {
     const canvas = within(canvasElement);
     const actionText = canvas.getByPlaceholderText("e.g., Submit button, Email field");
     await expect(actionText).toHaveValue("Click the Save button");
-    await expect(canvas.getByPlaceholderText("Internal notes about this step")).toHaveValue(
+    await expect(canvas.getByPlaceholderText("Add more detail about this step")).toHaveValue(
       "Some notes",
     );
+    await expect(
+      canvas.getByText("Notes are visible to anyone who can view this guide."),
+    ).toBeInTheDocument();
 
     await userEvent.clear(actionText);
     await userEvent.type(actionText, "Press Save");
@@ -81,7 +84,7 @@ export const KeepsTypingWhenServerRefetchesStaleValue: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const actionText = canvas.getByPlaceholderText("e.g., Submit button, Email field");
-    const notes = canvas.getByPlaceholderText("Internal notes about this step");
+    const notes = canvas.getByPlaceholderText("Add more detail about this step");
 
     await userEvent.clear(actionText);
     await userEvent.type(actionText, "abcdef");
