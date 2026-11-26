@@ -135,6 +135,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           config={{
             triggerMode: "fixed",
             position: "bottom-right",
+            hideUntilHover: true,
+            defaultOpen: false,
           }}
           plugins={[
             {
