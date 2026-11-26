@@ -20,7 +20,7 @@ import { AppUserRole, hasMinimumRole } from "@repo/data-commons";
 
 import { RoleGuard } from "../shared/role-guard";
 import { useCopyGuideLink } from "./use-copy-guide-link";
-import { ExportDialog } from "@/components/editor/shared/export-dialog";
+import { ExportDialog } from "@/components/editor/shared/export/export-dialog";
 import { ConfirmActionDialog } from "@/components/guides/guide-confirm-action-dialog";
 import { MoveToTeamSlot } from "@/components/guides/move-to-team-slot";
 import { Button } from "@/components/ui/button";

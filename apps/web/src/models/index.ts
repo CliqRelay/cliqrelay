@@ -2,6 +2,7 @@ export * from "./auth";
 export * from "./code";
 export * from "./editor-widgets";
 export * from "./guide-archive";
+export * from "./guide-export";
 export * from "./guides";
 export * from "./media";
 export * from "./members";
