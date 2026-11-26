@@ -9,8 +9,12 @@ import { GuideWorkflowViewMode } from "./guide-workflow-view-mode";
 import { useGuideStepMutations } from "@/hooks/useGuideStepMutations";
 import { useRevealStep } from "@/hooks/useRevealStep";
 import { useStepEditor } from "@/hooks/useStepEditor";
-import { useStepMediaReplace } from "@/hooks/useStepMediaReplace";
 import { useEditorStore } from "@/stores";
+
+type MediaReplace = {
+  handleReplaceMedia: (stepId: string, file: File) => Promise<void>;
+  replacingStepIds: string[];
+};
 
 type Props = {
   guide: Guide;
@@ -18,9 +22,10 @@ type Props = {
   canEdit?: boolean;
   onModeChange?: (mode: "view" | "edit") => void;
   onUpdateGuide?: (updates: { title?: string; description?: string | null }) => void;
+  mediaReplace: MediaReplace;
 };
 
-export function GuideEditor({ guide, mode, canEdit = true, onUpdateGuide }: Props) {
+export function GuideEditor({ guide, mode, canEdit = true, onUpdateGuide, mediaReplace }: Props) {
   const {
     steps,
     totalSteps,
@@ -34,7 +39,7 @@ export function GuideEditor({ guide, mode, canEdit = true, onUpdateGuide }: Prop
 
   const { handleAddStepWithType, handleSave, handleDelete, handleDuplicate, handleReorder } =
     useGuideStepMutations(guide.id);
-  const { handleReplaceMedia, replacingStepIds } = useStepMediaReplace(guide.id);
+  const { handleReplaceMedia, replacingStepIds } = mediaReplace;
   const revealStep = useRevealStep(selectStep);
 
   const resetEditor = useEditorStore((state) => state.reset);

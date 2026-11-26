@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ExtensionSlotKeys } from "@/constants/extension-slots";
+import { useStepMediaReplace } from "@/hooks/useStepMediaReplace";
 import { toast } from "@/lib/toast";
 import { updateGuide } from "@/server-fns/guides";
 import { useOrgStore } from "@/stores";
@@ -103,6 +104,7 @@ function GuideDetailPage() {
   const { guideId } = Route.useParams();
   const queryClient = useQueryClient();
   const { toggleStar } = useToggleStar();
+  const { handleReplaceMedia, replacingStepIds } = useStepMediaReplace(guideId);
 
   const currentMemberRole = useOrgStore((s) => s.currentMember?.role);
 
@@ -243,7 +245,7 @@ function GuideDetailPage() {
                 </ToggleGroupItem>
               </ToggleGroup>
 
-              <GuideActionsDropdown guide={guide} />
+              <GuideActionsDropdown guide={guide} replacingStepIds={replacingStepIds} />
             </>
           )}
         </div>
@@ -257,6 +259,7 @@ function GuideDetailPage() {
             canEdit={canEdit}
             onModeChange={setMode}
             onUpdateGuide={handleUpdateGuide}
+            mediaReplace={{ handleReplaceMedia, replacingStepIds }}
           />
         )}
       </div>
