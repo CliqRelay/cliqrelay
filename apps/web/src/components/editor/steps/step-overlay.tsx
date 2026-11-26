@@ -32,7 +32,7 @@ export function StepOverlay({
       ref={circleRef}
       data-slot="step-indicator"
       className={cn(
-        "absolute -translate-x-1/2 -translate-y-1/2 rounded-full",
+        "absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full",
         interactive
           ? "cursor-grab touch-none will-change-transform active:cursor-grabbing"
           : "pointer-events-none",

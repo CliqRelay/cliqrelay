@@ -156,6 +156,43 @@ export const IndicatorCanBeDragged: Story = {
   },
 };
 
+export const IndicatorStacksAboveMediaToolbar: Story = {
+  args: {
+    step: indicatorStep({
+      clickX: 1980,
+      clickY: 20,
+      viewportWidth: 2000,
+      viewportHeight: 1000,
+    }),
+    onUpdate: fn(),
+    onReplaceMedia: fn(),
+    isReplacing: true,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const indicator = await waitFor(() => {
+      const element = canvasElement.querySelector<HTMLElement>("[data-slot='step-indicator']");
+      if (!element) throw new Error("Indicator not rendered");
+      return element;
+    });
+    const button = canvas.getByRole("button", { name: "Remove indicator" });
+    const indicatorRect = indicator.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+
+    const left = Math.max(indicatorRect.left, buttonRect.left);
+    const right = Math.min(indicatorRect.right, buttonRect.right);
+    const top = Math.max(indicatorRect.top, buttonRect.top);
+    const bottom = Math.min(indicatorRect.bottom, buttonRect.bottom);
+
+    if (left >= right || top >= bottom) {
+      throw new Error("Indicator does not overlap the media toolbar");
+    }
+
+    const hit = document.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+    await expect(hit).toBe(indicator);
+  },
+};
+
 export const IndicatorCanBeHidden: Story = {
   args: {
     step: indicatorStep({
