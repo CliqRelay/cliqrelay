@@ -20,10 +20,10 @@ const createController = (): GuideExportController => ({
   cancel: null,
 });
 
-const notionStrategy: GuideExportManifest = {
-  id: "notion",
-  label: "Notion",
-  description: "Publish the guide to a Notion page.",
+const customStrategy: GuideExportManifest = {
+  id: "custom",
+  label: "Custom",
+  description: "Custom export strategy for testing.",
   icon: FileText,
   group: "integration",
   getAvailability: () => ({ available: true }),
@@ -82,10 +82,10 @@ export const ZipDisabledWhileUploading: Story = {
 
 export const IntegrationGroup: Story = {
   args: {
-    options: [...baseOptions, { strategy: notionStrategy, availability: { available: true } }],
+    options: [...baseOptions, { strategy: customStrategy, availability: { available: true } }],
   },
   play: async () => {
     await expect(await screen.findByText("Integrations")).toBeVisible();
-    await expect(screen.getByRole("button", { name: /Notion/ })).toBeVisible();
+    await expect(screen.getByRole("button", { name: /Custom/ })).toBeVisible();
   },
 };
