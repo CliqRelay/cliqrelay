@@ -44,7 +44,7 @@ ENV SHELL=/bin/zsh
 # --------------------------------------
 # Node.js
 # --------------------------------------
-RUN npm i -g pnpm@12.21.0
+RUN npm i -g pnpm@12.23.0
 
 # Install required dependencies for playwright.
 RUN npx playwright install-deps
